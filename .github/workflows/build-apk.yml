@@ -75,9 +75,9 @@ jobs:
           npm ci --ignore-scripts --no-audit --no-fund
           npx esbuild --version
 
-      - name: Lint (eslint)
-        working-directory: bot-js
-        run: npm run lint
+      # Lint TIDAK di sini — eslint baru butuh Node >= 20 sedangkan job ini
+      # sengaja dipaku di 18.20.4. Lint-nya ada di workflow "Code quality"
+      # (job js, matrix Node 22). Job ini fokus: bikin bundle yang JALAN.
 
       - name: Unit test
         working-directory: bot-js

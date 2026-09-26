@@ -51,8 +51,14 @@ jobs:
           npm ci --ignore-scripts --no-audit --no-fund
           npx --no-install esbuild --version 2>/dev/null || true
 
+      # Lint cuma di Node 22, sengaja.
+      # eslint versi baru (>= 9.3x) manggil util.styleText yang baru ada di
+      # Node >= 20, jadi lint di Node 18.20.4 bisa meledak bukan karena kode
+      # kita salah — dan itu bikin job merah padahal engine-nya sehat.
+      # Yang WAJIB jalan di 18.20.4 tetap diuji di sana: unit test, bundle,
+      # dan smoke test (langkah di bawah) — itu yang menentukan APK jalan.
       - name: Lint
-        if: matrix.dir == 'bot-js'
+        if: matrix.dir == 'bot-js' && matrix.node == '22'
         working-directory: ${{ matrix.dir }}
         run: npm run lint
 
@@ -90,7 +96,10 @@ jobs:
       - name: npm audit (bot-js)
         working-directory: bot-js
         run: |
-          npm ci --no-audit --no-fund
+          # --ignore-scripts: sama seperti job lain — preinstall Baileys
+          # nge-gate Node < 20 (lihat build-apk.yml), nggak ada hubungannya
+          # sama audit dan nggak kita perlukan di sini.
+          npm ci --ignore-scripts --no-audit --no-fund
           # Yang bikin gagal cuma kerentanan level high/critical di dependency
           # PRODUKSI. Dev-only (esbuild dev server dll) dilaporkan tapi nggak
           # memblokir, karena nggak ikut masuk APK.
@@ -101,7 +110,7 @@ jobs:
       - name: npm audit (cli)
         working-directory: cli
         run: |
-          npm ci --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
           npm audit --omit=dev --audit-level=high
 
       - name: Tidak boleh ada token/secret yang ke-commit

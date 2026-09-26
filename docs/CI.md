@@ -19,7 +19,7 @@ push / PR ──┬─→ build-apk.yml    ─→ APK artifact  (+ GitHub Releas
 | push ke `main` | build engine → APK release → upload artifact (30 hari) |
 | pull request | build engine → APK **debug** (cuma buat cek compile) |
 | push tag `v*` | semua di atas **+ GitHub Release** dengan APK & `sha256` |
-| `workflow_dispatch` | build manual, bisa pilih `release` / `debug` |
+| `workflow_dispatch` | build manual, bisa pilih `release` / `debug` **dan ABI-nya** |
 
 Dua job:
 
@@ -29,13 +29,17 @@ dalam nodejs-mobile. Urutannya: `npm ci` → `eslint` → `node --test` → `esb
 pernah dibuild.
 
 **`apk`** — JDK 17 (temurin) → Android SDK 35 + NDK 26.1.10909125 + CMake 3.22.1
-→ bundle dari artifact → `cacache` nodejs-mobile (57 MB, di-cache) → keystore
+→ bundle dari artifact → `cacache` nodejs-mobile (di-cache) → keystore
 dari secrets (kalau ada) → `:app:testDebugUnitTest` → `:app:lintDebug` →
-`assembleRelease` → rename + `sha256sum` → **verifikasi isi APK**
-(`unzip -l | grep libnode.so|bundle.cjs|libnodebridge.so`) → upload.
+`assembleRelease` → rename + `sha256sum` → **verifikasi isi APK** → upload.
 
-Langkah verifikasi isi APK itu penting: tanpa itu, APK bisa "berhasil" dibuild
-tapi kosong dari engine — dan baru ketahuan setelah di-install ke HP.
+Verifikasi isi APK-nya cek dua hal, dan dua-duanya penting:
+1. `bundle.cjs` + `libnode.so` + `libnodebridge.so` benar-benar ada — tanpa itu
+   APK bisa "berhasil" dibuild tapi kosong dari engine, dan baru ketahuan
+   setelah di-install ke HP.
+2. **Tiap ABI yang diminta** ada di `lib/<abi>/libnode.so`. Kalau minta dua ABI
+   tapi cuma satu yang kepackage, APK-nya tetap "berhasil" — dan HP yang satunya
+   cuma dapat crash. Jadi dicek per-ABI, bukan asal ada salah satu.
 
 **`release`** — cuma jalan kalau ref-nya tag `v*`. Pakai
 `softprops/action-gh-release@v2`, `generate_release_notes: true`, dan
@@ -45,13 +49,31 @@ menandai prerelease otomatis kalau tag-nya mengandung `-rc` atau `-beta`.
 
 | Secret | Fungsi |
 |---|---|
-| `KEYSTORE_BASE64` | keystore dalam base64 → APK di-sign resmi |
+| `KEYSTORE_BASE64` | keystore dalam base64 → APK di-sign dengan kunci tetap |
 | `KEYSTORE_PASSWORD` | password store |
 | `KEY_ALIAS` | alias key |
 | `KEY_PASSWORD` | password key |
 
-Tanpa keempatnya, APK di-sign debug key — tetap bisa di-install, dan workflow
-tetap hijau.
+Tanpa keempatnya, APK di-sign pakai debug key **bawaan runner** — tetap bisa
+di-install dan workflow tetap hijau, tapi runner itu bersih tiap kali, jadi
+kuncinya di-generate ulang tiap build. Akibatnya tiap APK punya sidik jari
+berbeda dan **nggak bisa dipasang nimpa APK sebelumnya** (`App not installed`).
+
+Jadi walau cuma buat dipakai sendiri, patok keystore-nya sekali. Bikin + pasang:
+
+```bash
+keytool -genkeypair -v -keystore my-release.jks -alias warelease \
+  -keyalg RSA -keysize 4096 -validity 10000 -storetype PKCS12 \
+  -storepass GANTI_INI -keypass GANTI_INI -dname "CN=Nama Lo, O=nama-lo, C=ID"
+
+base64 -w0 my-release.jks     # → tempel ke secret KEYSTORE_BASE64
+```
+
+Cara ngecek dua APK di-sign kunci yang sama, tanpa install Android SDK:
+
+```bash
+python3 scripts-dev/apk_signer.py apk-lama.apk apk-baru.apk
+```
 
 ---
 
@@ -131,7 +153,7 @@ di-group biar cuma beberapa PR:
 | `github-actions` | `/` | semua action di-*group* jadi 1 PR |
 | `npm` | `/bot-js` | `@whiskeysockets/baileys` dikunci dari major otomatis |
 | `npm` | `/cli` | semua di-group |
-| `gradle` | `/` | AGP & Kotlin dikunci dari major otomatis |
+| `gradle` | `/` | semua update major dikunci otomatis (AGP, Kotlin, Gradle wrapper, okhttp saling terikat) |
 
 **Alasan penguncian:** engine di APK harus tetap Node 18-compatible, dan
 naikkan Baileys / AGP harus dilakukan sadar sambil menjalankan
@@ -153,4 +175,8 @@ actionlint
 
 # yang sama dengan job `apk`
 bash scripts/build-local.sh
+
+# build buat HP 32-bit, atau dua-duanya sekaligus
+ABIS=armeabi-v7a bash scripts/build-local.sh
+ABIS="arm64-v8a armeabi-v7a" bash scripts/build-local.sh
 ```

@@ -183,7 +183,7 @@ Node 18.20.4, menghasilkan `QR RECEIVED len=237` dari server WhatsApp asli.
 |---|---|---|
 | `libnode.so` align 4 KB, bukan 16 KB | nodejs-mobile dibangun sebelum syarat 16 KB | perlu upstream build ulang — **nggak** |
 | Runtime mentok Node 18 | nodejs-mobile nggak ada rilis lebih baru | tunggu upstream |
-| Cuma `arm64-v8a` | x86_64 cuma buat emulator; 2 ABI = APK 2× lebih besar | bisa, tapi nggak berguna |
+| Default cuma `arm64-v8a` | tiap ABI nambah ±20 MB; hampir semua HP sekarang 64-bit | **bisa** — input `abis` di workflow, atau `-Pabis=armeabi-v7a` lokal |
 | HP harus tetap nyala | batasan fisik | ❌ |
 | Risiko akun WA dibatasi Meta | automasi pihak ketiga | ❌ konsekuensi desain |
 

@@ -22,6 +22,14 @@ on:
         type: choice
         default: release
         options: [release, debug]
+      abis:
+        description: 'ABI yang dipackage (HP 32-bit butuh armeabi-v7a)'
+        type: choice
+        default: arm64-v8a
+        options:
+          - arm64-v8a
+          - armeabi-v7a
+          - arm64-v8a,armeabi-v7a
 
 # Push ke branch yang sama berturut-turut → batalkan yang lama biar nggak numpuk.
 # Tag TIDAK ikut dibatalkan (release harus selesai).
@@ -41,6 +49,9 @@ env:
   COMPILE_SDK: '35'
   BUILD_TOOLS: '35.0.0'
   NODEJS_MOBILE_VERSION: 'v18.20.4'
+  # Tag/PR selalu arm64-v8a (default). Cuma workflow_dispatch yang bisa milih,
+  # dan kalau input-nya kosong (misal dari tag) kita jatuh ke default juga.
+  ABIS: ${{ inputs.abis || 'arm64-v8a' }}
 
 jobs:
   # ==========================================================================
@@ -109,7 +120,7 @@ jobs:
   #  2) APK Android arm64
   # ==========================================================================
   apk:
-    name: APK (arm64-v8a)
+    name: APK (${{ inputs.abis || 'arm64-v8a' }})
     needs: engine
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -135,13 +146,23 @@ jobs:
             TASK="assembleRelease"
             APK="app/build/outputs/apk/release/app-release.apk"
           fi
+
+          # Nama file dibuat dari daftar ABI-nya: 'arm64' kalau cuma arm64-v8a,
+          # 'universal' kalau lebih dari satu.
+          case "$ABIS" in
+            *","*) ABI_TAG="universal" ;;
+            armeabi-v7a) ABI_TAG="armeabi-v7a" ;;
+            *) ABI_TAG="arm64" ;;
+          esac
+
           {
             echo "variant=$VARIANT"
             echo "task=$TASK"
             echo "apk-path=$APK"
-            echo "apk-name=wa-release-bot-arm64-$VARIANT.apk"
+            echo "apk-name=wa-release-bot-$ABI_TAG-$VARIANT.apk"
           } >> "$GITHUB_OUTPUT"
           echo "Varian: $VARIANT ($TASK)"
+          echo "ABI   : $ABIS → $ABI_TAG"
 
       - name: Setup JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v6
@@ -176,13 +197,16 @@ jobs:
           path: |
             app/src/main/jniLibs
             app/libnode
-          key: nodejs-mobile-${{ env.NODEJS_MOBILE_VERSION }}-arm64-v8a
+          # Cache key HARUS memuat daftar ABI-nya. Kalau nggak, build v7a bakal
+          # kena cache arm64 dan libnode.so v7a-nya nggak pernah keunduh —
+          # build-nya gagal di CMake dengan 'libnode.so tidak ditemukan'.
+          key: nodejs-mobile-${{ env.NODEJS_MOBILE_VERSION }}-${{ env.ABIS }}
 
       - name: Download nodejs-mobile
         if: steps.njsm-cache.outputs.cache-hit != 'true'
         env:
           NODEJS_MOBILE_VERSION: ${{ env.NODEJS_MOBILE_VERSION }}
-          ABI: arm64-v8a
+          ABIS: ${{ env.ABIS }}
         run: bash scripts/fetch-nodejs-mobile.sh
 
       - name: Siapkan keystore release (opsional)
@@ -229,6 +253,7 @@ jobs:
       - name: Build APK (${{ steps.vars.outputs.task }})
         run: |
           ./gradlew --no-daemon ${{ steps.vars.outputs.task }} \
+            -Pabis="${{ env.ABIS }}" \
             -PversionName="${GITHUB_REF_NAME#v}" \
             --stacktrace
 
@@ -247,6 +272,17 @@ jobs:
           APK="dist/${{ steps.vars.outputs.apk-name }}"
           unzip -l "$APK" | grep -E 'libnode\.so|bundle\.cjs|libnodebridge\.so' || {
             echo "❌ bundle.cjs atau libnode.so tidak ada di dalam APK"; exit 1; }
+
+          # Pastikan SETIAP ABI yang diminta benar-benar ikut, bukan cuma salah satu.
+          FAIL=0
+          for ABI in $(echo "$ABIS" | tr ',' ' '); do
+            if unzip -l "$APK" | grep -q "lib/${ABI}/libnode.so"; then
+              echo "✅ lib/${ABI}/libnode.so ada"
+            else
+              echo "❌ lib/${ABI}/libnode.so TIDAK ada di dalam APK"; FAIL=1
+            fi
+          done
+          exit $FAIL
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
@@ -308,22 +344,22 @@ jobs:
           body: |
             ## 🦴 WA Release Bot ${{ github.ref_name }}
 
-            APK arm64-v8a — pasang langsung di HP Android 8.0+.
+            APK ${{ env.ABIS }} — pasang langsung di HP Android 8.0+.
 
             | Item | Nilai |
             |---|---|
-            | Arsitektur | arm64-v8a |
+            | Arsitektur | ${{ env.ABIS }} |
             | minSdk / targetSdk | 26 / 34 |
             | Engine | Node.js 18.20.4 (nodejs-mobile) |
             | WhatsApp client | Baileys 6.7.24 |
 
-            **Install:** unduh `wa-release-bot-arm64-release.apk`, aktifkan
+            **Install:** unduh `${{ needs.apk.outputs.apk-name }}`, aktifkan
             "Install unknown apps", pasang, lalu ikuti bagian
             [Pakai Setelah Install](https://github.com/${{ github.repository }}#-pakai-setelah-install).
 
             **Verifikasi unduhan** (opsional tapi disarankan):
             ```bash
-            sha256sum -c wa-release-bot-arm64-release.apk.sha256
+            sha256sum -c ${{ needs.apk.outputs.apk-name }}.sha256
             ```
 
             > ⚠️ Ini automation WhatsApp pihak ketiga. Risiko akun dibatasi Meta

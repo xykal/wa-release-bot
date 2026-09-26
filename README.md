@@ -14,7 +14,7 @@ Nggak ada update? 0% CPU, 0% data.
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/xykal/wa-release-bot/badge)](https://securityscorecards.dev/viewer/?uri=github.com/xykal/wa-release-bot)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Android](https://img.shields.io/badge/Android-8.0%2B%20(arm64)-3DDC84?logo=android&logoColor=white)](#-pakai-setelah-install)
+[![Android](https://img.shields.io/badge/Android-8.0%2B%20(arm64%20%7C%20v7a)-3DDC84?logo=android&logoColor=white)](#-pakai-setelah-install)
 [![Node](https://img.shields.io/badge/Node.js-18.20.4-339933?logo=nodedotjs&logoColor=white)](docs/ARCHITECTURE.md)
 
 </div>
@@ -178,11 +178,26 @@ git tag v1.1.0 && git push origin v1.1.0
 
 → APK + `sha256` otomatis di-attach ke [GitHub Release](../../releases).
 
-**Signing resmi (opsional).** Set 4 secrets di *Settings → Secrets and variables → Actions*:
+**Pilih ABI (opsional).** Lewat *Actions → Build APK → Run workflow*:
+
+| Input `abis` | Buat siapa | Perkiraan APK |
+|---|---|---|
+| `arm64-v8a` (default) | HP 64-bit — hampir semua HP sekarang | ±22 MB |
+| `armeabi-v7a` | HP 32-bit (HP lama) | ±20 MB |
+| `arm64-v8a,armeabi-v7a` | satu APK buat dua-duanya | ±42 MB |
+
+Kalau nggak yakin HP-nya yang mana: pakai `arm64-v8a,armeabi-v7a`. APK-nya
+lebih besar tapi dijamin jalan di dua-duanya.
+
+> nodejs-mobile v18.20.4 nyediain 3 prebuilt: `arm64-v8a`, `armeabi-v7a`, dan
+> `x86_64` (buat emulator). Yang nggak diambil di langkah fetch nggak bisa
+> dipackage — build-nya bakal berhenti di CMake.
+
+**Signing.** Set 4 secrets di *Settings → Secrets and variables → Actions*:
 
 | Secret | Isi |
 |---|---|
-| `KEYSTORE_BASE64` | `base64 -w0 my-release.keystore` |
+| `KEYSTORE_BASE64` | `base64 -w0 my-release.jks` |
 | `KEYSTORE_PASSWORD` | password store |
 | `KEY_ALIAS` | alias key |
 | `KEY_PASSWORD` | password key |
@@ -190,13 +205,23 @@ git tag v1.1.0 && git push origin v1.1.0
 Bikin keystore-nya sekali:
 
 ```bash
-keytool -genkeypair -v -keystore my-release.keystore -alias wa-release \
-  -keyalg RSA -keysize 2048 -validity 10000 \
-  -storepass GANTI_INI -keypass GANTI_INI
+keytool -genkeypair -v -keystore my-release.jks -alias warelease \
+  -keyalg RSA -keysize 4096 -validity 10000 -storetype PKCS12 \
+  -storepass GANTI_INI -keypass GANTI_INI \
+  -dname "CN=Nama Lo, O=nama-lo, C=ID"
+
+base64 -w0 my-release.jks    # tempel hasilnya ke KEYSTORE_BASE64
 ```
 
+> ⚠️ **Keystore itu identitas aplikasinya.** Kalau hilang, lo nggak bisa lagi
+> bikin update yang bisa nimpa versi lama — pemakai harus uninstall dulu.
+> Kalau bocor, orang bisa bikin APK palsu yang dianggap "aplikasi yang sama".
+> Simpan di tempat aman, **jangan pernah** masuk repo.
+
 > Tanpa secrets, workflow tetap jalan dan menghasilkan APK yang **bisa di-install**
-> (di-sign debug key). Pasang dulu, pastiin jalan, baru set keystore resmi.
+> (di-sign otomatis dengan debug key bawaan runner). Tapi tiap build punya kunci
+> yang BEDA, jadi APK baru nggak bisa dipasang nimpa APK lama — harus uninstall
+> dulu, dan itu menghapus sesi WA-nya.
 
 ### Opsi B — lokal (Android Studio / CLI)
 
@@ -280,7 +305,7 @@ Repo ini punya 4 workflow:
 
 | Workflow | Isi |
 |---|---|
-| [`build-apk.yml`](.github/workflows/build-apk.yml) | lint + unit test engine → bundle → APK arm64 → artifact / GitHub Release |
+| [`build-apk.yml`](.github/workflows/build-apk.yml) | lint + unit test engine → bundle → APK (ABI bisa dipilih) → artifact / GitHub Release |
 | [`code-quality.yml`](.github/workflows/code-quality.yml) | ESLint, unit test di Node 18/20/22, `npm audit`, shellcheck, actionlint, cek token bocor |
 | [`codeql.yml`](.github/workflows/codeql.yml) | SAST CodeQL untuk JavaScript **dan** Kotlin (muncul di tab Security) |
 | [`security.yml`](.github/workflows/security.yml) | dependency-review, gitleaks secret scan, OpenSSF Scorecard |

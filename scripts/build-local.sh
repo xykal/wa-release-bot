@@ -31,14 +31,20 @@ cp bot-js/dist/bundle.cjs app/src/main/assets/node/bundle.cjs
 ls -la app/src/main/assets/node/
 
 hr "3/4  nodejs-mobile (libnode.so + header)"
-if [ -f app/src/main/jniLibs/arm64-v8a/libnode.so ] && [ -f app/libnode/include/node/node.h ]; then
+# ABIS bisa diatur:  ABIS="arm64-v8a armeabi-v7a" bash scripts/build-local.sh
+ABIS="${ABIS:-arm64-v8a}"
+MISSING=0
+for ABI in $(echo "$ABIS" | tr ',' ' '); do
+  [ -f "app/src/main/jniLibs/${ABI}/libnode.so" ] || MISSING=1
+done
+if [ "$MISSING" -eq 0 ] && [ -f app/libnode/include/node/node.h ]; then
   echo "ℹ️  sudah ada, dilewati. (hapus folder-nya kalau mau unduh ulang)"
 else
-  bash scripts/fetch-nodejs-mobile.sh
+  ABIS="$ABIS" bash scripts/fetch-nodejs-mobile.sh
 fi
 
-hr "4/4  Gradle: $TASK"
-./gradlew --no-daemon "$TASK"
+hr "4/4  Gradle: $TASK  (ABI: $ABIS)"
+./gradlew --no-daemon "$TASK" -Pabis="$ABIS"
 
 hr "Selesai"
 find app/build/outputs/apk -name '*.apk' -exec ls -la {} \; 2>/dev/null || true

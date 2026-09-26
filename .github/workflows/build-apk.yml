@@ -1,53 +1,177 @@
 name: Build APK
 
+# Alur:
+#   push ke main / PR      → build APK, upload sebagai artifact
+#   push tag v*            → build APK + bikin GitHub Release (APK + sha256)
+#   workflow_dispatch      → build manual, bisa disign pakai keystore release
 on:
   push:
     branches: [main, master]
+    tags: ['v*']
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.github/ISSUE_TEMPLATE/**'
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
+    inputs:
+      build-variant:
+        description: 'Varian yang dibuild'
+        type: choice
+        default: release
+        options: [release, debug]
 
+# Push ke branch yang sama berturut-turut → batalkan yang lama biar nggak numpuk.
+# Tag TIDAK ikut dibatalkan (release harus selesai).
 concurrency:
-  group: build-apk
-  cancel-in-progress: true
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '18.20.4'          # PERSIS sama dengan Node di dalam nodejs-mobile
+  NODE_BUILD_VERSION: '20'
+  JAVA_VERSION: '17'
+  NDK_VERSION: '26.1.10909125'
+  CMAKE_VERSION: '3.22.1'
+  COMPILE_SDK: '34'
+  BUILD_TOOLS: '34.0.0'
+  NODEJS_MOBILE_VERSION: 'v18.20.4'
 
 jobs:
-  build:
-    name: Build APK (arm64)
+  # ==========================================================================
+  #  1) Engine Node.js — lint, unit test, bundle, smoke test di Node 18
+  # ==========================================================================
+  engine:
+    name: Engine (bot-js)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup JDK 17
+      - name: Setup Node ${{ env.NODE_VERSION }} (sama dengan nodejs-mobile)
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: bot-js/package-lock.json
+
+      - name: Install dependencies (npm ci)
+        working-directory: bot-js
+        run: npm ci --no-audit --no-fund
+
+      - name: Lint (eslint)
+        working-directory: bot-js
+        run: npm run lint
+
+      - name: Unit test
+        working-directory: bot-js
+        run: npm test
+
+      - name: Bundle engine (esbuild → dist/bundle.cjs)
+        working-directory: bot-js
+        run: npm run build
+
+      - name: Smoke test bundle di Node ${{ env.NODE_VERSION }}
+        working-directory: bot-js
+        run: |
+          node dist/bundle.cjs --selftest
+          node -e "
+            const s = require('fs').statSync('dist/bundle.cjs').size;
+            console.log('bundle.cjs =', (s/1048576).toFixed(1), 'MB');
+            if (s < 100000) { throw new Error('bundle mencurigakan kecil'); }
+          "
+
+      - name: Upload bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine-bundle
+          path: bot-js/dist/bundle.cjs
+          if-no-files-found: error
+          retention-days: 14
+
+  # ==========================================================================
+  #  2) APK Android arm64
+  # ==========================================================================
+  apk:
+    name: APK (arm64-v8a)
+    needs: engine
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      variant: ${{ steps.vars.outputs.variant }}
+      apk-name: ${{ steps.vars.outputs.apk-name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Tentukan varian & nama APK
+        id: vars
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            VARIANT="debug"
+          else
+            VARIANT="${{ inputs.build-variant || 'release' }}"
+          fi
+          if [ "$VARIANT" = "debug" ]; then
+            TASK="assembleDebug"
+            APK="app/build/outputs/apk/debug/app-debug.apk"
+          else
+            TASK="assembleRelease"
+            APK="app/build/outputs/apk/release/app-release.apk"
+          fi
+          echo "variant=$VARIANT"   >> "$GITHUB_OUTPUT"
+          echo "task=$TASK"         >> "$GITHUB_OUTPUT"
+          echo "apk-path=$APK"      >> "$GITHUB_OUTPUT"
+          echo "apk-name=wa-release-bot-arm64-$VARIANT.apk" >> "$GITHUB_OUTPUT"
+          echo "Varian: $VARIANT ($TASK)"
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Setup Node 20
-        uses: actions/setup-node@v4
+      - name: Setup Android SDK + NDK + CMake
+        uses: android-actions/setup-android@v3
         with:
-          node-version: '20'
+          packages: >-
+            platform-tools
+            platforms;android-${{ env.COMPILE_SDK }}
+            build-tools;${{ env.BUILD_TOOLS }}
+            ndk;${{ env.NDK_VERSION }}
+            cmake;${{ env.CMAKE_VERSION }}
+          log-accepted-android-sdk-licenses: false
 
-      - name: Bundle engine bot (esbuild → bundle.cjs)
-        run: |
-          cd bot-js
-          npm ci --no-audit --no-fund
-          npm run build
-          npm run selftest
-          mkdir -p ../app/src/main/assets/node
-          cp dist/bundle.cjs ../app/src/main/assets/node/bundle.cjs
-          du -h ../app/src/main/assets/node/bundle.cjs
+      - name: Ambil bundle engine dari artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: engine-bundle
+          path: app/src/main/assets/node
 
-      - name: Download nodejs-mobile (libnode.so + header)
-        run: |
-          VER=v18.20.4
-          curl -fsSL -o /tmp/njsm.zip \
-            "https://github.com/nodejs-mobile/nodejs-mobile/releases/download/${VER}/nodejs-mobile-v18.20.4-android.zip"
-          unzip -q /tmp/njsm.zip -d /tmp/njsm
-          mkdir -p app/src/main/jniLibs/arm64-v8a app/libnode
-          cp /tmp/njsm/bin/arm64-v8a/libnode.so app/src/main/jniLibs/arm64-v8a/libnode.so
-          cp -r /tmp/njsm/include app/libnode/include
-          du -h app/src/main/jniLibs/arm64-v8a/libnode.so
+      - name: Verifikasi bundle ada
+        run: ls -la app/src/main/assets/node/bundle.cjs
+
+      - name: Cache nodejs-mobile (libnode.so + header, ±57MB)
+        id: njsm-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            app/src/main/jniLibs
+            app/libnode
+          key: nodejs-mobile-${{ env.NODEJS_MOBILE_VERSION }}-arm64-v8a
+
+      - name: Download nodejs-mobile
+        if: steps.njsm-cache.outputs.cache-hit != 'true'
+        env:
+          NODEJS_MOBILE_VERSION: ${{ env.NODEJS_MOBILE_VERSION }}
+          ABI: arm64-v8a
+        run: bash scripts/fetch-nodejs-mobile.sh
 
       - name: Siapkan keystore release (opsional)
         env:
@@ -56,31 +180,139 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > release.keystore
+          if [ -n "${KEYSTORE_BASE64:-}" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
             {
-              echo "RELEASE_KEYSTORE_FILE=$PWD/release.keystore"
-              echo "RELEASE_KEYSTORE_PASSWORD=***"
+              echo "RELEASE_KEYSTORE_FILE=$RUNNER_TEMP/release.keystore"
+              echo "RELEASE_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
               echo "RELEASE_KEY_ALIAS=$KEY_ALIAS"
-              echo "RELEASE_KEY_PASSWORD=***"
+              echo "RELEASE_KEY_PASSWORD=$KEY_PASSWORD"
             } >> "$GITHUB_ENV"
             echo "✅ Keystore release siap — APK akan di-sign resmi"
           else
             echo "ℹ️ Secrets keystore belum diset — APK di-sign dengan debug key (tetap bisa di-install)"
           fi
 
-      - name: Build APK (assembleRelease)
-        uses: gradle/gradle-build-action@v3
+      - name: Setup Gradle (dengan cache)
+        uses: gradle/actions/setup-gradle@v4
         with:
-          arguments: assembleRelease
-          ndk: '26.1.10909125'
-          cmake: '3.22.1'
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
-      - name: Rename APK
-        run: mv app/build/outputs/apk/release/app-release.apk wa-release-bot-arm64-release.apk
+      - name: Unit test Android
+        run: ./gradlew --no-daemon :app:testDebugUnitTest
+
+      - name: Lint Android (SARIF untuk Code Scanning)
+        continue-on-error: true
+        run: ./gradlew --no-daemon :app:lintDebug
+
+      - name: Upload hasil lint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-lint-results
+          path: app/build/reports/lint-results-*.{html,xml,sarif}
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Build APK (${{ steps.vars.outputs.task }})
+        run: |
+          ./gradlew --no-daemon ${{ steps.vars.outputs.task }} \
+            -PversionName="${GITHUB_REF_NAME#v}" \
+            --stacktrace
+
+      - name: Rename + checksum
+        id: package
+        run: |
+          mkdir -p dist
+          cp "${{ steps.vars.outputs.apk-path }}" "dist/${{ steps.vars.outputs.apk-name }}"
+          cd dist
+          sha256sum "${{ steps.vars.outputs.apk-name }}" > "${{ steps.vars.outputs.apk-name }}.sha256"
+          ls -la
+          cat "${{ steps.vars.outputs.apk-name }}.sha256"
+
+      - name: Cek isi APK (bundle + libnode ikut ter-package)
+        run: |
+          APK="dist/${{ steps.vars.outputs.apk-name }}"
+          unzip -l "$APK" | grep -E 'libnode\.so|bundle\.cjs|libnodebridge\.so' || {
+            echo "❌ bundle.cjs atau libnode.so tidak ada di dalam APK"; exit 1; }
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: wa-release-bot-arm64
-          path: wa-release-bot-arm64-release.apk
+          name: ${{ steps.vars.outputs.apk-name }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Ringkasan
+        run: |
+          {
+            echo "### 📦 APK siap"
+            echo ""
+            echo "| Item | Nilai |"
+            echo "|---|---|"
+            echo "| Varian | \`${{ steps.vars.outputs.variant }}\` |"
+            echo "| File | \`${{ steps.vars.outputs.apk-name }}\` |"
+            echo "| Ukuran | $(du -h dist/${{ steps.vars.outputs.apk-name }} | cut -f1) |"
+            echo "| Signing | $([ -n "${RELEASE_KEYSTORE_FILE:-}" ] && echo 'keystore release' || echo 'debug key') |"
+            echo ""
+            echo "SHA-256: \`$(cut -d' ' -f1 dist/${{ steps.vars.outputs.apk-name }}.sha256)\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ==========================================================================
+  #  3) GitHub Release — cuma jalan kalau push tag v*
+  # ==========================================================================
+  release:
+    name: GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [engine, apk]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ambil APK
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.apk.outputs.apk-name }}
+          path: dist
+
+      - name: Buat Release + attach APK
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') }}
+          files: |
+            dist/*.apk
+            dist/*.sha256
+          body: |
+            ## 🦴 WA Release Bot ${{ github.ref_name }}
+
+            APK arm64-v8a — pasang langsung di HP Android 8.0+.
+
+            | Item | Nilai |
+            |---|---|
+            | Arsitektur | arm64-v8a |
+            | minSdk / targetSdk | 26 / 34 |
+            | Engine | Node.js 18.20.4 (nodejs-mobile) |
+            | WhatsApp client | Baileys 6.7.24 |
+
+            **Install:** unduh `wa-release-bot-arm64-release.apk`, aktifkan
+            "Install unknown apps", pasang, lalu ikuti bagian
+            [Pakai Setelah Install](https://github.com/${{ github.repository }}#-pakai-setelah-install).
+
+            **Verifikasi unduhan** (opsional tapi disarankan):
+            ```bash
+            sha256sum -c wa-release-bot-arm64-release.apk.sha256
+            ```
+
+            > ⚠️ Ini automation WhatsApp pihak ketiga. Risiko akun dibatasi Meta
+            > ada dan sepenuhnya tanggung jawab pemakai. Jangan pakai buat spam.

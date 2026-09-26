@@ -85,12 +85,20 @@ async function main() {
   let setupInFlight = false;
 
   // ----------------------------- bridge ------------------------------------
+  // `bridge` sengaja di-`let` dan dicek null: createBridge() memanggil log()
+  // secara sinkron (mis. waktu WS gagal start), sedangkan saat itu `bridge`
+  // belum selesai di-assign. Tanpa guard ini muncul
+  // "ReferenceError: Cannot access 'bridge' before initialization".
+  let bridge = null;
+
   function log(msg) {
     console.log(msg); // juga ke logcat (redirect dari native)
-    bridge.send({ type: 'log', msg, ts: Date.now() });
+    try {
+      bridge?.send({ type: 'log', msg, ts: Date.now() });
+    } catch { /* bridge belum siap — log tetap ke console */ }
   }
 
-  const bridge = createBridge({
+  bridge = createBridge({
     dataDir,
     wsPort: Number(process.env.WR_WS_PORT || 18790),
     log,

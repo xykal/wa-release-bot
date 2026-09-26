@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: ❓ Pertanyaan / diskusi
+    url: https://github.com/xykal/wa-release-bot/discussions
+    about: Buat pertanyaan umum, ide, atau nanya "ini kenapa ya?"
+  - name: 🔒 Laporkan kerentanan (privat)
+    url: https://github.com/xykal/wa-release-bot/security/advisories/new
+    about: Jangan buat issue publik untuk masalah keamanan.

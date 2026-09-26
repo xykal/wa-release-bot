@@ -1,0 +1,72 @@
+# Konfigurasi gitleaks — dipakai oleh .github/workflows/security.yml
+#
+# `extends` mewarisi seluruh ruleset bawaan gitleaks, lalu kita tambah
+# aturan spesifik untuk token yang dipakai proyek ini + allowlist untuk
+# nilai dummy di dokumentasi.
+title = "wa-release-bot gitleaks config"
+
+[extends]
+path = "default"
+
+# ------------------------------------------------------------------ aturan kita
+[[rules]]
+id = "resend-api-key"
+description = "Resend API key (re_...)"
+regex = '''\bre_[A-Za-z0-9_-]{20,}\b'''
+tags = ["key", "resend"]
+
+[[rules]]
+id = "grok-api-key"
+description = "xAI / Grok API key (xai-... atau gsk_...)"
+regex = '''\b(xai-[A-Za-z0-9]{20,}|gsk_[A-Za-z0-9]{40,})\b'''
+tags = ["key", "grok"]
+
+[[rules]]
+id = "cloudflare-api-token"
+description = "Cloudflare API token"
+regex = '''\bcfut_[A-Za-z0-9_-]{30,}\b'''
+tags = ["key", "cloudflare"]
+
+[[rules]]
+id = "vercel-token"
+description = "Vercel token"
+regex = '''\bvcp_[A-Za-z0-9]{40,}\b'''
+tags = ["key", "vercel"]
+
+[[rules]]
+id = "onesignal-api-key"
+description = "OneSignal REST API key (os_v2_app_...)"
+regex = '''\bos_v2_app_[A-Za-z0-9]{40,}\b'''
+tags = ["key", "onesignal"]
+
+[[rules]]
+id = "tailscale-auth-key"
+description = "Tailscale auth key"
+regex = '''\btskey-auth-[A-Za-z0-9-]{15,}\b'''
+tags = ["key", "tailscale"]
+
+[[rules]]
+id = "twicpics-key"
+description = "TwicPics API key (UUID)"
+regex = '''twicpics[\s\S]{0,80}[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'''
+tags = ["key", "twicpics"]
+
+# ------------------------------------------------------------------- allowlist
+[allowlist]
+description = "Nilai contoh/dummy yang memang boleh ada di repo"
+paths = [
+  '''config\.example\.json$''',
+  '''\.gitleaks\.toml$''',
+  '''docs/.*\.md$''',
+  '''README\.md$''',
+  '''SECURITY\.md$''',
+]
+regexes = [
+  '''GANTI_INI''',
+  '''CHANGEME''',
+  '''xxx+''',
+  '''<.*>''',
+  '''contoh''',
+  '''example''',
+  '''placeholder''',
+]

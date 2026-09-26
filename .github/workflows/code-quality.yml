@@ -1,0 +1,179 @@
+name: Code quality
+
+# Analisis statis + unit test, tanpa perlu build APK.
+# Cepat (< 5 menit) supaya bisa jadi gerbang review tiap PR.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: code-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------- JavaScript
+  js:
+    name: Lint & test JS
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # 18.20.4 = versi asli di dalam APK, 20/22 = kalau engine dijalankan di PC/CI
+        node: ['18.20.4', '20', '22']
+        dir: [bot-js, cli]
+        exclude:
+          # CLI nggak dibundle ke APK → cukup diuji di Node modern
+          - node: '18.20.4'
+            dir: cli
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: ${{ matrix.dir }}/package-lock.json
+
+      - name: Install
+        working-directory: ${{ matrix.dir }}
+        run: npm ci --no-audit --no-fund
+
+      - name: Lint
+        if: matrix.dir == 'bot-js'
+        working-directory: ${{ matrix.dir }}
+        run: npm run lint
+
+      - name: Syntax check semua source
+        working-directory: ${{ matrix.dir }}
+        run: |
+          find src -name '*.mjs' -print0 | xargs -0 -n1 node --check
+
+      - name: Unit test
+        if: matrix.dir == 'bot-js'
+        working-directory: ${{ matrix.dir }}
+        run: npm test
+
+      - name: Build bundle (khusus bot-js)
+        if: matrix.dir == 'bot-js'
+        working-directory: ${{ matrix.dir }}
+        run: npm run build
+
+      - name: Bundle jalan di Node ${{ matrix.node }}?
+        if: matrix.dir == 'bot-js'
+        working-directory: ${{ matrix.dir }}
+        run: node dist/bundle.cjs --selftest
+
+  # -------------------------------------------------------------------- audit
+  audit:
+    name: Audit dependensi
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: npm audit (bot-js)
+        working-directory: bot-js
+        run: |
+          npm ci --no-audit --no-fund
+          # Yang bikin gagal cuma kerentanan level high/critical di dependency
+          # PRODUKSI. Dev-only (esbuild dev server dll) dilaporkan tapi nggak
+          # memblokir, karena nggak ikut masuk APK.
+          npm audit --omit=dev --audit-level=high
+          echo "--- laporan lengkap (informasional) ---"
+          npm audit || true
+
+      - name: npm audit (cli)
+        working-directory: cli
+        run: |
+          npm ci --no-audit --no-fund
+          npm audit --omit=dev --audit-level=high
+
+      - name: Tidak boleh ada token/secret yang ke-commit
+        run: |
+          set -e
+          echo "Cek pola token yang umum ke-commit..."
+          if git grep -nEI \
+              -e 'ghp_[A-Za-z0-9]{36}' \
+              -e 'gho_[A-Za-z0-9]{36}' \
+              -e 'github_pat_[A-Za-z0-9_]{20,}' \
+              -e 're_[A-Za-z0-9_-]{20,}' \
+              -e 'tskey-auth-[A-Za-z0-9-]{20,}' \
+              -e 'os_v2_app_[A-Za-z0-9]{20,}' \
+              -e 'gsk_[A-Za-z0-9]{40,}' \
+              -e 'vcp_[A-Za-z0-9]{20,}' \
+              -e 'sk-[A-Za-z0-9]{32,}' \
+              -- . ':(exclude).github/workflows/*.yml' ; then
+            echo "❌ Ada yang kelihatan seperti token di dalam repo!"
+            exit 1
+          fi
+          echo "✅ Bersih"
+
+  # ------------------------------------------------------------------ shell/YAML
+  scripts:
+    name: Lint script & workflow
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ShellCheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq shellcheck
+          find . -name '*.sh' -not -path './node_modules/*' -print0 \
+            | xargs -0 shellcheck --severity=warning --shell=bash
+
+      - name: actionlint (lint file workflow)
+        run: |
+          bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color -verbose
+
+      - name: Validasi YAML lainnya
+        run: |
+          python3 - <<'PY'
+          import sys, pathlib
+          try:
+              import yaml
+          except ImportError:
+              print("pyyaml tidak ada — dilewati")
+              sys.exit(0)
+          bad = 0
+          for p in pathlib.Path('.').rglob('*.yml'):
+              if 'node_modules' in p.parts:
+                  continue
+              try:
+                  yaml.safe_load(p.read_text())
+              except Exception as e:
+                  print(f"❌ {p}: {e}")
+                  bad += 1
+          for p in pathlib.Path('.').rglob('*.yaml'):
+              if 'node_modules' in p.parts:
+                  continue
+              try:
+                  yaml.safe_load(p.read_text())
+              except Exception as e:
+                  print(f"❌ {p}: {e}")
+                  bad += 1
+          print("✅ semua YAML valid" if not bad else f"❌ {bad} file bermasalah")
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: File executable harus punya bit +x
+        run: |
+          fail=0
+          for f in gradlew scripts/*.sh cli/setup-termux.sh; do
+            if [ -f "$f" ] && [ ! -x "$f" ]; then
+              echo "❌ $f tidak executable"; fail=1
+            fi
+          done
+          exit $fail

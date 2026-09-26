@@ -1,0 +1,83 @@
+name: CodeQL
+
+# Analisis keamanan statis (SAST) untuk JavaScript engine + Kotlin/Java Android.
+# Hasilnya muncul di tab Security → Code scanning.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # tiap Senin 03:17 UTC — nangkep query baru walau kode nggak berubah
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: javascript-typescript
+            build-mode: none
+          - language: java-kotlin
+            build-mode: manual
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          queries: security-and-quality
+
+      # ----------------------------------------------------------------- Java
+      - name: Setup JDK 17
+        if: matrix.build-mode == 'manual'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK + NDK + CMake
+        if: matrix.build-mode == 'manual'
+        uses: android-actions/setup-android@v3
+        with:
+          packages: >-
+            platform-tools
+            platforms;android-34
+            build-tools;34.0.0
+            ndk;26.1.10909125
+            cmake;3.22.1
+
+      # CodeQL cuma menganalisis kode Kotlin, tapi Gradle tetap butuh
+      # bundle.cjs + libnode.so supaya konfigurasi native-nya valid.
+      - name: Siapkan artifact yang dibutuhkan build Android
+        if: matrix.build-mode == 'manual'
+        run: |
+          mkdir -p app/src/main/assets/node
+          echo '// placeholder untuk CodeQL build' > app/src/main/assets/node/bundle.cjs
+          bash scripts/fetch-nodejs-mobile.sh
+
+      - name: Compile Kotlin/Java (di-trace CodeQL)
+        if: matrix.build-mode == 'manual'
+        run: ./gradlew --no-daemon :app:assembleDebug -x lint -x test
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
+          upload: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}

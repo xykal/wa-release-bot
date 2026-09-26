@@ -1,5 +1,19 @@
-// Bundel engine bot jadi SATU file CJS (dist/bundle.cjs) yang di-asset ke APK.
+// ============================================================================
+//  Bundel engine bot jadi SATU file CJS (dist/bundle.cjs) yang di-asset ke APK.
+//
+//  Catatan penting:
+//   - `target: node18` karena nodejs-mobile terakhir cuma sampai Node 18.20.4
+//   - banner WebCrypto polyfill WAJIB (lihat polyfills/webcrypto.cjs)
+//   - TLA (top-level await) tidak boleh dipakai: output CJS tidak mendukungnya.
+//     Kalau perlu await, bungkus dalam fungsi async dan panggil dari `main()`.
+// ============================================================================
+import { readFileSync, statSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import esbuild from 'esbuild';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const banner = readFileSync(path.join(here, 'polyfills/webcrypto.cjs'), 'utf8');
 
 const result = await esbuild.build({
   entryPoints: ['src/bot.mjs'],
@@ -16,11 +30,23 @@ const result = await esbuild.build({
     jimp: './optional-stub.cjs',
     'link-preview-js': './optional-stub.cjs',
   },
+  banner: { js: banner },
+  // Buang komentar lisensi pihak ketiga dari bundle — memangkas ukuran APK.
+  // (Atribusi lisensi tetap ada di THIRD_PARTY_LICENSES.md repo ini.)
+  legalComments: 'none',
   logLevel: 'info',
-  banner: {
-    js: '// wa-release-bot bundle — dibangun otomatis oleh esbuild. Jangan edit manual.',
-  },
+  metafile: true,
 });
 
 if (result.errors.length) process.exit(1);
-console.log('✅ Bundle selesai: dist/bundle.cjs');
+
+const size = statSync('dist/bundle.cjs').size;
+console.log(`✅ Bundle selesai: dist/bundle.cjs (${(size / 1024 / 1024).toFixed(1)} MB)`);
+
+// Sanity check: pastikan polyfill benar-benar ke-inject di baris awal.
+const head = readFileSync('dist/bundle.cjs', 'utf8').slice(0, 4000);
+if (!head.includes('installWebCryptoPolyfill')) {
+  console.error('❌ Polyfill WebCrypto tidak masuk ke bundle — cek banner di build.mjs');
+  process.exit(1);
+}
+console.log('✅ Polyfill WebCrypto terpasang di banner bundle.');

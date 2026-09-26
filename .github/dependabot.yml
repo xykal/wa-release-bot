@@ -1,0 +1,81 @@
+version: 2
+
+updates:
+  # ---------------------------------------------------- GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '03:00'
+      timezone: Asia/Jakarta
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'ci'
+      include: scope
+    groups:
+      actions:
+        patterns: ['*']
+
+  # ---------------------------------------------------- engine bot (bot-js)
+  - package-ecosystem: npm
+    directory: /bot-js
+    schedule:
+      interval: weekly
+      day: monday
+      time: '03:10'
+      timezone: Asia/Jakarta
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'deps(bot-js)'
+      include: scope
+    versioning-strategy: increase
+    ignore:
+      # Engine ini HARUS tetap Node 18-compatible karena nodejs-mobile mentok
+      # di Node 18.20.4. Naikkan versi Baileys secara manual + jalankan
+      # `npm run build && node dist/bundle.cjs --selftest` di Node 18 dulu.
+      - dependency-name: '@whiskeysockets/baileys'
+        update-types: ['version-update:semver-major']
+    groups:
+      bot-js:
+        patterns: ['*']
+        exclude-patterns: ['@whiskeysockets/baileys']
+
+  # ---------------------------------------------------- CLI (Termux)
+  - package-ecosystem: npm
+    directory: /cli
+    schedule:
+      interval: weekly
+      day: monday
+      time: '03:20'
+      timezone: Asia/Jakarta
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'deps(cli)'
+      include: scope
+    groups:
+      cli:
+        patterns: ['*']
+
+  # ---------------------------------------------------- Gradle / Android
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '03:30'
+      timezone: Asia/Jakarta
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'deps(android)'
+      include: scope
+    ignore:
+      # AGP & Kotlin harus kompatibel dengan Gradle wrapper (8.9) — naikkan
+      # bareng-bareng manual, jangan lewat PR otomatis.
+      - dependency-name: 'com.android.tools.build:gradle'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'org.jetbrains.kotlin.android'
+        update-types: ['version-update:semver-major']
+    groups:
+      android:
+        patterns: ['*']

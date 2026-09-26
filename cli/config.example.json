@@ -1,0 +1,16 @@
+{
+  "github": {
+    "repo": "owner/nama-repo",
+    "token": "",
+    "includePrereleases": false
+  },
+  "whatsapp": {
+    "channel": "@username_channel",
+    "sessionDir": "./wa-session"
+  },
+  "bot": {
+    "checkIntervalMinutes": 15,
+    "postOnFirstRun": false,
+    "testMessageOnSetup": true
+  }
+}

@@ -10,6 +10,7 @@ import android.os.Looper
 import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.ScrollView
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,6 +19,7 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import com.xykals.warelease.util.Durasi
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -40,11 +42,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvStatus: TextView
     private lateinit var tvError: TextView
     private lateinit var tvLog: TextView
+    private lateinit var svLog: ScrollView
 
     private var qrDialogRef: Dialog? = null
     private var qrImage: ImageView? = null
 
-    private val busListener = { ui: BotUiSnapshot -> handler.post { renderUi(ui) } }
+    // Tipenya ditulis eksplisit: `handler.post {}` mengembalikan Boolean,
+    // sedangkan BotBus.subscribe() minta (BotUi) -> Unit.
+    private val busListener: (BotUi) -> Unit = { ui -> handler.post { renderUi(ui) } }
 
     private val notifPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -86,6 +91,7 @@ class MainActivity : AppCompatActivity() {
         tvStatus = findViewById(R.id.tvStatus)
         tvError = findViewById(R.id.tvError)
         tvLog = findViewById(R.id.tvLog)
+        svLog = findViewById(R.id.svLog)
 
         findViewById<MaterialButton>(R.id.btnSave).setOnClickListener { onSave() }
         findViewById<MaterialButton>(R.id.btnStart).setOnClickListener {
@@ -179,7 +185,7 @@ class MainActivity : AppCompatActivity() {
 
     // ----------------------------- render -----------------------------
 
-    private fun renderUi(ui: BotUiSnapshot) {
+    private fun renderUi(ui: BotUi) {
         val sb = StringBuilder()
         sb.append("Service : ").append(if (ui.serviceRunning) "✅ aktif" else "❌ mati")
         sb.append("\nEngine  : ").append(
@@ -203,9 +209,7 @@ class MainActivity : AppCompatActivity() {
         val next = ui.nextCheckAt
         if (next != null) {
             val d = next - System.currentTimeMillis()
-            sb.append("\nNext    : ").append(
-                if (d > 0) "dalam ${fmtDurasi(d)}" else "sebentar lagi"
-            )
+            sb.append("\nNext    : ").append("dalam ${Durasi.human(d)}")
         }
         tvStatus.text = sb.toString()
 
@@ -219,18 +223,12 @@ class MainActivity : AppCompatActivity() {
 
         if (ui.log.isNotEmpty()) {
             tvLog.text = ui.log.takeLast(40).joinToString("\n")
-            tvLog.post { tvLog.scrollTo(0, tvLog.scrollHeight) }
+            // tvLog ada di dalam ScrollView (id: svLog) → scroll wadahnya.
+            svLog.post { svLog.fullScroll(View.FOCUS_DOWN) }
         }
 
         val qr = ui.qr
         if (qr != null) showQrDialog(qr) else hideQrDialog()
-    }
-
-    private fun fmtDurasi(ms: Long): String {
-        val totalDetik = ms / 1000
-        val m = totalDetik / 60
-        val s = totalDetik % 60
-        return if (m >= 60) "${m / 60}j ${m % 60}m" else if (m > 0) "${m}m ${s}d" else "${s} detik"
     }
 
     private fun showQrDialog(qr: String) {
@@ -247,7 +245,7 @@ class MainActivity : AppCompatActivity() {
             setPadding(pad, pad, pad, pad)
         }
         qrImage = iv
-        val wrapper = ScrollView(this).apply { content = iv }
+        val wrapper = ScrollView(this).apply { addView(iv) }
         val dialog = MaterialAlertDialogBuilder(this)
             .setTitle("Scan QR dengan WhatsApp")
             .setMessage(

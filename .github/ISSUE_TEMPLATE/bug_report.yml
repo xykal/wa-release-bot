@@ -1,0 +1,75 @@
+name: 🐛 Laporkan bug
+description: Ada yang nggak jalan? Ceritain di sini.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Sebelum lapor, coba cek dulu bagian **Troubleshooting** di README ya.
+
+  - type: dropdown
+    id: varian
+    attributes:
+      label: Varian mana?
+      options:
+        - Aplikasi Android (APK)
+        - CLI (Termux / PC)
+        - Dua-duanya
+        - Bukan dua-duanya (build, CI, dll)
+    validations:
+      required: true
+
+  - type: input
+    id: versi
+    attributes:
+      label: Versi
+      description: Tag release, atau commit hash kalau build sendiri
+      placeholder: v1.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: perangkat
+    attributes:
+      label: Perangkat / OS
+      placeholder: 'Xiaomi Redmi Note 12, Android 14  — atau  Android 12 / Termux 0.118'
+    validations:
+      required: true
+
+  - type: textarea
+    id: apa-yang-terjadi
+    attributes:
+      label: Apa yang terjadi?
+      description: Sertakan pesan error kalau ada.
+    validations:
+      required: true
+
+  - type: textarea
+    id: harapan
+    attributes:
+      label: Harapannya apa?
+    validations:
+      required: true
+
+  - type: textarea
+    id: langkah
+    attributes:
+      label: Langkah reproduksi
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: |
+        Dari app: salin isi kotak **Log** di layar utama.
+        Dari HP (lebih lengkap): `adb logcat -s WRBot`
+        Dari CLI: tempel output terminal-nya.
+      render: shell
+    validations:
+      required: false

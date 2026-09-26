@@ -1,26 +1,50 @@
-# Gradle / Android
+# ------------------------------- SECRETS -----------------------------------
+# JANGAN PERNAH commit file-file ini. Kalau kepentok, rotate token-nya.
+secrets/
+secrets.json
+*.secrets.json
+ini-buat-kerja.json
+ini-buat-kerja.txt
+token*.json
+.env
+.env.*
+keystore.properties
+*.keystore
+*.jks
+*.p12
+release.keystore
+
+# ------------------------------- Gradle / Android ---------------------------
 .gradle/
 build/
 local.properties
 *.iml
 .idea/
 .cxx/
+captures/
+*.apk
+*.aab
+!gradle/wrapper/gradle-wrapper.jar
 
 # Hasil build bot-js
 bot-js/node_modules/
 bot-js/dist/
 app/src/main/assets/node/
 
-# Node.js prebuilt (diunduh CI / setup lokal — 60MB, jangan di-commit)
+# Node.js prebuilt (diunduh CI / setup lokal — ±60MB, jangan di-commit)
 app/src/main/jniLibs/
 app/libnode/
 
-# Keystore — JANGAN PERNAH di-commit
-*.keystore
-*.jks
-release.keystore
+# ------------------------------- CLI runtime state --------------------------
+cli/node_modules/
+cli/config.json
+cli/state.json
+cli/wa-session/
+cli/*.log
 
-# OS / editor
+# ------------------------------- OS / editor --------------------------------
 .DS_Store
 Thumbs.db
 *.log
+*.swp
+*~

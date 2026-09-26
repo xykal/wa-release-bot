@@ -1,72 +1,126 @@
-# Konfigurasi gitleaks — dipakai oleh .github/workflows/security.yml
+# ============================================================================
+#  Konfigurasi gitleaks — dipakai oleh .github/workflows/security.yml
 #
-# `extends` mewarisi seluruh ruleset bawaan gitleaks, lalu kita tambah
-# aturan spesifik untuk token yang dipakai proyek ini + allowlist untuk
-# nilai dummy di dokumentasi.
-title = "wa-release-bot gitleaks config"
+#  PENTING: `[extend] useDefault = true` WAJIB ada.
+#  Kalau nggak, ruleset bawaan gitleaks (yang mendeteksi GitHub PAT, AWS key,
+#  private key, dsb.) TIDAK ikut dimuat — dan scanning-nya jadi sia-sia karena
+#  cuma aturan custom di bawah yang jalan. (Sudah dites: tanpa baris ini,
+#  token `ghp_...` yang ditanam lolos.)
+#
+#  Uji cepat di lokal:
+#     gitleaks dir --config .gitleaks.toml --redact --no-banner .
+#     gitleaks git --config .gitleaks.toml --redact --no-banner
+# ============================================================================
+title = "wa-release-bot"
 
-[extends]
-path = "default"
+[extend]
+useDefault = true
 
-# ------------------------------------------------------------------ aturan kita
+# ----------------------------------------------------------------------------
+#  Aturan tambahan: token dari layanan yang dipakai ekosistem proyek ini.
+#  (GitHub PAT, AWS, private key, dsb. sudah ditangani ruleset default.)
+# ----------------------------------------------------------------------------
+
+# --- GitHub: jaring pengaman eksplisit -------------------------------------
+# Ruleset default seharusnya sudah menangkap ini, tapi kita bikin eksplisit
+# karena repo ini sering menyentuh token GitHub.
+[[rules]]
+id = "github-pat-classic"
+description = "GitHub Personal Access Token (classic)"
+regex = '''\bgh[pousr]_[0-9A-Za-z]{36,255}\b'''
+tags = ["key", "github"]
+
+[[rules]]
+id = "github-pat-fine-grained"
+description = "GitHub Personal Access Token (fine-grained)"
+regex = '''\bgithub_pat_[0-9A-Za-z_]{20,255}\b'''
+tags = ["key", "github"]
+
+# --- layanan lain ----------------------------------------------------------
 [[rules]]
 id = "resend-api-key"
-description = "Resend API key (re_...)"
-regex = '''\bre_[A-Za-z0-9_-]{20,}\b'''
+description = "Resend API key"
+regex = '''\bre_[0-9A-Za-z_-]{20,}\b'''
 tags = ["key", "resend"]
 
 [[rules]]
-id = "grok-api-key"
-description = "xAI / Grok API key (xai-... atau gsk_...)"
-regex = '''\b(xai-[A-Za-z0-9]{20,}|gsk_[A-Za-z0-9]{40,})\b'''
+id = "xai-grok-api-key"
+description = "xAI / Grok API key"
+regex = '''\b(xai-[0-9A-Za-z]{20,}|gsk_[0-9A-Za-z]{40,})\b'''
 tags = ["key", "grok"]
 
 [[rules]]
 id = "cloudflare-api-token"
 description = "Cloudflare API token"
-regex = '''\bcfut_[A-Za-z0-9_-]{30,}\b'''
+regex = '''\bcfut_[0-9A-Za-z_-]{30,}\b'''
 tags = ["key", "cloudflare"]
 
 [[rules]]
 id = "vercel-token"
 description = "Vercel token"
-regex = '''\bvcp_[A-Za-z0-9]{40,}\b'''
+regex = '''\bvcp_[0-9A-Za-z]{40,}\b'''
 tags = ["key", "vercel"]
 
 [[rules]]
 id = "onesignal-api-key"
-description = "OneSignal REST API key (os_v2_app_...)"
-regex = '''\bos_v2_app_[A-Za-z0-9]{40,}\b'''
+description = "OneSignal REST API key"
+regex = '''\bos_v2_app_[0-9A-Za-z]{40,}\b'''
 tags = ["key", "onesignal"]
 
 [[rules]]
 id = "tailscale-auth-key"
 description = "Tailscale auth key"
-regex = '''\btskey-auth-[A-Za-z0-9-]{15,}\b'''
+regex = '''\btskey-auth-[0-9A-Za-z-]{15,}\b'''
 tags = ["key", "tailscale"]
 
 [[rules]]
-id = "twicpics-key"
-description = "TwicPics API key (UUID)"
-regex = '''twicpics[\s\S]{0,80}[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'''
-tags = ["key", "twicpics"]
+id = "pakasir-api-key"
+description = "Pakasir API key"
+regex = '''pakasir[^\n]{0,120}?[0-9A-Za-z]{32}\b'''
+tags = ["key", "pakasir"]
 
-# ------------------------------------------------------------------- allowlist
+[[rules]]
+id = "google-oauth-client-secret"
+description = "Google OAuth client secret"
+regex = '''GOCSPX-[0-9A-Za-z_-]{28,}'''
+tags = ["key", "google"]
+
+[[rules]]
+id = "whatsapp-session-creds"
+description = "File sesi Baileys/WhatsApp yang ke-commit"
+regex = '''"(noiseKey|signedIdentityKey|signedPreKey|registrationId|advSecretKey)"\s*:'''
+path = '''(creds\.json|session.*\.json|wa-session/)'''
+tags = ["whatsapp", "session"]
+
+# ----------------------------------------------------------------------------
+#  Allowlist — nilai yang MEMANG boleh ada di repo (dokumentasi/contoh).
+#  Dibuat se-spesifik mungkin: pola `xxx+` yang terlalu luas bisa menyembunyikan
+#  token asli yang kebetulan mengandung huruf itu.
+# ----------------------------------------------------------------------------
 [allowlist]
-description = "Nilai contoh/dummy yang memang boleh ada di repo"
+description = "contoh/dummy di dokumentasi, dan isi dependency/build"
+
+# Jangan scan isi dependency & hasil build — bukan kode kita, dan bikin lambat.
 paths = [
-  '''config\.example\.json$''',
-  '''\.gitleaks\.toml$''',
-  '''docs/.*\.md$''',
-  '''README\.md$''',
-  '''SECURITY\.md$''',
+  '''node_modules/''',
+  '''/build/''',
+  '''\.gradle/''',
+  '''app/src/main/assets/node/''',
+  '''app/src/main/jniLibs/''',
+  '''app/libnode/''',
+  '''bot-js/dist/''',
+  '''package-lock\.json$''',
+  '''gradle-wrapper\.jar$''',
 ]
+
+# Nilai placeholder yang sengaja ditaruh di contoh konfigurasi & dokumentasi.
 regexes = [
   '''GANTI_INI''',
+  '''GANTI_DENGAN''',
   '''CHANGEME''',
-  '''xxx+''',
-  '''<.*>''',
-  '''contoh''',
-  '''example''',
-  '''placeholder''',
+  '''YOUR_[A-Z_]+_HERE''',
+  '''owner/nama-repo''',
+  '''@username_channel''',
+  '''<[A-Za-z_]+>''',
+  '''sk-ant-\.\.\.''',
 ]

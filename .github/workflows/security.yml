@@ -1,9 +1,9 @@
 name: Security
 
 # Tiga lapis:
-#   1. dependency-review  → blokir PR yang menambah dependency rentan/berlisensi galak
-#   2. gitleaks           → pastikan nggak ada token/secret yang ke-commit
-#   3. scorecard          → skor hygiene supply-chain repo (OpenSSF)
+#   1. secret scanning → pastikan nggak ada token/secret yang ke-commit
+#   2. dependency-review → blokir PR yang menambah dependency rentan/berlisensi galak
+#   3. scorecard → skor hygiene supply-chain repo (OpenSSF)
 on:
   push:
     branches: [main, master]
@@ -16,8 +16,57 @@ on:
 permissions:
   contents: read
 
+env:
+  GITLEAKS_VERSION: '8.30.1'
+
 jobs:
-  # ------------------------------------------------------------------ 1) deps
+  # ------------------------------------------------------------------ 1) secret
+  gitleaks:
+    name: Secret scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # perlu seluruh riwayat buat scan semua commit
+
+      # Pakai binary resmi, bukan gitleaks-action: nggak butuh lisensi, nggak ada
+      # env var action yang bisa berubah diam-diam, dan perilakunya sama persis
+      # dengan yang diuji di lokal (gitleaks 8.30.1).
+      - name: Install gitleaks
+        run: |
+          {
+            echo "Mengunduh gitleaks ${GITLEAKS_VERSION}"
+            curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+              | sudo tar -xz -C /usr/local/bin gitleaks
+          }
+          gitleaks version
+
+      - name: Scan riwayat git
+        run: |
+          # --redact supaya kalau ADA kebocoran, nilainya nggak ikut tercetak
+          # ke log publik Actions (log build repo publik bisa dibaca siapa saja).
+          gitleaks git --config .gitleaks.toml --redact --no-banner --verbose
+
+      - name: Scan working tree
+        run: gitleaks dir --config .gitleaks.toml --redact --no-banner .
+
+      - name: Cek config gitleaks masih memuat ruleset default
+        run: |
+          # Jaring pengaman: kalau `[extend] useDefault = true` hilang, gitleaks
+          # cuma pakai aturan custom kita dan nggak akan nangkep GitHub PAT,
+          # AWS key, private key, dll. — silently. Jadi kita uji langsung:
+          # tanam token AWS palsu, harus KETANGKAP.
+          TMP="$(mktemp -d)"
+          printf 'AWS_ACCESS_KEY_ID=AKIAZQ7XK3MPL2NVBWRT\n' > "$TMP/canary.txt"
+          if gitleaks dir --config .gitleaks.toml --no-banner "$TMP" > /dev/null 2>&1; then
+            echo "❌ Ruleset default gitleaks TIDAK aktif — cek [extend] useDefault di .gitleaks.toml"
+            exit 1
+          fi
+          echo "✅ Ruleset default aktif (canary token tertangkap)"
+          rm -rf "$TMP"
+
+  # ------------------------------------------------------------------ 2) deps
   dependency-review:
     name: Dependency review (PR)
     if: github.event_name == 'pull_request'
@@ -27,35 +76,15 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
+      - uses: actions/checkout@v7
+
+      - uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: high
           comment-summary-in-pr: on-failure
           # Lisensi yang nggak boleh masuk build (copyleft kuat bikin ribet
           # kalau proyek ini mau dipakai komersial).
           deny-licenses: GPL-3.0, AGPL-3.0, SSPL-1.0
-
-  # ------------------------------------------------------------------ 2) secret
-  gitleaks:
-    name: Secret scanning
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_ENABLE_COMMENTS: true
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
-          GITLEAKS_ENABLE_SUMMARY: true
 
   # ------------------------------------------------------------------ 3) scorecard
   scorecard:
@@ -69,22 +98,22 @@ jobs:
       contents: read
       actions: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: ossf/scorecard-action@v2.4.0
+      - uses: ossf/scorecard-action@v2.4.4
         with:
           results_file: results.sarif
           results_format: sarif
           publish_results: ${{ github.event_name == 'push' || github.event_name == 'schedule' }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: scorecard-results
           path: results.sarif
           retention-days: 5
 
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif

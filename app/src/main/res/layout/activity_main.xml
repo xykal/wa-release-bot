@@ -259,7 +259,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Setup cuma 1x seumur hidup: nampilin QR, lo scan pakai WA, bot kirim test message ke channel & catat baseline release."
+                    android:text="Setup cuma 1x seumur hidup: nampilin QR, lo scan pakai WA, bot kirim test message ke channel, lalu catat baseline release."
                     android:textSize="12sp"
                     android:textColor="?android:attr/textColorSecondary" />
             </LinearLayout>

@@ -34,7 +34,10 @@ on:
 # Push ke branch yang sama berturut-turut → batalkan yang lama biar nggak numpuk.
 # Tag TIDAK ikut dibatalkan (release harus selesai).
 concurrency:
-  group: build-apk-${{ github.ref }}
+  # Daftar ABI ikut masuk ke grup concurrency, supaya build manual buat
+  # armeabi-v7a nggak membatalkan build push buat arm64-v8a (dua-duanya
+  # memakai ref yang sama, 'refs/heads/main').
+  group: build-apk-${{ github.ref }}-${{ inputs.abis || 'arm64-v8a' }}
   cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 permissions:

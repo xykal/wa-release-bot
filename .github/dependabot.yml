@@ -36,6 +36,11 @@ updates:
       # `npm run build && node dist/bundle.cjs --selftest` di Node 18 dulu.
       - dependency-name: '@whiskeysockets/baileys'
         update-types: ['version-update:semver-major']
+      # pino 10 menarik thread-stream 4 yang butuh Node >= 20. Engine ini
+      # dibundle untuk Node 18.20.4 (plafon nodejs-mobile), jadi pino major
+      # cuma boleh naik BARENGAN upgrade nodejs-mobile — bukan lewat PR.
+      - dependency-name: 'pino'
+        update-types: ['version-update:semver-major']
     groups:
       bot-js:
         patterns: ['*']
@@ -53,6 +58,11 @@ updates:
     commit-message:
       prefix: 'deps(cli)'
       include: scope
+    ignore:
+      # Sama seperti bot-js: pino 10 butuh Node >= 20 sedangkan CLI ini
+      # dinyatakan jalan di Node >= 18 (Termux).
+      - dependency-name: 'pino'
+        update-types: ['version-update:semver-major']
     groups:
       cli:
         patterns: ['*']
@@ -70,11 +80,16 @@ updates:
       prefix: 'deps(android)'
       include: scope
     ignore:
-      # AGP & Kotlin harus kompatibel dengan Gradle wrapper (8.9) — naikkan
-      # bareng-bareng manual, jangan lewat PR otomatis.
-      - dependency-name: 'com.android.tools.build:gradle'
-        update-types: ['version-update:semver-major']
-      - dependency-name: 'org.jetbrains.kotlin.android'
+      # SEMUA major di ekosistem gradle di-ignore, bukan cuma AGP.
+      # Alasannya: AGP, versi Gradle di wrapper, Kotlin, dan okhttp saling
+      # terikat. Dependabot pernah ngajuin PR yang naikin AGP 8.5.2 -> 9.4.1
+      # SEKALIGUS wrapper Gradle 8.9 -> 9.7.1 dan okhttp 4 -> 5 dalam satu PR;
+      # itu migrasi besar, bukan update rutin, dan kalau dilolosin build yang
+      # sudah hijau langsung rusak.
+      # Minor & patch tetap lewat otomatis. Major dinaikkan manual:
+      # edit build.gradle + gradle-wrapper.properties, lalu jalankan
+      # ./gradlew assembleRelease buat memastikan masih jalan.
+      - dependency-name: '*'
         update-types: ['version-update:semver-major']
     groups:
       android:

@@ -52,10 +52,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node ${{ env.NODE_VERSION }} (sama dengan nodejs-mobile)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -88,7 +88,7 @@ jobs:
           "
 
       - name: Upload bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: engine-bundle
           path: bot-js/dist/bundle.cjs
@@ -108,7 +108,7 @@ jobs:
       apk-name: ${{ steps.vars.outputs.apk-name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Tentukan varian & nama APK
         id: vars
@@ -132,13 +132,13 @@ jobs:
           echo "Varian: $VARIANT ($TASK)"
 
       - name: Setup JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Setup Android SDK + NDK + CMake
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           packages: >-
             platform-tools
@@ -149,7 +149,7 @@ jobs:
           log-accepted-android-sdk-licenses: false
 
       - name: Ambil bundle engine dari artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: engine-bundle
           path: app/src/main/assets/node
@@ -159,7 +159,7 @@ jobs:
 
       - name: Cache nodejs-mobile (libnode.so + header, ±57MB)
         id: njsm-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             app/src/main/jniLibs
@@ -194,7 +194,7 @@ jobs:
           fi
 
       - name: Setup Gradle (dengan cache)
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
@@ -207,7 +207,7 @@ jobs:
 
       - name: Upload hasil lint
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: android-lint-results
           path: app/build/reports/lint-results-*.{html,xml,sarif}
@@ -237,7 +237,7 @@ jobs:
             echo "❌ bundle.cjs atau libnode.so tidak ada di dalam APK"; exit 1; }
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.vars.outputs.apk-name }}
           path: dist/*
@@ -272,18 +272,18 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Ambil APK
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ needs.apk.outputs.apk-name }}
           path: dist
 
       - name: Buat Release + attach APK
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}

@@ -34,7 +34,8 @@ export async function fetchLatestRelease(repoStr, { token = '', includePrereleas
   try {
     res = await fetch(url, { headers });
   } catch (e) {
-    throw new Error(`Nggak bisa nyampe GitHub (internet HP lo check): ${e.message}`);
+    // { cause: e } bikin error aslinya tetap kebawa buat debugging.
+    throw new Error(`Nggak bisa nyampe GitHub (internet HP lo check): ${e.message}`, { cause: e });
   }
 
   if (res.status === 404) {

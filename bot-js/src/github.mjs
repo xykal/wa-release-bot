@@ -25,7 +25,9 @@ export async function fetchLatestRelease(repoStr, { token = '', includePrereleas
   try {
     res = await fetch(url, { headers });
   } catch (e) {
-    throw new Error(`Nggak bisa nyampe GitHub (cek internet HP): ${e.message}`);
+    // { cause: e } bikin error aslinya (ECONNREFUSED, DNS, timeout, dll.)
+    // tetap kebawa, jadi pas di-debug nggak cuma keliatan pesan bungkusnya.
+    throw new Error(`Nggak bisa nyampe GitHub (cek internet HP): ${e.message}`, { cause: e });
   }
 
   if (res.status === 404) {

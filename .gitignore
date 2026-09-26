@@ -1,0 +1,26 @@
+# Gradle / Android
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+.cxx/
+
+# Hasil build bot-js
+bot-js/node_modules/
+bot-js/dist/
+app/src/main/assets/node/
+
+# Node.js prebuilt (diunduh CI / setup lokal — 60MB, jangan di-commit)
+app/src/main/jniLibs/
+app/libnode/
+
+# Keystore — JANGAN PERNAH di-commit
+*.keystore
+*.jks
+release.keystore
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log

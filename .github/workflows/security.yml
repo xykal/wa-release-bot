@@ -57,8 +57,13 @@ jobs:
           # cuma pakai aturan custom kita dan nggak akan nangkep GitHub PAT,
           # AWS key, private key, dll. — silently. Jadi kita uji langsung:
           # tanam token AWS palsu, harus KETANGKAP.
+          # Token-nya DIRAKIT saat runtime, sengaja dipecah jadi dua variabel.
+          # Kalau ditulis literal di file ini, langkah "Scan riwayat git" di
+          # atas justru bakal nangkep file ini sendiri (sudah pernah kejadian).
+          CANARY_PREFIX="AKIA"
+          CANARY_BODY="ZQ7XK3MPL2NVBWRT"
           TMP="$(mktemp -d)"
-          printf 'AWS_ACCESS_KEY_ID=AKIAZQ7XK3MPL2NVBWRT\n' > "$TMP/canary.txt"
+          printf 'AWS_ACCESS_KEY_ID=%s%s\n' "$CANARY_PREFIX" "$CANARY_BODY" > "$TMP/canary.txt"
           if gitleaks dir --config .gitleaks.toml --no-banner "$TMP" > /dev/null 2>&1; then
             echo "❌ Ruleset default gitleaks TIDAK aktif — cek [extend] useDefault di .gitleaks.toml"
             exit 1

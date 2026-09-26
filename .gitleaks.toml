@@ -123,4 +123,14 @@ regexes = [
   '''@username_channel''',
   '''<[A-Za-z_]+>''',
   '''sk-ant-\.\.\.''',
+
+  # Token AWS PALSU yang sengaja ditanam oleh langkah
+  # "Cek config gitleaks masih memuat ruleset default" di security.yml,
+  # buat memastikan ruleset default gitleaks memang aktif (kalau
+  # [extend] useDefault hilang, job-nya jadi merah karena canary nggak ketangkep).
+  #
+  # Nilai ini BUKAN kredensial nyata. Sejak commit berikutnya token-nya
+  # dirakit saat runtime, jadi nggak muncul literal lagi di file mana pun —
+  # entri ini cuma nutup commit lama yang masih menyimpannya.
+  '''AKIAZQ7XK3MPL2NVBWRT''',
 ]

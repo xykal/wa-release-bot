@@ -13,7 +13,11 @@ def appVersionCode = (project.findProperty('versionCode') ?: '2').toString().toI
 
 android {
     namespace 'com.xykals.warelease'
-    compileSdk 34
+    // 35 (Android 15) — dibutuhkan androidx terbaru: appcompat 1.8.0 dan
+    // material 1.14.0 menarik androidx.core 1.16.0 yang menolak di-compile
+    // kalau compileSdk masih 34. targetSdk sengaja TETAP 34 supaya perilaku
+    // runtime tidak berubah diam-diam.
+    compileSdk 35
 
     // Dipatok supaya build lokal dan CI pakai NDK yang sama.
     // Harus sinkron dengan .github/workflows/build-apk.yml dan scripts/fetch-nodejs-mobile.sh
@@ -133,13 +137,13 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.13.1'
     // Dipakai MainActivity lewat AppCompatActivity. Tanpa baris ini app TIDAK
     // bisa di-compile (unresolved reference: androidx.appcompat).
-    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.appcompat:appcompat:1.8.0'
     implementation 'androidx.activity:activity-ktx:1.9.2'
-    implementation 'com.google.android.material:material:1.12.0'
+    implementation 'com.google.android.material:material:1.14.0'
     implementation 'androidx.work:work-runtime-ktx:2.9.1'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    implementation 'com.google.zxing:core:3.5.2'
+    implementation 'com.google.zxing:core:3.5.4'
 
     testImplementation 'junit:junit:4.13.2'
 }

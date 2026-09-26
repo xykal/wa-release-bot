@@ -6,6 +6,43 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.1.1] — 2026-09-26
+
+Versi ini soal **tanda tangan APK** dan **dukungan HP 32-bit**.
+
+### ✨ Ditambahkan
+
+- **Dukungan `armeabi-v7a`** (HP Android 32-bit). Sebelumnya cuma `arm64-v8a`.
+  Bisa dipilih lewat *Actions → Build APK → Run workflow* pada input `abis`:
+  `arm64-v8a` (default), `armeabi-v7a`, atau `arm64-v8a,armeabi-v7a` (satu APK
+  buat dua-duanya, ±35 MB).
+- `scripts-dev/apk_signer.py` — baca sertifikat penandatangan APK langsung dari
+  APK Signing Block (v2/v3), tanpa perlu install Android SDK. Gunanya buat
+  menjawab "APK ini bisa nimpa yang lama atau nggak".
+- `-Pabis=...` untuk build lokal, dan `ABIS=...` untuk script yang mengunduh
+  `libnode.so`.
+
+### 🐛 Diperbaiki
+
+- **Komentar ABI di `app/build.gradle` salah** — ditulis "nodejs-mobile cuma
+  menyediakan prebuilt arm64-v8a + x86_64". Faktanya `armeabi-v7a` juga ada,
+  dan itu yang bikin HP 32-bit nggak bisa didukung.
+- **Cache key `nodejs-mobile` nggak memuat daftar ABI-nya.** Build `armeabi-v7a`
+  bakal kena cache `arm64-v8a`, jadi `libnode.so` versi v7a nggak pernah
+  keunduh dan build-nya berhenti di CMake. Sekarang cache key-nya per-set-ABI.
+- **Verifikasi isi APK cuma cek "ada `libnode.so`".** Kalau minta dua ABI tapi
+  cuma satu yang kepackage, APK-nya tetap lolos dan HP yang satunya cuma dapat
+  crash. Sekarang dicek per-ABI.
+
+### 🔒 Keamanan
+
+- **APK sekarang di-sign dengan kunci yang tetap.** Sebelumnya di-sign pakai
+  debug key bawaan runner CI, dan runner itu bersih tiap kali — jadi kuncinya
+  di-generate ulang tiap build. Akibatnya tiap APK punya sidik jari berbeda dan
+  **nggak bisa dipasang nimpa APK sebelumnya** (`App not installed`), sehingga
+  tiap update menghapus sesi WhatsApp. Sudah diverifikasi: 3 build dari commit
+  dan event berbeda menghasilkan sidik jari yang sama.
+
 ## [1.1.0] — 2026-09-26
 
 Versi ini fokusnya **bikin proyeknya benar-benar bisa di-build dan aman**.
@@ -120,6 +157,7 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.1.0...HEAD
+[Unreleased]: ../../compare/v1.1.1...HEAD
+[1.1.1]: ../../compare/v1.1.0...v1.1.1
 [1.1.0]: ../../compare/v1.0.0...v1.1.0
 [1.0.0]: ../../releases/tag/v1.0.0

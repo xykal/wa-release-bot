@@ -155,11 +155,16 @@ jobs:
             *) ABI_TAG="arm64" ;;
           esac
 
+          # Cache key GitHub nggak boleh mengandung koma, jadi daftar ABI-nya
+          # diubah jadi slug: 'arm64-v8a,armeabi-v7a' → 'arm64-v8a-armeabi-v7a'.
+          ABI_SLUG="$(echo "$ABIS" | tr ',' '-')"
+
           {
             echo "variant=$VARIANT"
             echo "task=$TASK"
             echo "apk-path=$APK"
             echo "apk-name=wa-release-bot-$ABI_TAG-$VARIANT.apk"
+            echo "abi-slug=$ABI_SLUG"
           } >> "$GITHUB_OUTPUT"
           echo "Varian: $VARIANT ($TASK)"
           echo "ABI   : $ABIS → $ABI_TAG"
@@ -200,7 +205,9 @@ jobs:
           # Cache key HARUS memuat daftar ABI-nya. Kalau nggak, build v7a bakal
           # kena cache arm64 dan libnode.so v7a-nya nggak pernah keunduh —
           # build-nya gagal di CMake dengan 'libnode.so tidak ditemukan'.
-          key: nodejs-mobile-${{ env.NODEJS_MOBILE_VERSION }}-${{ env.ABIS }}
+          # Dipakai slug (bukan env.ABIS langsung) karena cache key GitHub
+          # MENOLAK koma: 'Key Validation Error: ... cannot contain commas'.
+          key: nodejs-mobile-${{ env.NODEJS_MOBILE_VERSION }}-${{ steps.vars.outputs.abi-slug }}
 
       - name: Download nodejs-mobile
         if: steps.njsm-cache.outputs.cache-hit != 'true'

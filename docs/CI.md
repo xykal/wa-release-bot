@@ -28,7 +28,7 @@ dalam nodejs-mobile. Urutannya: `npm ci` → `eslint` → `node --test` → `esb
 → `node dist/bundle.cjs --selftest`. Kalau engine nggak sehat, APK nggak
 pernah dibuild.
 
-**`apk`** — JDK 17 (temurin) → Android SDK 34 + NDK 26.1.10909125 + CMake 3.22.1
+**`apk`** — JDK 17 (temurin) → Android SDK 35 + NDK 26.1.10909125 + CMake 3.22.1
 → bundle dari artifact → `cacache` nodejs-mobile (57 MB, di-cache) → keystore
 dari secrets (kalau ada) → `:app:testDebugUnitTest` → `:app:lintDebug` →
 `assembleRelease` → rename + `sha256sum` → **verifikasi isi APK**

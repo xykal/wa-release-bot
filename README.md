@@ -212,7 +212,7 @@ Script itu melakukan 4 langkah yang sama persis dengan CI:
 3. `bash scripts/fetch-nodejs-mobile.sh` → `libnode.so` + header
 4. `./gradlew assembleRelease`
 
-Butuh: **JDK 17**, **Android SDK 34**, **NDK 26.1.10909125**, **CMake 3.22.1**, **Node 18+**.
+Butuh: **JDK 17**, **Android SDK 35**, **NDK 26.1.10909125**, **CMake 3.22.1**, **Node 18+**.
 
 ---
 

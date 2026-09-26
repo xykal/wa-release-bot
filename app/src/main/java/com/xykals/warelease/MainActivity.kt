@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
     private var qrDialogRef: Dialog? = null
     private var qrImage: ImageView? = null
 
-    private val busListener = { ui: BotUi -> handler.post { renderUi(ui) } }
+    private val busListener = { ui: BotUiSnapshot -> handler.post { renderUi(ui) } }
 
     private val notifPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -179,7 +179,7 @@ class MainActivity : AppCompatActivity() {
 
     // ----------------------------- render -----------------------------
 
-    private fun renderUi(ui: BotUi) {
+    private fun renderUi(ui: BotUiSnapshot) {
         val sb = StringBuilder()
         sb.append("Service : ").append(if (ui.serviceRunning) "✅ aktif" else "❌ mati")
         sb.append("\nEngine  : ").append(

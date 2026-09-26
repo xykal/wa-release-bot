@@ -2,9 +2,11 @@ package com.xykals.warelease
 
 /**
  * State bersama antara BotService (thread IO) dan MainActivity (thread main).
- * Sangat sederhana: satu objek immutable + listener.
+ *
+ * Desain: satu objek mutable di balik lock + snapshot immutable untuk UI.
+ * Call-site:  BotBus.publish { engineRunning = true }
  */
-data class BotUi(
+data class BotUiSnapshot(
     val serviceRunning: Boolean = false,
     val engineRunning: Boolean = false,
     val busy: Boolean = false,
@@ -23,30 +25,60 @@ data class BotUi(
     val log: List<String> = emptyList()
 )
 
+class BotUiMutable {
+    var serviceRunning = false
+    var engineRunning = false
+    var busy = false
+    var waLinked = false
+    var waConnected = false
+    var lastTag: String? = null
+    var lastPostedAt: String? = null
+    var postCount = 0
+    var lastCheckAt: Long? = null
+    var nextCheckAt: Long? = null
+    var repo: String? = null
+    var channel: String? = null
+    var qr: String? = null
+    var engineError: String? = null
+    var setupState: String? = null
+    var log: List<String> = emptyList()
+
+    fun snapshot() = BotUiSnapshot(
+        serviceRunning, engineRunning, busy, waLinked, waConnected,
+        lastTag, lastPostedAt, postCount, lastCheckAt, nextCheckAt,
+        repo, channel, qr, engineError, setupState, log
+    )
+}
+
 object BotBus {
-    private val listeners = mutableSetOf<(BotUi) -> Unit>()
+    private val m = BotUiMutable()
+    private val listeners = mutableSetOf<(BotUiSnapshot) -> Unit>()
 
-    @Volatile
-    var ui: BotUi = BotUi()
-        private set
+    /** Snapshot immutable — aman dibaca dari thread mana pun. */
+    val snapshot: BotUiSnapshot
+        get() = synchronized(m) { m.snapshot() }
 
-    fun publish(block: BotUi.() -> BotUi) {
-        ui = ui.block()
-        val snapshot = synchronized(listeners) { listeners.toList() }
-        for (l in snapshot) {
+    /** Mutasi state + notifikasi listener dengan snapshot terbaru. */
+    fun publish(block: BotUiMutable.() -> Unit) {
+        val snap = synchronized(m) {
+            m.block()
+            m.snapshot()
+        }
+        val copy = synchronized(listeners) { listeners.toList() }
+        for (l in copy) {
             try {
-                l(ui)
+                l(snap)
             } catch (_: Exception) {
             }
         }
     }
 
-    fun subscribe(l: (BotUi) -> Unit) {
+    fun subscribe(l: (BotUiSnapshot) -> Unit) {
         synchronized(listeners) { listeners.add(l) }
-        l(ui)
+        l(snapshot)
     }
 
-    fun unsubscribe(l: (BotUi) -> Unit) {
+    fun unsubscribe(l: (BotUiSnapshot) -> Unit) {
         synchronized(listeners) { listeners.remove(l) }
     }
 }

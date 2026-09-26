@@ -31,7 +31,7 @@ class BotWatchdogWorker(
             return@withContext Result.success()
         }
 
-        val st = BotBus.ui
+        val st = BotBus.snapshot
         val intervalMin = settings.intervalMinutes.coerceAtLeast(15)
         val staleMs = (intervalMin * 2L + 5) * 60_000L
         val last = st.lastCheckAt

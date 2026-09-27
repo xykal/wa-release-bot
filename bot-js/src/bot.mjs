@@ -12,6 +12,8 @@
 // ============================================================================
 
 import os from 'node:os';
+import dns from 'node:dns';
+import net from 'node:net';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createBridge } from './bridge.mjs';
@@ -109,6 +111,13 @@ async function main() {
   }
   let sisaFatal = '';
   try { sisaFatal = fs.readFileSync(fileFatal, 'utf8').trim(); fs.rmSync(fileFatal, { force: true }); } catch { /* belum ada */ }
+
+  // Jaringan: pilih IPv4 dulu. Node 18 defaultnya ngikutin urutan DNS (IPv6
+  // duluan kalau ada), dan belum otomatis pindah ke IPv4 kalau IPv6-nya
+  // mati — di data seluler yang IPv6-nya ngadat, fetch ke Cloudflare /
+  // SoundCloud jadi "fetch failed" (GitHub aman karena emang cuma IPv4).
+  try { dns.setDefaultResultOrder('ipv4first'); } catch { /* ignore */ }
+  try { if (typeof net.setDefaultAutoSelectFamily === 'function') net.setDefaultAutoSelectFamily(true); } catch { /* ignore */ }
 
   // Baileys nulis file sementara ke os.tmpdir() waktu upload media (audio
   // lagu ke channel). Di Android nggak ada /tmp. Ngeset env TMPDIR aja NGGAK
@@ -303,8 +312,12 @@ async function main() {
     let file = null;
     try {
       log(`🎵 Lagi mood nih… minta lagu ke Cloudflare (${source}).`);
-      const lagu = await ambilBerikut(sumber);
-      const { data, detik } = await downloadPotongan(lagu.url, lagu);
+      const lagu = await ambilBerikut(sumber).catch((e) => {
+        throw new Error('minta lagu ke Cloudflare gagal: ' + e.message, { cause: e });
+      });
+      const { data, detik } = await downloadPotongan(lagu.url, lagu).catch((e) => {
+        throw new Error(`download potongan "${lagu.judul}" gagal: ` + e.message, { cause: e });
+      });
       // File sementara — langsung dihapus begitu kekirim (atau gagal).
       log(`🎵 Dapet: ${lagu.judul} — ${lagu.artis} (potongan ${detik} dtk, ${Math.round(data.length / 1024)} KB)`);
       // Saluran WA cuma nerima voice note (Ogg Opus) — MP3 biasa tampil

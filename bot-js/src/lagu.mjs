@@ -53,20 +53,41 @@ export function formatKataLagu(lagu) {
   return [kata, judul ? `🎧 *${judul}*` : ''].filter(Boolean).join('\n\n');
 }
 
+/** "fetch failed" doang nggak ngasih tau apa-apa — ambil kode aslinya dari `cause`. */
+export function jelaskanGalat(e) {
+  const c = e?.cause;
+  const kode = c?.code || c?.errno || c?.name;
+  const detail = c?.message && c.message !== e.message ? c.message : '';
+  if (e?.name === 'AbortError') return 'kelamaan (timeout)';
+  return [e?.message || String(e), kode && !String(detail).includes(kode) ? kode : '', detail].filter(Boolean).join(' — ');
+}
+
 async function ambilDgnTimeout(url, ms, headers = {}) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), ms);
-  try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'wa-release-bot (android app)', ...headers }, signal: ctrl.signal });
-    if (!res.ok) {
-      let detail = '';
-      try { const j = await res.json(); detail = j.error ? ` — ${j.error}` : ''; } catch { /* bukan json */ }
-      throw new Error(`HTTP ${res.status}${detail}`);
+  // Jaringan HP suka putus-nyambung (ganti sinyal, IPv6 operator yang ngadat):
+  // coba sampai 3x sebelum nyerah. Error HTTP (4xx/5xx) nggak diulang.
+  let terakhir;
+  for (let coba = 1; coba <= 3; coba++) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    try {
+      const res = await fetch(url, { headers: { 'User-Agent': 'wa-release-bot (android app)', ...headers }, signal: ctrl.signal });
+      if (!res.ok) {
+        let detail = '';
+        try { const j = await res.json(); detail = j.error ? ` — ${j.error}` : ''; } catch { /* bukan json */ }
+        const err = new Error(`HTTP ${res.status}${detail}`);
+        err.http = true;
+        throw err;
+      }
+      return res;
+    } catch (e) {
+      if (e.http) throw e;
+      terakhir = e;
+      if (coba < 3) await new Promise((r) => setTimeout(r, 2000 * coba));
+    } finally {
+      clearTimeout(t);
     }
-    return res;
-  } finally {
-    clearTimeout(t);
   }
+  throw new Error(jelaskanGalat(terakhir), { cause: terakhir });
 }
 
 /** Minta lagu berikutnya ke Worker: { artis, judul, kata, url, mulai, detik, kbps, ... } */

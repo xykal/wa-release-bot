@@ -6,6 +6,17 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.6.5] — 2026-09-27
+
+### 🌐 "Kirim lagu gagal: fetch failed"
+- Engine sekarang milih IPv4 duluan + otomatis pindah jalur kalau satu
+  jalur mati (`ipv4first` + `autoSelectFamily`). Node 18 defaultnya nyoba
+  IPv6 dulu kalau ada; di data seluler yang IPv6-nya ngadat, fetch ke
+  Cloudflare / SoundCloud gagal, padahal GitHub (cuma IPv4) aman.
+- Fetch lagu diulang sampai 3x kalau jaringan putus (error HTTP nggak diulang).
+- Pesan error nggak cuma "fetch failed" lagi: kelihatan tahapnya (minta ke
+  Cloudflare / download potongan) plus kode aslinya (ENETUNREACH, ENOTFOUND, …).
+
 ### ☁️ Worker lagu (backend — nggak perlu update app)
 - Lagu sekarang 50% dari daftar lawas, 50% yang lagi trend di Indonesia
   (chart harian Spotify ID via kworb.net, disaring AI biar cuma lagu
@@ -666,7 +677,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.6.4...HEAD
+[Unreleased]: ../../compare/v1.6.5...HEAD
+[1.6.5]: ../../compare/v1.6.4...v1.6.5
 [1.6.4]: ../../compare/v1.6.3...v1.6.4
 [1.6.3]: ../../compare/v1.6.2...v1.6.3
 [1.6.2]: ../../compare/v1.6.1...v1.6.2

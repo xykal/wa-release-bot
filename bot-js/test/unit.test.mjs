@@ -481,3 +481,11 @@ test('pcmKeOgg: 1 dtk → Ogg Opus valid (OpusHead + OpusTags + halaman akhir)',
   assert.equal(ogg[akhir + 5], 4); // flag end-of-stream
   assert.equal(Number(ogg.readBigInt64LE(akhir + 6)), 48000 + 312);
 });
+
+import { jelaskanGalat } from '../src/lagu.mjs';
+test('jelaskanGalat: "fetch failed" dibuka sampai kode aslinya', () => {
+  const e = new TypeError('fetch failed', { cause: Object.assign(new Error('connect ENETUNREACH 2606:4700::1:443'), { code: 'ENETUNREACH' }) });
+  const t = jelaskanGalat(e);
+  assert.match(t, /fetch failed/);
+  assert.match(t, /ENETUNREACH/);
+});

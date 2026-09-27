@@ -52,6 +52,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvGrupStat: TextView
     private lateinit var tvLog: TextView
     private lateinit var svLog: ScrollView
+    private var logTampil: List<String>? = null
     private lateinit var btnMulai: TextView
     private lateinit var btnKill: TextView
     private lateinit var kartuTertaut: View
@@ -447,7 +448,10 @@ class MainActivity : AppCompatActivity() {
         tvError.visibility = if (err != null) View.VISIBLE else View.GONE
         if (err != null) tvError.text = err
 
-        if (ui.log.isNotEmpty()) {
+        // Kartu log cuma digambar ulang kalau isinya BERUBAH (dulu tiap status
+        // masuk — beberapa kali per detik pas engine rame).
+        if (ui.log.isNotEmpty() && ui.log !== logTampil) {
+            logTampil = ui.log
             tvLog.text = ui.log.takeLast(60).joinToString("\n")
             svLog.post { svLog.fullScroll(View.FOCUS_DOWN) }
         }

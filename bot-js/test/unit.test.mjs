@@ -502,3 +502,35 @@ test('daftar hitam manual: nomor pakai spasi nggak pecah', () => {
     '6281399998888@s.whatsapp.net',
   ]);
 });
+
+// ---------------------------------------------------------------------------
+// pengaman: error nyasar nggak boleh matiin proses (di Android = app force close)
+// ---------------------------------------------------------------------------
+import { EventEmitter } from 'node:events';
+import { createPengaman } from '../src/pengaman.mjs';
+
+test('pengaman: unhandledRejection & uncaughtException cuma dicatat', () => {
+  const logs = [];
+  const proc = new EventEmitter();
+  const p = createPengaman({ log: (m) => logs.push(m) });
+  const copot = p.pasang(proc);
+  proc.emit('unhandledRejection', new Error('Connection Closed'));
+  proc.emit('uncaughtException', new Error('boom'));
+  assert.equal(logs.length, 2);
+  assert.match(logs[0], /diabaikan/);
+  assert.match(logs[1], /boom/);
+  copot();
+  assert.equal(proc.listenerCount('unhandledRejection'), 0);
+});
+
+test('pengaman: pesan sama nggak banjirin log, banjir error → onBanjir sekali', () => {
+  let t = 1_000_000;
+  const logs = [];
+  let banjir = 0;
+  const p = createPengaman({ log: (m) => logs.push(m), onBanjir: () => banjir++, batas: 5, now: () => t });
+  for (let i = 0; i < 10; i++) { p.tangani('promise', new Error('sama')); t += 100; }
+  assert.equal(banjir, 1);
+  assert.equal(logs.filter((l) => /sama/.test(l)).length, 1);
+  p.reset();
+  assert.equal(p.jumlah, 0);
+});

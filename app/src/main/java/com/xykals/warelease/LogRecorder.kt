@@ -172,7 +172,7 @@ object LogRecorder {
         kepala.append("--------------------------------------\n")
         kepala.append(jejak(e))
         kepala.append("======================================\n")
-        tulisKe("crash.log", kepala.toString())
+        tulisSekarang("crash.log", kepala.toString())
         Log.e(TAG, "app crash — detail ditulis ke crash.log", e)
     }
 
@@ -254,22 +254,94 @@ object LogRecorder {
         return if (f.canWrite()) f else null
     }
 
+    // ----------------------------- penulis di belakang -----------------------------
+    //
+    // DULU tiap baris log langsung ditulis ke file (buka → append → tutup) di
+    // thread yang manggil, pakai kunci yang sama buat semua file. Perekam
+    // logcat nulis ribuan baris ke situ, jadi kuncinya hampir selalu kepegang.
+    // Begitu tombol ditekan, thread UTAMA ikut nulis "[Tombol] tekan: …" →
+    // nunggu kunci → layar beku → Android nutup app ("tidak merespons").
+    //
+    // SEKARANG: semua baris masuk antrean di memori (instan), satu thread di
+    // belakang yang nulis ke file per rombongan. Thread utama nggak pernah
+    // nyentuh disk. Antrean penuh (disk lemot banget) → baris dibuang, bukan
+    // bikin app nunggu.
+
+    private val antrean = java.util.concurrent.LinkedBlockingQueue<Pair<String, String>>(20_000)
+    private val kunciTulis = Any()
+    private val kunciPenulis = Any()
+
+    @Volatile
+    private var penulis: Thread? = null
+
     private fun tulisKe(nama: String, isi: String) {
-        val dasar = folder ?: return
-        synchronized(kunci) {
-            try {
-                val f = File(dasar, nama)
-                if (f.length() > BATAS_BYTE) rotate(f)
-                f.appendText(isi.trimEnd('\n') + "\n")
-            } catch (_: Throwable) {
-                // disk penuh / file lagi dipakai — jangan sampai bikin app mati
+        if (folder == null) return
+        val baris = if (nama == "app.log") "${jamPendek()} ${isi.trimEnd('\n')}" else isi.trimEnd('\n')
+        antrean.offer(nama to baris)
+        pastikanPenulis()
+    }
+
+    private fun pastikanPenulis() {
+        if (penulis?.isAlive == true) return
+        synchronized(kunciPenulis) {
+            if (penulis?.isAlive == true) return
+            penulis = Thread({
+                val rombongan = ArrayList<Pair<String, String>>(512)
+                while (true) {
+                    try {
+                        rombongan.add(antrean.take())
+                        antrean.drainTo(rombongan, 2_000)
+                        tulisRombongan(rombongan)
+                    } catch (_: InterruptedException) {
+                        return@Thread
+                    } catch (_: Throwable) {
+                        // jangan sampai penulis log mati gara-gara satu baris
+                    } finally {
+                        rombongan.clear()
+                    }
+                    // kasih napas: logcat yang rame ditulis per ±0,5 dtk, bukan per baris
+                    try {
+                        Thread.sleep(500)
+                    } catch (_: InterruptedException) {
+                        return@Thread
+                    }
+                }
+            }, "wr-log-penulis").apply {
+                isDaemon = true
+                priority = Thread.MIN_PRIORITY
+                start()
             }
         }
     }
 
+    private fun tulisRombongan(daftar: List<Pair<String, String>>) {
+        val dasar = folder ?: return
+        synchronized(kunciTulis) {
+            for ((nama, baris) in daftar.groupBy({ it.first }, { it.second })) {
+                try {
+                    val f = File(dasar, nama)
+                    if (f.length() > BATAS_BYTE) rotate(f)
+                    f.appendText(baris.joinToString("\n", postfix = "\n"))
+                } catch (_: Throwable) {
+                    // disk penuh / file lagi dipakai — jangan sampai bikin app mati
+                }
+            }
+        }
+    }
+
+    /** Dipakai pas app mau mati: tulis sisa antrean + teksnya LANGSUNG. */
+    private fun tulisSekarang(nama: String, isi: String) {
+        val sisa = ArrayList<Pair<String, String>>()
+        antrean.drainTo(sisa)
+        sisa.add(nama to isi.trimEnd('\n'))
+        tulisRombongan(sisa)
+    }
+
+    private fun jamPendek(): String = SimpleDateFormat("MM-dd HH:mm:ss", Locale.US).format(Date())
+
     private fun tulisBerkas(nama: String, isi: String, sekaliSaja: Boolean) {
         val dasar = folder ?: return
-        synchronized(kunci) {
+        synchronized(kunciTulis) {
             try {
                 val f = File(dasar, nama)
                 if (sekaliSaja && f.exists()) return

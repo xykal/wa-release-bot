@@ -6,6 +6,29 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.4.1] — 2026-09-27
+
+### 🐛 Diperbaiki
+
+- **App force close + HP jadi lemot / app lain ketutup.** Engine Node jalan
+  di dalam proses app. Baileys 6.7.24 punya beberapa handler async tanpa
+  `catch` (upload pre-key pas login, ambil semua grup pas ada notif "dirty").
+  Kalau socket ditutup pas handler itu masih jalan, error-nya nggak ketangkep →
+  Node 18 matiin proses → **seluruh app ikut mati**, lalu Android nyalain
+  ulang service → nyambung WA lagi → mati lagi. Muter terus, makan CPU & RAM.
+  Sekarang error nyasar cuma dicatat di Log; kalau banjir (>30/menit) bot
+  dijeda sendiri, bukan crash.
+- **Tombol bikin app beku.** Tiap tombol nulis ke app.log di thread utama,
+  rebutan kunci sama perekam logcat yang nulis per baris ke penyimpanan.
+  Sekarang semua log ditulis thread belakang per rombongan; thread utama
+  nggak pernah nyentuh disk.
+- **Mode Pintar kebanyakan bangun.** Di grup rame, notif WA dateng tiap
+  beberapa detik → bot login ulang tiap ±20 dtk. Sekarang paling cepat
+  2 menit sekali, dan nggak dibangunin kalau socket masih kebuka.
+- Kartu Log cuma digambar ulang kalau isinya berubah.
+- `bot.log` internal (numpuk terus, nggak pernah dipotong, isinya dobel sama
+  `mesin.log`) udah nggak ditulis dan dihapus.
+
 ## [1.4.0] — 2026-09-27
 
 ### ⚖️ Lisensi berubah
@@ -502,7 +525,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.4.0...HEAD
+[Unreleased]: ../../compare/v1.4.1...HEAD
+[1.4.1]: ../../compare/v1.4.0...v1.4.1
 [1.4.0]: ../../compare/v1.3.0...v1.4.0
 [1.3.0]: ../../compare/v1.2.1...v1.3.0
 [1.2.2]: ../../compare/v1.2.1...v1.2.2

@@ -18,6 +18,7 @@ import { fetchLatestRelease } from './github.mjs';
 import { connectToWhatsApp, resolveChannel, statusSesi, hapusSesi, nomorSesi } from './wa.mjs';
 import { kirimTeks, kirimPertanyaan, ambilRespons, ambilTerkirim, pernahKirim } from './kirim.mjs';
 import { createKoneksi } from './koneksi.mjs';
+import { createPengaman } from './pengaman.mjs';
 import { createPlugin } from './plugin.mjs';
 import { cariTeks, pisahPerintah, samarkan, jedaGrup, faktorBerikut, normalMode } from './pesan.mjs';
 import { bikinChannel, linkChannel, bacaTarget, JENIS } from './channel.mjs';
@@ -135,6 +136,13 @@ async function main() {
     onCommand: (cmd) => { void handleCommand(cmd); },
   });
 
+  // Error nyasar jangan sampai matiin proses — di Android itu = app force close.
+  const pengaman = createPengaman({
+    log,
+    onBanjir: () => { stopEngine(); },
+  });
+  pengaman.pasang();
+
   const repoAda = () => Boolean(cfg?.github?.repo);
   const grupAktif = () => Boolean(cfg?.grup?.aktif && cfg?.grup?.target);
   const mode = () => normalMode(cfg?.bot?.mode);
@@ -242,6 +250,7 @@ async function main() {
       return;
     }
     running = true;
+    pengaman.reset();
     faktorAdaptif = 1;
     const bagian = [];
     if (repoAda()) bagian.push(`cek release tiap ${Math.round(intervalMs() / 60000)} mnt`);
@@ -272,7 +281,12 @@ async function main() {
    */
   function bangun(sumber) {
     if (!running) return;
-    const jeda = 20_000;
+    // Notif WA di grup rame bisa dateng tiap beberapa detik. Dulu jedanya 20
+    // dtk → bot nyambung-putus terus (praktis kayak realtime, tapi lebih berat
+    // karena login ulang tiap kali). Sekarang notif paling cepat 2 menit sekali.
+    const jeda = sumber === 'notif' ? 120_000 : 20_000;
+    // Socket masih kebuka → pesan grup udah masuk langsung, nggak perlu dibangunin.
+    if (sumber === 'notif' && kon.nyambung) return;
     const sejak = Date.now() - terakhirBangun;
     clearTimeout(timerBangun);
     const tunda = sejak > jeda ? 3_000 : jeda - sejak;

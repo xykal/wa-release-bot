@@ -98,6 +98,11 @@ class BotService : Service() {
 
         dataDir = File(filesDir, "wa_release_bot").apply { mkdirs() }
 
+        // sisa bot.log lama (numpuk terus, isinya dobel sama mesin.log)
+        try {
+            File(dataDir, "bot.log").delete()
+        } catch (_: Exception) {
+        }
         val bundleOk = ensureBundle()
         writeConfig()
 
@@ -469,9 +474,9 @@ class BotService : Service() {
      *  - buffer di memori → ditampilkan di kartu Log
      *  - folder Android/media/<paket>/log/mesin.log → bisa dibuka/dikirim user
      *
-     * Yang lama (bot.log di dalam dataDir) tetap ditulis, tapi itu ada di
-     * /data/data/... yang nggak bisa dibuka siapa-siapa tanpa root. Percuma
-     * buat debugging di HP — itu sebabnya LogRecorder dipakai.
+     * bot.log (di dalam dataDir) udah nggak ditulis sejak v1.4.1: isinya sama
+     * persis kayak mesin.log, nggak pernah dipotong (numpuk terus), dan
+     * nggak bisa dibuka tanpa root.
      */
     private fun appendLog(msg: String) {
         val line =
@@ -483,12 +488,6 @@ class BotService : Service() {
             BotBus.publish { log = copy }
         }
         LogRecorder.mesin(line)
-        if (::dataDir.isInitialized) {
-            try {
-                File(dataDir, "bot.log").appendText(line + "\n")
-            } catch (_: Exception) {
-            }
-        }
     }
 
     // ----------------------------- notifikasi & watchdog -----------------------------

@@ -56,9 +56,12 @@ env:
   COMPILE_SDK: '35'
   BUILD_TOOLS: '35.0.0'
   NODEJS_MOBILE_VERSION: 'v18.20.4'
-  # Tag/PR selalu arm64-v8a (default). Cuma workflow_dispatch yang bisa milih,
-  # dan kalau input-nya kosong (misal dari tag) kita jatuh ke default juga.
-  ABIS: ${{ inputs.abis || 'arm64-v8a' }}
+  # Aturan urutannya:
+  #   1. build manual (workflow_dispatch) → pakai pilihan input 'abis'
+  #   2. build dari TAG v* → universal (arm64-v8a + armeabi-v7a), supaya APK di
+  #      GitHub Release jalan di HP 64-bit MAUPUN 32-bit
+  #   3. selain itu (push/PR) → arm64-v8a saja (paling cepat & kecil)
+  ABIS: ${{ inputs.abis || (startsWith(github.ref, 'refs/tags/v') && 'arm64-v8a,armeabi-v7a' || 'arm64-v8a') }}
 
 jobs:
   # ==========================================================================
@@ -127,7 +130,7 @@ jobs:
   #  2) APK Android arm64
   # ==========================================================================
   apk:
-    name: APK (${{ inputs.abis || 'arm64-v8a' }})
+    name: APK (${{ inputs.abis || (startsWith(github.ref, 'refs/tags/v') && 'arm64-v8a,armeabi-v7a' || 'arm64-v8a') }})
     needs: engine
     runs-on: ubuntu-latest
     timeout-minutes: 45

@@ -13,9 +13,17 @@ Versi ini soal **tanda tangan APK** dan **dukungan HP 32-bit**.
 ### ✨ Ditambahkan
 
 - **Dukungan `armeabi-v7a`** (HP Android 32-bit). Sebelumnya cuma `arm64-v8a`.
-  Bisa dipilih lewat *Actions → Build APK → Run workflow* pada input `abis`:
-  `arm64-v8a` (default), `armeabi-v7a`, atau `arm64-v8a,armeabi-v7a` (satu APK
-  buat dua-duanya, ±35 MB).
+
+  Aturan ABI-nya sekarang:
+
+  | Build dari | ABI yang dipackage |
+  |---|---|
+  | **tag `v*`** (yang masuk GitHub Release) | `arm64-v8a` **+** `armeabi-v7a` — satu APK, jalan di HP 64-bit maupun 32-bit |
+  | push / pull request | `arm64-v8a` saja (paling cepat & kecil) |
+  | *Actions → Build APK → Run workflow* | bisa pilih: `arm64-v8a`, `armeabi-v7a`, atau dua-duanya |
+
+  Jadi APK yang di-attach ke Release selalu yang universal — nggak ada lagi
+  kejadian "release-nya cuma arm64, HP 32-bit nggak bisa pasang".
 - `scripts-dev/apk_signer.py` — baca sertifikat penandatangan APK langsung dari
   APK Signing Block (v2/v3), tanpa perlu install Android SDK. Gunanya buat
   menjawab "APK ini bisa nimpa yang lama atau nggak".

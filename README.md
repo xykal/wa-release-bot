@@ -178,9 +178,9 @@ git tag v1.1.1 && git push origin v1.1.1
 
 → APK + `sha256` otomatis di-attach ke [GitHub Release](../../releases).
 
-> Build dari **tag** selalu `arm64-v8a`. Kalau perlu `armeabi-v7a`, jalankan
-> manual lewat *Actions → Build APK → Run workflow* lalu pilih ABI-nya — hasilnya
-> muncul sebagai artifact (bukan Release).
+> Build dari **tag** menghasilkan APK **universal** (`arm64-v8a` + `armeabi-v7a`),
+> jadi satu file itu jalan di HP 64-bit maupun 32-bit. Build push/PR cuma
+> `arm64-v8a` biar cepat.
 
 **Pilih ABI (opsional).** Lewat *Actions → Build APK → Run workflow*:
 

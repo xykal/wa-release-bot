@@ -519,6 +519,12 @@ jobs:
             sha256sum -c <nama-file>.apk.sha256
             ```
 
+            **Kalau ada yang aneh-aneh:** di dalam app ada tombol **Kirim Log**.
+            Semua kejadian dicatat ke `Android/media/<nama-paket>/log/` — folder
+            itu bisa dibuka dari HP maupun lewat kabel, tanpa root. Yang paling
+            penting `crash.log` (isi penyebab kalau app-nya pernah mati sendiri).
+            Kirim file-nya kalau mau lapor masalah.
+
             Ketiganya ditandatangani dengan kunci yang sama, jadi update berikutnya
             bisa dipasang langsung tanpa uninstall.
 

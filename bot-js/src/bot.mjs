@@ -73,6 +73,35 @@ async function main() {
     process.exit(1);
   }
 
+  // ---- Jaring pengaman: Node JANGAN sampai exit() ----
+  // nodejs-mobile jalan DI DALAM proses app. Kalau Node exit (process.exit
+  // atau error yang nggak ketangkep), libc ngejalanin destructor global dan
+  // ngancurin mutex yang masih dipakai thread Android → app force close
+  // ("FORTIFY: pthread_mutex_lock called on a destroyed mutex", SIGABRT).
+  // Jadi: error apa pun dicatat, engine tetap hidup.
+  const fileFatal = path.join(dataDir, 'engine-fatal.log');
+  const catatFatal = (jenis, e) => {
+    const teks = `[${new Date().toISOString()}] ${jenis}: ${(e && e.stack) || e}`;
+    try { fs.appendFileSync(fileFatal, teks.replace(/\s*\n\s*/g, ' ⏎ ') + '\n'); } catch { /* ignore */ }
+    try { console.error(teks); } catch { /* ignore */ }
+    try { logAman?.(`🩹 Error nyasar ketangkep (${jenis}): ${(e && e.message) || e} — engine tetap jalan.`); } catch { /* ignore */ }
+  };
+  let logAman = null;
+  process.on('uncaughtException', (e) => catatFatal('uncaughtException', e));
+  process.on('unhandledRejection', (e) => catatFatal('unhandledRejection', e));
+  const exitAsli = process.exit.bind(process);
+  process.exit = (kode) => {
+    catatFatal('process.exit', new Error(`process.exit(${kode}) dicegah`));
+  };
+  void exitAsli;
+  if (process.env.WR_TES_GALAT) { // cuma buat ngetes jaring pengaman ini
+    setTimeout(() => { void Promise.reject(new Error('tes rejection')); }, 300);
+    setTimeout(() => { throw new Error('tes throw'); }, 600);
+    setTimeout(() => process.exit(3), 900);
+  }
+  let sisaFatal = '';
+  try { sisaFatal = fs.readFileSync(fileFatal, 'utf8').trim(); fs.rmSync(fileFatal, { force: true }); } catch { /* belum ada */ }
+
   // Baileys nulis file sementara ke os.tmpdir() waktu upload media (audio
   // lagu ke channel). Di Android nggak ada /tmp → arahin ke folder data.
   if (!process.env.TMPDIR) {
@@ -135,6 +164,10 @@ async function main() {
     log,
     onCommand: (cmd) => { handleCommand(cmd).catch((e) => log('⚠️ Perintah ' + cmd?.type + ' gagal: ' + e.message)); },
   });
+  logAman = log;
+  if (sisaFatal) {
+    for (const baris of sisaFatal.split('\n').slice(-3)) log('🩹 Catatan error sebelumnya: ' + baris.slice(0, 600));
+  }
 
   // Bot custom orang (worker_threads) — lihat hosting.mjs
   const hosting = buatHosting({ dataDir, log, kirim: (e) => bridge?.send(e) });
@@ -268,6 +301,9 @@ async function main() {
           const jid = await cariTarget(sock);
           await sendText(sock, jid, formatKataLagu(lagu));
           await sock.sendMessage(jid, { audio: { url: file }, mimetype: 'audio/mpeg', seconds: detik, ptt: false });
+          // Kasih napas bentar sebelum socket ditutup: upload/ack yang masih
+          // jalan di belakang kalau diputus paksa suka lempar "Connection Closed".
+          await new Promise((r) => setTimeout(r, 3000));
         } finally {
           close();
         }

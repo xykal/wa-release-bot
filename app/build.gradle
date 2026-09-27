@@ -8,8 +8,8 @@ plugins {
 def releaseKeystoreFile = System.getenv("RELEASE_KEYSTORE_FILE")
 
 // Versi bisa di-override dari CI:  ./gradlew assembleRelease -PversionName=1.2.0 -PversionCode=5
-def appVersionName = (project.findProperty('versionName') ?: '1.6.1').toString()
-def appVersionCode = (project.findProperty('versionCode') ?: '17').toString().toInteger()
+def appVersionName = (project.findProperty('versionName') ?: '1.6.2').toString()
+def appVersionCode = (project.findProperty('versionCode') ?: '18').toString().toInteger()
 
 android {
     namespace 'com.xykals.warelease'
@@ -164,6 +164,7 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'com.google.zxing:core:3.5.4'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
 
     testImplementation 'junit:junit:4.13.2'
 }

@@ -11,6 +11,12 @@
     android:layout_height="match_parent"
     android:background="@color/wr_latar">
 
+    <!-- Tarik dari atas ke bawah = segerin status (tanpa nautin ulang). -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/segarkan"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
     <ScrollView
         android:id="@+id/svUtama"
         android:layout_width="match_parent"
@@ -162,7 +168,7 @@
                 style="@style/JudulKartu"
                 android:drawableStart="@drawable/ic_tautan"
                 android:text="Tautkan WhatsApp" />
-            <TextView style="@style/KetKartu" android:text="Cukup sekali. Paling gampang pakai kode: isi nomor WA lo, nanti muncul 8 huruf yang diketik di WhatsApp — nggak perlu HP kedua buat scan QR." />
+            <TextView android:id="@+id/tvKetTaut" style="@style/KetKartu" android:text="Cukup sekali. Paling gampang pakai kode: isi nomor WA lo, nanti muncul 8 huruf yang diketik di WhatsApp — nggak perlu HP kedua buat scan QR." />
             <TextView
                 android:id="@+id/tvWaStatus"
                 android:layout_width="match_parent"
@@ -171,7 +177,7 @@
                 android:textColor="@color/wr_hijau"
                 android:textSize="13sp"
                 android:textStyle="bold" />
-            <TextView style="@style/Label" android:text="Nomor WA (buat pairing code)" />
+            <TextView android:id="@+id/tvLabelPhone" style="@style/Label" android:text="Nomor WA (buat pairing code)" />
             <EditText
                 android:id="@+id/etPhone"
                 style="@style/Isian"
@@ -699,6 +705,7 @@
                 android:layout_height="24dp" />
         </LinearLayout>
     </ScrollView>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <!-- ================= BANNER (pengganti Toast) ================= -->
     <TextView

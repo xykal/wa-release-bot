@@ -385,6 +385,7 @@ class BotService : Service() {
             "setup_start" -> BotBus.publish {
                 setupState = "starting"
                 setupTahap = null
+                setupMode = e.optString("mode", "").orNull()
             }
 
             "setup_tahap" -> BotBus.publish { setupTahap = e.optString("msg", "").orNull() }
@@ -392,6 +393,8 @@ class BotService : Service() {
                 BotBus.publish {
                     setupState = "done"
                     setupTahap = null
+                    setupMode = null
+                    waLinked = true
                     qr = null
                     pairingCode = null
                 }
@@ -401,6 +404,7 @@ class BotService : Service() {
             "setup_error" -> BotBus.publish {
                 setupState = "error"
                 setupTahap = null
+                setupMode = null
                 qr = null
                 pairingCode = null
             }

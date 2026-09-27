@@ -50,6 +50,9 @@ data class BotUi(
     var qr: String? = null,
     // Pairing code 8 huruf (format ABCD-1234) — ditampilkan di lembar khusus.
     var pairingCode: String? = null,
+    // Cara nautin yang lagi jalan: "pairing" / "qr" (null = nggak lagi nautin).
+    // Cuma tampilan cara ini yang boleh nongol — QR & kode nggak boleh barengan.
+    var setupMode: String? = null,
     var grupAktif: Boolean = false,
     var grupNama: String? = null,
     var grupDisetujui: Int = 0,

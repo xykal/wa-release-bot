@@ -32,6 +32,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.xykals.warelease.util.Durasi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -85,6 +86,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvNext: TextView
     private lateinit var tvError: TextView
     private lateinit var tvWaStatus: TextView
+    private var segarkan: SwipeRefreshLayout? = null
+    private val selesaiSegar = Runnable { segarkan?.isRefreshing = false }
     private lateinit var tvGrupStat: TextView
     private lateinit var tvBatreStat: TextView
     private lateinit var tvLog: TextView
@@ -266,6 +269,11 @@ class MainActivity : AppCompatActivity() {
         tvNext = findViewById(R.id.tvNext)
         tvError = findViewById(R.id.tvError)
         tvWaStatus = findViewById(R.id.tvWaStatus)
+        segarkan = findViewById<SwipeRefreshLayout>(R.id.segarkan).apply {
+            setColorSchemeColors(ContextCompat.getColor(this@MainActivity, R.color.wr_hijau))
+            setProgressBackgroundColorSchemeColor(ContextCompat.getColor(this@MainActivity, R.color.wr_latar))
+            setOnRefreshListener { segarkanStatus() }
+        }
         tvGrupStat = findViewById(R.id.tvGrupStat)
         tvBatreStat = findViewById(R.id.tvBatreStat)
         tvLog = findViewById(R.id.tvLog)
@@ -770,9 +778,26 @@ class MainActivity : AppCompatActivity() {
         btnKill.isEnabled = killAktif
         btnKill.alpha = if (killAktif) 1f else 0.45f
 
+        // Kartu "Tautkan WhatsApp" ikut berubah: udah tertaut → isian nomor &
+        // tombol nautin disembunyiin, sisa "Lepas WA" doang.
+        val nautin = ui.setupState == "starting"
+        val tertaut = ui.waLinked && !nautin
+        val tampilTaut = if (tertaut) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.tvLabelPhone).visibility = tampilTaut
+        etPhone.visibility = tampilTaut
+        findViewById<View>(R.id.btnPairing).visibility = tampilTaut
+        findViewById<View>(R.id.btnQr).visibility = tampilTaut
+        findViewById<View>(R.id.btnLepas).visibility = if (tertaut) View.VISIBLE else View.GONE
+        findViewById<TextView>(R.id.tvKetTaut).text = if (tertaut) {
+            "Udah beres, nggak perlu diapa-apain lagi. Mau ganti nomor? Lepas dulu, baru tautin lagi."
+        } else {
+            "Cukup sekali. Paling gampang pakai kode: isi nomor WA lo, nanti muncul 8 huruf yang diketik di WhatsApp — nggak perlu HP kedua buat scan QR."
+        }
+        val nomorTampil = settings.phone.trim().ifBlank { null }
+
         tvWaStatus.text = when {
             ui.setupState == "starting" && ui.setupTahap != null -> ui.setupTahap!!
-            ui.waLinked -> "✓ WhatsApp udah tertaut — nggak perlu nautin lagi."
+            ui.waLinked -> "✓ WhatsApp tertaut" + (nomorTampil?.let { " ($it)" } ?: "") + " — bot siap kerja."
             ui.setupState == "starting" -> "Lagi nautin…"
             else -> "Belum tertaut."
         }
@@ -833,8 +858,24 @@ class MainActivity : AppCompatActivity() {
 
         // QR & pairing code nggak boleh nongol bareng: kalau lagi mode kode,
         // QR-nya diabaikan (Baileys tetap bikin QR di belakang layar).
-        tanganiKode(ui.pairingCode)
-        tanganiQr(if (ui.pairingCode.isNullOrBlank()) ui.qr else null)
+        // Cuma cara yang lagi dipilih yang boleh tampil.
+        tanganiKode(if (nautin && ui.setupMode == "pairing") ui.pairingCode else null)
+        tanganiQr(if (nautin && ui.setupMode == "qr" && ui.pairingCode.isNullOrBlank()) ui.qr else null)
+    }
+
+    /** Tarik-ke-bawah: minta status terbaru ke engine, tanpa nautin ulang. */
+    private fun segarkanStatus() {
+        LogRecorder.tulis("Tombol", "tarik: segarkan status")
+        handler.removeCallbacks(selesaiSegar)
+        renderBatre()
+        if (BotService.instance != null) {
+            sendCmd(mapOf("type" to "status"))
+            banner("Status diperbarui.")
+        } else {
+            banner("Service lagi mati — tekan Mulai buat nyalain.")
+        }
+        renderUi(BotBus.ui)
+        handler.postDelayed(selesaiSegar, 1200)
     }
 
     // ----------------------------- pairing code -----------------------------
@@ -960,6 +1001,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun tampilkanDialogQr(bmp: Bitmap) {
         if (isFinishing || isDestroyed || qrDiabaikan) return
+        // QR digambar di background — pas kelar, bisa aja user udah pindah ke kode.
+        val u = BotBus.ui
+        if (u.setupMode != "qr" || !u.pairingCode.isNullOrBlank()) return
         val ada = qrDialog
         if (ada != null && ada.isShowing) {
             qrImage?.setImageBitmap(bmp)

@@ -6,6 +6,27 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.6.2] — 2026-09-27
+
+### 🩹 Force close pas kirim lagu (dan pas tes grup)
+- Penyebab: ada error dari dalam Baileys yang lepas di belakang layar
+  (biasanya habis socket WA ditutup). Node 18 nganggep itu fatal → Node
+  `exit()` → karena Node jalan di dalam proses app, mutex yang lagi dipakai
+  thread Android ikut ancur → `FORTIFY: pthread_mutex_lock called on a
+  destroyed mutex` → app FC.
+- Sekarang engine punya jaring pengaman: `uncaughtException`,
+  `unhandledRejection`, dan `process.exit()` ditangkep, dicatat, engine tetap
+  jalan. Isinya juga disimpen ke file, jadi kalau tetep mati, alasannya
+  muncul di log begitu engine nyala lagi ("🩹 Catatan error sebelumnya").
+- Habis ngirim audio lagu, socket dikasih jeda 3 dtk sebelum ditutup.
+
+### 🔗 Kartu "Tautkan WhatsApp"
+- Udah tertaut → isian nomor, "Tautkan pakai kode", dan "Pakai QR"
+  disembunyiin; yang tersisa status + "Lepas WA".
+- QR & pairing code nggak bakal nongol barengan lagi: yang tampil cuma cara
+  yang lagi dipilih.
+- Tarik layar dari atas ke bawah buat nyegerin status (tanpa nautin ulang).
+
 ## [1.6.1] — 2026-09-27
 
 ### 🔁 Lagu mood: Cloudflare x HP (GitHub Actions dicabut)
@@ -610,7 +631,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.6.1...HEAD
+[Unreleased]: ../../compare/v1.6.2...HEAD
+[1.6.2]: ../../compare/v1.6.1...v1.6.2
 [1.6.1]: ../../compare/v1.6.0...v1.6.1
 [1.6.0]: ../../compare/v1.5.0...v1.6.0
 [1.5.0]: ../../compare/v1.4.3...v1.5.0

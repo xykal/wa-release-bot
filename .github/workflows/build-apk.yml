@@ -372,6 +372,7 @@ jobs:
 
           # Nama class WAJIB masih ada di dex (deskriptor dalvik-nya).
           WAJIB="
+          Lcom/xykals/warelease/App;
           Lcom/xykals/warelease/NodeBridge;
           Lcom/xykals/warelease/BotService;
           Lcom/xykals/warelease/MainActivity;

@@ -24,6 +24,10 @@ data class BotUi(
     var nextCheckAt: Long? = null,
     var repo: String? = null,
     var channel: String? = null,
+    var channelNama: String? = null,
+    // Diisi cuma waktu bot selesai bikin channel baru. MainActivity ngeliat ini
+    // lalu ngisi field "Channel WA" sendiri — biar user nggak perlu nyalin JID.
+    var channelBaru: String? = null,
     var qr: String? = null,
     var engineError: String? = null,
     var setupState: String? = null, // null | starting | done | error

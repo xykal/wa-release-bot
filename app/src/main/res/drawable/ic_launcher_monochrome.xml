@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ikon app: balon obrolan + panah naik = "kabarin rilis baru".
-     Sengaja gambar vektor, BUKAN emoji — emoji dirender beda-beda di tiap HP
-     (dan sebagian malah muncul kotak kosong), jadi nggak bisa dipakai buat
-     ikon app. Lihat juga ic_launcher_monochrome.xml buat themed icon. -->
+<!-- Versi satu warna buat "themed icon" (Android 13+): sistem yang ngewarnain.
+     Yang penting cuma bentuk + alpha, jadi panahnya dibikin lubang
+     (fillType evenOdd) biar tetap kebaca. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:fillColor="#FFD166"
+        android:fillColor="#FFFFFFFF"
         android:fillType="evenOdd"
         android:pathData="M36,28 L72,28 A10,10 0 0 1 82,38 L82,62 A10,10 0 0 1 72,72 L52,72 L36,84 L36,72 A10,10 0 0 1 26,62 L26,38 A10,10 0 0 1 36,28 Z M54,34 L66,48 L58,48 L58,64 L50,64 L50,48 L42,48 Z" />
 </vector>

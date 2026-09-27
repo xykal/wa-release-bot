@@ -31,7 +31,8 @@ Bangun tiap 15 menit → cek GitHub → ada release baru? Posting info ke **chan
 
 - HP **Android**
 - [Termux](https://f-droid.org/packages/com.termux/) — **wajib dari F-Droid** (versi Play Store udah basi)
-- 1 **channel WhatsApp** yang lo **admin-nya** (bot posting pake nomor lo sebagai linked device)
+- 1 **channel WhatsApp** yang lo **pemilik/admin-nya** (bot posting pake nomor lo sebagai linked device)
+  — atau cukup 1 **grup WA** kalau males bikin channel
 - Repo GitHub yang mau dipantau
 
 ## Instalasi di HP
@@ -64,11 +65,15 @@ nano config.json
 | `github.repo` | `owner/nama-repo`, contoh: `vercel/next.js` |
 | `github.token` | Opsional. Isikan kalau repo **private** atau sering kena rate limit (buat di [github.com/settings/tokens](https://github.com/settings/tokens), scope `public_repo` udah cukup) |
 | `github.includePrereleases` | `true` kalau mau hitung beta/prerelease juga |
-| `whatsapp.channel` | Username channel `@nama_channel` **atau** JID channel (`120363XXXXXXXX@g.us`) |
+| `whatsapp.channel` | **Link** channel (`https://whatsapp.com/channel/0029...`), atau JID `<angka>@newsletter`, atau grup `<angka>@g.us` |
 | `bot.checkIntervalMinutes` | Tiap berapa menit bot bangun (default 15) |
 | `bot.postOnFirstRun` | `true` kalau mau langsung posting release yang sedang ada saat pertama jalan |
 
-**Tips nemuin username channel:** buka channel di HP → info channel → username-nya kelihatan kayak `@nama_channel`. Kalau nggak ada username, pakai JID (bisa liat di [wa-2-chat.com](https://wa-2-chat.com) atau grup JID-nya).
+**Cara dapetin link channel:** buka channel-nya di WA → tap nama channel → **⋯** → **Bagikan** → salin link-nya. Bentuknya `https://whatsapp.com/channel/0029...` — tempel apa adanya.
+
+**Yang nggak bisa: username (`@nama_channel`).** Dulu didokumentasikan bisa, dan itu salah — kodenya nyari pakai `onWhatsApp()`, padahal fungsi itu buat nyari **nomor HP**, bukan channel. Engine-nya juga nggak punya API buat nyari channel dari username.
+
+**Belum punya channel?** Bikin lewat app Android (tombol **Bikin Channel**), atau bikin manual di WA: tab **Saluran/Updates** → ikon **+** → *Buat saluran*. Lo otomatis jadi pemiliknya, jadi bot boleh posting ke situ.
 
 ## Setup (sekali seumur hidup)
 
@@ -78,7 +83,7 @@ npm run setup
 
 Bot bakal:
 1. Nampilin **QR code** di terminal → scan pakai WA lo (WA → ☰ → *Linked Devices* → *Link a Device*)
-2. Nemuin channel lo
+2. Nemuin channel lo (dari link/JID di config)
 3. Ngekirim **test message** ke channel
 4. Ngecatat baseline release
 
@@ -154,7 +159,8 @@ npm run once      # cek sekali doang (sama yang dipake cron)
 |---|---|
 | `Sesi WA belum ada` | Belum pernah `npm run setup`. Jalankan di terminal (bukan via cron), scan QR. |
 | `Sesi WA ke-logout` | Session-nya kebuang (misal HP di-reset / WA di-logout semua perangkat). `npm run setup` lagi. |
-| `Channel @xxx nggak ketemu` | Cek username. Pastikan lo admin channel. Atau isi JID langsung. |
+| `Username channel (...) nggak bisa dipakai` | Memang nggak didukung — pakai link channel-nya. Lihat tabel di atas |
+| Bot diam aja / nggak posting | Cek log. Pesan error sekarang nyebutin target yang dicari |
 | `GitHub rate limit` | Isi `github.token` di config, atau tambah interval. |
 | Bot nggak pernah bangun | Cek `crontab -l` (barisnya ada?), `cron` udah jalan?, Termux nggak dibunuh (lihat tips di atas). Liat `tail -f bot.log`. |
 | QR nggak muncul di terminal | Pastikan jalanin di terminal interaktif (`npm run setup`), bukan dari cron. |

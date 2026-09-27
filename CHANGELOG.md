@@ -6,6 +6,75 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.1.3] — 2026-09-27
+
+### 🐛 Diperbaiki
+
+- **App terhenti waktu tombol ditekan (paling sering kelihatan di Setup).**
+  `BotService` baca setting lewat `private val settings = SettingsStore(this)`
+  di badan class. Field itu jalan di **constructor**, sedangkan Android baru
+  memasang Context-nya setelah constructor selesai
+  (`newService()` → `attach(ctx)` → `onCreate()`). Jadi di titik itu `this`
+  masih Context kosong → `getSharedPreferences()` melempar NullPointerException
+  di thread utama → **seluruh proses app mati**.
+  Sekarang `settings` `lateinit` dan diisi di `onCreate()`.
+  Ini bug lama, bukan bawaan v1.1.2 — baru ketahuan sekarang karena belum
+  pernah dites di HP sungguhan.
+- **Layar beku waktu dialog QR muncul.** Gambar QR 640×640 digambar dengan
+  400 ribu panggilan `Bitmap.setPixel()` **di thread utama** — dan digambar
+  ulang tiap kali ada event masuk (walau isi QR-nya sama). Sekarang: gambar
+  QR disusun dulu di array, dikirim ke bitmap lewat satu panggilan
+  `setPixels()`, diproses di thread belakang, dan hasinya di-cache per isi QR.
+- `QrBitmap` cuma nangkep `Exception`; kalau yang kelempar `OutOfMemoryError`
+  (itu `Error`, bukan `Exception`) aplikasinya tetap mati. Sekarang `Throwable`.
+- Semua tombol dibungkus try/catch: kalau ada yang meledak, muncul toast + jejak
+  di log — app-nya nggak ikut mati.
+- Tombol yang ditekan waktu service belum siap nggak lagi diam-diam nggak
+  ngapa-ngapain (`withService` cuma nunggu 4 detik lalu kirim; kalau service-nya
+  belum kelar, perintahnya hilang tanpa pesan). Sekarang ditunggu sampai
+  instance-nya benar-benar ada, maksimal ~10 detik, lalu dikasih tahu kalau gagal.
+
+### ✨ Ditambahkan
+
+- **Perekam log**, tersimpan di `Android/media/<nama-paket>/log/`:
+  `app.log` (aktivitas app), `mesin.log` (engine Node), `logcat.log` (log
+  mentah Android, termasuk output Node), dan `crash.log` (penyebab app mati).
+  Folder itu bisa dibuka tanpa root dan tanpa izin penyimpanan — beda dengan
+  `/data/data/...` yang nggak bisa diakses siapa-siapa.
+- **Penangkap crash** yang dipasang dari `App.onCreate()`, jadi crash paling
+  awal pun kecatat lengkap dengan versi app, tipe HP, dan stack trace.
+- Tombol **Buka Folder Log** dan **Kirim Log** (bagi file log lewat
+  WA/email/Drive pakai FileProvider — cuma folder log yang bisa dibagikan).
+- **Cari channel dari link.** Field "Channel WA" sekarang nerima
+  `https://whatsapp.com/channel/...`, JID `<angka>@newsletter`, JID grup
+  `<angka>@g.us`, dan link undangan grup `chat.whatsapp.com/...`.
+- **Tombol Bikin Channel** — bot bikin channel baru dari akun lo, nyimpen
+  JID-nya ke setting, lalu kirim test message. Buat yang belum punya channel.
+- Channel boleh dikosongin pas nyimpen setting. Sebelumnya wajib diisi — dan
+  itu bikin muter: nggak bisa nyimpen setting → engine nggak nyala → tombol
+  Bikin Channel nggak bisa dipakai → nggak punya channel.
+- Perintah `cek-channel` (`bikin-channel` juga) di engine + pemakaian grup WA
+  sebagai target posting.
+
+### 🔧 Diubah
+
+- **Emoji di UI diganti ikon vektor.** Emoji (▶️ ⏸️ 💾 dst) dirender beda-beda
+  tiap HP, ukurannya nggak bisa diatur, dan ada yang muncul kotak kosong.
+  Sekarang semua ikon gambar vektor yang warnanya ngikut tema (jadi ikut
+  mode terang/gelap).
+- **Ikon app digambar ulang**: balon obrolan + panah naik. Yang lama (bulan
+  sabit kuning + bintang) kelihatan kayak emoji 🌙. Sekalian ditambah layer
+  `monochrome` biar ikut "themed icon" Android 13+.
+
+### ⚠️ Perubahan perilaku (penting)
+
+- **Username channel (`@nama_channel`) sekarang ditolak** dengan pesan yang
+  jelas. Dulu "didukung", tapi kodenya manggil `onWhatsApp()`
+  — fungsi itu buat nyari **nomor HP**, bukan channel, jadi selalu gagal.
+  API WhatsApp yang dipakai engine ini juga nggak nyediain pencarian channel
+  lewat username. Yang benar: pakai **link** channel, atau tombol Bikin Channel.
+  Ini berlaku juga di CLI (`cli/src/wa.mjs`).
+
 ## [1.1.2] — 2026-09-27
 
 ### ✨ Ditambahkan
@@ -199,7 +268,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.1.2...HEAD
+[Unreleased]: ../../compare/v1.1.3...HEAD
+[1.1.3]: ../../compare/v1.1.2...v1.1.3
 [1.1.2]: ../../compare/v1.1.1...v1.1.2
 [1.1.1]: ../../compare/v1.1.0...v1.1.1
 [1.1.0]: ../../compare/v1.0.0...v1.1.0

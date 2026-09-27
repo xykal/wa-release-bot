@@ -3,6 +3,7 @@
 
 import pino from 'pino';
 import { existsSync } from 'node:fs';
+import { resolveTarget } from './channel.mjs';
 import {
   makeWASocket,
   useMultiFileAuthState,
@@ -74,18 +75,18 @@ export async function connectToWhatsApp({ sessionDir, allowQr, emitQr, onStatus,
   return { sock, close: () => sock.end() };
 }
 
-/** Ubah target channel jadi JID. Terima "@username" | "username" | "120363...@g.us" */
-export async function resolveChannelJid(sock, target) {
-  const t = String(target || '').trim();
-  if (t.includes('@')) return t;
-  const username = t.startsWith('@') ? t : `@${t}`;
-  const result = await sock.onWhatsApp(username);
-  if (!result || !result.length) {
-    throw new Error(
-      `Channel ${username} nggak ketemu. Cek username-nya, atau pakai JID channel (contoh: 120363XXXXXXXX@g.us).`
-    );
-  }
-  return result[0][0];
+/**
+ * Ubah target channel jadi JID.
+ *
+ * Logika bacanya ada di channel.mjs (file itu nggak import apa-apa, jadi bisa
+ * dites tanpa Baileys). Di sini cuma neruskan.
+ *
+ * Catatan penting: dulu fungsi ini manggil `sock.onWhatsApp('@username')` —
+ * itu buat nyari NOMOR HP, bukan channel, jadi selalu gagal buat channel.
+ * Sekarang username ditolak dengan pesan yang jelas + cara benerinnya.
+ */
+export async function resolveChannel(sock, target, log) {
+  return resolveTarget(sock, target, log);
 }
 
 export async function sendText(sock, jid, text) {

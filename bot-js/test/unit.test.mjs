@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { parseRepo } from '../src/github.mjs';
+import { bacaTarget, JENIS, pesanCaraIsiChannel, linkChannel } from '../src/channel.mjs';
 import { formatReleasePost, formatTestMessage } from '../src/format.mjs';
 import { createBridge } from '../src/bridge.mjs';
 
@@ -73,6 +74,75 @@ test('formatTestMessage: menyebut repo yang dipantau', () => {
   const msg = formatTestMessage('xykal/wa-release-bot');
   assert.match(msg, /xykal\/wa-release-bot/);
   assert.match(msg, /SETUP SUKSES/);
+});
+
+// --------------------------------------------------------------- bacaTarget
+// Regresi penting: dulu field "Channel WA" nerima @username dan diproses pakai
+// onWhatsApp() — itu buat nyari NOMOR HP, bukan channel, jadi selalu gagal.
+// Sekarang username harus DITOLAK dengan pesan yang ngasih jalan keluar.
+test('bacaTarget: link channel → kode undangan', () => {
+  const t = bacaTarget('https://whatsapp.com/channel/0029VbAbCdEf1234567890xyZ');
+  assert.equal(t.jenis, JENIS.INVITE);
+  assert.equal(t.nilai, '0029VbAbCdEf1234567890xyZ');
+
+  // tanpa protokol / pakai www / ada trailing slash → tetap kebaca
+  assert.equal(bacaTarget('whatsapp.com/channel/0029Vaaaaabbbbb').jenis, JENIS.INVITE);
+  assert.equal(bacaTarget('http://www.whatsapp.com/channel/0029Vaaaaabbbbb/').nilai, '0029Vaaaaabbbbb');
+});
+
+test('bacaTarget: JID channel & JID grup diterima apa adanya', () => {
+  assert.deepEqual(bacaTarget('120363123456789012@newsletter'), {
+    jenis: JENIS.JID,
+    nilai: '120363123456789012@newsletter',
+  });
+  assert.deepEqual(bacaTarget('120363123456789012@g.us'), {
+    jenis: JENIS.GRUP,
+    nilai: '120363123456789012@g.us',
+  });
+});
+
+test('bacaTarget: link undangan grup dikenali', () => {
+  const t = bacaTarget('https://chat.whatsapp.com/AbCdEfGhIjKlMnOp');
+  assert.equal(t.jenis, JENIS.LINK_GRUP);
+  assert.equal(t.nilai, 'AbCdEfGhIjKlMnOp');
+});
+
+test('bacaTarget: kode undangan telanjang (tanpa link) dikenali', () => {
+  const t = bacaTarget('0029VbAbCdEf1234567890xyZ');
+  assert.equal(t.jenis, JENIS.INVITE);
+});
+
+test('bacaTarget: angka doang dikasih pesan yang nyuruh lengkapin akhiran', () => {
+  const t = bacaTarget('120363123456789012');
+  assert.equal(t.jenis, JENIS.SALAH);
+  assert.match(t.pesan, /@newsletter/);
+});
+
+test('bacaTarget: username ditolak + ada jalan keluarnya', () => {
+  for (const s of ['@nama_channel', 'nama_channel']) {
+    const t = bacaTarget(s);
+    assert.equal(t.jenis, JENIS.USERNAME, `harus kebaca username: ${s}`);
+    assert.equal(t.nilai, '@nama_channel');
+  }
+  const pesan = pesanCaraIsiChannel('@nama_channel');
+  assert.match(pesan, /LINK channel/);
+  assert.match(pesan, /Bikin Channel/);
+});
+
+test('bacaTarget: kosong & sampah ditolak', () => {
+  assert.equal(bacaTarget('').jenis, JENIS.SALAH);
+  assert.equal(bacaTarget('   ').jenis, JENIS.SALAH);
+  assert.equal(bacaTarget('ada spasi di sini').jenis, JENIS.SALAH);
+  assert.equal(bacaTarget('!!!').jenis, JENIS.SALAH);
+});
+
+test('linkChannel: bikin link dari metadata channel', () => {
+  assert.equal(
+    linkChannel({ invite: '0029VbAbCd' }),
+    'https://whatsapp.com/channel/0029VbAbCd'
+  );
+  assert.equal(linkChannel({}), null);
+  assert.equal(linkChannel(null), null);
 });
 
 // ------------------------------------------------------------------- bridge

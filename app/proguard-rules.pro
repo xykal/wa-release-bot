@@ -9,7 +9,7 @@
 #  Di aplikasi ini, yang manggil lewat nama cuma empat:
 #    1. JNI  — native-lib.cpp nyari Java_com_xykals_warelease_NodeBridge_startNode
 #    2. WorkManager — bikin ulang worker dari nama class yang disimpan di DB
-#    3. Android (sistem) — Activity/Service/Receiver dari AndroidManifest
+#    3. Android (sistem) — Application/Activity/Service/Receiver dari AndroidManifest
 #    4. androidx (Consumer rules bawaan library) — diurus library-nya sendiri
 #
 #  Selain empat itu, semuanya aman di-rename: bridge ke Node lewat FILE
@@ -44,6 +44,7 @@
 # Activity/Service/Receiver di-instansiasi oleh SISTEM lewat nama class dari
 # AndroidManifest. AGP sebenarnya sudah otomatis bikin aturan ini, tapi ditulis
 # eksplisit biar kalau suatu saat manifest-nya berubah, tetap aman.
+-keep class com.xykals.warelease.App { *; }
 -keep class com.xykals.warelease.MainActivity { *; }
 -keep class com.xykals.warelease.BotService { *; }
 -keep class com.xykals.warelease.BootReceiver { *; }

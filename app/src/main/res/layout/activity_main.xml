@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Catatan soal ikon:
+  Semua ikon di layar ini gambar VEKTOR (@drawable/ic_*), bukan emoji.
+  Emoji (▶️ ⏸️ 💾 dst) dirender beda-beda di tiap HP — ada yang kotak kosong,
+  ada yang jadi warna aneh, dan ukurannya nggak bisa diatur. Vektor aman
+  karena warnanya diambil dari tema (app:tint / app:iconTint), jadi otomatis
+  ikut terang/gelap.
+-->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -24,12 +32,27 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="🦴 WA RELEASE BOT"
-                    android:textStyle="bold"
-                    android:textSize="16sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:contentDescription="@string/app_name"
+                        android:src="@drawable/ic_logo"
+                        app:tint="?attr/colorPrimary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/app_name"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvStatus"
@@ -37,7 +60,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:fontFamily="monospace"
-                    android:text="Service : ❌ mati\nEngine  : —\nWA      : —\nTerakhir: —"
+                    android:text="Service : mati&#10;Engine  : —&#10;WA      : —&#10;Channel : —&#10;Terakhir: —"
                     android:textSize="13sp" />
 
                 <TextView
@@ -45,9 +68,9 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:visibility="gone"
                     android:textColor="#D32F2F"
-                    android:textSize="13sp" />
+                    android:textSize="13sp"
+                    android:visibility="gone" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -65,12 +88,27 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="⚙️ Setting"
-                    android:textStyle="bold"
-                    android:textSize="15sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_setelan"
+                        app:tint="?attr/colorPrimary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Setting"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
@@ -86,19 +124,46 @@
                         android:textSize="14sp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!--
+                  Yang diterima: LINK channel (https://whatsapp.com/channel/0029...),
+                  atau JID <angka>@newsletter, atau grup <angka>@g.us.
+                  Username (@nama) TIDAK bisa dipakai — engine-nya nggak punya
+                  API buat nyari channel dari username. Tekan "Bikin Channel"
+                  kalau belum punya channel.
+                -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:hint="Channel WA (@username atau 120363...@g.us)">
+                    android:hint="Channel WA (tempel LINK channel-nya)">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etChannel"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="text"
+                        android:inputType="textUri"
                         android:textSize="14sp" />
                 </com.google.android.material.textfield.TextInputLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Buka channel-nya di WA → ⋯ → Bagikan → salin link-nya, tempel di atas. Belum punya channel? Tekan Bikin Channel — bot yang bikinin, lalu ngisi kolom ini otomatis."
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="10sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnBikinChannel"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Bikin Channel"
+                    app:icon="@drawable/ic_tambah"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconTint="?attr/colorOnSecondaryContainer" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
@@ -162,7 +227,11 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="💾 Simpan Setting" />
+                    android:text="Simpan Setting"
+                    app:icon="@drawable/ic_simpan"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconTint="?attr/colorOnPrimary" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -180,12 +249,27 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🎮 Kontrol"
-                    android:textStyle="bold"
-                    android:textSize="15sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_kontrol"
+                        app:tint="?attr/colorPrimary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Kontrol"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -198,7 +282,11 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="▶️ Mulai" />
+                        android:text="Mulai"
+                        app:icon="@drawable/ic_play"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconTint="?attr/colorOnPrimary" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnStop"
@@ -207,7 +295,11 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
-                        android:text="⏸️ Jeda" />
+                        android:text="Jeda"
+                        app:icon="@drawable/ic_jeda"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconTint="?attr/colorOnSecondaryContainer" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -221,7 +313,11 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="👀 Cek Sekarang" />
+                        android:text="Cek Sekarang"
+                        app:icon="@drawable/ic_cek"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconTint="?attr/colorOnPrimary" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnTest"
@@ -230,7 +326,11 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_weight="1"
-                        android:text="🧪 Test" />
+                        android:text="Test"
+                        app:icon="@drawable/ic_kirim"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconTint="?attr/colorOnSecondaryContainer" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -244,15 +344,23 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="📱 Setup (Scan QR)" />
+                        android:text="Setup (Scan QR)"
+                        app:icon="@drawable/ic_qr"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconTint="?attr/colorOnPrimary" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnKill"
                         style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:text="Matikan Service"
                         android:textColor="#D32F2F"
-                        android:text="⏹️ Matikan Service" />
+                        app:icon="@drawable/ic_power"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconTint="#D32F2F" />
                 </LinearLayout>
 
                 <TextView
@@ -260,8 +368,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:text="Setup cuma 1x seumur hidup: nampilin QR, lo scan pakai WA, bot kirim test message ke channel &amp; catat baseline release."
-                    android:textSize="12sp"
-                    android:textColor="?android:attr/textColorSecondary" />
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="12sp" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -280,12 +388,77 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="📜 Log"
-                    android:textStyle="bold"
-                    android:textSize="15sp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_log"
+                        app:tint="?attr/colorPrimary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="Log"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="40 baris terakhir. Rekaman lengkapnya (termasuk penyebab kalau app mati sendiri) ada di file:"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/tvFolderLog"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="monospace"
+                    android:text="(folder log)"
+                    android:textIsSelectable="true"
+                    android:textSize="10sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnBukaLog"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Buka Folder Log"
+                        app:icon="@drawable/ic_folder"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconTint="?attr/colorOnSecondaryContainer" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnKirimLog"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:text="Kirim Log"
+                        app:icon="@drawable/ic_bagi"
+                        app:iconGravity="textStart"
+                        app:iconPadding="6dp"
+                        app:iconTint="?attr/colorOnSecondaryContainer" />
+                </LinearLayout>
 
                 <ScrollView
                     android:id="@+id/svLog"

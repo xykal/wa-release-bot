@@ -16,10 +16,17 @@ object NodeBridge {
         if (isAlive) return
         val t = Thread({
             try {
-                startNode(scriptPath, env, true)
+                val kode = startNode(scriptPath, env, true)
+                // Node cuma balik ke sini kalau event loop-nya berhenti
+                // (mis. `process.exit()` di bundle, atau libnode-nya ngamuk).
+                LogRecorder.galat("NodeBridge", "proses Node berhenti sendiri (exit $kode)", null)
+                BotBus.publish {
+                    engineError = "Engine Node berhenti (exit $kode). Lihat log, lalu tekan Mulai."
+                }
             } catch (t: Throwable) {
-                android.util.Log.e("NodeBridge", "Node thread crash", t)
-                BotBus.publish { engineError = "Node thread crash: ${t.message}" }
+                // Termasuk UnsatisfiedLinkError kalau libnode.so nggak bisa dimuat
+                LogRecorder.galat("NodeBridge", "thread Node mati", t)
+                BotBus.publish { engineError = "Engine Node gagal jalan: ${t.message}" }
             }
         }, "wa-bot-node")
         t.start()

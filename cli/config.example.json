@@ -5,7 +5,7 @@
     "includePrereleases": false
   },
   "whatsapp": {
-    "channel": "@username_channel",
+    "channel": "https://whatsapp.com/channel/0029VbXXXXXXXXXXXXXX",
     "sessionDir": "./wa-session"
   },
   "bot": {

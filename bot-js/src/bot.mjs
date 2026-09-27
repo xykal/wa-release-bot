@@ -15,7 +15,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createBridge } from './bridge.mjs';
 import { fetchLatestRelease } from './github.mjs';
-import { connectToWhatsApp, resolveChannelJid, sendText } from './wa.mjs';
+import { connectToWhatsApp, resolveChannel, sendText } from './wa.mjs';
+import { bikinChannel, linkChannel, JENIS } from './channel.mjs';
 import { formatReleasePost, formatTestMessage } from './format.mjs';
 
 // ----------------------------- selftest ------------------------------------
@@ -63,7 +64,7 @@ async function main() {
   const stateFile = path.join(dataDir, 'state.json');
   const sessionDir = path.join(dataDir, 'session');
 
-  let state = { lastTag: null, channelJid: null, postCount: 0, lastPostedAt: null };
+  let state = { lastTag: null, channelJid: null, channelName: null, postCount: 0, lastPostedAt: null };
   if (fs.existsSync(stateFile)) {
     try { state = { ...state, ...JSON.parse(fs.readFileSync(stateFile, 'utf8')) }; } catch { /* abaikan */ }
   }
@@ -118,6 +119,7 @@ async function main() {
       lastCheckAt,
       nextCheckAt,
       channel: cfg?.whatsapp?.channel || null,
+      channelName: state.channelName || null,
       repo: cfg?.github?.repo || null,
     });
   }
@@ -198,6 +200,26 @@ async function main() {
     }
   }
 
+  /**
+   * Cari JID channel/grup dari isi setting. Hasilnya di-cache di state supaya
+   * nggak query WhatsApp terus tiap mau posting.
+   */
+  async function cariTarget(sock) {
+    let jid = state.channelJid;
+    if (jid) return jid;
+
+    const hasil = await resolveChannel(sock, cfg.whatsapp.channel, log);
+    jid = hasil.jid;
+    state.channelJid = jid;
+    state.channelName = hasil.nama;
+    saveState();
+
+    const subs = hasil.subscribers != null ? `, ${hasil.subscribers} subscriber` : '';
+    log(`📡 Target ketemu: ${hasil.nama || '(tanpa nama)'} → ${jid}${subs}`);
+    if (hasil.jenis === JENIS.GRUP) log('ℹ️ Target-nya GRUP WA, bukan channel. Pesan bakal masuk ke grup itu.');
+    return jid;
+  }
+
   async function postRelease(rel) {
     const text = formatReleasePost(rel, cfg.github.repo);
 
@@ -210,11 +232,7 @@ async function main() {
     waConnected = true;
     emitStatus();
     try {
-      let jid = state.channelJid;
-      if (!jid) {
-        jid = await resolveChannelJid(sock, cfg.whatsapp.channel);
-        state.channelJid = jid;
-      }
+      const jid = await cariTarget(sock);
       await sendText(sock, jid, text);
       state.lastTag = rel.tag;
       state.lastPostedAt = new Date().toISOString();
@@ -248,9 +266,7 @@ async function main() {
         timeoutMs: 240000,
       });
       try {
-        const jid = await resolveChannelJid(sock, cfg.whatsapp.channel);
-        state.channelJid = jid;
-        log(`📡 Channel ketemu: ${jid}`);
+        const jid = await cariTarget(sock);
         if (cfg.bot?.testMessageOnSetup !== false) {
           await sendText(sock, jid, formatTestMessage(cfg.github.repo));
           log('📨 Test message dikirim ke channel. Cek channel-nya!');
@@ -277,17 +293,90 @@ async function main() {
     }
   }
 
+  /**
+   * Bikin channel WA baru dari nomor yang lagi login, lalu simpan JID-nya.
+   * Ini jalan pintas buat yang bingung "channel-nya dapet dari mana?".
+   */
+  /** Cek doang: target-nya ketemu nggak? Nggak kirim apa-apa. */
+  async function doCekChannel() {
+    if (!cfg.whatsapp.channel) {
+      log('⚠️ Channel WA masih kosong. Tekan "Bikin Channel", atau tempel link channel-nya.');
+      return;
+    }
+    log('🔎 Nyari channel/grup dari isi setting...');
+    try {
+      const { sock, close } = await connectToWhatsApp({
+        sessionDir,
+        allowQr: false,
+        onStatus: (m) => log(m),
+      });
+      try {
+        state.channelJid = null; // paksa resolve ulang
+        const jid = await cariTarget(sock);
+        log(`✅ Ketemu: ${state.channelName || '(tanpa nama)'} → ${jid}`);
+        log('Kalau ini bukan target yang lo mau, ganti isi "Channel WA"-nya.');
+      } finally {
+        close();
+      }
+    } catch (e) {
+      log(`💥 Gagal nyari channel: ${e.message}`);
+    }
+  }
+
+  async function doBikinChannel(namaMinta) {
+    log('🏗️ Bikin channel baru di WhatsApp lo...');
+    try {
+      const { sock, close } = await connectToWhatsApp({
+        sessionDir,
+        allowQr: false,
+        onStatus: (m) => log(m),
+      });
+      try {
+        const nama = (namaMinta && String(namaMinta).trim()) || `Release ${cfg.github.repo}`;
+        const meta = await bikinChannel(
+          sock,
+          nama,
+          `Info release dari ${cfg.github.repo} — dijaga sama wa-release-bot.`
+        );
+        const link = linkChannel(meta);
+
+        state.channelJid = meta.id;
+        state.channelName = meta.name || nama;
+        cfg.whatsapp.channel = meta.id;
+        fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 2));
+        saveState();
+
+        log(`✅ Channel dibuat: ${state.channelName}`);
+        log(`   JID-nya: ${meta.id}`);
+        if (link) log(`🔗 Link channel (buat dibagikan): ${link}`);
+        log('ℹ️ Karena lo yang bikin, lo pemiliknya — bot boleh posting ke situ.');
+
+        if (cfg.bot?.testMessageOnSetup !== false) {
+          await sendText(sock, meta.id, formatTestMessage(cfg.github.repo));
+          log('📨 Test message dikirim ke channel baru. Cek tab Saluran di WA.');
+        }
+        bridge.send({
+          type: 'channel_dibuat',
+          jid: meta.id,
+          nama: state.channelName,
+          link,
+        });
+        emitStatus();
+      } finally {
+        close();
+      }
+    } catch (e) {
+      log(`💥 Gagal bikin channel: ${e.message}`);
+      bridge.send({ type: 'channel_gagal', msg: e.message });
+    }
+  }
+
   async function doTest() {
     try {
       log('🧪 Mengirim test message ke channel...');
       const { sock, close } = await connectToWhatsApp({ sessionDir, allowQr: false });
       try {
-        let jid = state.channelJid;
-        if (!jid) {
-          jid = await resolveChannelJid(sock, cfg.whatsapp.channel);
-          state.channelJid = jid;
-          saveState();
-        }
+        const jid = await cariTarget(sock);
         await sendText(sock, jid, formatTestMessage(cfg.github.repo));
         log(`✅ Test message terkirim ke ${jid}`);
       } finally {
@@ -319,9 +408,14 @@ async function main() {
             testMessageOnSetup: cmd.testMessageOnSetup !== false,
           },
         };
-        if (!next.github.repo || !next.whatsapp.channel) {
-          bridge.send({ type: 'cmd_error', msg: 'repo & channel wajib diisi' });
+        if (!next.github.repo) {
+          bridge.send({ type: 'cmd_error', msg: 'Repo GitHub wajib diisi.' });
           return;
+        }
+        // Channel SENGAJA boleh kosong: biar user masih bisa nyimpen repo dulu,
+        // lalu pakai tombol "Bikin Channel" buat dapetin channel-nya.
+        if (!next.whatsapp.channel) {
+          log('ℹ️ Channel WA masih kosong. Tekan "Bikin Channel" di app, atau tempel link channel-nya.');
         }
         cfg = next;
         fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 2));
@@ -356,6 +450,16 @@ async function main() {
       case 'test':
         if (!cfg) { bridge.send({ type: 'cmd_error', msg: 'Setting belum di-simpan.' }); return; }
         void doTest();
+        break;
+
+      case 'bikin-channel':
+        if (!cfg) { bridge.send({ type: 'cmd_error', msg: 'Setting belum di-simpan.' }); return; }
+        void doBikinChannel(cmd.nama);
+        break;
+
+      case 'cek-channel':
+        if (!cfg) { bridge.send({ type: 'cmd_error', msg: 'Setting belum di-simpan.' }); return; }
+        void doCekChannel();
         break;
 
       default:

@@ -56,7 +56,24 @@ class BotService : Service() {
     }
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val settings = SettingsStore(this)
+
+    /**
+     * ⚠️ JANGAN dipindah jadi `private val settings = SettingsStore(this)`.
+     *
+     * Service dibikin Android begini urutannya:
+     *     new BotService()   ← constructor + semua `val` di bawah ini jalan
+     *     service.attach(ctx)     ← baru DI SINI Context-nya dipasang
+     *     service.onCreate()
+     *
+     * Jadi di dalam constructor, `this` itu Context yang masih kosong — isinya
+     * null. `SettingsStore(this)` manggil getSharedPreferences() dan langsung
+     * NullPointerException. Crash-nya kejadian di thread utama waktu service
+     * dibikin, jadi SELURUH app mati: "aplikasi terhenti".
+     *
+     * Itu sebabnya field ini `lateinit` dan diisi di onCreate().
+     */
+    private lateinit var settings: SettingsStore
+
     private lateinit var dataDir: File
     private var fileBridge: FileBridge? = null
     private var ws: WsClient? = null
@@ -64,8 +81,12 @@ class BotService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        // Di sinilah Context-nya udah benar-benar siap.
+        settings = SettingsStore(this)
+        LogRecorder.init(this)
+        LogRecorder.tulis("Service", "BotService.onCreate — folder log: ${LogRecorder.dir?.absolutePath}")
         createNotifChannel()
-        startForeground(NOTIF_ID, buildNotif("🦴 WA Release Bot — service aktif"))
+        startForeground(NOTIF_ID, buildNotif("Service aktif — bot siap"))
 
         dataDir = File(filesDir, "wa_release_bot").apply { mkdirs() }
 
@@ -87,6 +108,7 @@ class BotService : Service() {
             ws = WsClient("ws://127.0.0.1:18790", scope).also { it.connect() }
             appendLog("Proses Node dinyalakan (bundle.cjs).")
         } else {
+            LogRecorder.galat("Service", "bundle.cjs nggak ada di assets", null)
             BotBus.publish {
                 engineError =
                     "bundle.cjs tidak ditemukan di assets. Build ulang APK lewat GitHub Actions, atau jalankan langkah 'Build Lokal' di README."
@@ -112,9 +134,17 @@ class BotService : Service() {
         return START_STICKY
     }
 
+    // Dipanggil kalau Android membunuh service (RAM sempit / di-swipe).
+    // Dicatat biar ketahuan kenapa bot-nya diam.
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        LogRecorder.tulis("Service", "onTaskRemoved — app di-swipe dari daftar recent")
+        super.onTaskRemoved(rootIntent)
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        LogRecorder.tulis("Service", "BotService.onDestroy — service dihentikan")
         isRunning = false
         instance = null
         BotBus.publish { serviceRunning = false }
@@ -174,6 +204,7 @@ class BotService : Service() {
                 nextCheckAt = e.optLong("nextCheckAt", 0L).takeIf { it > 0 }
                 repo = e.optString("repo", "").orNull()
                 channel = e.optString("channel", "").orNull()
+                channelNama = e.optString("channelName", "").orNull()
             }
 
             "qr" -> BotBus.publish { qr = e.optString("qr", "").orNull() }
@@ -191,8 +222,28 @@ class BotService : Service() {
 
             "posted" -> {
                 val tag = e.optString("tag")
-                updateNotif("🚀 Posting release $tag ke channel!")
+                updateNotif("Release $tag udah diposting ke channel")
             }
+
+            // Bot selesai bikin channel baru: simpan JID-nya biar nggak perlu
+            // disalin manual, lalu kabari UI lewat BotBus.
+            "channel_dibuat" -> {
+                val jid = e.optString("jid")
+                val nama = e.optString("nama", "").orNull()
+                val link = e.optString("link", "").orNull()
+                if (jid.isNotBlank()) {
+                    settings.channel = jid
+                    appendLog("Channel baru disimpan ke setting: $jid")
+                    if (link != null) appendLog("Link channel (buat dibagikan): $link")
+                    BotBus.publish {
+                        channel = jid
+                        channelNama = nama
+                        channelBaru = jid
+                    }
+                }
+            }
+
+            "channel_gagal" -> appendLog("Gagal bikin channel: " + e.optString("msg"))
 
             "cmd_error" -> appendLog("⚠️ " + e.optString("msg"))
 
@@ -200,6 +251,15 @@ class BotService : Service() {
         }
     }
 
+    /**
+     * Log dari engine (Node) masuk ke dua tempat:
+     *  - buffer di memori → ditampilkan di kartu Log
+     *  - folder Android/media/<paket>/log/mesin.log → bisa dibuka/dikirim user
+     *
+     * Yang lama (bot.log di dalam dataDir) tetap ditulis, tapi itu ada di
+     * /data/data/... yang nggak bisa dibuka siapa-siapa tanpa root. Percuma
+     * buat debugging di HP — itu sebabnya LogRecorder dipakai.
+     */
     private fun appendLog(msg: String) {
         val line =
             "[" + SimpleDateFormat("HH:mm:ss", Locale.US).format(Date()) + "] $msg"
@@ -209,9 +269,12 @@ class BotService : Service() {
             val copy = logBuffer.toList()
             BotBus.publish { log = copy }
         }
-        try {
-            File(dataDir, "bot.log").appendText(line + "\n")
-        } catch (_: Exception) {
+        LogRecorder.mesin(line)
+        if (::dataDir.isInitialized) {
+            try {
+                File(dataDir, "bot.log").appendText(line + "\n")
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -224,7 +287,7 @@ class BotService : Service() {
             "Layanan Bot",
             NotificationManager.IMPORTANCE_LOW
         )
-        ch.description = "Status bot wa-release-bot"
+        ch.description = "Status bot wa-release-bot (cek release GitHub)"
         nm.createNotificationChannel(ch)
     }
 

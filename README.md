@@ -65,7 +65,8 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`), jadi perilakunya identik.
 - ✅ **Host di HP sendiri** — aplikasi Android native, tanpa Termux, tanpa VPS
 - ✅ **Tidur-bangun beneran** — WhatsApp baru terhubung pas mau posting
 - ✅ **Scan QR sekali seumur hidup** — session WA tersimpan di storage privat app
-- ✅ **Post ke channel WA** (username `@...` atau JID `120363...@g.us`)
+- ✅ **Post ke channel WA** (tempel link channel-nya) — atau ke **grup WA** kalau lebih gampang
+- ✅ **Bikin channel dari app** — belum punya channel? bot yang bikinin, sekali klik
 - ✅ **Watchdog** — WorkManager + boot receiver: service ke-bunuh Android → nyala lagi
 - ✅ **UI status real-time** — log, tag terakhir, hitungan mundur, dialog QR
 - ✅ **Semua setting bisa diubah dari UI** — repo, interval, token, prerelease, dll.
@@ -96,13 +97,51 @@ Detail lengkap: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ### Pakai Setelah Install
 
-1. Buka app → isi **Repo GitHub** (`owner/nama-repo`) & **Channel WA** (`@username_channel`)
-   → **Simpan Setting**
-2. Tekan **Setup (Scan QR)** → scan QR di layar pakai WA
-   (WA → ☰ → *Perangkat Tertaut* → *Hubungkan Perangkat*)
-3. Bot kirim **test message** ke channel → muncul? Beres 🎉
-4. Tekan **Mulai** → bot jalan dalam mode bangun-tidur
-5. (Opsional) centang **Mulai otomatis saat HP boot**
+1. Buka app → isi **Repo GitHub** (`owner/nama-repo`) → **Simpan Setting**
+   (Channel boleh dikosongin dulu — lihat langkah 2)
+2. **Channel WA**-nya belum ada? Tekan **Bikin Channel** → bot bikin channel baru
+   di WhatsApp lo dan ngisi kolomnya sendiri. Udah punya channel? Tempel
+   **link**-nya di kolom itu (cara ambil link: lihat [di bawah](#channel-wa-dapetnya-dari-mana))
+3. Tekan **Setup (Scan QR)** → scan QR di layar pakai WA
+   (WA → Setelan → *Perangkat Tertaut* → *Tautkan perangkat*)
+4. Bot kirim **test message** ke channel → muncul? Beres
+5. Tekan **Mulai** → bot jalan dalam mode bangun-tidur
+6. (Opsional) centang **Mulai otomatis saat HP boot**
+
+### Channel WA: dapetnya dari mana?
+
+**Channel** itu fitur WhatsApp yang isinya cuma siaran satu arah — cuma lo yang
+ bisa nge-post, yang lain cuma bisa baca. Jadi cocok banget buat kabarin rilis.
+ Ini **bukan** grup dan bukan status.
+
+Ada tiga cara, dari yang paling gampang:
+
+**1. Biarin bot yang bikin (paling gampang).**
+Tekan **Bikin Channel** di app. Bot bikin channel baru di akun lo, nulis JID-nya
+ke kolom setting, kirim test message, dan nampilin link channel-nya di Log.
+Karena lo yang bikin, lo otomatis pemiliknya — jadi bot boleh nge-post ke situ.
+Ini butuh WA-nya udah ditautkan dulu (langkah 3 di atas lewat **Setup**).
+
+**2. Pake channel yang udah lo punya.**
+Buka channel-nya di WA → tap nama channel → **⋯** → **Bagikan** → salin link-nya.
+Bentuknya `https://whatsapp.com/channel/0029...` — tempel apa adanya di kolom
+**Channel WA**. Bot yang ngurusin sisanya.
+
+**3. Pake grup WA.**
+Kalau males bikin channel: bikin grup (boleh grup isi lo sendiri), lalu tempel
+JID grup (`120363...@g.us`) atau link undangan grup-nya
+(`https://chat.whatsapp.com/...`). Bot nge-post ke grup itu.
+
+> **Yang NGGAK bisa: username channel (`@nama_channel`).**
+> Dulu kolom ini nerima username, dan itu selalu gagal — kodenya nyari pakai
+> `onWhatsApp()`, padahal fungsi itu buat nyari **nomor HP**, bukan channel.
+> API WhatsApp yang dipakai engine ini juga nggak nyediain pencarian channel
+> lewat username. Sekarang username ditolak dengan pesan yang nyaranin pakai
+> link. Ini bukan salah lo kalau bingung — pesan errornya yang dulu menyesatkan.
+
+> **Syarat:** lo harus **pemilik/admin** channel-nya, karena bot nge-post pakai
+> nomor WA lo sendiri (sebagai perangkat tertaut). Channel orang lain → pesannya
+> nggak akan terkirim.
 
 | Tombol | Fungsi |
 |---|---|
@@ -112,6 +151,9 @@ Detail lengkap: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | **Cek Sekarang** | Paksa cek GitHub sekarang (hasilnya di Log) |
 | **Setup (Scan QR)** | Tampilkan QR buat linking device |
 | **Test** | Kirim test message ke channel |
+| **Bikin Channel** | Bikin channel WA baru dari akun lo + isi kolom Channel otomatis |
+| **Buka Folder Log** | Buka folder log di file manager (path-nya ke-copy kalau nggak ada file manager) |
+| **Kirim Log** | Bagikan file log lewat WA/email/Drive — ini yang dikirim kalau lapor masalah |
 | **Matikan Service** | Matikan semuanya sampai service dinyalakan lagi |
 
 **Biar HP nggak "neror":**
@@ -253,20 +295,60 @@ Butuh: **JDK 17**, **Android SDK 35**, **NDK 26.1.10909125**, **CMake 3.22.1**, 
 
 ---
 
+## 🩺 Debugging — log ada di mana
+
+App-nya nulis semua yang terjadi ke:
+
+```
+Android/media/com.xykals.warelease/log/
+```
+
+Alasan folder itu yang dipakai: **bisa dibuka tanpa root dan tanpa izin
+penyimpanan apa pun** (file manager, atau HP disambung ke komputer), sedangkan
+folder app yang lama (`/data/data/...`) nggak bisa dibuka siapa-siapa kecuali
+app-nya sendiri — jadi percuma buat nyari masalah.
+
+| File | Isinya |
+|---|---|
+| `app.log` | Aktivitas app: tombol apa yang ditekan, service nyala/mati, error |
+| `mesin.log` | Log engine bot (Node.js): cek release, posting, QR, error |
+| `logcat.log` | Log mentah Android — termasuk output mentah Node & stack trace |
+| `crash.log` | **Ada isinya = app pernah mati sendiri.** Bagian atasnya nulis versi app, HP apa, dan penyebabnya |
+
+Cara paling gampang: **Kirim Log** di app → pilih WhatsApp/email → kirim ke
+tujuan. Kalau mau lihat sendiri: **Buka Folder Log**.
+
+Tiap file maksimal 2 MB lalu di-rotate (yang lama jadi `.1`). Folder ini boleh
+dihapus kapan aja — bakal dibikin ulang.
+
+**Kalau app-nya mati sendiri ("aplikasi terhenti"):** buka `crash.log` — di
+situ ada stack trace-nya. Kalau `crash.log` kosong padahal app-nya jelas-jelas
+nutup, berarti yang mati bukan app-nya (mis. service-nya dibunuh Android karena
+HP-nya kehabisan RAM) — cek `app.log` baris `onTaskRemoved` / `onDestroy`.
+
+Masih perlu log mentah? `adb logcat -s WRBot` (output engine Node).
+
+---
+
 ## 🔧 Troubleshooting
 
 | Gejala | Solusi |
 |---|---|
 | `bundle.cjs tidak ditemukan` | APK di-build tanpa langkah bundling — build ulang via Actions / `scripts/build-local.sh` |
 | `libnode.so tidak ditemukan` | Jalankan `bash scripts/fetch-nodejs-mobile.sh` |
-| QR tidak muncul | Pastikan service aktif (baru tekan Setup? tunggu ±4 detik). Cek Log di app |
+| App **terhenti** pas ditekan (dulu sering kena di tombol Setup) | Fixed di **v1.1.3** — `BotService` baca SharedPreferences di constructor, padahal Context-nya belum dipasang Android → NullPointerException. Update ke v1.1.3+ |
+| QR tidak muncul | Tunggu ±4 detik (service baru dinyalakan). Kalau >10 detik, app bilang sendiri di Log. Cek `mesin.log` |
+| Layar sempat beku pas QR muncul | Fixed di **v1.1.3** — gambar QR 640×640 dulu digambar di thread utama (400 ribu panggilan `setPixel`). Sekarang di thread belakang |
 | QR tidak muncul di CLI | Pastikan pakai Baileys 6.7.24 + `qrcode-terminal` (sudah otomatis sejak v1.1.0) |
 | `Cannot destructure property 'subtle' of globalThis.crypto` | Runtime Node 18 tanpa polyfill. Sudah diperbaiki di v1.1.0 — update dulu |
 | `Sesi WA ke-logout` | Session terbuang — tekan **Setup** lagi dan scan QR |
-| `Channel @x tidak ketemu` | Cek username channel; pastikan lo **admin**; atau pakai JID (`120363...@g.us`) |
+| `Username channel (...) nggak bisa dipakai` | Memang nggak didukung. Pakai **link** channel, atau tekan **Bikin Channel**. Lihat [Channel WA: dapetnya dari mana?](#channel-wa-dapetnya-dari-mana) |
+| `Link channel-nya nggak kebaca` | Link-nya kadaluarsa / salah. Buka channel → ⋯ → Bagikan → salin ulang |
+| Pesan nggak terkirim ke channel | Pastikan lo **pemilik/admin** channel-nya. Cek `mesin.log` |
+| Mau lapor bug tapi nggak tau kenapa | Tekan **Kirim Log** → kirim hasilnya. Yang paling penting `crash.log` |
 | GitHub 403/429 (rate limit) | Isi **Token GitHub** di setting (classic token, scope `public_repo` cukup) |
 | Bot tidur terus padahal ada release | Cek **Log** di app + tab **Terakhir**. Pakai **Cek Sekarang** buat paksa |
-| Log mentah (debug) | `adb logcat -s WRBot` — semua `console.log` engine Node ke sana |
+| Log mentah (debug) | `adb logcat -s WRBot` — semua `console.log` engine Node ke sana. Atau `logcat.log` di folder log app |
 
 Masih mentok? Buka [Issue](../../issues/new/choose) — sertakan output Log dari app.
 
@@ -277,7 +359,8 @@ Masih mentok? Buka [Issue](../../issues/new/choose) — sertakan output Log dari
 - Session WA tersimpan di **storage privat app** (`/data/data/.../wa_release_bot/session`)
   — nggak bisa diakses app lain
 - `allowBackup=false` → session nggak ikut backup/restore
-- Bot posting pakai **nomor WA lo sendiri** (sebagai linked device) — pastikan lo admin channel-nya
+- Bot posting pakai **nomor WA lo sendiri** (sebagai linked device) — pastikan lo pemilik/admin channel-nya
+- **Folder log bisa dibaca siapa aja yang pegang HP-nya.** Isinya tag release, isi pesan, dan error — **bukan** token atau kredensial session. Kalau mau bersih, hapus foldernya
 - **Jangan pernah commit** keystore / token ke repo
   (`.gitignore` + [gitleaks](.github/workflows/security.yml) sudah jaga, tapi tetap hati-hati)
 - Token di CI taruh di **GitHub Secrets**, jangan di file
@@ -295,7 +378,7 @@ Laporan kerentanan: lihat [SECURITY.md](SECURITY.md).
 .
 ├── app/                      # 📱 aplikasi Android (Kotlin)
 │   ├── src/main/cpp/         #    jembatan JNI → node::Start()
-│   ├── src/main/java/…/      #    service, bridge, UI
+│   ├── src/main/java/…/      #    App (log+capture crash), BotService, LogRecorder, bridge, UI
 │   ├── src/test/             #    unit test (JVM)
 │   └── build.gradle
 ├── bot-js/                   # 🧠 engine bot (plain Node.js + Baileys)

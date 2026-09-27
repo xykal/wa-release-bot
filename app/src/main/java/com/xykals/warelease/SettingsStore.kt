@@ -40,7 +40,19 @@ class SettingsStore(ctx: Context) {
         get() = p.getBoolean("boot", false)
         set(v) = p.edit().putBoolean("boot", v).apply()
 
-    fun hasValidSettings(): Boolean = repo.isNotBlank() && channel.isNotBlank()
+    /**
+     * Buat nyalain engine, yang wajib cuma repo.
+     *
+     * Channel sengaja TIDAK ikut diwajibkan: dari sananya user nggak punya
+     * channel, dan dia nggak bisa dapet channel sebelum engine-nya jalan
+     * (tombol "Bikin Channel" butuh engine hidup). Kalau channel diwajibkan,
+     * keadaannya jadi mentok: nggak bisa nyimpen setting → nggak bisa bikin
+     * channel → nggak bisa ngisi channel.
+     *
+     * Kalau channel-nya kosong pas mau posting, engine bakal ngeluh di log
+     * dengan pesan yang jelas — bukan gagal diam-diam.
+     */
+    fun hasValidSettings(): Boolean = repo.isNotBlank()
 
     fun toConfigJson(): JSONObject = JSONObject()
         .put(

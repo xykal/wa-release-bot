@@ -11,6 +11,7 @@ import {
   DisconnectReason,
   Browsers,
 } from '@whiskeysockets/baileys';
+import { resolveTarget } from './channel.mjs';
 
 /**
  * Nyambung ke WA sebagai linked device.
@@ -103,19 +104,16 @@ export async function connectToWhatsApp({
 
 /**
  * Ubah target channel jadi JID.
- * Terima: "@usernamechannel" | "usernamechannel" | "120363XXXXXX@g.us"
+ * Terima: link channel (https://whatsapp.com/channel/...), JID <angka>@newsletter,
+ * JID grup <angka>@g.us, atau link undangan grup.
+ *
+ * Ingat: username channel (@nama) TIDAK didukung — lihat src/channel.mjs.
+ * (Dulu fungsi ini manggil onWhatsApp('@username'), padahal itu buat nyari
+ * NOMOR HP, bukan channel. Jadi @username selalu gagal.)
  */
-export async function resolveChannelJid(sock, target) {
-  const t = String(target || '').trim();
-  if (t.includes('@')) return t; // udah JID
-  const username = t.startsWith('@') ? t : `@${t}`;
-  const result = await sock.onWhatsApp(username);
-  if (!result || !result.length) {
-    throw new Error(
-      `Channel ${username} nggak ketemu. Cek username channel-nya, atau isi JID channel langsung di config (contoh: 120363XXXXXXXX@g.us).`
-    );
-  }
-  return result[0][0];
+export async function resolveChannelJid(sock, target, log = () => {}) {
+  const hasil = await resolveTarget(sock, target, log);
+  return hasil.jid;
 }
 
 export async function sendText(sock, jid, text) {

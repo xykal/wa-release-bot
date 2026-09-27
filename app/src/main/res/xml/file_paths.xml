@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Folder mana saja yang boleh dibagikan lewat FileProvider (tombol "Kirim log").
+
+  external-media-path = Android/media/<paket>/ — sama dengan yang dipakai
+  LogRecorder. Kalau LogRecorder jatuh ke cadangan (Android/data atau
+  filesDir), dua baris berikutnya yang kepakai, jadi tombol "Kirim log"
+  tetap jalan di HP yang penyimpanan eksternalnya bermasalah.
+
+  Nggak dibuka lebih luas dari ini: FileProvider nolak path yang nggak
+  terdaftar, jadi file lain di HP nggak bisa ikut kebagikan.
+-->
+<paths>
+    <external-media-path name="log" path="log/" />
+    <external-files-path name="log-cadangan" path="log/" />
+    <files-path name="log-dalam" path="log/" />
+</paths>

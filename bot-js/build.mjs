@@ -15,7 +15,48 @@ import esbuild from 'esbuild';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const banner = readFileSync(path.join(here, 'polyfills/webcrypto.cjs'), 'utf8');
 
+// ---------------------------------------------------------------------------
+//  Tambalan Baileys 6.7.24 (dipasang waktu bundling, node_modules nggak diubah)
+//
+//  Grup WA sekarang banyak yang pakai "LID" (ID samaran, bukan nomor HP).
+//  Baileys 6.7.24 ngenkripsi pesan grup pakai identitas NOMOR kita walaupun
+//  grupnya LID → HP anggota nyari kunci pengirim pakai LID kita, nggak ketemu,
+//  pesannya cuma jadi "Menunggu pesan ini". Baileys 7 udah benerin ini
+//  (groupSenderIdentity = meLid kalau grupnya LID), tapi Baileys 7 butuh
+//  Node 20 — sedangkan nodejs-mobile mentok di Node 18. Jadi baris yang sama
+//  ditambal di sini.
+// ---------------------------------------------------------------------------
+const TAMBALAN = [
+  {
+    file: /baileys[\\/]lib[\\/]Socket[\\/]messages-send\.js$/,
+    cari: `                    data: bytes,
+                    meId
+                });`,
+    ganti: `                    data: bytes,
+                    // [wa-release-bot] grup LID → kunci pengirim pakai LID kita (sama kayak Baileys 7)
+                    meId: (groupData?.addressingMode === 'lid' && authState.creds.me?.lid) ? authState.creds.me.lid : meId
+                });`,
+  },
+];
+
+const tambalBaileys = {
+  name: 'tambal-baileys',
+  setup(build) {
+    for (const t of TAMBALAN) {
+      build.onLoad({ filter: t.file }, (args) => {
+        const asli = readFileSync(args.path, 'utf8');
+        if (!asli.includes(t.cari)) {
+          throw new Error(`Tambalan Baileys nggak nemu baris targetnya di ${args.path} — versi Baileys berubah? Cek build.mjs.`);
+        }
+        t.kepakai = true;
+        return { contents: asli.replace(t.cari, t.ganti), loader: 'js' };
+      });
+    }
+  },
+};
+
 const result = await esbuild.build({
+  plugins: [tambalBaileys],
   entryPoints: ['src/bot.mjs'],
   bundle: true,
   platform: 'node',
@@ -39,6 +80,13 @@ const result = await esbuild.build({
 });
 
 if (result.errors.length) process.exit(1);
+for (const t of TAMBALAN) {
+  if (!t.kepakai) {
+    console.error('❌ Tambalan Baileys nggak kepasang:', t.file);
+    process.exit(1);
+  }
+}
+console.log(`✅ Tambalan Baileys kepasang (${TAMBALAN.length}).`);
 
 const size = statSync('dist/bundle.cjs').size;
 console.log(`✅ Bundle selesai: dist/bundle.cjs (${(size / 1024 / 1024).toFixed(1)} MB)`);

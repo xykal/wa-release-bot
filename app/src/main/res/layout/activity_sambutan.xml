@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sambutan (WelcomeActivity): 3 halaman, muncul sekali pas pertama buka.
+  DIBIKIN GENERATOR: scripts-dev/gen_layout.py — edit di sana, lalu jalankan ulang.
+  Semua komponen digambar sendiri (res/values/themes.xml + res/drawable/bg_*):
+  nggak ada MaterialButton / CardView / Switch bawaan.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/wr_latar">
+
+    <ScrollView
+        android:id="@+id/svUtama"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingBottom="130dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingTop="16dp"
+            android:paddingEnd="16dp">
+
+            <LinearLayout
+                android:id="@+id/hal1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+                <FrameLayout
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:layout_marginTop="40dp"
+                    android:background="@drawable/bg_logo">
+                    <ImageView
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_logo" />
+                </FrameLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:gravity="center"
+                    android:text="Halo! 👋"
+                    android:textColor="@color/wr_teks"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_kartu"
+                    android:lineSpacingExtra="5dp"
+                    android:padding="18dp"
+                    android:text="WA Release Bot = asisten WhatsApp yang jalan di HP lo sendiri.
+
+            🚀  Rilis baru di GitHub → otomatis diposting ke channel
+            🛡️  Jagain grup: approve yang minta join, tolak yang dulu udah keluar
+            ⌨️  Perintah !info / !rules / !menu + script buatan sendiri
+            🔋  Tidur hampir sepanjang waktu — hemat batre"
+                    android:textColor="@color/wr_teks2"
+                    android:textSize="14.5sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/hal2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:visibility="gone">
+                <FrameLayout
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:layout_marginTop="40dp"
+                    android:background="@drawable/bg_logo">
+                    <ImageView
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_tautan"
+                        android:tint="@color/wr_hijau_terang" />
+                </FrameLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:gravity="center"
+                    android:text="Cara pakainya"
+                    android:textColor="@color/wr_teks"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_kartu"
+                    android:lineSpacingExtra="5dp"
+                    android:padding="18dp"
+                    android:text="1.  Tautkan WhatsApp (sekali aja) — pakai kode 8 huruf, nggak perlu HP kedua
+
+            2.  Buka Setelan (ikon gerigi): isi repo / channel / link grup, pilih mode
+
+            3.  Tekan Mulai. Udah — bot kerja sendiri di belakang.
+
+            Di Xiaomi &amp; sejenisnya: izinkan Autostart + batre &quot;Tanpa batasan&quot; biar nggak dimatiin sistem."
+                    android:textColor="@color/wr_teks2"
+                    android:textSize="14.5sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/hal3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:visibility="gone">
+                <FrameLayout
+                    android:layout_width="96dp"
+                    android:layout_height="96dp"
+                    android:layout_marginTop="40dp"
+                    android:background="@drawable/bg_logo">
+                    <ImageView
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:layout_gravity="center"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_perisai"
+                        android:tint="@color/wr_hijau_terang" />
+                </FrameLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:gravity="center"
+                    android:text="Sebelum mulai"
+                    android:textColor="@color/wr_teks"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_kartu"
+                    android:lineSpacingExtra="5dp"
+                    android:padding="18dp"
+                    android:text="•  Bot login sebagai &quot;perangkat tertaut&quot; di akun WA lo — sama kayak WhatsApp Web.
+
+            •  Semua data (sesi WA, setelan, log) cuma ada di HP ini. Nggak ada server.
+
+            •  Ini alat tidak resmi, bukan buatan WhatsApp. Pakai secukupnya, jangan buat spam.
+
+            •  Boleh dipakai &amp; dilihat kodenya buat pribadi. Dilarang dijual / disebar ulang / di-rebrand tanpa izin — detailnya di Tentang → Lisensi."
+                    android:textColor="@color/wr_teks2"
+                    android:textSize="14.5sp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="24dp" />
+        </LinearLayout>
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/tvBanner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="130dp"
+        android:background="@drawable/bg_banner"
+        android:elevation="8dp"
+        android:padding="14dp"
+        android:textColor="@color/wr_teks"
+        android:textSize="14sp"
+        android:visibility="gone" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#F20B141A"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp">
+        <TextView
+            android:id="@+id/tvTitik"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:letterSpacing="0.3"
+            android:text="●  ○  ○"
+            android:textColor="@color/wr_hijau"
+            android:textSize="12sp" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/btnLewati"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                style="@style/TombolLembut"
+                android:text="Lewati" />
+            <TextView
+                android:id="@+id/btnLanjut"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:layout_marginStart="10dp"
+                style="@style/TombolUtama"
+                android:text="Lanjut" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

@@ -54,6 +54,10 @@ class BotService : Service() {
             else ctx.startService(i)
         }
 
+        /** Folder script bot (plugin) — engine baca dari sini. */
+        fun folderScript(ctx: Context): File =
+            File(File(ctx.filesDir, "wa_release_bot"), "plugins").apply { mkdirs() }
+
         fun stop(ctx: Context) {
             ctx.stopService(Intent(ctx, BotService::class.java))
         }
@@ -286,6 +290,17 @@ class BotService : Service() {
         }
     }
 
+    /**
+     * Mode pintar: dipanggil [WaNotifListener] tiap ada notifikasi WhatsApp
+     * yang relevan. Penyaringan & jeda ada di engine juga, jadi aman dipanggil
+     * beruntun.
+     */
+    fun bangun(alasan: String) {
+        if (settings.mode != "pintar") return
+        LogRecorder.tulis("Pintar", "dibangunin: $alasan")
+        sendCmd(mapOf("type" to "bangun"))
+    }
+
     /** Dipanggil MainActivity: app kebuka → polling cepat, di belakang → santai. */
     fun setUiTerlihat(terlihat: Boolean) {
         fileBridge?.uiTerlihat = terlihat
@@ -308,6 +323,9 @@ class BotService : Service() {
                 busy = e.optBoolean("busy")
                 waLinked = e.optBoolean("waLinked")
                 waConnected = e.optBoolean("waConnected")
+                waNomor = e.optString("waNomor", "").takeIf { it.isNotBlank() && it != "null" }
+                mode = e.optString("mode", "berkala")
+                pluginJumlah = e.optInt("pluginJumlah", 0)
                 lastTag = e.optString("lastTag", "").orNull()
                 lastPostedAt = e.optString("lastPostedAt", "").orNull()
                 postCount = e.optInt("postCount", 0)
@@ -343,6 +361,50 @@ class BotService : Service() {
                     daftarHitam = daftar
                     daftarHitamManual = manual
                     daftarHitamSeq += 1
+                }
+            }
+
+            "plugin_daftar" -> {
+                val arr = e.optJSONArray("items")
+                val daftar = (0 until (arr?.length() ?: 0)).mapNotNull { i ->
+                    val o = arr?.optJSONObject(i) ?: return@mapNotNull null
+                    val pr = o.optJSONArray("perintah")
+                    ScriptBot(
+                        file = o.optString("file"),
+                        nama = o.optString("nama"),
+                        versi = o.optString("versi"),
+                        deskripsi = o.optString("deskripsi"),
+                        perintah = (0 until (pr?.length() ?: 0)).map { pr!!.optString(it) },
+                        error = o.optString("error", "").takeIf { it.isNotBlank() && it != "null" }
+                    )
+                }
+                BotBus.publish {
+                    scriptBot = daftar
+                    pluginJumlah = daftar.count { it.error == null }
+                    scriptBotSeq += 1
+                }
+            }
+
+            "respons" -> {
+                val arr = e.optJSONArray("items")
+                val items = (0 until (arr?.length() ?: 0)).mapNotNull { i ->
+                    val o = arr?.optJSONObject(i) ?: return@mapNotNull null
+                    Respons(
+                        o.optString("nama"),
+                        o.optString("teks"),
+                        o.optLong("t", 0L).takeIf { it > 0 },
+                        o.optBoolean("dibalas")
+                    )
+                }
+                val hasil = HasilRespons(
+                    ok = e.optBoolean("ok"),
+                    judul = e.optString("judul", "").orNull(),
+                    pesan = e.optString("msg", "").orNull(),
+                    items = items
+                )
+                BotBus.publish {
+                    respons = hasil
+                    responsSeq += 1
                 }
             }
 

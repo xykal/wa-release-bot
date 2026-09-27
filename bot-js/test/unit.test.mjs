@@ -314,20 +314,183 @@ test('format: ajakan bales cuma muncul kalau diminta', () => {
   assert.ok(formatTesGrup('Grup A').includes('Grup A'));
 });
 
-test('sendPertanyaan: channel → questionMessage, grup → teks biasa', async () => {
+// ------------------------------------------------------ kirim + ack
+async function siapBaileys() {
   // Baileys butuh WebCrypto global; Node 18 belum punya (di app ada polyfill-nya).
   if (!globalThis.crypto) globalThis.crypto = (await import('node:crypto')).webcrypto;
-  const { sendPertanyaan } = await import('../src/wa.mjs');
+  return import('../src/kirim.mjs');
+}
+
+function sockPalsu({ ackAttrs = {}, tanpaAck = false } = {}) {
+  const { EventEmitter } = require_('node:events');
+  const ws = new EventEmitter();
   const kirim = [];
-  const sock = {
-    relayMessage: async (jid, msg) => kirim.push(['relay', jid, msg]),
-    sendMessage: async (jid, isi) => kirim.push(['send', jid, isi]),
+  const balasAck = (id, to) => {
+    if (tanpaAck) return;
+    setTimeout(() => ws.emit(`TAG:${id}`, { tag: 'ack', attrs: { id, class: 'message', from: to, ...ackAttrs } }), 5);
   };
-  await sendPertanyaan(sock, '123@newsletter', 'halo');
-  await sendPertanyaan(sock, '456@g.us', 'halo');
-  assert.equal(kirim[0][0], 'relay');
-  assert.equal(kirim[0][2].questionMessage.message.extendedTextMessage.text, 'halo');
-  assert.deepEqual(kirim[1], ['send', '456@g.us', { text: 'halo' }]);
+  return {
+    ws,
+    kirim,
+    user: { id: '6281111111111:1@s.whatsapp.net' },
+    sendNode: async (node) => { kirim.push(['node', node]); balasAck(node.attrs.id, node.attrs.to); },
+    sendMessage: async (jid, isi, opsi) => {
+      kirim.push(['send', jid, isi, opsi]);
+      balasAck(opsi.messageId, jid);
+      return { key: { id: opsi.messageId }, message: { conversation: isi.text } };
+    },
+  };
+}
+import { createRequire as bikinRequire } from 'node:module';
+const require_ = bikinRequire(import.meta.url);
+
+test('kirimPertanyaan: stanza channel pakai <meta questiontype> + isQuestion, serverId dari ack', async () => {
+  const { kirimPertanyaan } = await siapBaileys();
+  const { proto } = await import('@whiskeysockets/baileys');
+  const sock = sockPalsu({ ackAttrs: { server_id: '321' } });
+  const h = await kirimPertanyaan(sock, '123@newsletter', 'halo');
+  assert.equal(h.ok, true);
+  assert.equal(h.serverId, '321');
+  const node = sock.kirim[0][1];
+  assert.equal(node.tag, 'message');
+  assert.equal(node.attrs.to, '123@newsletter');
+  assert.deepEqual(node.content[0], { tag: 'meta', attrs: { questiontype: 'question' }, content: undefined });
+  assert.equal(node.content[1].tag, 'plaintext');
+  const msg = proto.Message.decode(node.content[1].content);
+  assert.equal(msg.questionMessage.message.extendedTextMessage.text, 'halo');
+  assert.equal(msg.questionMessage.message.extendedTextMessage.contextInfo.isQuestion, true);
+});
+
+test('kirimTeks: ack error → dilempar dengan kode WA; tanpa ack → ok null', async () => {
+  const { kirimTeks, pernahKirim } = await siapBaileys();
+  const gagal = sockPalsu({ ackAttrs: { error: '479' } });
+  await assert.rejects(() => kirimTeks(gagal, '1@g.us', 'x'), /479/);
+  const diam = sockPalsu({ tanpaAck: true });
+  const { tungguAck } = await siapBaileys();
+  assert.equal(await tungguAck(diam, 'abc', 30), null);
+  const ok = sockPalsu();
+  const h = await kirimTeks(ok, '1@g.us', 'halo');
+  assert.equal(h.ok, true);
+  assert.ok(pernahKirim(h.id), 'pesan disimpan buat retry');
+  assert.equal(ok.kirim[0][3].messageId, h.id);
+});
+
+test('ambilRespons: baca question_responses', async () => {
+  const { ambilRespons } = await siapBaileys();
+  const { proto } = await import('@whiskeysockets/baileys');
+  const bytes = proto.Message.encode(proto.Message.fromObject({ extendedTextMessage: { text: 'mantap bang' } })).finish();
+  const sock = {
+    query: async (node) => {
+      assert.equal(node.content[0].attrs.server_id, '99');
+      return {
+        tag: 'iq', attrs: {}, content: [{
+          tag: 'question_responses', attrs: { server_id: '99' }, content: [{
+            tag: 'question_response', attrs: {}, content: [
+              { tag: 'message', attrs: { id: 'a', t: '1700000000' }, content: [{ tag: 'plaintext', attrs: {}, content: bytes }] },
+              { tag: 'sender', attrs: { lid: '5@lid', notify_name: 'Budi' } },
+              { tag: 'flags', attrs: {}, content: [{ tag: 'replied', attrs: {} }] },
+            ],
+          }],
+        }],
+      };
+    },
+  };
+  const r = await ambilRespons(sock, '1@newsletter', 99);
+  assert.deepEqual(r, [{ nama: 'Budi', teks: 'mantap bang', t: 1700000000000, dibalas: true }]);
+});
+
+// ------------------------------------------------------ helper pesan & mode
+test('pesan: pisahPerintah, cariTeks, samarkan, artiError', async () => {
+  const { pisahPerintah, cariTeks, samarkan, artiError, bacaAck } = await import('../src/pesan.mjs');
+  assert.deepEqual(pisahPerintah('!INFO  grup a'), { perintah: '!info', argumen: ['grup', 'a'], sisa: 'grup a' });
+  assert.equal(pisahPerintah('halo !info'), null);
+  assert.equal(pisahPerintah('/menu').perintah, '!menu');
+  assert.equal(cariTeks({ ephemeralMessage: { message: { extendedTextMessage: { text: '!rules', contextInfo: { quotedMessage: { conversation: 'lama' } } } } } }), '!rules');
+  assert.equal(cariTeks({ imageMessage: { caption: 'cap' } }), 'cap');
+  assert.equal(samarkan('+6281234567890'), '+62812****7890');
+  assert.equal(samarkan('ID samaran …1'), 'ID samaran …1');
+  assert.match(artiError('479'), /479 — /);
+  assert.equal(bacaAck(null), null);
+  assert.deepEqual(bacaAck({ attrs: { server_id: '7' } }), { ok: true, serverId: '7', t: null });
+});
+
+test('mode: jeda grup & faktor adaptif', async () => {
+  const { jedaGrup, faktorBerikut, normalMode } = await import('../src/pesan.mjs');
+  assert.equal(jedaGrup({ mode: 'berkala', dasarMenit: 5 }), 5 * 60_000);
+  assert.equal(jedaGrup({ mode: 'pintar', dasarMenit: 5 }), 30 * 60_000);
+  assert.equal(jedaGrup({ mode: 'adaptif', dasarMenit: 5, faktor: 4 }), 20 * 60_000);
+  assert.equal(jedaGrup({ mode: 'adaptif', dasarMenit: 5, faktor: 64, maksMenit: 60 }), 60 * 60_000);
+  let f = 1;
+  for (let i = 0; i < 10; i++) f = faktorBerikut({ faktor: f, adaKegiatan: false, dasarMenit: 5, maksMenit: 60 });
+  assert.equal(f, 12);
+  assert.equal(faktorBerikut({ faktor: 8, adaKegiatan: true, dasarMenit: 5 }), 1);
+  assert.equal(normalMode('ngasal'), 'berkala');
+});
+
+// ------------------------------------------------------ koneksi
+test('koneksi: socket dipakai bareng, ditutup setelah sepi, eksklusif nutup dulu', async () => {
+  const { createKoneksi } = await import('../src/koneksi.mjs');
+  let dibuka = 0;
+  let ditutup = 0;
+  const status = [];
+  const kon = createKoneksi({
+    jedaTutupMs: 40,
+    buka: async () => { dibuka++; return { sock: { n: dibuka, ev: { on() {} } }, close: () => { ditutup++; } }; },
+    onBerubah: (v) => status.push(v),
+  });
+  const a = await kon.pakai(async (s) => s.n);
+  const b = await kon.pakai(async (s) => s.n);
+  assert.equal(a, 1);
+  assert.equal(b, 1, 'socket kedua numpang yang pertama');
+  assert.equal(kon.nyambung, true);
+  await new Promise((r) => setTimeout(r, 80));
+  assert.equal(kon.nyambung, false);
+  assert.equal(ditutup, 1);
+  await kon.pakai(async () => {});
+  await kon.eksklusif(async () => { assert.equal(kon.nyambung, false); });
+  assert.equal(ditutup, 2);
+  assert.deepEqual(status, [true, false, true, false]);
+  kon.hentikan();
+});
+
+// ------------------------------------------------------ plugin
+test('plugin: muat script, perintah & error dicatat', async () => {
+  const { createPlugin } = await import('../src/plugin.mjs');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'plg-'));
+  fs.writeFileSync(path.join(dir, 'sapa.js'),
+    "module.exports = { nama: 'Sapa', versi: '1', perintah: { halo: async (ctx) => ctx.balas('hai ' + ctx.pengirim.nama) } };");
+  fs.writeFileSync(path.join(dir, 'rusak.js'), 'module.exports = {;');
+  fs.writeFileSync(path.join(dir, 'bukan.txt'), 'x');
+  const log = [];
+  const pl = createPlugin({ dir, log: (m) => log.push(m) });
+  const info = pl.muat();
+  assert.equal(info.length, 2);
+  assert.deepEqual(info.find((i) => i.nama === 'Sapa').perintah, ['!halo']);
+  assert.ok(info.find((i) => i.file === 'rusak.js').error);
+  assert.equal(pl.jumlah, 1);
+  const c = pl.cari('!halo');
+  let dibalas = '';
+  assert.equal(await pl.jalankan(c.plugin, c.fn, { pengirim: { nama: 'Budi' }, balas: async (t) => { dibalas = t; } }, '!halo'), true);
+  assert.equal(dibalas, 'hai Budi');
+  // script diubah → muat ulang kebaca versi baru
+  fs.writeFileSync(path.join(dir, 'sapa.js'), "module.exports = { nama: 'Sapa', perintah: { yo: async () => {} } };");
+  pl.muat();
+  assert.ok(pl.cari('!yo'));
+  assert.equal(pl.cari('!halo'), null);
+});
+
+test('format grup: tes kirim ada link rules, info samarkan', async () => {
+  const f = await import('../src/format.mjs');
+  const t = f.formatTesGrup('XyCloud');
+  assert.match(t, /BOT PENJAGA GRUP AKTIF/);
+  assert.match(t, /https:\/\/rules\.xyc\.my\.id\//);
+  assert.match(t, /!info/);
+  assert.ok(!f.formatTesGrup('A', { linkRules: '' }).includes('Aturan lengkap'));
+  const info = f.formatInfoGrup({ nama: 'G', anggota: 10, admin: 2, permintaan: 1, disetujui: 3, ditolak: 1,
+    hitam: [{ label: '+62812****7890', sejak: Date.now() }], manual: 0, lastCekAt: Date.now(), mode: 'Berkala' });
+  assert.match(info, /Anggota: \*10\*/);
+  assert.match(info, /\+62812\*\*\*\*7890/);
+  assert.match(f.formatMenu([{ perintah: '!halo', dari: 'Sapa' }]), /!halo/);
 });
 
 test('daftar hitam manual: nomor pakai spasi nggak pecah', () => {

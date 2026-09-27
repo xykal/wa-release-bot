@@ -68,6 +68,42 @@ class SettingsStore(ctx: Context) {
         get() = p.getString("grupHitam", "") ?: ""
         set(v) = p.edit().putString("grupHitam", v).apply()
 
+    /** Link aturan grup lengkap (dikirim di pesan tes / !rules). Kosong = nggak ditampilkan. */
+    var linkRules: String
+        get() = p.getString("linkRules", LINK_RULES_DEFAULT) ?: LINK_RULES_DEFAULT
+        set(v) = p.edit().putString("linkRules", v.trim()).apply()
+
+    /** Aturan singkat, 1 baris = 1 poin. Kosong = pakai bawaan. */
+    var ringkasRules: String
+        get() = p.getString("ringkasRules", "") ?: ""
+        set(v) = p.edit().putString("ringkasRules", v).apply()
+
+    /** Perintah !info / !rules / !menu di grup. */
+    var perintahAktif: Boolean
+        get() = p.getBoolean("perintahAktif", true)
+        set(v) = p.edit().putBoolean("perintahAktif", v).apply()
+
+    /** Nomor di daftar hitam yang dikirim ke grup (!info) disamarkan sebagian. */
+    var samarkanNomor: Boolean
+        get() = p.getBoolean("samarkanNomor", true)
+        set(v) = p.edit().putBoolean("samarkanNomor", v).apply()
+
+    // ---- mode aktivitas ----
+    /** berkala | adaptif | pintar | realtime */
+    var mode: String
+        get() = p.getString("mode", "berkala")?.takeIf { it in MODE } ?: "berkala"
+        set(v) = p.edit().putString("mode", if (v in MODE) v else "berkala").apply()
+
+    var adaptifMaks: Int
+        get() = p.getInt("adaptifMaks", 60)
+        set(v) = p.edit().putInt("adaptifMaks", v.coerceIn(10, 240)).apply()
+
+    // ---- app ----
+    /** Layar sambutan udah pernah dilewatin. */
+    var sambutanSelesai: Boolean
+        get() = p.getBoolean("sambutanSelesai", false)
+        set(v) = p.edit().putBoolean("sambutanSelesai", v).apply()
+
     // ---- batre ----
     var rekamLogcat: Boolean
         get() = p.getBoolean("rekamLogcat", true)
@@ -103,7 +139,13 @@ class SettingsStore(ctx: Context) {
         "grupAktif" to grupAktif,
         "grupTarget" to grupTarget,
         "grupInterval" to grupInterval,
-        "grupHitam" to grupHitam
+        "grupHitam" to grupHitam,
+        "linkRules" to linkRules,
+        "ringkasRules" to ringkasRules,
+        "perintahAktif" to perintahAktif,
+        "samarkanNomor" to samarkanNomor,
+        "mode" to mode,
+        "adaptifMaksMenit" to adaptifMaks
     )
 
     fun toConfigJson(): JSONObject = JSONObject()
@@ -128,6 +170,10 @@ class SettingsStore(ctx: Context) {
                 .put("target", grupTarget)
                 .put("intervalMinutes", grupInterval)
                 .put("daftarHitam", grupHitam)
+                .put("linkRules", linkRules)
+                .put("ringkasRules", ringkasRules)
+                .put("perintahAktif", perintahAktif)
+                .put("samarkanNomor", samarkanNomor)
         )
         .put(
             "bot",
@@ -135,5 +181,12 @@ class SettingsStore(ctx: Context) {
                 .put("checkIntervalMinutes", intervalMinutes)
                 .put("postOnFirstRun", postOnFirstRun)
                 .put("testMessageOnSetup", testMessageOnSetup)
+                .put("mode", mode)
+                .put("adaptifMaksMenit", adaptifMaks)
         )
+
+    companion object {
+        const val LINK_RULES_DEFAULT = "https://rules.xyc.my.id/"
+        val MODE = listOf("berkala", "adaptif", "pintar", "realtime")
+    }
 }

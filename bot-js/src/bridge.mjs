@@ -11,9 +11,11 @@ export function createBridge({ dataDir, wsPort = 18790, log, onCommand }) {
   const cmdFile = path.join(dataDir, 'cmd.json');
 
   fs.mkdirSync(dataDir, { recursive: true });
-  for (const f of [eventsFile, cmdFile]) {
-    if (!fs.existsSync(f)) fs.writeFileSync(f, '');
-  }
+  // events.jsonl DIKOSONGIN tiap engine nyala. Dulu isinya numpuk dari sesi-
+  // sesi lama, dan app baca ulang dari awal tiap service nyala — jadi QR /
+  // pairing code basi dari setup yang kepotong ikut "diputar ulang" dan
+  // nongol di layar barengan sama yang baru.
+  fs.writeFileSync(eventsFile, '');
 
   // ---------- WebSocket (fast path, boleh gagal) ----------
   let wss = null;
@@ -41,16 +43,22 @@ export function createBridge({ dataDir, wsPort = 18790, log, onCommand }) {
   }
 
   // ---------- Polling cmd.json (jalur utama) ----------
-  let cmdMtime = 0;
+  // Isinya boleh BANYAK perintah, satu per baris (app nambahin di ujung).
+  // Dulu tiap perintah nimpa file — jadi kalau app ngirim 2 perintah dalam
+  // 1 detik (mis. "configure" lalu "setup"), yang pertama hilang.
+  // File dipindah dulu (rename) baru dibaca, biar perintah yang masuk pas
+  // lagi diproses nggak ikut kehapus.
+  const procFile = cmdFile + '.proc';
   const pollTimer = setInterval(() => {
     try {
-      const st = fs.statSync(cmdFile);
-      if (st.mtimeMs !== cmdMtime) {
-        cmdMtime = st.mtimeMs;
-        const raw = fs.readFileSync(cmdFile, 'utf8').trim();
-        try { fs.unlinkSync(cmdFile); } catch { /* ignore */ }
-        if (!raw) return;
-        try { onCommand(JSON.parse(raw)); }
+      if (!fs.existsSync(cmdFile) || fs.statSync(cmdFile).size === 0) return;
+      fs.renameSync(cmdFile, procFile);
+      const raw = fs.readFileSync(procFile, 'utf8');
+      try { fs.unlinkSync(procFile); } catch { /* ignore */ }
+      for (const baris of raw.split('\n')) {
+        const t = baris.trim();
+        if (!t) continue;
+        try { onCommand(JSON.parse(t)); }
         catch (e) { log('cmd.json tidak bisa di-parse: ' + e.message); }
       }
     } catch { /* file belum ada / lagi di-tulis app */ }

@@ -88,6 +88,7 @@ class MainActivity : AppCompatActivity() {
 
     private var engineJalan = false
     private var setupTerakhir: String? = null
+    private var tahapTerakhir: String? = null
 
     // QR
     private var qrDialog: Dialog? = null
@@ -364,6 +365,10 @@ class MainActivity : AppCompatActivity() {
         if (settings.hasValidSettings()) withService { sendCmd(settings.toConfigureCmd()) }
         kodeDiabaikan = false
         qrDiabaikan = false
+        // Ganti cara nautin → tampilan cara yang lama langsung ditutup
+        // (engine juga ngebatalin setup yang lama).
+        tutupDialogKode()
+        tutupDialogQr()
         withService {
             sendCmd(mapOf("type" to "setup", "cara" to cara, "phone" to settings.phone))
         }
@@ -608,6 +613,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         tvWaStatus.text = when {
+            ui.setupState == "starting" && ui.setupTahap != null -> ui.setupTahap!!
             ui.waLinked -> "✓ WhatsApp udah tertaut — nggak perlu nautin lagi."
             ui.setupState == "starting" -> "Lagi nautin…"
             else -> "Belum tertaut."
@@ -653,8 +659,15 @@ class MainActivity : AppCompatActivity() {
             setupTerakhir = ui.setupState
         }
 
+        if (ui.setupTahap != null && ui.setupTahap != tahapTerakhir) {
+            banner(ui.setupTahap!!)
+        }
+        tahapTerakhir = ui.setupTahap
+
+        // QR & pairing code nggak boleh nongol bareng: kalau lagi mode kode,
+        // QR-nya diabaikan (Baileys tetap bikin QR di belakang layar).
         tanganiKode(ui.pairingCode)
-        tanganiQr(ui.qr)
+        tanganiQr(if (ui.pairingCode.isNullOrBlank()) ui.qr else null)
     }
 
     // ----------------------------- pairing code -----------------------------

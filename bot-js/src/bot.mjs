@@ -92,7 +92,6 @@ async function main() {
   let nextGrupAt = null;
   let timer = null;
   let timerGrup = null;
-  let setupInFlight = false;
 
   // ----------------------------- bridge ------------------------------------
   // `bridge` sengaja di-`let` dan dicek null: createBridge() memanggil log()
@@ -459,12 +458,34 @@ async function main() {
   }
 
   // ----------------------------- setup & test ------------------------------
+  // Setup yang lagi jalan + tombol pembatalnya. Kalau user minta setup lagi
+  // (mis. tadi pilih QR, sekarang pilih kode), yang lama DIBATALIN dan diganti
+  // — dulu yang baru ditolak ("Setup lagi jalan"), jadi QR lama tetap nongol
+  // barengan sama kode yang diminta.
+  let setupJalan = null;
+  let setupBatal = null;
+
+  async function mintaSetup(cara, nomorMentah) {
+    if (setupJalan) {
+      log('↩️ Setup sebelumnya dibatalin, ganti ke yang baru.');
+      setupBatal.aktif = true;
+      try { setupBatal.sock?.end(undefined); } catch { /* ignore */ }
+      await setupJalan.catch(() => {});
+    }
+    const batal = { aktif: false, sock: null };
+    setupBatal = batal;
+    setupJalan = doSetup(cara, nomorMentah, batal).finally(() => {
+      if (setupBatal === batal) { setupJalan = null; emitStatus(); }
+    });
+  }
+
   /**
    * Nautin WA. `cara` = 'pairing' (pakai nomor + kode 8 huruf) atau 'qr'.
    */
-  async function doSetup(cara, nomorMentah) {
-    if (setupInFlight) { log('Setup lagi jalan... selesaikan dulu yang tadi.'); return; }
-    setupInFlight = true;
+  async function doSetup(cara, nomorMentah, batal) {
+    // Bersihin sisa tampilan setup sebelumnya: QR & kode nggak boleh nongol bareng.
+    bridge.send({ type: 'qr', qr: null });
+    bridge.send({ type: 'pairing_code', code: null });
     emitStatus();
     let mode = cara === 'qr' ? 'qr' : 'pairing';
     try {
@@ -482,15 +503,24 @@ async function main() {
       bridge.send({ type: 'setup_start', mode });
 
       await pakaiWA('setup', async () => {
+        if (batal.aktif) throw new Error('Dibatalin.');
         const { sock, close } = await sambung({
           mode,
           phone: nomorMentah,
+          batal,
           emitQr: (qr) => {
+            if (batal.aktif) return;
             log('📱 QR baru ditampilkan — scan sekarang (QR ganti tiap ±20 dtk).');
             bridge.send({ type: 'qr', qr });
           },
-          emitPairingCode: (code) => bridge.send({ type: 'pairing_code', code }),
-          timeoutMs: 240000,
+          emitPairingCode: (code) => { if (!batal.aktif) bridge.send({ type: 'pairing_code', code }); },
+          onTertaut: () => {
+            // HP udah nerima kode / QR → tutup tampilannya, kasih tau lagi ngapain.
+            bridge.send({ type: 'qr', qr: null });
+            bridge.send({ type: 'pairing_code', code: null });
+            bridge.send({ type: 'setup_tahap', msg: 'Diterima WhatsApp! Nyelesaiin tautan (±20 dtk) — jangan tutup app.' });
+          },
+          timeoutMs: 300000,
         });
         bridge.send({ type: 'qr', qr: null });
         bridge.send({ type: 'pairing_code', code: null });
@@ -523,13 +553,14 @@ async function main() {
         }
       });
     } catch (e) {
+      if (batal.aktif) {
+        log('(setup yang lama udah dihentiin)');
+        return;
+      }
       log(`💥 Setup gagal: ${e.message}`);
       bridge.send({ type: 'setup_error', msg: e.message });
       bridge.send({ type: 'qr', qr: null });
       bridge.send({ type: 'pairing_code', code: null });
-    } finally {
-      setupInFlight = false;
-      emitStatus();
     }
   }
 
@@ -704,7 +735,11 @@ async function main() {
 
       case 'setup':
         // Sengaja nggak wajib setting: nautin WA boleh duluan.
-        void doSetup(cmd.cara, cmd.phone);
+        void mintaSetup(cmd.cara, cmd.phone);
+        break;
+
+      case 'status':
+        emitStatus();
         break;
 
       case 'lepas':

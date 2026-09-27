@@ -40,6 +40,8 @@ data class BotUi(
     var nextGrupAt: Long? = null,
     var engineError: String? = null,
     var setupState: String? = null, // null | starting | done | error
+    // Tahapan setup buat ditampilkan (mis. "Diterima WhatsApp! Nyelesaiin tautan...")
+    var setupTahap: String? = null,
     var log: List<String> = emptyList(),
 )
 

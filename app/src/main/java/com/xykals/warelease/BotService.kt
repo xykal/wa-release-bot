@@ -121,11 +121,26 @@ class BotService : Service() {
 
         isRunning = true
         instance = this
-        BotBus.publish { serviceRunning = true }
+        BotBus.publish {
+            serviceRunning = true
+            // sisa tampilan setup dari service sebelumnya nggak berlaku lagi
+            qr = null
+            pairingCode = null
+            setupState = null
+            setupTahap = null
+        }
 
         // Kalau setting sudah valid → langsung jalanin engine-nya
         if (bundleOk && settings.hasValidSettings()) {
             sendCmd(mapOf("type" to "start"))
+        }
+        // Minta engine ngirim status terbaru (kalau engine-nya ternyata masih
+        // jalan dari sebelumnya, event lama udah dibuang — jadi perlu disegerin).
+        if (bundleOk) {
+            scope.launch {
+                delay(1_500L)
+                sendCmd(mapOf("type" to "status"))
+            }
         }
 
         scheduleWatchdog()
@@ -297,10 +312,16 @@ class BotService : Service() {
 
             "pairing_code" -> BotBus.publish { pairingCode = e.optString("code", "").orNull() }
 
-            "setup_start" -> BotBus.publish { setupState = "starting" }
+            "setup_start" -> BotBus.publish {
+                setupState = "starting"
+                setupTahap = null
+            }
+
+            "setup_tahap" -> BotBus.publish { setupTahap = e.optString("msg", "").orNull() }
             "setup_done" -> {
                 BotBus.publish {
                     setupState = "done"
+                    setupTahap = null
                     qr = null
                     pairingCode = null
                 }
@@ -309,6 +330,7 @@ class BotService : Service() {
 
             "setup_error" -> BotBus.publish {
                 setupState = "error"
+                setupTahap = null
                 qr = null
                 pairingCode = null
             }

@@ -6,6 +6,35 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-09-27
+
+### 🐛 Diperbaiki
+
+- **Dialog QR sama pairing code nongol barengan.** Dua penyebab:
+  1. `events.jsonl` (jalur event engine → app) nggak pernah dikosongin, dan app
+     bacanya dari AWAL tiap service nyala. Jadi QR / kode basi dari setup yang
+     kepotong (mis. app di-swipe) "diputar ulang" dan nongol bareng yang baru.
+     Sekarang file itu dikosongin tiap start (di app & engine).
+  2. Minta setup lagi pas setup lama masih jalan dulu ditolak ("Setup lagi
+     jalan") — QR lama tetap nempel. Sekarang setup lama **dibatalin** dan
+     diganti; tampilan QR/kode yang lama langsung ditutup. Waktu mode kode, QR
+     nggak pernah ditampilin.
+- **WA di HP muter "Sedang masuk…" lama banget habis scan QR / masukin kode.**
+  Begitu tersambung, bot langsung kirim test message lalu **mutus koneksi** —
+  padahal HP masih nunggu perangkat baru ini nyelesaiin login (upload pre-key,
+  balas notifikasi sinkron riwayat). Koneksi diputus = HP nunggu terus, lalu
+  bisa gagal nautin. Sekarang habis nautin baru, koneksi ditahan sampai WA
+  selesai ngirim antrean notifikasinya + jeda (±15–30 dtk, maks 60 dtk). Status
+  di app: *"Diterima WhatsApp! Nyelesaiin tautan… jangan tutup app"*.
+- Nyambung ulang habis 515 sekarang pakai sesi yang ada di memori, bukan baca
+  ulang dari file (nyimpen sesi jalan di belakang dan kadang belum kelar → socket
+  kedua dapat sesi setengah jadi).
+- Perintah app → engine lewat `cmd.json` nggak hilang lagi kalau dikirim 2x
+  beruntun (dulu file-nya ditimpa; sekarang satu perintah per baris).
+- QR/kode yang kelamaan nggak dipakai sekarang pesannya jelas ("kadaluarsa,
+  minta kode baru"), bukan `code 408`. Waktu buat ngetik pairing code juga
+  dipanjangin.
+
 ## [1.2.0] — 2026-09-27
 
 ### 🐛 Diperbaiki
@@ -377,7 +406,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.2.0...HEAD
+[Unreleased]: ../../compare/v1.2.1...HEAD
+[1.2.1]: ../../compare/v1.2.0...v1.2.1
 [1.2.0]: ../../compare/v1.1.4...v1.2.0
 [1.1.4]: ../../compare/v1.1.3...v1.1.4
 [1.1.3]: ../../compare/v1.1.2...v1.1.3

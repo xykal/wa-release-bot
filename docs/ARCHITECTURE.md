@@ -60,15 +60,24 @@ Dua jalur, sengaja **dua**, karena jalur cepat nggak boleh jadi titik gagal tung
 
 | Jalur | Arah | Isi | Andalan? |
 |---|---|---|---|
-| `events.jsonl` | Node → App | `log`, `status`, `qr`, `posted`, `setup_*`, `cmd_error` | ✅ selalu jalan |
-| `cmd.json` | App → Node | `ping`, `configure`, `start`, `stop`, `check`, `setup`, `test` | ✅ selalu jalan |
+| `events.jsonl` | Node → App | `log`, `status`, `qr`, `pairing_code`, `posted`, `setup_*` (termasuk `setup_tahap`), `cmd_error` | ✅ selalu jalan |
+| `cmd.json` | App → Node | `ping`, `status`, `configure`, `start`, `stop`, `check`, `setup`, `test`, … | ✅ selalu jalan |
 | WebSocket `127.0.0.1:18790` | dua arah | perintah saja (bukan event) | ⚡ opsional |
 
 **File bridge** — Node `appendFileSync` satu baris JSON per event; app polling
-tiap 300 ms pakai `RandomAccessFile` dengan offset (bukan baca ulang seluruh
-file). File di-rotate kalau lewat 4 MB. Arah sebaliknya, app menulis `cmd.json`
-secara atomik (tulis `cmd.json.tmp` → `rename`), Node polling tiap 250 ms lalu
-**menghapus** file-nya setelah dibaca.
+(300 ms kalau app kebuka, 3 dtk kalau di belakang) pakai `RandomAccessFile`
+dengan offset. File di-rotate kalau lewat 4 MB, dan **dikosongin tiap service /
+engine start** — event dari sesi lama (mis. QR basi) nggak boleh diputar ulang.
+Karena itu app langsung minta `status` ke engine habis start.
+
+Arah sebaliknya, app **nambahin** satu baris JSON per perintah ke `cmd.json`.
+Node polling tiap 1 dtk: `rename` ke `cmd.json.proc`, baca semua baris,
+hapus. Jadi beberapa perintah beruntun nggak saling nimpa.
+
+**Setup** — kalau `setup` baru datang pas yang lama masih jalan, yang lama
+dibatalin (socket-nya ditutup) lalu diganti. Habis nautin baru, koneksi
+**ditahan** sampai WA selesai ngirim notifikasi yang ketunda + ±12 dtk (maks
+60 dtk) — HP butuh perangkat barunya tetap online buat nyelesaiin tautan.
 
 **WebSocket** — cuma buat mempercepat perintah (nggak nunggu 250 ms). Kalau
 gagal bind/gagal connect, `WsClient.send()` balikin `false` dan pemanggilnya

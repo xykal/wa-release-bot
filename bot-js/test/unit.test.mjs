@@ -265,3 +265,21 @@ test('catatAnggota + namaOrang', () => {
   assert.equal(namaOrang(c[0]), '628111');
   assert.equal(namaOrang(c[1]), '2');
 });
+
+test('bridge: 2 perintah beruntun nggak ada yang hilang & event basi dibuang', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'warbot-test-'));
+  // sisa event dari sesi lama (mis. QR basi)
+  fs.writeFileSync(path.join(dir, 'events.jsonl'), JSON.stringify({ type: 'qr', qr: 'BASI' }) + '\n');
+  const received = [];
+  const bridge = createBridge({ dataDir: dir, wsPort: 0, log: () => {}, onCommand: (c) => received.push(c) });
+  assert.equal(fs.readFileSync(bridge.eventsFile, 'utf8'), '', 'events.jsonl harus dikosongin waktu start');
+
+  // app nambahin 2 perintah dalam waktu kurang dari 1 detik
+  fs.appendFileSync(bridge.cmdFile, JSON.stringify({ type: 'configure' }) + '\n');
+  fs.appendFileSync(bridge.cmdFile, JSON.stringify({ type: 'setup', cara: 'pairing' }) + '\n');
+  await new Promise((r) => setTimeout(r, 1300));
+  bridge.close();
+
+  assert.deepEqual(received.map((c) => c.type), ['configure', 'setup']);
+  fs.rmSync(dir, { recursive: true, force: true });
+});

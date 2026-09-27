@@ -63,8 +63,12 @@ export async function connectToWhatsApp({
 
   const batas = Date.now() + timeoutMs;
   let kodeDiminta = false;
+  let tautBaru = false; // koneksi ini hasil nautin baru → jangan buru-buru diputus
+  // Sesi dibaca SEKALI & dipakai terus waktu nyambung ulang (habis 515).
+  // Dibaca ulang dari file bisa dapat versi lama karena nyimpennya jalan di belakang.
+  const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+  const sesiSiap = () => Boolean(state.creds?.me?.id && state.creds?.account);
   for (let coba = 1; ; coba++) {
-    const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
     const sock = makeWASocket({
       version,
       auth: state,
@@ -73,8 +77,11 @@ export async function connectToWhatsApp({
       markOnlineOnConnect: false,
       syncFullHistory: false,
       shouldSyncHistoryMessage: () => false,
+      qrTimeout: nomor ? 60000 : undefined, // pairing: waktu ngetik kode lebih lega
     });
     sock.ev.on('creds.update', saveCreds);
+    let pendingSudah = false;
+    let pendingKelar = null;
 
     const hasil = await new Promise((resolve) => {
       const timer = setTimeout(
@@ -82,8 +89,13 @@ export async function connectToWhatsApp({
         Math.max(5000, batas - Date.now())
       );
       sock.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect, qr } = update;
+        const { connection, lastDisconnect, qr, receivedPendingNotifications } = update;
+        if (receivedPendingNotifications) {
+          pendingSudah = true;
+          if (pendingKelar) pendingKelar();
+        }
         if (qr) {
+          if (allowQr) tautBaru = true;
           if (!allowQr) {
             clearTimeout(timer);
             resolve({ err: new Error('Sesi WA nggak berlaku lagi. Jalankan ulang setup.') });
@@ -124,6 +136,20 @@ export async function connectToWhatsApp({
 
     if (hasil.ok) {
       status('Terhubung ke WA');
+      if (tautBaru) {
+        // Habis nautin, HP masih nunggu perangkat baru ini beres (login ulang,
+        // upload pre-key, balas notif sinkron). Kalau langsung diputus, WA di
+        // HP muter "Sedang masuk..." lama lalu bisa gagal.
+        status('⏳ Nyelesaiin tautan sama WhatsApp (±20 dtk), jangan dimatiin...');
+        await new Promise((resolve) => {
+          const maks = setTimeout(resolve, 60000);
+          const selesai = () => { clearTimeout(maks); setTimeout(resolve, 12000); };
+          pendingKelar = () => { pendingKelar = null; selesai(); };
+          if (pendingSudah) pendingKelar();
+          setTimeout(() => { if (pendingKelar) { pendingKelar = null; selesai(); } }, 20000);
+        });
+        status('✅ Tautan beres di sisi WhatsApp.');
+      }
       return { sock, close: () => { try { sock.end(undefined); } catch { /* ignore */ } } };
     }
     try { sock.end(undefined); } catch { /* ignore */ }
@@ -134,7 +160,11 @@ export async function connectToWhatsApp({
     }
     if (hasil.code === DisconnectReason.restartRequired) {
       status('🔁 Tautan diterima WA, nyambung ulang (normal)...');
-    } else if ([408, 428, 503].includes(hasil.code) && coba < 4 && statusSesi(sessionDir) === 'siap') {
+    } else if (hasil.code === DisconnectReason.timedOut && !sesiSiap()) {
+      throw new Error(nomor
+        ? 'Kode-nya kelamaan nggak dimasukin (kadaluarsa). Jalankan setup lagi.'
+        : 'QR-nya kelamaan nggak discan. Jalankan setup lagi.');
+    } else if ([408, 428, 503].includes(hasil.code) && coba < 4 && sesiSiap()) {
       status(`🔁 Koneksi putus (code ${hasil.code}), coba lagi...`);
       await new Promise((r) => setTimeout(r, 2000 * coba));
     } else {

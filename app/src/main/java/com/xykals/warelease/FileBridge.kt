@@ -48,6 +48,16 @@ class FileBridge(
             if (cmdFile.exists()) cmdFile.delete()
         } catch (_: Exception) {
         }
+        // events.jsonl juga dikosongin & dibaca mulai dari 0. Dulu isinya
+        // numpuk dan dibaca ulang dari AWAL tiap service nyala → QR / pairing
+        // code basi dari setup yang kepotong ikut "diputar ulang" dan nongol
+        // barengan sama yang baru. Aman buat engine yang masih jalan: Node
+        // nulis pakai mode append, jadi nerusin di ujung file yang baru.
+        try {
+            eventsFile.writeText("")
+        } catch (_: Exception) {
+        }
+        offset = 0L
 
         scope.launch {
             while (isActive) {
@@ -85,12 +95,14 @@ class FileBridge(
         }
     }
 
+    /**
+     * Tambahin perintah ke ujung cmd.json (satu perintah per baris). Dulu
+     * file-nya ditimpa, jadi 2 perintah berturut-turut → yang pertama hilang.
+     */
+    @Synchronized
     fun send(cmd: JSONObject) {
         try {
-            val tmp = File(dataDir, "cmd.json.tmp")
-            tmp.writeText(cmd.toString())
-            if (cmdFile.exists()) cmdFile.delete()
-            if (!tmp.renameTo(cmdFile)) tmp.copyTo(cmdFile, overwrite = true)
+            cmdFile.appendText(cmd.toString() + "\n")
         } catch (_: Exception) {
         }
     }

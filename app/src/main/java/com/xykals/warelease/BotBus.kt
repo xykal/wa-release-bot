@@ -29,6 +29,15 @@ data class BotUi(
     // lalu ngisi field "Channel WA" sendiri — biar user nggak perlu nyalin JID.
     var channelBaru: String? = null,
     var qr: String? = null,
+    // Pairing code 8 huruf (format ABCD-1234) — ditampilkan di lembar khusus.
+    var pairingCode: String? = null,
+    var grupAktif: Boolean = false,
+    var grupNama: String? = null,
+    var grupDisetujui: Int = 0,
+    var grupDitolak: Int = 0,
+    var grupHitam: Int = 0,
+    var grupLastCekAt: Long? = null,
+    var nextGrupAt: Long? = null,
     var engineError: String? = null,
     var setupState: String? = null, // null | starting | done | error
     var log: List<String> = emptyList(),
@@ -83,6 +92,7 @@ object BotBus {
             waConnected = false
             nextCheckAt = null
             qr = null
+            pairingCode = null
             setupState = null
         }
     }

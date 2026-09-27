@@ -3,7 +3,8 @@
 //  wa-release-bot — bot WA yang tidur.
 //
 //  Mode:
-//    --setup    (sekali seumur hidup) scan QR WA + catat channel + baseline release
+//    --setup    (sekali seumur hidup) tautkan WA + catat channel + baseline release
+//               tambah  --pair 08xxxx  buat pakai PAIRING CODE (tanpa scan QR)
 //    --test     kirim test message ke channel buat cek
 //    --once     CEK SEKALI: bangun → cek GitHub → post kalau ada baru → MATI.
 //               (paling cocok buat cron — ini yang bikin bot "nggak nyala 24 jam")
@@ -129,7 +130,14 @@ async function checkOnce(cfg, state, { dryRun = false } = {}) {
 async function runSetup(cfg, state) {
   log('🔧 SETUP — nyambung ke WA. Kalau muncul QR: scan pakai WA lo');
   log('   (WA → ☰ → Linked Devices / Perangkat Tertaut → Link a Device / Hubungkan Perangkat)');
-  const { sock, close } = await connectToWhatsApp({ sessionDir: cfg.whatsapp.sessionDir, allowQr: true });
+  const phone = flagVal('--pair') || cfg.whatsapp.phone || '';
+  if (phone) log(`🔑 Mode pairing code buat nomor ${phone}`);
+  const { sock, close } = await connectToWhatsApp({
+    sessionDir: cfg.whatsapp.sessionDir,
+    allowQr: true,
+    phone,
+    onStatus: (m) => log(m),
+  });
   try {
     const jid = await resolveChannelJid(sock, cfg.whatsapp.channel);
     state.channelJid = jid;
@@ -154,7 +162,7 @@ async function runSetup(cfg, state) {
 }
 
 async function runTest(cfg, state) {
-  const { sock, close } = await connectToWhatsApp({ sessionDir: cfg.whatsapp.sessionDir, allowQr: true });
+  const { sock, close } = await connectToWhatsApp({ sessionDir: cfg.whatsapp.sessionDir, allowQr: false });
   try {
     let jid = state.channelJid;
     if (!jid) {

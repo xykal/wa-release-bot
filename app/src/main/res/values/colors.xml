@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- ikon launcher (logo bulan) -->
     <color name="wr_icon_bg">#1B2B4A</color>
     <color name="wr_moon">#FFD166</color>
+
+    <!-- palet UI: gelap ala WhatsApp -->
+    <color name="wr_latar">#0B141A</color>
+    <color name="wr_kartu">#111B21</color>
+    <color name="wr_kartu2">#1F2C34</color>
+    <color name="wr_garis">#233138</color>
+    <color name="wr_input">#18232A</color>
+    <color name="wr_teks">#E9EDEF</color>
+    <color name="wr_teks2">#8696A0</color>
+    <color name="wr_hijau">#00A884</color>
+    <color name="wr_hijau_tua">#005C4B</color>
+    <color name="wr_hijau_terang">#25D366</color>
+    <color name="wr_merah">#F15C6D</color>
+    <color name="wr_kuning">#FFD166</color>
+    <color name="wr_riak">#33FFFFFF</color>
 </resources>

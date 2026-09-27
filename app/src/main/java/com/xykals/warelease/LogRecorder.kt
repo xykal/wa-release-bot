@@ -110,7 +110,15 @@ object LogRecorder {
                         "(API ${Build.VERSION.SDK_INT}) • ABI dipakai: $abiDipakai " +
                         "(proses 64-bit: $bit64) • HP dukung: ${Build.SUPPORTED_ABIS.joinToString()}"
             )
-            mulaiRekamLogcat()
+            // Perekam logcat itu satu proses `logcat` yang nyala terus. Ringan,
+            // tapi tetap ada biayanya → bisa dimatiin di app (kartu "Batre").
+            val rekam = try {
+                ctx.getSharedPreferences("wa_release_bot", Context.MODE_PRIVATE)
+                    .getBoolean("rekamLogcat", true)
+            } catch (_: Throwable) {
+                true
+            }
+            if (rekam) mulaiRekamLogcat()
             return kandidat
         }
     }
@@ -202,6 +210,17 @@ object LogRecorder {
                 prosesLogcat = null
                 tulis("[LogRecorder] perekam logcat nggak bisa jalan: ${e.message} (log tetap jalan)")
             }
+        }
+    }
+
+    /** Matikan proses logcat (dipanggil waktu user nonaktifin opsi rekam logcat). */
+    fun berhentiRekamLogcat() {
+        synchronized(kunci) {
+            try {
+                prosesLogcat?.destroy()
+            } catch (_: Throwable) {
+            }
+            prosesLogcat = null
         }
     }
 

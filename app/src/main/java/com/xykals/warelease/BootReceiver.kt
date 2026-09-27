@@ -3,21 +3,45 @@ package com.xykals.warelease
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 
-/** Mulai service secara otomatis saat HP boot (kalau user mengaktifkan opsinya). */
+/**
+ * Nyalain service otomatis:
+ *  - HP selesai boot (BOOT_COMPLETED; beberapa ROM kirim QUICKBOOT_POWERON)
+ *  - app barusan di-update (MY_PACKAGE_REPLACED) — biar habis update nggak
+ *    perlu buka app lagi.
+ *
+ * Internet nggak perlu nyala pas boot: engine tinggal gagal cek sekali, lalu
+ * BotService nyuruh cek ulang begitu jaringan nyambung.
+ *
+ * Catatan Xiaomi/MIUI/HyperOS: broadcast boot BARU sampai ke app kalau izin
+ * "Mulai otomatis" (Autostart) dinyalakan manual. Tombolnya ada di app.
+ */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        val aksi = intent.action ?: return
+        val dikenal = aksi == Intent.ACTION_BOOT_COMPLETED ||
+                aksi == Intent.ACTION_MY_PACKAGE_REPLACED ||
+                aksi == "android.intent.action.QUICKBOOT_POWERON" ||
+                aksi == "com.htc.intent.action.QUICKBOOT_POWERON"
+        if (!dikenal) return
+
+        LogRecorder.init(ctx)
         val settings = SettingsStore(ctx)
-        if (!settings.autoStartOnBoot) return
-        if (!settings.hasValidSettings()) return
+        if (aksi != Intent.ACTION_MY_PACKAGE_REPLACED && !settings.autoStartOnBoot) {
+            LogRecorder.tulis("Boot", "$aksi diterima, tapi opsi nyala-otomatis dimatiin")
+            return
+        }
+        if (!settings.hasValidSettings()) {
+            LogRecorder.tulis("Boot", "$aksi diterima, tapi setting belum lengkap")
+            return
+        }
         try {
-            Log.i("BootReceiver", "BOOT_COMPLETED → start BotService")
+            LogRecorder.tulis("Boot", "$aksi → nyalain BotService")
             BotService.start(ctx)
-        } catch (e: Exception) {
-            // Beberapa ROM membatasi FGS saat boot — user tinggal buka app & tekan Mulai
-            Log.w("BootReceiver", "Gagal start saat boot: ${e.message}")
+        } catch (e: Throwable) {
+            // Beberapa ROM ngeblok foreground service saat boot — watchdog
+            // WorkManager bakal nyoba lagi nanti.
+            LogRecorder.galat("Boot", "gagal start service saat $aksi", e)
         }
     }
 }

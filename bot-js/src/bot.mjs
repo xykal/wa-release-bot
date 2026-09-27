@@ -1,7 +1,7 @@
 // ============================================================================
 //  wa-release-bot — engine bot (jalan di dalam app Android via nodejs-mobile)
 //
-//  Alur "bot tidur":
+//  Alur "bot tidur" (hemat batre):
 //    - engine hidup di proses (ringan, hampir 0% CPU saat idle)
 //    - tiap N menit → cek GitHub (1 request, ~1 detik)
 //    - ada release baru → WA nyambung 2-5 detik → post ke channel → WA dilepas
@@ -15,8 +15,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createBridge } from './bridge.mjs';
 import { fetchLatestRelease } from './github.mjs';
-import { connectToWhatsApp, resolveChannel, sendText } from './wa.mjs';
-import { bikinChannel, linkChannel, JENIS } from './channel.mjs';
+import { connectToWhatsApp, resolveChannel, sendText, statusSesi, hapusSesi } from './wa.mjs';
+import { bikinChannel, linkChannel, bacaTarget, JENIS } from './channel.mjs';
+import { normalisasiNomor } from './nomor.mjs';
+import {
+  identitas, cariYangKeluar, catatAnggota, putuskan, daftarHitamManual, namaOrang,
+} from './grup.mjs';
 import { formatReleasePost, formatTestMessage } from './format.mjs';
 
 // ----------------------------- selftest ------------------------------------
@@ -64,7 +68,10 @@ async function main() {
   const stateFile = path.join(dataDir, 'state.json');
   const sessionDir = path.join(dataDir, 'session');
 
-  let state = { lastTag: null, channelJid: null, channelName: null, postCount: 0, lastPostedAt: null };
+  let state = {
+    lastTag: null, channelJid: null, channelName: null, postCount: 0, lastPostedAt: null,
+    grup: null, // { target, jid, nama, anggota: [[id...]], hitam: [id...], disetujui, ditolak, lastCekAt }
+  };
   if (fs.existsSync(stateFile)) {
     try { state = { ...state, ...JSON.parse(fs.readFileSync(stateFile, 'utf8')) }; } catch { /* abaikan */ }
   }
@@ -82,14 +89,15 @@ async function main() {
   let lastCheckAt = null;
   let waConnected = false;
   let nextCheckAt = null;
+  let nextGrupAt = null;
   let timer = null;
+  let timerGrup = null;
   let setupInFlight = false;
 
   // ----------------------------- bridge ------------------------------------
   // `bridge` sengaja di-`let` dan dicek null: createBridge() memanggil log()
   // secara sinkron (mis. waktu WS gagal start), sedangkan saat itu `bridge`
-  // belum selesai di-assign. Tanpa guard ini muncul
-  // "ReferenceError: Cannot access 'bridge' before initialization".
+  // belum selesai di-assign.
   let bridge = null;
 
   function log(msg) {
@@ -106,12 +114,16 @@ async function main() {
     onCommand: (cmd) => { void handleCommand(cmd); },
   });
 
+  const repoAda = () => Boolean(cfg?.github?.repo);
+  const grupAktif = () => Boolean(cfg?.grup?.aktif && cfg?.grup?.target);
+
   function emitStatus() {
+    const g = state.grup || {};
     bridge.send({
       type: 'status',
       running,
       busy,
-      waLinked: fs.existsSync(path.join(sessionDir, 'creds.json')),
+      waLinked: statusSesi(sessionDir) === 'siap',
       waConnected,
       lastTag: state.lastTag,
       lastPostedAt: state.lastPostedAt,
@@ -121,12 +133,46 @@ async function main() {
       channel: cfg?.whatsapp?.channel || null,
       channelName: state.channelName || null,
       repo: cfg?.github?.repo || null,
+      grupAktif: grupAktif(),
+      grupNama: g.nama || null,
+      grupDisetujui: g.disetujui || 0,
+      grupDitolak: g.ditolak || 0,
+      grupHitam: (g.hitam || []).length,
+      grupLastCekAt: g.lastCekAt || null,
+      nextGrupAt,
     });
+  }
+
+  // ------------------------- kunci koneksi WA ------------------------------
+  // Posting, cek grup, setup — semuanya pakai WA. Kalau jalan barengan, dua
+  // socket login pakai sesi yang sama → WA nendang salah satunya. Jadi
+  // diantrikan satu-satu.
+  let antrianWA = Promise.resolve();
+  function pakaiWA(_nama, fn) {
+    const giliran = antrianWA.then(fn, fn);
+    antrianWA = giliran.catch(() => { /* error ditangani pemanggil */ });
+    return giliran;
+  }
+
+  async function sambung(opsi = {}) {
+    const { sock, close } = await connectToWhatsApp({
+      sessionDir,
+      mode: 'none',
+      onStatus: (m) => log(m),
+      ...opsi,
+    });
+    waConnected = true;
+    emitStatus();
+    return {
+      sock,
+      close: () => { waConnected = false; close(); emitStatus(); },
+    };
   }
 
   // ----------------------------- scheduler ---------------------------------
   function scheduleNext(delayMs) {
     clearTimeout(timer);
+    if (!repoAda()) { nextCheckAt = null; return; }
     nextCheckAt = Date.now() + delayMs;
     emitStatus();
     timer = setTimeout(() => { void runCheck('jadwal'); }, delayMs);
@@ -137,30 +183,47 @@ async function main() {
     return Math.max(1, min) * 60_000;
   }
 
+  function intervalGrupMs() {
+    const min = Number(cfg?.grup?.intervalMinutes ?? 5);
+    return Math.max(2, min) * 60_000;
+  }
+
+  function jadwalGrup(delayMs) {
+    clearTimeout(timerGrup);
+    if (!running || !grupAktif()) { nextGrupAt = null; return; }
+    nextGrupAt = Date.now() + delayMs;
+    timerGrup = setTimeout(() => { void runGrup('jadwal'); }, delayMs);
+  }
+
   function startEngine() {
     if (running) return;
     if (!cfg) {
-      log('⚠️ Config belum di-set. Tekan "Simpan Setting" di app dulu.');
+      log('⚠️ Config belum di-set. Tekan "Simpan" di app dulu.');
       return;
     }
     running = true;
-    log('▶️ Engine nyala. Cek berikutnya dalam ' + Math.round(intervalMs() / 60000) + ' menit.');
+    const bagian = [];
+    if (repoAda()) bagian.push(`cek release tiap ${Math.round(intervalMs() / 60000)} mnt`);
+    if (grupAktif()) bagian.push(`jaga grup tiap ${Math.round(intervalGrupMs() / 60000)} mnt`);
+    log('▶️ Engine nyala: ' + (bagian.join(' + ') || 'belum ada tugas'));
     emitStatus();
-    // cek pertama 3 detik setelah start
     scheduleNext(3000);
+    jadwalGrup(8000);
   }
 
   function stopEngine() {
     running = false;
     clearTimeout(timer);
+    clearTimeout(timerGrup);
     nextCheckAt = null;
+    nextGrupAt = null;
     log('⏸️ Engine jeda (istirahat). Tekan "Mulai" di app buat lanjut.');
     emitStatus();
   }
 
   // ----------------------------- cek & post --------------------------------
   async function runCheck(source) {
-    if (busy || !cfg) return;
+    if (busy || !cfg || !repoAda()) return;
     busy = true;
     lastCheckAt = Date.now();
     emitStatus();
@@ -201,7 +264,7 @@ async function main() {
   }
 
   /**
-   * Cari JID channel/grup dari isi setting. Hasilnya di-cache di state supaya
+   * Cari JID channel/grup tujuan posting. Hasilnya di-cache di state supaya
    * nggak query WhatsApp terus tiap mau posting.
    */
   async function cariTarget(sock) {
@@ -221,82 +284,271 @@ async function main() {
   }
 
   async function postRelease(rel) {
+    if (!cfg.whatsapp?.channel) {
+      log('⚠️ Ada release baru tapi "Channel WA" masih kosong — nggak ada tujuan posting.');
+      return;
+    }
     const text = formatReleasePost(rel, cfg.github.repo);
-
-    // WA baru nyambung DI SINI.
-    const { sock, close } = await connectToWhatsApp({
-      sessionDir,
-      allowQr: false,
-      onStatus: (m) => log(m),
+    await pakaiWA('posting', async () => {
+      const { sock, close } = await sambung();
+      try {
+        const jid = await cariTarget(sock);
+        await sendText(sock, jid, text);
+        state.lastTag = rel.tag;
+        state.lastPostedAt = new Date().toISOString();
+        state.postCount = (state.postCount || 0) + 1;
+        saveState();
+        log(`✅ POSTINGAN TERKIRIM ke channel! (postingan ke-${state.postCount})`);
+        bridge.send({ type: 'posted', tag: rel.tag, count: state.postCount });
+      } finally {
+        close();
+      }
     });
-    waConnected = true;
-    emitStatus();
+  }
+
+  // ----------------------------- penjaga grup ------------------------------
+  function grupState() {
+    const target = String(cfg?.grup?.target || '').trim();
+    if (!state.grup || state.grup.target !== target) {
+      // Grup-nya ganti → catatan lama nggak berlaku.
+      state.grup = { target, jid: null, nama: null, anggota: [], hitam: [], disetujui: 0, ditolak: 0, lastCekAt: null };
+    }
+    return state.grup;
+  }
+
+  async function cariGrup(sock, g) {
+    if (g.jid) return g.jid;
+    const t = bacaTarget(g.target);
+    let jid;
+    if (t.jenis === JENIS.GRUP) jid = t.nilai;
+    else if (t.jenis === JENIS.LINK_GRUP) jid = (await sock.groupGetInviteInfo(t.nilai))?.id || null;
+    else throw new Error('Isi "Grup" harus link undangan grup (chat.whatsapp.com/...) atau JID <angka>@g.us.');
+    if (!jid) throw new Error('Link grup-nya nggak kebaca / udah di-reset. Salin ulang link undangannya.');
+    g.jid = jid;
+    return jid;
+  }
+
+  let grupJalan = false;
+  async function runGrup(source) {
+    if (!grupAktif() || grupJalan) return;
+    grupJalan = true;
     try {
-      const jid = await cariTarget(sock);
-      await sendText(sock, jid, text);
-      state.lastTag = rel.tag;
-      state.lastPostedAt = new Date().toISOString();
-      state.postCount = (state.postCount || 0) + 1;
-      saveState();
-      log(`✅ POSTINGAN TERKIRIM ke channel! (postingan ke-${state.postCount})`);
-      bridge.send({ type: 'posted', tag: rel.tag, count: state.postCount });
+      await pakaiWA('grup', async () => {
+        const { sock, close } = await sambung({ onStatus: () => {} });
+        try {
+          await jagaGrup(sock, source);
+        } finally {
+          close();
+        }
+      });
+    } catch (e) {
+      log(`⚠️ Jaga grup gagal: ${e.message}`);
     } finally {
-      waConnected = false;
-      close();
+      grupJalan = false;
+      if (running) jadwalGrup(intervalGrupMs());
       emitStatus();
     }
   }
 
+  async function jagaGrup(sock, source) {
+    const g = grupState();
+    const jid = await cariGrup(sock, g);
+    const meta = await sock.groupMetadata(jid);
+    g.nama = meta.subject || g.nama;
+
+    const saya = identitas({ id: sock.user?.id, lid: sock.user?.lid });
+    const aku = meta.participants.find((p) => identitas(p).some((i) => saya.includes(i)));
+    if (!aku?.admin) {
+      log(`⚠️ Grup "${g.nama}": akun WA lo bukan admin di sana, jadi nggak bisa approve/tolak. Jadiin admin dulu.`);
+      saveState();
+      return;
+    }
+    if (!meta.joinApprovalMode && source !== 'jadwal') {
+      log(`ℹ️ Grup "${g.nama}": fitur "Setujui anggota baru" belum nyala. Nyalain di Info grup → Setelan grup.`);
+    }
+
+    // 1. Siapa yang keluar sejak cek terakhir → masuk daftar hitam.
+    const sekarang = meta.participants;
+    const lamaJumlah = g.anggota.length;
+    const hitam = new Set(g.hitam);
+    if (sekarang.length === 0 || (lamaJumlah > 6 && sekarang.length < lamaJumlah / 2)) {
+      // Jaga-jaga kalau WA balikin daftar anggota yang nggak lengkap: jangan
+      // sampai separuh grup masuk daftar hitam gara-gara glitch.
+      log(`⚠️ Daftar anggota "${g.nama}" aneh (${lamaJumlah} → ${sekarang.length}). Putaran ini nggak nyatet yang keluar.`);
+    } else {
+      for (const orang of cariYangKeluar(g.anggota, sekarang, saya)) {
+        orang.forEach((i) => hitam.add(i));
+        log(`🚪 ${namaOrang(orang)} keluar/dikeluarin dari "${g.nama}" → masuk daftar hitam.`);
+      }
+    }
+    // Yang sekarang ada di grup (mis. dimasukin lagi manual sama admin) =
+    // udah dimaafin → hapus dari daftar hitam.
+    for (const p of sekarang) identitas(p).forEach((i) => hitam.delete(i));
+
+    // 2. Proses permintaan join.
+    const manual = daftarHitamManual(cfg.grup.daftarHitam, normalisasiNomor);
+    const semuaHitam = new Set([...hitam, ...manual]);
+    let permintaan = [];
+    try {
+      permintaan = await sock.groupRequestParticipantsList(jid);
+    } catch (e) {
+      log(`⚠️ Nggak bisa baca permintaan join: ${e.message}`);
+    }
+
+    const setuju = [];
+    const tolak = [];
+    for (const r of permintaan) {
+      const target = r.jid || r.phone_number;
+      if (!target) continue;
+      if (putuskan(r, semuaHitam) === 'reject') tolak.push({ target, r });
+      else setuju.push({ target, r });
+    }
+
+    const baruMasuk = [];
+    if (setuju.length) {
+      const res = await sock.groupRequestParticipantsUpdate(jid, setuju.map((x) => x.target), 'approve');
+      for (const x of setuju) {
+        const st = res.find((y) => y.jid === x.target)?.status || '200';
+        if (st === '200') {
+          g.disetujui = (g.disetujui || 0) + 1;
+          baruMasuk.push(identitas(x.r));
+          log(`✅ ${namaOrang(x.r)} di-approve masuk "${g.nama}".`);
+        } else {
+          log(`⚠️ Approve ${namaOrang(x.r)} gagal (status ${st}).`);
+        }
+      }
+    }
+    if (tolak.length) {
+      const res = await sock.groupRequestParticipantsUpdate(jid, tolak.map((x) => x.target), 'reject');
+      for (const x of tolak) {
+        const st = res.find((y) => y.jid === x.target)?.status || '200';
+        if (st === '200') {
+          g.ditolak = (g.ditolak || 0) + 1;
+          log(`⛔ ${namaOrang(x.r)} ditolak — dulu pernah keluar/dikeluarin.`);
+        } else {
+          log(`⚠️ Nolak ${namaOrang(x.r)} gagal (status ${st}).`);
+        }
+      }
+    }
+
+    // 3. Simpan catatan anggota. Yang barusan di-approve langsung dicatat,
+    //    biar kalau mereka keluar sebelum cek berikutnya tetap ketahuan.
+    g.anggota = [...catatAnggota(sekarang), ...baruMasuk];
+    g.hitam = [...hitam];
+    g.lastCekAt = Date.now();
+    saveState();
+
+    if (source !== 'jadwal' || setuju.length || tolak.length) {
+      log(`🛡️ Grup "${g.nama}": ${sekarang.length} anggota, ${permintaan.length} permintaan ` +
+        `(${setuju.length} approve, ${tolak.length} tolak), daftar hitam ${g.hitam.length} + manual ${manual.length}.`);
+    }
+  }
+
+  function lihatHitam() {
+    const g = state.grup;
+    const manual = daftarHitamManual(cfg?.grup?.daftarHitam, normalisasiNomor);
+    if (!g?.hitam?.length && !manual.length) {
+      log('📋 Daftar hitam kosong.');
+      return;
+    }
+    const hitam = g?.hitam || [];
+    const nomor = hitam.filter((i) => i.endsWith('@s.whatsapp.net')).map((i) => i.split('@')[0]);
+    const lid = hitam.filter((i) => i.endsWith('@lid')).length;
+    log(`📋 Daftar hitam otomatis: ${nomor.join(', ') || '-'}` + (lid ? ` (+${lid} ID samaran/LID)` : ''));
+    log(`📋 Daftar hitam manual (${manual.length}): ${manual.map((i) => i.split('@')[0]).join(', ') || '-'}`);
+  }
+
   // ----------------------------- setup & test ------------------------------
-  async function doSetup() {
-    if (setupInFlight) { log('Setup lagi jalan... tunggu QR-nya discan dulu.'); return; }
+  /**
+   * Nautin WA. `cara` = 'pairing' (pakai nomor + kode 8 huruf) atau 'qr'.
+   */
+  async function doSetup(cara, nomorMentah) {
+    if (setupInFlight) { log('Setup lagi jalan... selesaikan dulu yang tadi.'); return; }
     setupInFlight = true;
     emitStatus();
+    let mode = cara === 'qr' ? 'qr' : 'pairing';
     try {
-      log('🔧 SETUP: tunjukkan QR di layar, scan pakai WA lo (Linked Devices).');
-      bridge.send({ type: 'setup_start' });
-      const { sock, close } = await connectToWhatsApp({
-        sessionDir,
-        allowQr: true,
-        emitQr: (qr) => {
-          log('📱 QR baru ditampilkan — scan sekarang (QR ke-expire tiap ±20 dtk).');
-          bridge.send({ type: 'qr', qr });
-        },
-        onStatus: (m) => log(m),
-        timeoutMs: 240000,
-      });
-      try {
-        const jid = await cariTarget(sock);
-        if (cfg.bot?.testMessageOnSetup !== false) {
-          await sendText(sock, jid, formatTestMessage(cfg.github.repo));
-          log('📨 Test message dikirim ke channel. Cek channel-nya!');
-        }
-        const rel = await fetchLatestRelease(cfg.github.repo, {
-          token: cfg.github?.token || '',
-          includePrereleases: Boolean(cfg.github?.includePrereleases),
-        });
-        state.lastTag = rel.tag;
-        saveState();
-        log(`🌱 Baseline release dicatat: ${rel.tag}`);
-        bridge.send({ type: 'setup_done', tag: rel.tag, jid });
-        log('🎉 SETUP SELESAI!');
-      } finally {
-        close();
+      if (statusSesi(sessionDir) === 'siap') {
+        mode = 'none';
+        log('ℹ️ WA udah tertaut. Kalau mau ganti akun, tekan "Lepas WA" dulu.');
+      } else if (mode === 'pairing') {
+        const n = normalisasiNomor(nomorMentah || cfg?.whatsapp?.phone);
+        if (!n) throw new Error('Isi nomor WA dulu (contoh 6281234567890).');
+        nomorMentah = n;
+        log(`🔧 SETUP: minta pairing code buat +${n}...`);
+      } else {
+        log('🔧 SETUP: tunjukkan QR di layar, scan pakai WA dari HP lain (Perangkat tertaut).');
       }
+      bridge.send({ type: 'setup_start', mode });
+
+      await pakaiWA('setup', async () => {
+        const { sock, close } = await sambung({
+          mode,
+          phone: nomorMentah,
+          emitQr: (qr) => {
+            log('📱 QR baru ditampilkan — scan sekarang (QR ganti tiap ±20 dtk).');
+            bridge.send({ type: 'qr', qr });
+          },
+          emitPairingCode: (code) => bridge.send({ type: 'pairing_code', code }),
+          timeoutMs: 240000,
+        });
+        bridge.send({ type: 'qr', qr: null });
+        bridge.send({ type: 'pairing_code', code: null });
+        log('🔗 WA tertaut!');
+        try {
+          let jid = null;
+          if (cfg?.whatsapp?.channel) {
+            jid = await cariTarget(sock);
+            if (cfg.bot?.testMessageOnSetup !== false) {
+              await sendText(sock, jid, formatTestMessage(cfg.github?.repo || '-'));
+              log('📨 Test message dikirim ke channel. Cek channel-nya!');
+            }
+          }
+          if (repoAda()) {
+            const rel = await fetchLatestRelease(cfg.github.repo, {
+              token: cfg.github?.token || '',
+              includePrereleases: Boolean(cfg.github?.includePrereleases),
+            });
+            if (!state.lastTag) {
+              state.lastTag = rel.tag;
+              saveState();
+              log(`🌱 Baseline release dicatat: ${rel.tag}`);
+            }
+          }
+          if (grupAktif()) await jagaGrup(sock, 'setup');
+          bridge.send({ type: 'setup_done', jid });
+          log('🎉 SETUP SELESAI!');
+        } finally {
+          close();
+        }
+      });
     } catch (e) {
       log(`💥 Setup gagal: ${e.message}`);
       bridge.send({ type: 'setup_error', msg: e.message });
       bridge.send({ type: 'qr', qr: null });
+      bridge.send({ type: 'pairing_code', code: null });
     } finally {
       setupInFlight = false;
       emitStatus();
     }
   }
 
-  /**
-   * Bikin channel WA baru dari nomor yang lagi login, lalu simpan JID-nya.
-   * Ini jalan pintas buat yang bingung "channel-nya dapet dari mana?".
-   */
+  async function doLepas() {
+    await pakaiWA('lepas', async () => {
+      if (statusSesi(sessionDir) === 'siap') {
+        try {
+          const { sock } = await connectToWhatsApp({ sessionDir, mode: 'none', timeoutMs: 30000 });
+          await sock.logout('dilepas dari app');
+        } catch { /* nggak nyambung → minimal hapus file-nya */ }
+      }
+      hapusSesi(sessionDir);
+      state.channelJid = null;
+      saveState();
+      log('🔌 WA dilepas. Tautkan lagi kapan aja lewat "Tautkan WA".');
+    });
+    emitStatus();
+  }
+
   /** Cek doang: target-nya ketemu nggak? Nggak kirim apa-apa. */
   async function doCekChannel() {
     if (!cfg.whatsapp.channel) {
@@ -305,66 +557,56 @@ async function main() {
     }
     log('🔎 Nyari channel/grup dari isi setting...');
     try {
-      const { sock, close } = await connectToWhatsApp({
-        sessionDir,
-        allowQr: false,
-        onStatus: (m) => log(m),
+      await pakaiWA('cek-channel', async () => {
+        const { sock, close } = await sambung();
+        try {
+          state.channelJid = null; // paksa resolve ulang
+          const jid = await cariTarget(sock);
+          log(`✅ Ketemu: ${state.channelName || '(tanpa nama)'} → ${jid}`);
+        } finally {
+          close();
+        }
       });
-      try {
-        state.channelJid = null; // paksa resolve ulang
-        const jid = await cariTarget(sock);
-        log(`✅ Ketemu: ${state.channelName || '(tanpa nama)'} → ${jid}`);
-        log('Kalau ini bukan target yang lo mau, ganti isi "Channel WA"-nya.');
-      } finally {
-        close();
-      }
     } catch (e) {
       log(`💥 Gagal nyari channel: ${e.message}`);
     }
   }
 
+  /**
+   * Bikin channel WA baru dari nomor yang lagi login, lalu simpan JID-nya.
+   * Jalan pintas buat yang bingung "channel-nya dapet dari mana?".
+   */
   async function doBikinChannel(namaMinta) {
     log('🏗️ Bikin channel baru di WhatsApp lo...');
     try {
-      const { sock, close } = await connectToWhatsApp({
-        sessionDir,
-        allowQr: false,
-        onStatus: (m) => log(m),
-      });
-      try {
-        const nama = (namaMinta && String(namaMinta).trim()) || `Release ${cfg.github.repo}`;
-        const meta = await bikinChannel(
-          sock,
-          nama,
-          `Info release dari ${cfg.github.repo} — dijaga sama wa-release-bot.`
-        );
-        const link = linkChannel(meta);
+      await pakaiWA('bikin-channel', async () => {
+        const { sock, close } = await sambung();
+        try {
+          const repo = cfg.github?.repo || 'bot';
+          const nama = (namaMinta && String(namaMinta).trim()) || `Release ${repo}`;
+          const meta = await bikinChannel(sock, nama, `Info release dari ${repo} — dijaga sama wa-release-bot.`);
+          const link = linkChannel(meta);
 
-        state.channelJid = meta.id;
-        state.channelName = meta.name || nama;
-        cfg.whatsapp.channel = meta.id;
-        fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 2));
-        saveState();
+          state.channelJid = meta.id;
+          state.channelName = meta.name || nama;
+          cfg.whatsapp.channel = meta.id;
+          fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 2));
+          saveState();
 
-        log(`✅ Channel dibuat: ${state.channelName}`);
-        log(`   JID-nya: ${meta.id}`);
-        if (link) log(`🔗 Link channel (buat dibagikan): ${link}`);
-        log('ℹ️ Karena lo yang bikin, lo pemiliknya — bot boleh posting ke situ.');
+          log(`✅ Channel dibuat: ${state.channelName}`);
+          log(`   JID-nya: ${meta.id}`);
+          if (link) log(`🔗 Link channel (buat dibagikan): ${link}`);
 
-        if (cfg.bot?.testMessageOnSetup !== false) {
-          await sendText(sock, meta.id, formatTestMessage(cfg.github.repo));
-          log('📨 Test message dikirim ke channel baru. Cek tab Saluran di WA.');
+          if (cfg.bot?.testMessageOnSetup !== false) {
+            await sendText(sock, meta.id, formatTestMessage(repo));
+            log('📨 Test message dikirim ke channel baru. Cek tab Saluran di WA.');
+          }
+          bridge.send({ type: 'channel_dibuat', jid: meta.id, nama: state.channelName, link });
+          emitStatus();
+        } finally {
+          close();
         }
-        bridge.send({
-          type: 'channel_dibuat',
-          jid: meta.id,
-          nama: state.channelName,
-          link,
-        });
-        emitStatus();
-      } finally {
-        close();
-      }
+      });
     } catch (e) {
       log(`💥 Gagal bikin channel: ${e.message}`);
       bridge.send({ type: 'channel_gagal', msg: e.message });
@@ -372,16 +614,19 @@ async function main() {
   }
 
   async function doTest() {
+    if (!cfg.whatsapp?.channel) { log('⚠️ Channel WA masih kosong.'); return; }
     try {
       log('🧪 Mengirim test message ke channel...');
-      const { sock, close } = await connectToWhatsApp({ sessionDir, allowQr: false });
-      try {
-        const jid = await cariTarget(sock);
-        await sendText(sock, jid, formatTestMessage(cfg.github.repo));
-        log(`✅ Test message terkirim ke ${jid}`);
-      } finally {
-        close();
-      }
+      await pakaiWA('test', async () => {
+        const { sock, close } = await sambung();
+        try {
+          const jid = await cariTarget(sock);
+          await sendText(sock, jid, formatTestMessage(cfg.github?.repo || '-'));
+          log(`✅ Test message terkirim ke ${jid}`);
+        } finally {
+          close();
+        }
+      });
     } catch (e) {
       log(`💥 Test gagal: ${e.message}`);
     }
@@ -389,6 +634,12 @@ async function main() {
 
   // ----------------------------- commands ----------------------------------
   async function handleCommand(cmd) {
+    const perluCfg = () => {
+      if (cfg) return true;
+      bridge.send({ type: 'cmd_error', msg: 'Setting belum di-simpan. Tekan "Simpan" dulu.' });
+      return false;
+    };
+
     switch (cmd?.type) {
       case 'ping':
         bridge.send({ type: 'pong', ts: Date.now() });
@@ -397,39 +648,47 @@ async function main() {
       case 'configure': {
         const next = {
           github: {
-            repo: cmd.repo,
+            repo: String(cmd.repo || '').trim(),
             token: cmd.token || '',
             includePrereleases: Boolean(cmd.includePrereleases),
           },
-          whatsapp: { channel: cmd.channel },
+          whatsapp: { channel: cmd.channel || '', phone: cmd.phone || '' },
           bot: {
             checkIntervalMinutes: Number(cmd.intervalMinutes) || 15,
             postOnFirstRun: Boolean(cmd.postOnFirstRun),
             testMessageOnSetup: cmd.testMessageOnSetup !== false,
           },
+          grup: {
+            aktif: Boolean(cmd.grupAktif),
+            target: String(cmd.grupTarget || '').trim(),
+            intervalMinutes: Number(cmd.grupInterval) || 5,
+            daftarHitam: String(cmd.grupHitam || ''),
+          },
         };
-        if (!next.github.repo) {
-          bridge.send({ type: 'cmd_error', msg: 'Repo GitHub wajib diisi.' });
+        if (!next.github.repo && !next.grup.aktif) {
+          bridge.send({ type: 'cmd_error', msg: 'Isi repo GitHub, atau nyalain penjaga grup — minimal salah satu.' });
           return;
         }
-        // Channel SENGAJA boleh kosong: biar user masih bisa nyimpen repo dulu,
-        // lalu pakai tombol "Bikin Channel" buat dapetin channel-nya.
-        if (!next.whatsapp.channel) {
-          log('ℹ️ Channel WA masih kosong. Tekan "Bikin Channel" di app, atau tempel link channel-nya.');
+        if (next.grup.aktif && !next.grup.target) {
+          bridge.send({ type: 'cmd_error', msg: 'Penjaga grup nyala tapi link grup-nya kosong.' });
+          return;
         }
+        if (cfg?.whatsapp?.channel !== next.whatsapp.channel) state.channelJid = null;
         cfg = next;
         fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 2));
-        log(`⚙️ Setting diperbarui: repo=${next.github.repo}, channel=${next.whatsapp.channel}, interval=${next.bot.checkIntervalMinutes}m`);
-        if (running) scheduleNext(intervalMs());
+        saveState();
+        log(`⚙️ Setting diperbarui: repo=${next.github.repo || '-'}, channel=${next.whatsapp.channel || '-'}, ` +
+          `interval=${next.bot.checkIntervalMinutes}m, grup=${next.grup.aktif ? 'nyala' : 'mati'}`);
+        if (running) {
+          scheduleNext(repoAda() ? intervalMs() : 0);
+          jadwalGrup(5000);
+        }
         emitStatus();
         break;
       }
 
       case 'start':
-        if (!cfg) {
-          bridge.send({ type: 'cmd_error', msg: 'Setting belum di-simpan. Tekan "Simpan Setting" dulu.' });
-          return;
-        }
+        if (!perluCfg()) return;
         startEngine();
         break;
 
@@ -438,28 +697,49 @@ async function main() {
         break;
 
       case 'check':
-        if (!cfg) { bridge.send({ type: 'cmd_error', msg: 'Setting belum di-simpan.' }); return; }
+        if (!perluCfg()) return;
         void runCheck('manual');
+        if (grupAktif()) void runGrup('manual');
         break;
 
       case 'setup':
-        if (!cfg) { bridge.send({ type: 'cmd_error', msg: 'Setting belum di-simpan.' }); return; }
-        void doSetup();
+        // Sengaja nggak wajib setting: nautin WA boleh duluan.
+        void doSetup(cmd.cara, cmd.phone);
+        break;
+
+      case 'lepas':
+        void doLepas();
         break;
 
       case 'test':
-        if (!cfg) { bridge.send({ type: 'cmd_error', msg: 'Setting belum di-simpan.' }); return; }
+        if (!perluCfg()) return;
         void doTest();
         break;
 
       case 'bikin-channel':
-        if (!cfg) { bridge.send({ type: 'cmd_error', msg: 'Setting belum di-simpan.' }); return; }
+        if (!perluCfg()) return;
         void doBikinChannel(cmd.nama);
         break;
 
       case 'cek-channel':
-        if (!cfg) { bridge.send({ type: 'cmd_error', msg: 'Setting belum di-simpan.' }); return; }
+        if (!perluCfg()) return;
         void doCekChannel();
+        break;
+
+      case 'cek-grup':
+        if (!perluCfg()) return;
+        if (!grupAktif()) { log('⚠️ Penjaga grup belum dinyalain / link grup kosong.'); return; }
+        void runGrup('manual');
+        break;
+
+      case 'lihat-hitam':
+        lihatHitam();
+        break;
+
+      case 'reset-hitam':
+        if (state.grup) { state.grup.hitam = []; saveState(); }
+        log('🧽 Daftar hitam otomatis dikosongin (yang manual di setting nggak disentuh).');
+        emitStatus();
         break;
 
       default:
@@ -472,8 +752,8 @@ async function main() {
   emitStatus();
 
   if (cfg) {
-    log('Config terbaca: repo=' + cfg.github.repo + ', channel=' + cfg.whatsapp.channel);
-    // auto-start kalau app mengizinkan
+    log('Config terbaca: repo=' + (cfg.github?.repo || '-') + ', channel=' + (cfg.whatsapp?.channel || '-') +
+      (cfg.grup?.aktif ? ', penjaga grup nyala' : ''));
     if (cfg._autoStart) startEngine();
   }
 }

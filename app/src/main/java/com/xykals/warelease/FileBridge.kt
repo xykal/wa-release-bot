@@ -26,6 +26,18 @@ class FileBridge(
 
     var onEvent: ((JSONObject) -> Unit)? = null
 
+    /**
+     * Seberapa sering events.jsonl dicek.
+     *  - app lagi dibuka  → 300 ms (log & QR/kode harus cepat nongol)
+     *  - app di belakang  → 3 dtk (nggak ada yang nonton; hemat batre)
+     * Kalau ada event masuk, 15 detik berikutnya tetap cepat (lagi rame).
+     */
+    @Volatile
+    var uiTerlihat = false
+
+    @Volatile
+    private var ramaiSampai = 0L
+
     fun start() {
         // Buang perintah yang belum sempat diproses dari sesi sebelumnya.
         // Tanpa ini, cmd.json yang nggak pernah kebaca (mis. karena mesin Node
@@ -39,7 +51,8 @@ class FileBridge(
 
         scope.launch {
             while (isActive) {
-                delay(300)
+                val cepat = uiTerlihat || System.currentTimeMillis() < ramaiSampai
+                delay(if (cepat) 300L else 3_000L)
                 try {
                     RandomAccessFile(eventsFile, "r").use { raf ->
                         val size = raf.length()
@@ -53,6 +66,7 @@ class FileBridge(
                             if (lastNl >= 0) {
                                 val chunk = text.substring(0, lastNl + 1)
                                 offset += chunk.toByteArray(Charset.forName("UTF-8")).size
+                                ramaiSampai = System.currentTimeMillis() + 15_000L
                                 for (line in chunk.split('\n')) {
                                     val t = line.trim()
                                     if (t.isEmpty()) continue

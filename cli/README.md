@@ -78,11 +78,17 @@ nano config.json
 ## Setup (sekali seumur hidup)
 
 ```bash
+# Termux di HP yang sama dengan WA-nya → pakai pairing code (nggak perlu scan):
+npm run setup -- --pair 081234567890
+
+# Punya HP / layar lain buat scan → boleh pakai QR:
 npm run setup
 ```
 
+Nomor bisa juga ditaruh di `config.json` → `"whatsapp": { "phone": "0812..." }`.
+
 Bot bakal:
-1. Nampilin **QR code** di terminal → scan pakai WA lo (WA → ☰ → *Linked Devices* → *Link a Device*)
+1. Nampilin **pairing code** 8 huruf (ketik di WA: ⋮ → *Perangkat tertaut* → *Tautkan perangkat* → *Tautkan dengan nomor telepon saja*) — atau **QR code** kalau nggak pakai `--pair`
 2. Nemuin channel lo (dari link/JID di config)
 3. Ngekirim **test message** ke channel
 4. Ngecatat baseline release
@@ -157,7 +163,8 @@ npm run once      # cek sekali doang (sama yang dipake cron)
 
 | Gejala | Solusi |
 |---|---|
-| `Sesi WA belum ada` | Belum pernah `npm run setup`. Jalankan di terminal (bukan via cron), scan QR. |
+| `WA belum ditautkan` | Belum pernah `npm run setup`. Jalankan di terminal (bukan via cron). |
+| `Koneksi WA tutup (code 515)` pas setup | Versi lama. 515 itu normal habis nautin — sejak v1.2.0 dijawab dengan nyambung ulang. Update. |
 | `Sesi WA ke-logout` | Session-nya kebuang (misal HP di-reset / WA di-logout semua perangkat). `npm run setup` lagi. |
 | `Username channel (...) nggak bisa dipakai` | Memang nggak didukung — pakai link channel-nya. Lihat tabel di atas |
 | Bot diam aja / nggak posting | Cek log. Pesan error sekarang nyebutin target yang dicari |

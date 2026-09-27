@@ -23,8 +23,11 @@ class WsClient(
     var isOpen = false
         private set
 
+    // Nggak pakai ping: ini koneksi 127.0.0.1 ke proses sendiri, nggak ada
+    // router/NAT yang bisa mutus. Dulu ping tiap 15 dtk = bangunin CPU
+    // 5.760x sehari buat hal yang nggak perlu.
     private val client = OkHttpClient.Builder()
-        .pingInterval(15, TimeUnit.SECONDS)
+        .connectTimeout(5, TimeUnit.SECONDS)
         .build()
 
     private var ws: WebSocket? = null

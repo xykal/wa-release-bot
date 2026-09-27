@@ -6,7 +6,8 @@
   },
   "whatsapp": {
     "channel": "https://whatsapp.com/channel/0029VbXXXXXXXXXXXXXX",
-    "sessionDir": "./wa-session"
+    "sessionDir": "./wa-session",
+    "phone": ""
   },
   "bot": {
     "checkIntervalMinutes": 15,

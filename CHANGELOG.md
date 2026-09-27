@@ -6,6 +6,66 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-09-27
+
+### 🐛 Diperbaiki
+
+- **Setup "gagal" dengan `code 515` padahal QR-nya udah kescan.** Tepat setelah
+  QR discan (atau pairing code dimasukin), WhatsApp SELALU mutus koneksi dengan
+  kode 515 (*restart required*) dan nyuruh nyambung ulang — itu bagian normal
+  dari proses nautin. Engine dulu nganggap semua koneksi putus = gagal, jadi
+  setup selalu berakhir `💥 Setup gagal: Koneksi WA tutup (code 515)`.
+  Sekarang 515 dijawab dengan nyambung ulang pakai sesi yang baru disimpan.
+  Putus karena jaringan (408/428/503) juga dicoba ulang sampai 3x.
+- **Habis update APK, engine yang jalan tetap engine LAMA.** `bundle.cjs` cuma
+  disalin dari APK kalau file-nya belum ada — jadi perbaikan di engine nggak
+  pernah kepakai sampai app di-uninstall. Sekarang ditandai pakai versionCode +
+  waktu update APK; beda → disalin ulang.
+- Sisa pairing yang nggak selesai (kode diminta, tapi nggak pernah dimasukin)
+  dibuang otomatis sebelum nautin lagi — kalau nggak, WA nolak login berikutnya.
+
+### ✨ Baru
+
+- **Tautkan pakai pairing code.** Isi nomor WA → muncul kode 8 huruf → ketik di
+  WhatsApp (*Perangkat tertaut → Tautkan dengan nomor telepon saja*). Nggak
+  perlu HP kedua buat scan QR — cocok karena bot-nya biasanya di HP yang sama
+  dengan WA-nya. QR tetap ada sebagai pilihan kedua. CLI: `npm run setup -- --pair 08xxxx`.
+- **Penjaga grup.** Buat grup yang pakai *Setujui anggota baru*: permintaan join
+  di-approve otomatis, **kecuali** orang yang dulu udah keluar / dikeluarin —
+  mereka ditolak. Jalan berkala (default tiap 5 menit): nyambung → cek →
+  putus, jadi tetap hemat batre.
+  - "Siapa yang keluar" dihitung dari selisih daftar anggota antar-cek.
+    Yang di-approve bot langsung dicatat, jadi keluar sebelum cek berikutnya
+    pun tetap ketahuan.
+  - Satu orang dicatat pakai nomor HP **dan** LID-nya (ID samaran WA), biar
+    nggak lolos cuma karena WA nampilin ID yang beda.
+  - Yang keluar sebelum fitur ini nyala nggak ketahuan → ada kolom
+    "selalu tolak nomor ini".
+  - Yang dimasukin lagi manual sama admin otomatis keluar dari daftar hitam.
+  - Pengaman: kalau daftar anggota dari WA tiba-tiba anjlok >50%, putaran itu
+    nggak nyatet siapa pun (biar glitch nggak bikin separuh grup ke-blacklist).
+- **Lepas WA** — logout perangkat dari app.
+- Tombol **Izinkan jalan di latar** (pengecualian optimasi batre) dan **Buka
+  izin Autostart** (Xiaomi/Oppo/Vivo/Huawei/Samsung).
+- Nyala otomatis juga habis **app di-update** (`MY_PACKAGE_REPLACED`) dan di ROM
+  yang pakai `QUICKBOOT_POWERON`. Opsi nyala-otomatis sekarang default **nyala**.
+- Begitu internet nyambung lagi, bot langsung cek (nggak nunggu jadwal).
+
+### 🎨 Tampilan
+
+- UI baru, gelap ala WhatsApp, **tanpa komponen Material bawaan**: tombol,
+  kartu, input, saklar, dialog, dan notifikasi kecil digambar sendiri.
+- Logo **bulan sabit** yang lama balik lagi (sabitnya sekarang path beneran,
+  bukan lingkaran yang ditimpa warna latar), plus versi themed icon.
+
+### 🔋 Hemat batre
+
+- Ping WebSocket lokal tiap 15 dtk dihapus (koneksi ke 127.0.0.1 nggak butuh).
+- Polling file event: 300 ms cuma pas app kebuka, 3 dtk pas di belakang.
+- Polling `cmd.json` di engine: 250 ms → 1 dtk (perintah normalnya lewat WS).
+- Baileys nggak narik riwayat chat sama sekali (`shouldSyncHistoryMessage: false`).
+- Perekam logcat bisa dimatiin (kartu Batre).
+
 ## [1.1.4] — 2026-09-27
 
 ### 🐛 Diperbaiki (yang ini fatal)
@@ -317,7 +377,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.1.4...HEAD
+[Unreleased]: ../../compare/v1.2.0...HEAD
+[1.2.0]: ../../compare/v1.1.4...v1.2.0
 [1.1.4]: ../../compare/v1.1.3...v1.1.4
 [1.1.3]: ../../compare/v1.1.2...v1.1.3
 [1.1.2]: ../../compare/v1.1.1...v1.1.2

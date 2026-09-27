@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ikon notifikasi: balon obrolan + panah naik.
-     Wajib alpha-only (putih + transparan) — warna diabaikan sistem. -->
+<!-- Ikon notifikasi: bulan sabit putih solid (status bar cuma pakai alpha). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M7,3 L17,3 A3,3 0 0 1 20,6 L20,13 A3,3 0 0 1 17,16 L11,16 L7,20 L7,16 A3,3 0 0 1 4,13 L4,6 A3,3 0 0 1 7,3 Z M11.9,5.6 L15.6,10.2 L13.4,10.2 L13.4,14 L10.4,14 L10.4,10.2 L8.2,10.2 Z" />
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:translateX="-4" android:translateY="-2" android:scaleX="1.15" android:scaleY="1.15" android:pivotX="54" android:pivotY="54">
+        <path android:fillColor="#FFFFFFFF" android:pathData="M46.03,28 A26,26 0 1,0 70.51,62.68 A22,22 0 0,1 46.03,28 Z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M80,66 l3.5,5 -3.5,5 -3.5,-5 z" />
+    </group>
 </vector>

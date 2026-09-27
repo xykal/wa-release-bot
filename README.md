@@ -64,7 +64,8 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`), jadi perilakunya identik.
 
 - ✅ **Host di HP sendiri** — aplikasi Android native, tanpa Termux, tanpa VPS
 - ✅ **Tidur-bangun beneran** — WhatsApp baru terhubung pas mau posting
-- ✅ **Scan QR sekali seumur hidup** — session WA tersimpan di storage privat app
+- ✅ **Tautkan sekali seumur hidup** — pakai **pairing code** (8 huruf, tanpa HP kedua) atau QR
+- ✅ **Penjaga grup** — auto-approve permintaan join, tolak yang dulu udah keluar/dikeluarin
 - ✅ **Post ke channel WA** (tempel link channel-nya) — atau ke **grup WA** kalau lebih gampang
 - ✅ **Bikin channel dari app** — belum punya channel? bot yang bikinin, sekali klik
 - ✅ **Watchdog** — WorkManager + boot receiver: service ke-bunuh Android → nyala lagi
@@ -87,7 +88,7 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`), jadi perilakunya identik.
 
 | Bagian | Teknologi |
 |---|---|
-| Shell app | Kotlin + Material 3, foreground service, WorkManager |
+| Shell app | Kotlin, UI custom (tanpa komponen Material), foreground service, WorkManager |
 | "Otak" bot | **Node.js 18.20.4 sungguhan** di-embed via [nodejs-mobile](https://github.com/nodejs-mobile/nodejs-mobile) (`libnode.so` + jembatan JNI) |
 | Klien WhatsApp | [Baileys 6.7.24](https://github.com/WhiskeySockets/Baileys) (linked device) |
 | Bot ↔ App | File bridge (`events.jsonl` / `cmd.json`) + WebSocket `127.0.0.1` sebagai jalur cepat |
@@ -97,16 +98,50 @@ Detail lengkap: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ### Pakai Setelah Install
 
-1. Buka app → isi **Repo GitHub** (`owner/nama-repo`) → **Simpan Setting**
-   (Channel boleh dikosongin dulu — lihat langkah 2)
-2. **Channel WA**-nya belum ada? Tekan **Bikin Channel** → bot bikin channel baru
-   di WhatsApp lo dan ngisi kolomnya sendiri. Udah punya channel? Tempel
-   **link**-nya di kolom itu (cara ambil link: lihat [di bawah](#channel-wa-dapetnya-dari-mana))
-3. Tekan **Setup (Scan QR)** → scan QR di layar pakai WA
-   (WA → Setelan → *Perangkat Tertaut* → *Tautkan perangkat*)
-4. Bot kirim **test message** ke channel → muncul? Beres
-5. Tekan **Mulai** → bot jalan dalam mode bangun-tidur
-6. (Opsional) centang **Mulai otomatis saat HP boot**
+1. Buka app → kartu **Tautkan WhatsApp** → isi **nomor WA** lo → **Tautkan pakai kode**
+2. Muncul kode 8 huruf. Di WhatsApp: **⋮ → Perangkat tertaut → Tautkan perangkat →
+   Tautkan dengan nomor telepon saja** → ketik kodenya. (Biasanya WA juga ngirim
+   notifikasi "masukkan kode" — tinggal tap.)
+   Punya HP kedua? Boleh juga pakai **Pakai QR**.
+3. Kartu **Rilis GitHub → Channel**: isi repo (`owner/nama-repo`) + link channel
+   (belum punya? tekan **Bikin channel**) → **Simpan setting**
+4. Tekan **Mulai**
+5. Kartu **Batre & nyala otomatis**: tekan dua tombolnya (izin batre + Autostart).
+   Di Xiaomi ini **wajib**, kalau nggak bot dibunuh pas layar mati dan nggak
+   nyala habis restart.
+
+> Log bilang `code 515` terus "Setup gagal"? Itu bug v1.1.4 ke bawah — 515
+> artinya QR-nya **udah** kescan dan WA nyuruh nyambung ulang. Fixed di v1.2.0.
+
+### Penjaga grup (auto-approve)
+
+Buat grup yang nyalain **Setujui anggota baru** (Info grup → Setelan grup):
+
+- yang minta join → **di-approve otomatis**
+- yang dulu **udah keluar / dikeluarin** lalu minta join lagi → **ditolak otomatis**
+
+Syarat: akun WA yang ditautkan harus **admin** di grup itu. Isi **link undangan
+grup** di kartu **Penjaga grup**, nyalain saklarnya, simpan.
+
+Cara kerjanya berkala (default tiap 5 menit, bisa diubah): nyambung → cek
+anggota + permintaan → approve/tolak → putus. Jadi approve-nya bisa telat
+sampai 5 menit, tapi batre aman. "Siapa yang keluar" dihitung dari daftar
+anggota yang berubah antar-cek, jadi:
+
+- orang yang keluar **sebelum** fitur ini nyala nggak ketahuan → ketik nomornya
+  di kolom **Selalu tolak nomor ini**
+- orang yang dimasukin lagi manual sama admin otomatis dihapus dari daftar hitam
+- **Daftar hitam** nampilin isinya di Log, **Kosongin** buat reset
+
+### Batre
+
+Bot ini **tidur** hampir sepanjang waktu. Yang nyala terus cuma proses kecil +
+notifikasi (itu syarat Android biar nggak dibunuh). Tiap jadwal: cek GitHub
+(1 request) dan/atau nyambung WA beberapa detik, lalu tidur lagi. WA **nggak**
+nyambung terus-terusan, dan riwayat chat nggak pernah ditarik.
+
+Yang paling berpengaruh ke batre: interval. Cek rilis tiap 15 menit + grup tiap
+5 menit itu ringan; interval 1–2 menit bakal kerasa.
 
 ### Channel WA: dapetnya dari mana?
 
@@ -145,16 +180,20 @@ JID grup (`120363...@g.us`) atau link undangan grup-nya
 
 | Tombol | Fungsi |
 |---|---|
-| **Simpan Setting** | Simpan konfigurasi + kirim ke engine |
-| **Mulai** | Nyalakan service + engine (mode bangun-tidur) |
-| **Jeda** | Engine berhenti cek — proses app tetap hidup, 0% aktivitas |
-| **Cek Sekarang** | Paksa cek GitHub sekarang (hasilnya di Log) |
-| **Setup (Scan QR)** | Tampilkan QR buat linking device |
-| **Test** | Kirim test message ke channel |
-| **Bikin Channel** | Bikin channel WA baru dari akun lo + isi kolom Channel otomatis |
-| **Buka Folder Log** | Buka folder log di file manager (path-nya ke-copy kalau nggak ada file manager) |
-| **Kirim Log** | Bagikan file log lewat WA/email/Drive — ini yang dikirim kalau lapor masalah |
-| **Matikan Service** | Matikan semuanya sampai service dinyalakan lagi |
+| **Simpan setting** (bar bawah) | Simpan konfigurasi + kirim ke engine |
+| **Mulai / Jeda** | Nyalain engine / istirahatin (proses tetap hidup, 0% aktivitas) |
+| **Cek sekarang** | Paksa cek GitHub (+ grup kalau nyala) sekarang |
+| **Tautkan pakai kode** | Nautin WA pakai pairing code 8 huruf |
+| **Pakai QR** | Nautin WA pakai QR (scan dari HP lain) |
+| **Lepas WA** | Logout perangkat bot dari WA |
+| **Bikin channel** | Bikin channel WA baru dari akun lo + isi kolom Channel otomatis |
+| **Tes kirim** | Kirim pesan tes ke channel |
+| **Cek grup sekarang** | Jalanin penjaga grup sekarang |
+| **Daftar hitam / Kosongin** | Lihat / reset daftar orang yang bakal ditolak |
+| **Izinkan jalan di latar** | Minta dikecualikan dari optimasi batre |
+| **Buka izin Autostart** | Buka menu Autostart (Xiaomi dll) |
+| **Buka folder / Kirim log** | Buka / bagikan file log |
+| **Matikan service** | Matikan semuanya sampai dinyalakan lagi |
 
 **Biar HP nggak "neror":**
 - Charge HP-nya terus (layar boleh mati)
@@ -179,8 +218,9 @@ npm install
 cp config.example.json config.json
 nano config.json
 
-# 4. Scan QR sekali seumur hidup (±30 detik)
-npm run setup
+# 4. Tautkan WA sekali seumur hidup — pakai pairing code (satu HP cukup):
+npm run setup -- --pair 081234567890
+#    ...atau scan QR dari HP lain:  npm run setup
 
 # 5. Jadwalkan (ini yang bikin bot "nggak nyala 24 jam")
 crontab -e
@@ -194,7 +234,8 @@ Baris cron — bangun tiap 15 menit, posting kalau ada release baru, langsung ma
 
 | Perintah | Fungsi |
 |---|---|
-| `npm run setup` | Scan QR + catat channel + baseline release |
+| `npm run setup -- --pair 08xxxx` | Tautkan pakai pairing code + catat channel + baseline release |
+| `npm run setup` | Sama, tapi pakai QR |
 | `npm run test` | Kirim test message ke channel |
 | `npm run once` | **Cek sekali lalu mati** — ini yang dipakai cron |
 | `npm run loop` | Cek berulang tiap N menit (proses tetap nyala) |
@@ -343,7 +384,12 @@ Masih perlu log mentah? `adb logcat -s WRBot` (output engine Node).
 | Layar sempat beku pas QR muncul | Fixed di **v1.1.3** — gambar QR 640×640 dulu digambar di thread utama (400 ribu panggilan `setPixel`). Sekarang di thread belakang |
 | QR tidak muncul di CLI | Pastikan pakai Baileys 6.7.24 + `qrcode-terminal` (sudah otomatis sejak v1.1.0) |
 | `Cannot destructure property 'subtle' of globalThis.crypto` | Runtime Node 18 tanpa polyfill. Sudah diperbaiki di v1.1.0 — update dulu |
-| `Sesi WA ke-logout` | Session terbuang — tekan **Setup** lagi dan scan QR |
+| `Setup gagal: Koneksi WA tutup (code 515)` | Bug v1.1.4 ke bawah: 515 itu **normal** habis QR discan (WA nyuruh nyambung ulang). Update ke **v1.2.0** |
+| Pairing code nggak diterima WA | Pastikan nomornya nomor WA yang sama dengan HP tempat ngetik kode, pakai kode negara (`62…` / `08…` otomatis diubah). Kode cuma berlaku ±1 menit — minta lagi kalau lewat |
+| Penjaga grup bilang "bukan admin" | Jadiin akun WA yang ditautkan admin di grup itu |
+| Bot mati sendiri pas layar mati (Xiaomi) | Kartu **Batre**: tekan **Izinkan jalan di latar** + **Buka izin Autostart**, nyalain dua-duanya |
+| Habis update, fitur baru nggak jalan | Fixed di v1.2.0 — dulu engine lama nggak ditimpa waktu update |
+| `Sesi WA ke-logout` | Session terbuang — tautkan lagi (kode / QR) |
 | `Username channel (...) nggak bisa dipakai` | Memang nggak didukung. Pakai **link** channel, atau tekan **Bikin Channel**. Lihat [Channel WA: dapetnya dari mana?](#channel-wa-dapetnya-dari-mana) |
 | `Link channel-nya nggak kebaca` | Link-nya kadaluarsa / salah. Buka channel → ⋯ → Bagikan → salin ulang |
 | Pesan nggak terkirim ke channel | Pastikan lo **pemilik/admin** channel-nya. Cek `mesin.log` |

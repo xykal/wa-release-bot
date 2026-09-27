@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ikon app: balon obrolan + panah naik = "kabarin rilis baru".
-     Sengaja gambar vektor, BUKAN emoji — emoji dirender beda-beda di tiap HP
-     (dan sebagian malah muncul kotak kosong), jadi nggak bisa dipakai buat
-     ikon app. Lihat juga ic_launcher_monochrome.xml buat themed icon. -->
+<!-- Ikon: bulan sabit + bintang (bot yang tidur, bangun pas ada release). Logo asli v1.0 — balik lagi di v1.2.0. Sabitnya sekarang path beneran (bukan lingkaran ditimpa warna latar), jadi aman di latar apa pun. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFD166"
-        android:fillType="evenOdd"
-        android:pathData="M36,28 L72,28 A10,10 0 0 1 82,38 L82,62 A10,10 0 0 1 72,72 L52,72 L36,84 L36,72 A10,10 0 0 1 26,62 L26,38 A10,10 0 0 1 36,28 Z M54,34 L66,48 L58,48 L58,64 L50,64 L50,48 L42,48 Z" />
+    <path android:fillColor="#FFD166" android:pathData="M46.03,28 A26,26 0 1,0 70.51,62.68 A22,22 0 0,1 46.03,28 Z" />
+    <path android:fillColor="#FFD166" android:pathData="M80,66 l3.5,5 -3.5,5 -3.5,-5 z" />
+    <path android:fillColor="#FFD166" android:pathData="M72,80 l2.5,3.5 -2.5,3.5 -2.5,-3.5 z" />
 </vector>

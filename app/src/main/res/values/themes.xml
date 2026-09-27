@@ -1,4 +1,185 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.WaReleaseBot" parent="Theme.Material3.DayNight.NoActionBar" />
+    <!--
+      Sengaja BUKAN tema Material: semua tombol, kartu, input, saklar, dan
+      dialog digambar sendiri (res/drawable/bg_*, sel_*), jadi tampilannya
+      sama di HP mana pun dan nggak kelihatan "app bawaan Android".
+    -->
+    <style name="Theme.WaReleaseBot" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/wr_hijau</item>
+        <item name="colorPrimaryDark">@color/wr_latar</item>
+        <item name="colorAccent">@color/wr_hijau</item>
+        <item name="colorControlNormal">@color/wr_teks2</item>
+        <item name="colorControlActivated">@color/wr_hijau</item>
+        <item name="colorControlHighlight">@color/wr_riak</item>
+        <item name="android:windowBackground">@color/wr_latar</item>
+        <item name="android:statusBarColor">@color/wr_latar</item>
+        <item name="android:navigationBarColor">@color/wr_latar</item>
+        <item name="android:textColorPrimary">@color/wr_teks</item>
+        <item name="android:textColorSecondary">@color/wr_teks2</item>
+        <item name="android:textColorHint">#5C6B73</item>
+        <item name="android:textColorHighlight">#5500A884</item>
+    </style>
+
+    <!-- dialog custom: latar transparan, isinya yang punya sudut bulat -->
+    <style name="Lembar" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:backgroundDimAmount">0.7</item>
+        <item name="colorAccent">@color/wr_hijau</item>
+    </style>
+
+    <!-- ===== gaya komponen ===== -->
+    <style name="Kartu">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">14dp</item>
+        <item name="android:background">@drawable/bg_kartu</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:padding">18dp</item>
+    </style>
+
+    <style name="JudulKartu">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/wr_teks</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:drawablePadding">10dp</item>
+        <item name="android:drawableTint">@color/wr_hijau</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
+    <style name="KetKartu">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:textColor">@color/wr_teks2</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+    </style>
+
+    <style name="Label">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">14dp</item>
+        <item name="android:layout_marginBottom">6dp</item>
+        <item name="android:textColor">@color/wr_teks2</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <style name="Isian">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">50dp</item>
+        <item name="android:background">@drawable/bg_input</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:textColor">@color/wr_teks</item>
+        <item name="android:textColorHint">#5C6B73</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textCursorDrawable">@drawable/kursor</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
+    <style name="TombolDasar">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">52dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:drawablePadding">8dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="TombolUtama" parent="TombolDasar">
+        <item name="android:background">@drawable/bg_tombol_utama</item>
+        <item name="android:textColor">#FF06201A</item>
+        <item name="android:drawableTint">#FF06201A</item>
+    </style>
+
+    <style name="TombolGaris" parent="TombolDasar">
+        <item name="android:background">@drawable/bg_tombol_garis</item>
+        <item name="android:textColor">@color/wr_hijau</item>
+        <item name="android:drawableTint">@color/wr_hijau</item>
+    </style>
+
+    <style name="TombolLembut" parent="TombolDasar">
+        <item name="android:background">@drawable/bg_tombol_lembut</item>
+        <item name="android:textColor">@color/wr_teks</item>
+        <item name="android:drawableTint">@color/wr_teks2</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="TombolBahaya" parent="TombolDasar">
+        <item name="android:background">@drawable/bg_tombol_bahaya</item>
+        <item name="android:textColor">@color/wr_merah</item>
+        <item name="android:drawableTint">@color/wr_merah</item>
+    </style>
+
+    <!-- baris saklar: judul + keterangan + saklar di kanan -->
+    <style name="BarisSaklar">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">6dp</item>
+        <item name="android:background">@drawable/bg_baris</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="android:paddingStart">4dp</item>
+        <item name="android:paddingEnd">4dp</item>
+    </style>
+
+    <style name="Saklar">
+        <item name="android:layout_width">46dp</item>
+        <item name="android:layout_height">28dp</item>
+        <item name="android:layout_marginStart">12dp</item>
+        <item name="android:src">@drawable/sel_saklar</item>
+        <item name="android:duplicateParentState">true</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
+    <style name="Ubin">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/bg_ubin</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:padding">14dp</item>
+    </style>
+
+    <style name="UbinLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/wr_teks2</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+
+    <style name="UbinIsi">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">4dp</item>
+        <item name="android:textColor">@color/wr_teks</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:ellipsize">end</item>
+    </style>
 </resources>

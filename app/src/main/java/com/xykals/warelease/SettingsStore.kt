@@ -37,8 +37,36 @@ class SettingsStore(ctx: Context) {
         set(v) = p.edit().putBoolean("testMsg", v).apply()
 
     var autoStartOnBoot: Boolean
-        get() = p.getBoolean("boot", false)
+        get() = p.getBoolean("boot", true)
         set(v) = p.edit().putBoolean("boot", v).apply()
+
+    /** Nomor WA buat pairing code (format bebas, dirapikan sama engine). */
+    var phone: String
+        get() = p.getString("phone", "") ?: ""
+        set(v) = p.edit().putString("phone", v.trim()).apply()
+
+    // ---- penjaga grup ----
+    var grupAktif: Boolean
+        get() = p.getBoolean("grupAktif", false)
+        set(v) = p.edit().putBoolean("grupAktif", v).apply()
+
+    var grupTarget: String
+        get() = p.getString("grupTarget", "") ?: ""
+        set(v) = p.edit().putString("grupTarget", v.trim()).apply()
+
+    var grupInterval: Int
+        get() = p.getInt("grupInterval", 5)
+        set(v) = p.edit().putInt("grupInterval", v.coerceIn(2, 720)).apply()
+
+    /** Nomor yang selalu ditolak (dipisah koma / baris). */
+    var grupHitam: String
+        get() = p.getString("grupHitam", "") ?: ""
+        set(v) = p.edit().putString("grupHitam", v).apply()
+
+    // ---- batre ----
+    var rekamLogcat: Boolean
+        get() = p.getBoolean("rekamLogcat", true)
+        set(v) = p.edit().putBoolean("rekamLogcat", v).apply()
 
     /**
      * Buat nyalain engine, yang wajib cuma repo.
@@ -52,7 +80,25 @@ class SettingsStore(ctx: Context) {
      * Kalau channel-nya kosong pas mau posting, engine bakal ngeluh di log
      * dengan pesan yang jelas — bukan gagal diam-diam.
      */
-    fun hasValidSettings(): Boolean = repo.isNotBlank()
+    fun hasValidSettings(): Boolean =
+        repo.isNotBlank() || (grupAktif && grupTarget.isNotBlank())
+
+    /** Isi perintah `configure` buat engine — satu sumber, dipakai app & service. */
+    fun toConfigureCmd(): Map<String, Any> = mapOf(
+        "type" to "configure",
+        "repo" to repo,
+        "channel" to channel,
+        "phone" to phone,
+        "token" to token,
+        "intervalMinutes" to intervalMinutes,
+        "includePrereleases" to includePrereleases,
+        "postOnFirstRun" to postOnFirstRun,
+        "testMessageOnSetup" to testMessageOnSetup,
+        "grupAktif" to grupAktif,
+        "grupTarget" to grupTarget,
+        "grupInterval" to grupInterval,
+        "grupHitam" to grupHitam
+    )
 
     fun toConfigJson(): JSONObject = JSONObject()
         .put(
@@ -62,7 +108,15 @@ class SettingsStore(ctx: Context) {
                 .put("token", token)
                 .put("includePrereleases", includePrereleases)
         )
-        .put("whatsapp", JSONObject().put("channel", channel))
+        .put("whatsapp", JSONObject().put("channel", channel).put("phone", phone))
+        .put(
+            "grup",
+            JSONObject()
+                .put("aktif", grupAktif)
+                .put("target", grupTarget)
+                .put("intervalMinutes", grupInterval)
+                .put("daftarHitam", grupHitam)
+        )
         .put(
             "bot",
             JSONObject()

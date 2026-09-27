@@ -54,7 +54,7 @@ export function createBridge({ dataDir, wsPort = 18790, log, onCommand }) {
         catch (e) { log('cmd.json tidak bisa di-parse: ' + e.message); }
       }
     } catch { /* file belum ada / lagi di-tulis app */ }
-  }, 250);
+  }, 1000); // 1 dtk cukup: perintah normalnya lewat WS; ini cuma cadangan
 
   // ---------- Kirim event ke app ----------
   function send(obj) {

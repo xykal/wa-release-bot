@@ -12,6 +12,10 @@ import { parseRepo } from '../src/github.mjs';
 import { bacaTarget, JENIS, pesanCaraIsiChannel, linkChannel } from '../src/channel.mjs';
 import { formatReleasePost, formatTestMessage } from '../src/format.mjs';
 import { createBridge } from '../src/bridge.mjs';
+import { normalisasiNomor } from '../src/nomor.mjs';
+import {
+  rapikanJid, identitas, cariYangKeluar, catatAnggota, putuskan, daftarHitamManual, namaOrang,
+} from '../src/grup.mjs';
 
 // ---------------------------------------------------------------- parseRepo
 test('parseRepo: format valid diterima', () => {
@@ -200,4 +204,64 @@ test('bridge: cmd.json rusak tidak bikin proses mati', async () => {
   assert.equal(received[0].type, 'masih-hidup');
 
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// ---------------------------------------------------------------- nomor
+test('normalisasiNomor: format Indonesia yang umum', () => {
+  assert.equal(normalisasiNomor('0812-3456-7890'), '6281234567890');
+  assert.equal(normalisasiNomor('+62 812 3456 7890'), '6281234567890');
+  assert.equal(normalisasiNomor('812 3456 7890'), '6281234567890');
+  assert.equal(normalisasiNomor('006281234567890'), '6281234567890');
+  assert.equal(normalisasiNomor('14155552671'), '14155552671');
+  assert.equal(normalisasiNomor('abc'), null);
+  assert.equal(normalisasiNomor('123'), null);
+  assert.equal(normalisasiNomor(''), null);
+});
+
+// ---------------------------------------------------------------- grup
+test('rapikanJid: buang nomor device & samain c.us', () => {
+  assert.equal(rapikanJid('628111:12@s.whatsapp.net'), '628111@s.whatsapp.net');
+  assert.equal(rapikanJid('628111@c.us'), '628111@s.whatsapp.net');
+  assert.equal(rapikanJid('999@lid'), '999@lid');
+  assert.equal(rapikanJid('ngawur'), null);
+});
+
+test('identitas: gabung nomor HP + LID', () => {
+  assert.deepEqual(
+    identitas({ id: '999@lid', jid: '628111@s.whatsapp.net', lid: '999@lid' }).sort(),
+    ['628111@s.whatsapp.net', '999@lid']
+  );
+  assert.deepEqual(identitas({ jid: '777@lid', phone_number: '628222@s.whatsapp.net' }).sort(),
+    ['628222@s.whatsapp.net', '777@lid']);
+});
+
+test('cariYangKeluar: yang hilang dari daftar = keluar; diri sendiri nggak dihitung', () => {
+  const lama = [['628111@s.whatsapp.net', '1@lid'], ['628222@s.whatsapp.net'], ['628999@s.whatsapp.net']];
+  // 628111 sekarang cuma kelihatan pakai LID-nya → tetap dianggap masih ada
+  const sekarang = [{ id: '1@lid' }];
+  const keluar = cariYangKeluar(lama, sekarang, ['628999:3@s.whatsapp.net']);
+  assert.deepEqual(keluar, [['628222@s.whatsapp.net']]);
+});
+
+test('putuskan: yang di daftar hitam ditolak, sisanya di-approve', () => {
+  const hitam = new Set(['628222@s.whatsapp.net', '5@lid']);
+  assert.equal(putuskan({ jid: '628222@s.whatsapp.net' }, hitam), 'reject');
+  assert.equal(putuskan({ jid: '5@lid', phone_number: '628333@s.whatsapp.net' }, hitam), 'reject');
+  // dulu keluar pakai nomor, sekarang minta join kelihatan LID + nomor → tetap ketangkep
+  assert.equal(putuskan({ jid: '8@lid', phone_number: '628222@s.whatsapp.net' }, hitam), 'reject');
+  assert.equal(putuskan({ jid: '628444@s.whatsapp.net' }, hitam), 'approve');
+});
+
+test('daftarHitamManual: koma/spasi/baris + format lokal', () => {
+  assert.deepEqual(
+    daftarHitamManual('0812-3456-7890,\n+62811000111 ; 55@lid', normalisasiNomor).sort(),
+    ['55@lid', '62811000111@s.whatsapp.net', '6281234567890@s.whatsapp.net']
+  );
+});
+
+test('catatAnggota + namaOrang', () => {
+  const c = catatAnggota([{ id: '1@lid', jid: '628111@s.whatsapp.net' }, { id: '2@lid' }]);
+  assert.equal(c.length, 2);
+  assert.equal(namaOrang(c[0]), '628111');
+  assert.equal(namaOrang(c[1]), '2');
 });

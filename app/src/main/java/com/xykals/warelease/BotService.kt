@@ -6,6 +6,8 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
@@ -17,6 +19,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
@@ -125,6 +129,49 @@ class BotService : Service() {
         }
 
         scheduleWatchdog()
+        pantauJaringan()
+    }
+
+    // ----------------------------- jaringan -----------------------------
+
+    private var jaringanCb: ConnectivityManager.NetworkCallback? = null
+
+    /**
+     * HP nyala tanpa internet → cek pertama engine gagal. Daripada nunggu
+     * jadwal berikutnya (bisa 15 menit), begitu internet nyambung langsung
+     * suruh cek. Callback ini dari sistem — nggak ada polling, gratis batre.
+     */
+    private fun pantauJaringan() {
+        try {
+            val cm = getSystemService(ConnectivityManager::class.java) ?: return
+            var sudahAdaJaringan = cm.activeNetwork != null
+            val cb = object : ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    if (sudahAdaJaringan) {
+                        // callback pertama pas daftar — jaringannya emang udah ada
+                        sudahAdaJaringan = false
+                        return
+                    }
+                    val st = BotBus.ui
+                    val last = st.lastCheckAt ?: 0L
+                    if (st.engineRunning && System.currentTimeMillis() - last > 2 * 60_000L) {
+                        LogRecorder.tulis("Jaringan", "internet nyambung lagi → suruh engine cek")
+                        scope.launch {
+                            delay(5_000) // kasih waktu DNS dll siap
+                            sendCmd(mapOf("type" to "check"))
+                        }
+                    }
+                }
+
+                override fun onLost(network: Network) {
+                    sudahAdaJaringan = false
+                }
+            }
+            cm.registerDefaultNetworkCallback(cb)
+            jaringanCb = cb
+        } catch (e: Throwable) {
+            LogRecorder.galat("Jaringan", "nggak bisa pantau jaringan", e)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -148,6 +195,10 @@ class BotService : Service() {
         isRunning = false
         instance = null
         BotBus.publish { serviceRunning = false }
+        try {
+            jaringanCb?.let { getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(it) }
+        } catch (_: Throwable) {
+        }
         ws?.close()
         scope.cancel()
         super.onDestroy()
@@ -155,14 +206,37 @@ class BotService : Service() {
 
     // ----------------------------- node & bridge -----------------------------
 
+    /**
+     * Salin engine (bundle.cjs) dari dalam APK ke folder data.
+     *
+     * ⚠️ Dulu cuma disalin kalau file-nya BELUM ADA. Akibatnya: habis update
+     * APK, engine yang jalan tetap engine LAMA dari instalasi pertama — fitur
+     * & perbaikan di bundle baru nggak pernah kepakai. Sekarang ditandai pakai
+     * versionCode + waktu update APK; beda sedikit aja → salin ulang.
+     */
     private fun ensureBundle(): Boolean {
         val dest = File(dataDir, "bundle.cjs")
+        val stampFile = File(dataDir, "bundle.stamp")
+        val stamp = try {
+            val info = packageManager.getPackageInfo(packageName, 0)
+            "${BuildConfig.VERSION_CODE}:${info.lastUpdateTime}"
+        } catch (_: Exception) {
+            "${BuildConfig.VERSION_CODE}"
+        }
         return try {
-            if (!dest.exists() || dest.length() == 0L) {
+            val lama = if (stampFile.exists()) stampFile.readText().trim() else ""
+            if (!dest.exists() || dest.length() == 0L || lama != stamp) {
+                val tmp = File(dataDir, "bundle.cjs.tmp")
                 assets.open("node/bundle.cjs").use { ins ->
-                    dest.outputStream().use { ins.copyTo(it) }
+                    tmp.outputStream().use { ins.copyTo(it) }
                 }
-                appendLog("bundle.cjs di-extract dari assets (${dest.length() / 1024 / 1024} MB).")
+                if (dest.exists()) dest.delete()
+                if (!tmp.renameTo(dest)) tmp.copyTo(dest, overwrite = true)
+                stampFile.writeText(stamp)
+                appendLog(
+                    "Engine (bundle.cjs) disalin dari APK — ${dest.length() / 1024} KB, " +
+                            "versi app ${BuildConfig.VERSION_NAME}."
+                )
             }
             true
         } catch (e: Exception) {
@@ -178,6 +252,11 @@ class BotService : Service() {
             }
         } catch (_: Exception) {
         }
+    }
+
+    /** Dipanggil MainActivity: app kebuka → polling cepat, di belakang → santai. */
+    fun setUiTerlihat(terlihat: Boolean) {
+        fileBridge?.uiTerlihat = terlihat
     }
 
     /** Kirim perintah ke engine (WS fast path, fallback file). */
@@ -205,19 +284,33 @@ class BotService : Service() {
                 repo = e.optString("repo", "").orNull()
                 channel = e.optString("channel", "").orNull()
                 channelNama = e.optString("channelName", "").orNull()
+                grupAktif = e.optBoolean("grupAktif")
+                grupNama = e.optString("grupNama", "").orNull()
+                grupDisetujui = e.optInt("grupDisetujui", 0)
+                grupDitolak = e.optInt("grupDitolak", 0)
+                grupHitam = e.optInt("grupHitam", 0)
+                grupLastCekAt = e.optLong("grupLastCekAt", 0L).takeIf { it > 0 }
+                nextGrupAt = e.optLong("nextGrupAt", 0L).takeIf { it > 0 }
             }
 
             "qr" -> BotBus.publish { qr = e.optString("qr", "").orNull() }
 
+            "pairing_code" -> BotBus.publish { pairingCode = e.optString("code", "").orNull() }
+
             "setup_start" -> BotBus.publish { setupState = "starting" }
-            "setup_done" -> BotBus.publish {
-                setupState = "done"
-                qr = null
+            "setup_done" -> {
+                BotBus.publish {
+                    setupState = "done"
+                    qr = null
+                    pairingCode = null
+                }
+                updateNotif("WhatsApp tertaut — bot siap")
             }
 
             "setup_error" -> BotBus.publish {
                 setupState = "error"
                 qr = null
+                pairingCode = null
             }
 
             "posted" -> {

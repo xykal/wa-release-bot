@@ -3,7 +3,8 @@
 
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { normalisasiNomor } from './nomor.mjs';
 import {
   makeWASocket,
   useMultiFileAuthState,
@@ -14,37 +15,44 @@ import {
 import { resolveTarget } from './channel.mjs';
 
 /**
- * Nyambung ke WA sebagai linked device.
- *
- * CATATAN: opsi `printQRInTerminal` sudah DIHAPUS dari Baileys sejak 6.6.
- * Jadi QR sekarang kita render sendiri pakai `qrcode-terminal`.
+ * Nyambung ke WA. Tangani kode 515 ("restart required") — itu NORMAL tepat
+ * setelah QR discan / pairing code dimasukin: WA nyuruh nyambung ulang.
+ * Dulu 515 dianggap gagal, jadi setup selalu "gagal" padahal udah berhasil.
  *
  * @param {{
  *   sessionDir?: string,
- *   allowQr?: boolean,
+ *   allowQr?: boolean,     // boleh nautin baru (setup)
+ *   phone?: string,        // kalau diisi + allowQr → pakai PAIRING CODE, bukan QR
  *   emitQr?: (qr: string) => void,
- *   printQr?: boolean,          // render QR ke terminal (default: true kalau allowQr)
+ *   printQr?: boolean,     // render QR ke terminal (default: true kalau allowQr)
  *   onStatus?: (msg: string) => void,
  *   timeoutMs?: number
- * }} opts
+ * }} [opts]
  * @returns {Promise<{sock: object, close: () => void}>}
  */
 export async function connectToWhatsApp({
   sessionDir = './wa-session',
   allowQr = false,
+  phone,
   emitQr,
   printQr,
   onStatus,
   timeoutMs = 180000,
 } = {}) {
-  if (!allowQr && !existsSync(`${sessionDir}/creds.json`)) {
+  const status = (m) => { if (onStatus) onStatus(m); };
+  const sesi = statusSesi(sessionDir);
+  if (!allowQr && sesi !== 'siap') {
     throw new Error(
-      'Sesi WA belum ada (belum scan QR). Jalankan dulu:  npm run setup  — di terminal, terus scan QR-nya.'
+      'WA belum ditautkan. Jalankan dulu:  npm run setup  (QR)  atau  npm run setup -- --pair 08xxxx  (pairing code).'
     );
   }
-  const shouldPrintQr = printQr ?? allowQr;
-
-  const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+  if (allowQr && sesi === 'setengah') {
+    status('🧹 Sisa tautan yang nggak selesai dibuang dulu.');
+    rmSync(sessionDir, { recursive: true, force: true });
+  }
+  const nomor = phone ? normalisasiNomor(phone) : null;
+  if (phone && !nomor) throw new Error(`Nomor "${phone}" nggak valid. Contoh: 6281234567890`);
+  const shouldPrintQr = (printQr ?? allowQr) && !nomor;
 
   let version;
   try {
@@ -53,53 +61,99 @@ export async function connectToWhatsApp({
     version = undefined; // jaringan lagi bermasalah → pakai default Baileys
   }
 
-  const sock = makeWASocket({
-    version,
-    auth: state,
-    browser: Browsers.macOS('Desktop'),
-    logger: pino({ level: 'silent' }),
-    markOnlineOnConnect: false,
-  });
-  sock.ev.on('creds.update', saveCreds);
-
-  await new Promise((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error(`Timeout ${timeoutMs / 1000}s nunggu koneksi WA. Coba lagi.`)),
-      timeoutMs
-    );
-
-    sock.ev.on('connection.update', (update) => {
-      const { connection, lastDisconnect, qr } = update;
-
-      if (qr) {
-        // Baileys tidak lagi mencetak QR sendiri → kita render di sini.
-        if (shouldPrintQr) {
-          console.log('\n📱 Scan QR ini pakai WhatsApp lo:');
-          console.log('   WA → ☰ → Perangkat Tertaut → Hubungkan Perangkat\n');
-          qrcode.generate(qr, { small: true });
-          console.log('\n   (QR ke-expire tiap ±20 detik — kalau lewat, QR baru muncul lagi)\n');
-        }
-        if (emitQr) emitQr(qr);
-        if (onStatus) onStatus('Menunggu scan QR...');
-      }
-
-      if (connection === 'open') {
-        clearTimeout(timer);
-        if (onStatus) onStatus('Terhubung ke WA');
-        resolve();
-      } else if (connection === 'close') {
-        const code = lastDisconnect?.error?.output?.statusCode;
-        clearTimeout(timer);
-        if (code === DisconnectReason.loggedOut) {
-          reject(new Error('Sesi WA ke-logout. Jalankan ulang:  npm run setup  (scan QR lagi).'));
-        } else {
-          reject(new Error(`Koneksi WA tutup (code ${code}). Coba jalankan lagi.`));
-        }
-      }
+  const batas = Date.now() + timeoutMs;
+  let kodeDiminta = false;
+  for (let coba = 1; ; coba++) {
+    const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+    const sock = makeWASocket({
+      version,
+      auth: state,
+      browser: Browsers.macOS('Chrome'),
+      logger: pino({ level: 'silent' }),
+      markOnlineOnConnect: false,
+      syncFullHistory: false,
+      shouldSyncHistoryMessage: () => false,
     });
-  });
+    sock.ev.on('creds.update', saveCreds);
 
-  return { sock, close: () => sock.end() };
+    const hasil = await new Promise((resolve) => {
+      const timer = setTimeout(
+        () => resolve({ err: new Error(`Timeout ${timeoutMs / 1000}s nunggu koneksi WA. Coba lagi.`) }),
+        Math.max(5000, batas - Date.now())
+      );
+      sock.ev.on('connection.update', async (update) => {
+        const { connection, lastDisconnect, qr } = update;
+        if (qr) {
+          if (!allowQr) {
+            clearTimeout(timer);
+            resolve({ err: new Error('Sesi WA nggak berlaku lagi. Jalankan ulang setup.') });
+          } else if (nomor) {
+            if (!kodeDiminta) {
+              kodeDiminta = true;
+              try {
+                const k = await sock.requestPairingCode(nomor);
+                const rapi = k.length === 8 ? `${k.slice(0, 4)}-${k.slice(4)}` : k;
+                console.log(`\n🔑 PAIRING CODE:  ${rapi}\n`);
+                console.log('   WA → ⋮ → Perangkat tertaut → Tautkan perangkat');
+                console.log('   → "Tautkan dengan nomor telepon saja" → ketik kode di atas.\n');
+              } catch (e) {
+                clearTimeout(timer);
+                resolve({ err: new Error('Gagal minta pairing code: ' + e.message) });
+              }
+            }
+          } else {
+            if (shouldPrintQr) {
+              console.log('\n📱 Scan QR ini pakai WhatsApp (dari HP lain):');
+              console.log('   WA → ⋮ → Perangkat tertaut → Tautkan perangkat\n');
+              qrcode.generate(qr, { small: true });
+              console.log('\n   (QR ganti tiap ±20 detik. Satu HP doang? Pakai:  npm run setup -- --pair 08xxxx)\n');
+            }
+            if (emitQr) emitQr(qr);
+            status('Menunggu scan QR...');
+          }
+        }
+        if (connection === 'open') {
+          clearTimeout(timer);
+          resolve({ ok: true });
+        } else if (connection === 'close') {
+          clearTimeout(timer);
+          resolve({ code: lastDisconnect?.error?.output?.statusCode });
+        }
+      });
+    });
+
+    if (hasil.ok) {
+      status('Terhubung ke WA');
+      return { sock, close: () => { try { sock.end(undefined); } catch { /* ignore */ } } };
+    }
+    try { sock.end(undefined); } catch { /* ignore */ }
+    if (hasil.err) throw hasil.err;
+    if (hasil.code === DisconnectReason.loggedOut) {
+      rmSync(sessionDir, { recursive: true, force: true });
+      throw new Error('Sesi WA ke-logout. Jalankan ulang:  npm run setup');
+    }
+    if (hasil.code === DisconnectReason.restartRequired) {
+      status('🔁 Tautan diterima WA, nyambung ulang (normal)...');
+    } else if ([408, 428, 503].includes(hasil.code) && coba < 4 && statusSesi(sessionDir) === 'siap') {
+      status(`🔁 Koneksi putus (code ${hasil.code}), coba lagi...`);
+      await new Promise((r) => setTimeout(r, 2000 * coba));
+    } else {
+      throw new Error(`Koneksi WA tutup (code ${hasil.code}). Coba jalankan lagi.`);
+    }
+    if (coba >= 6 || Date.now() > batas) throw new Error('WA nyuruh nyambung ulang terus. Coba lagi bentar lagi.');
+  }
+}
+
+/** 'kosong' | 'setengah' (pairing nggak selesai) | 'siap' */
+export function statusSesi(sessionDir) {
+  const f = `${sessionDir}/creds.json`;
+  if (!existsSync(f)) return 'kosong';
+  try {
+    const c = JSON.parse(readFileSync(f, 'utf8'));
+    return c?.me?.id && c?.account ? 'siap' : 'setengah';
+  } catch {
+    return 'setengah';
+  }
 }
 
 /**

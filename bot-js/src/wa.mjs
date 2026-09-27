@@ -1,9 +1,18 @@
-// Klien WhatsApp (Baileys). Prinsip: nyambung HANYA pas perlu kirim pesan,
-// selesai → disconnect. Session disimpan di file, QR cuma discan 1x seumur hidup.
+// Klien WhatsApp (Baileys). Prinsip: nyambung HANYA pas perlu, selesai →
+// disconnect. Session disimpan di file, jadi nautin cuma sekali seumur hidup.
+//
+// Cara nautin ada dua:
+//   - QR            : tampil di layar, discan dari HP LAIN.
+//   - Pairing code  : 8 huruf, diketik di WA (Perangkat tertaut → Tautkan
+//                     dengan nomor telepon). Ini yang cocok kalau bot-nya
+//                     jalan di HP yang sama dengan WA-nya — QR di layar sendiri
+//                     kan nggak bisa discan.
 
 import pino from 'pino';
-import { existsSync } from 'node:fs';
+import fs from 'node:fs';
+import path from 'node:path';
 import { resolveTarget } from './channel.mjs';
+import { normalisasiNomor } from './nomor.mjs';
 import {
   makeWASocket,
   useMultiFileAuthState,
@@ -12,21 +21,79 @@ import {
   Browsers,
 } from '@whiskeysockets/baileys';
 
+export { normalisasiNomor };
+
+/**
+ * Status sesi di folder session:
+ *   'kosong'   → belum pernah ditautkan
+ *   'setengah' → pairing code udah diminta tapi nggak pernah diselesaikan
+ *                (creds.me ada, tapi `account` — tanda tangan dari HP — belum)
+ *   'siap'     → udah tertaut, tinggal nyambung
+ */
+export function statusSesi(sessionDir) {
+  const f = path.join(sessionDir, 'creds.json');
+  if (!fs.existsSync(f)) return 'kosong';
+  try {
+    const c = JSON.parse(fs.readFileSync(f, 'utf8'));
+    if (c?.me?.id && c?.account) return 'siap';
+    return 'setengah';
+  } catch {
+    return 'setengah';
+  }
+}
+
+export function hapusSesi(sessionDir) {
+  fs.rmSync(sessionDir, { recursive: true, force: true });
+}
+
+// Kode yang artinya "coba sambung lagi aja", bukan gagal beneran.
+//   515 restartRequired → NORMAL tepat setelah QR discan / pairing code
+//                         dimasukin. WA emang nyuruh nyambung ulang.
+//   408 timedOut, 428 connectionClosed, 503 unavailable → jaringan goyang.
+const KODE_ULANG = new Set([
+  DisconnectReason.restartRequired,
+  DisconnectReason.timedOut,
+  DisconnectReason.connectionClosed,
+  503,
+]);
+
 /**
  * @param {{
  *   sessionDir: string,
- *   allowQr: boolean,            // setup: iya; posting biasa: tidak
+ *   mode?: 'none'|'qr'|'pairing',   // none = cuma pakai sesi yang ada
+ *   phone?: string,                  // wajib kalau mode = 'pairing'
  *   emitQr?: (qr: string) => void,
+ *   emitPairingCode?: (code: string) => void,
  *   onStatus?: (msg: string) => void,
  *   timeoutMs?: number
  * }} opts
  */
-export async function connectToWhatsApp({ sessionDir, allowQr, emitQr, onStatus, timeoutMs = 180000 }) {
-  if (!allowQr && !existsSync(`${sessionDir}/creds.json`)) {
-    throw new Error('Sesi WA belum ada. Tekan tombol "Setup" di app lalu scan QR-nya.');
+export async function connectToWhatsApp({
+  sessionDir,
+  mode = 'none',
+  phone,
+  emitQr,
+  emitPairingCode,
+  onStatus,
+  timeoutMs = 180000,
+}) {
+  const status = (m) => { if (onStatus) onStatus(m); };
+  const sesi = statusSesi(sessionDir);
+
+  if (mode === 'none' && sesi !== 'siap') {
+    throw new Error('WA belum ditautkan. Tekan "Tautkan WA" di app (pakai pairing code atau QR).');
+  }
+  if (mode !== 'none' && sesi === 'setengah') {
+    // Sisa pairing yang nggak selesai bikin login berikutnya ditolak WA.
+    status('🧹 Sisa tautan yang nggak selesai dibuang dulu.');
+    hapusSesi(sessionDir);
   }
 
-  const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+  let nomor = null;
+  if (mode === 'pairing') {
+    nomor = normalisasiNomor(phone);
+    if (!nomor) throw new Error('Nomor WA buat pairing code nggak valid. Contoh: 6281234567890');
+  }
 
   let version;
   try {
@@ -35,55 +102,100 @@ export async function connectToWhatsApp({ sessionDir, allowQr, emitQr, onStatus,
     version = undefined; // jaringan bermasalah → pakai versi default Baileys
   }
 
-  const sock = makeWASocket({
-    version,
-    auth: state,
-    browser: Browsers.macOS('Desktop'),
-    logger: pino({ level: 'silent' }),
-    markOnlineOnConnect: false, // bot jangan muncul "online"
-  });
-  sock.ev.on('creds.update', saveCreds);
+  const batasWaktu = Date.now() + timeoutMs;
+  let kodeSudahDiminta = false;
+  let percobaan = 0;
 
-  await new Promise((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error(`Timeout ${Math.round(timeoutMs / 1000)}s nunggu koneksi WA. Coba lagi.`)),
-      timeoutMs
-    );
-
-    sock.ev.on('connection.update', (update) => {
-      const { connection, lastDisconnect, qr } = update;
-      if (qr) {
-        if (emitQr) emitQr(qr);
-        if (onStatus) onStatus('Menunggu scan QR...');
-      }
-      if (connection === 'open') {
-        clearTimeout(timer);
-        if (onStatus) onStatus('Terhubung ke WA');
-        resolve();
-      } else if (connection === 'close') {
-        const code = lastDisconnect?.error?.output?.statusCode;
-        clearTimeout(timer);
-        if (code === DisconnectReason.loggedOut) {
-          reject(new Error('Sesi WA ke-logout. Tekan "Setup" lagi dan scan QR.'));
-        } else {
-          reject(new Error(`Koneksi WA tutup (code ${code}). Coba lagi.`));
-        }
-      }
+  for (;;) {
+    percobaan++;
+    const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+    const sock = makeWASocket({
+      version,
+      auth: state,
+      // Pairing code cuma diterima WA kalau "browser"-nya dikenal.
+      browser: Browsers.macOS('Chrome'),
+      logger: pino({ level: 'silent' }),
+      markOnlineOnConnect: false, // bot jangan muncul "online"
+      // Hemat batre & kuota: jangan tarik riwayat chat sama sekali.
+      syncFullHistory: false,
+      shouldSyncHistoryMessage: () => false,
+      generateHighQualityLinkPreview: false,
     });
-  });
+    sock.ev.on('creds.update', saveCreds);
 
-  return { sock, close: () => sock.end() };
+    const hasil = await new Promise((resolve) => {
+      const sisa = Math.max(5000, batasWaktu - Date.now());
+      const timer = setTimeout(() => resolve({ ok: false, err: new Error(
+        `Timeout ${Math.round(timeoutMs / 1000)} dtk nunggu koneksi WA. Coba lagi.`) }), sisa);
+
+      sock.ev.on('connection.update', async (update) => {
+        const { connection, lastDisconnect, qr } = update;
+
+        if (qr) {
+          if (mode === 'pairing') {
+            // Event `qr` pertama = socket udah siap nerima permintaan tautan.
+            if (!kodeSudahDiminta) {
+              kodeSudahDiminta = true;
+              try {
+                const kode = await sock.requestPairingCode(nomor);
+                const rapi = kode.length === 8 ? `${kode.slice(0, 4)}-${kode.slice(4)}` : kode;
+                if (emitPairingCode) emitPairingCode(rapi);
+                status(`🔑 Pairing code: ${rapi} — masukin di WA lo.`);
+              } catch (e) {
+                clearTimeout(timer);
+                resolve({ ok: false, err: new Error('Gagal minta pairing code: ' + e.message) });
+              }
+            }
+          } else if (mode === 'qr') {
+            if (emitQr) emitQr(qr);
+            status('Menunggu scan QR...');
+          } else {
+            clearTimeout(timer);
+            resolve({ ok: false, err: new Error('Sesi WA nggak berlaku lagi. Tautkan ulang.') });
+          }
+        }
+
+        if (connection === 'open') {
+          clearTimeout(timer);
+          resolve({ ok: true });
+        } else if (connection === 'close') {
+          clearTimeout(timer);
+          const code = lastDisconnect?.error?.output?.statusCode;
+          resolve({ ok: false, code, err: lastDisconnect?.error });
+        }
+      });
+    });
+
+    if (hasil.ok) {
+      status('Terhubung ke WA');
+      return { sock, close: () => { try { sock.end(undefined); } catch { /* ignore */ } } };
+    }
+
+    try { sock.end(undefined); } catch { /* ignore */ }
+
+    if (hasil.code === DisconnectReason.loggedOut) {
+      hapusSesi(sessionDir);
+      throw new Error('Sesi WA ke-logout (perangkat dilepas dari HP). Tautkan ulang.');
+    }
+    if (hasil.code === DisconnectReason.restartRequired) {
+      status('🔁 Tautan diterima WA, nyambung ulang (ini normal)...');
+    } else if (KODE_ULANG.has(hasil.code) && percobaan < 4 && statusSesi(sessionDir) === 'siap') {
+      status(`🔁 Koneksi putus (code ${hasil.code}), coba lagi...`);
+      await new Promise((r) => setTimeout(r, 2000 * percobaan));
+    } else if (hasil.code == null && hasil.err) {
+      throw hasil.err;
+    } else {
+      throw new Error(`Koneksi WA tutup (code ${hasil.code}). Coba lagi.`);
+    }
+
+    if (Date.now() > batasWaktu) throw new Error('Kelamaan nunggu WA. Coba lagi.');
+    if (percobaan >= 6) throw new Error('WA nyuruh nyambung ulang terus. Coba lagi bentar lagi.');
+  }
 }
 
 /**
- * Ubah target channel jadi JID.
- *
- * Logika bacanya ada di channel.mjs (file itu nggak import apa-apa, jadi bisa
- * dites tanpa Baileys). Di sini cuma neruskan.
- *
- * Catatan penting: dulu fungsi ini manggil `sock.onWhatsApp('@username')` —
- * itu buat nyari NOMOR HP, bukan channel, jadi selalu gagal buat channel.
- * Sekarang username ditolak dengan pesan yang jelas + cara benerinnya.
+ * Ubah target channel jadi JID. Logikanya ada di channel.mjs (file itu nggak
+ * import apa-apa, jadi bisa dites tanpa Baileys).
  */
 export async function resolveChannel(sock, target, log) {
   return resolveTarget(sock, target, log);

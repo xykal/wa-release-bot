@@ -77,13 +77,24 @@ jobs:
     steps:
       - name: Pilih set ABI
         id: pick
+        # Ekspresi GitHub-nya ditaruh di env dulu, bukan ditempel langsung ke
+        # dalam skrip. Dua alasan:
+        #   1. actionlint menjalankan shellcheck atas skrip ini, dan ekspresi
+        #      yang ditempel jadi literal bikin perbandingannya "literal vs
+        #      literal" → kena SC2193 (pernah bikin Code quality merah).
+        #   2. lebih aman: nilai ekspresi diperlakukan sebagai data, bukan
+        #      sebagai potongan skrip.
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          INPUT_ABIS: ${{ inputs.abis }}
         run: |
           # 1. build manual → hormati pilihan input 'abis'
           # 2. build dari TAG v* → tiga-tiganya (arm64, v7a, universal)
           # 3. selain itu (push/PR) → arm64-v8a saja, biar CI-nya cepat.
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            SET='["${{ inputs.abis }}"]'
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            SET="[\"$INPUT_ABIS\"]"
+          elif [[ "$REF" == refs/tags/v* ]]; then
             SET='["arm64-v8a","armeabi-v7a","arm64-v8a,armeabi-v7a"]'
           else
             SET='["arm64-v8a"]'
@@ -188,11 +199,14 @@ jobs:
 
       - name: Tentukan varian & nama APK
         id: vars
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_VARIANT: ${{ inputs.build-variant }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
+          if [ "$EVENT" = "pull_request" ]; then
             VARIANT="debug"
           else
-            VARIANT="${{ inputs.build-variant || 'release' }}"
+            VARIANT="${INPUT_VARIANT:-release}"
           fi
           if [ "$VARIANT" = "debug" ]; then
             TASK="assembleDebug"
@@ -324,7 +338,7 @@ jobs:
         run: |
           mkdir -p dist
           cp "${{ steps.vars.outputs.apk-path }}" "dist/${{ steps.vars.outputs.apk-name }}"
-          cd dist
+          cd dist || exit 1
           sha256sum "${{ steps.vars.outputs.apk-name }}" > "${{ steps.vars.outputs.apk-name }}.sha256"
           ls -la
           cat "${{ steps.vars.outputs.apk-name }}.sha256"

@@ -364,6 +364,56 @@ jobs:
       # (JNI, WorkManager, sistem Android) dan ikut ke-rename, aplikasinya
       # crash DI HP — bukan di CI. Jadi nama-nama penting itu diperiksa
       # langsung di dalam classes.dex hasil build.
+      # ----------------------------------------------------------------------
+      # Jembatan JNI: ada di dalam APK belum cukup, Android baru menautkan
+      # sebuah .so kalau ada yang memintanya lewat System.loadLibrary().
+      #
+      # Dulu langkah ini nggak ada, dan yang kejadian: .so-nya ada di APK,
+      # simbolnya juga ada, tapi NodeBridge nggak pernah manggil loadLibrary →
+      # tiap panggilan native melempar UnsatisfiedLinkError → mesin Node nggak
+      # pernah nyala → QR nggak muncul, setup nggak jalan. Build-nya hijau,
+      # APK-nya "benar", tapi fiturnya mati semua.
+      #
+      # Jadi dua-duanya diperiksa: file-nya ada, DAN simbol JNI-nya benar.
+      # ----------------------------------------------------------------------
+      - name: Cek jembatan JNI (libnodebridge.so + simbol startNode)
+        run: |
+          APK="dist/${{ steps.vars.outputs.apk-name }}"
+          SIMBOL="Java_com_xykals_warelease_NodeBridge_startNode"
+          FAIL=0
+
+          # readelf bagian dari binutils, udah ada di runner ubuntu. Dicek
+          # eksplisit biar kalau suatu saat hilang, pesannya jelas — bukan
+          # "command not found" yang bikin bingung.
+          if ! command -v readelf >/dev/null 2>&1; then
+            echo "❌ readelf nggak ada di runner — nggak bisa verifikasi simbol JNI"
+            exit 1
+          fi
+
+          for ABI in $(echo "$ABIS" | tr ',' ' '); do
+            TMP="$(mktemp -d)"
+            unzip -q -o -j "$APK" "lib/$ABI/libnodebridge.so" -d "$TMP" 2>/dev/null || true
+
+            if [ ! -f "$TMP/libnodebridge.so" ]; then
+              echo "❌ lib/$ABI/libnodebridge.so TIDAK ada di dalam APK"
+              FAIL=1
+              rm -rf "$TMP"
+              continue
+            fi
+
+            if readelf --dyn-syms -W "$TMP/libnodebridge.so" | grep -q "$SIMBOL"; then
+              echo "✅ lib/$ABI/libnodebridge.so ada + punya simbol $SIMBOL"
+            else
+              echo "❌ lib/$ABI/libnodebridge.so nggak punya simbol $SIMBOL"
+              echo "   → Node nggak akan jalan di HP (UnsatisfiedLinkError)."
+              echo "   Cek: nama paket/kelas di native-lib.cpp, dan keep-rule JNI di proguard-rules.pro."
+              FAIL=1
+            fi
+            rm -rf "$TMP"
+          done
+
+          exit $FAIL
+
       - name: Cek dex hasil R8 (nama yang dipanggil lewat string masih utuh)
         run: |
           APK="dist/${{ steps.vars.outputs.apk-name }}"

@@ -27,6 +27,16 @@ class FileBridge(
     var onEvent: ((JSONObject) -> Unit)? = null
 
     fun start() {
+        // Buang perintah yang belum sempat diproses dari sesi sebelumnya.
+        // Tanpa ini, cmd.json yang nggak pernah kebaca (mis. karena mesin Node
+        // mati waktu perintahnya dikirim) bakal disimpan di file dan DIPROSES
+        // belakangan waktu Node akhirnya jalan — jadi bot ngelakuin hal yang
+        // udah nggak relevan.
+        try {
+            if (cmdFile.exists()) cmdFile.delete()
+        } catch (_: Exception) {
+        }
+
         scope.launch {
             while (isActive) {
                 delay(300)

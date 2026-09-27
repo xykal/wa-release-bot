@@ -337,7 +337,9 @@ Masih perlu log mentah? `adb logcat -s WRBot` (output engine Node).
 | `bundle.cjs tidak ditemukan` | APK di-build tanpa langkah bundling — build ulang via Actions / `scripts/build-local.sh` |
 | `libnode.so tidak ditemukan` | Jalankan `bash scripts/fetch-nodejs-mobile.sh` |
 | App **terhenti** pas ditekan (dulu sering kena di tombol Setup) | Fixed di **v1.1.3** — `BotService` baca SharedPreferences di constructor, padahal Context-nya belum dipasang Android → NullPointerException. Update ke v1.1.3+ |
-| QR tidak muncul | Tunggu ±4 detik (service baru dinyalakan). Kalau >10 detik, app bilang sendiri di Log. Cek `mesin.log` |
+| **QR tidak muncul sama sekali** | Buka `app.log`, cari `NodeBridge`. Kalau ada `UnsatisfiedLinkError`, mesin Node nggak bisa dimuat → pasang APK yang **cocok sama ABI HP**. Fixed total di **v1.1.4** (dulu `loadLibrary` nggak pernah dipanggil) |
+| `UnsatisfiedLinkError: No implementation found for ... startNode` | v1.1.3 ke bawah: `System.loadLibrary()` nggak pernah dipanggil, jadi mesin Node nggak akan pernah jalan. **Update ke v1.1.4** |
+| QR tidak muncul, mesin Node jalan | Tunggu ±4 detik (service baru dinyalakan). Kalau >10 detik, app bilang sendiri di Log. Cek `mesin.log` |
 | Layar sempat beku pas QR muncul | Fixed di **v1.1.3** — gambar QR 640×640 dulu digambar di thread utama (400 ribu panggilan `setPixel`). Sekarang di thread belakang |
 | QR tidak muncul di CLI | Pastikan pakai Baileys 6.7.24 + `qrcode-terminal` (sudah otomatis sejak v1.1.0) |
 | `Cannot destructure property 'subtle' of globalThis.crypto` | Runtime Node 18 tanpa polyfill. Sudah diperbaiki di v1.1.0 — update dulu |

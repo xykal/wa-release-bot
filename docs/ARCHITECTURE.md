@@ -115,13 +115,38 @@ ulang (itu juga butuh koneksi WA).
 |---|---|---|
 | `assets/node/bundle.cjs` | ±11 MB | hasil `esbuild` dari `bot-js/src/` — semua dependency termasuk Baileys di-inline |
 | `lib/arm64-v8a/libnode.so` | ±60 MB (unstripped) | rilis nodejs-mobile v18.20.4 |
-| `lib/arm64-v8a/libnodebridge.so` | ±20 KB | `app/src/main/cpp/native-lib.cpp` |
+| `lib/arm64-v8a/libnodebridge.so` | ±7 KB | `app/src/main/cpp/native-lib.cpp` |
 | Kode Kotlin + resource | ±1 MB | `app/` |
 
 APK hasilnya ±35–40 MB, dominan dari `libnode.so`. Itu harga yang dibayar buat
 "nggak butuh Termux".
 
 ## Jembatan JNI
+
+### Yang harus ada di sisi Kotlin
+
+Punya `.so` di dalam APK **tidak cukup**. Android baru menautkan sebuah library
+native kalau ada kode yang memintanya:
+
+```kotlin
+// URUTANNYA PENTING — libnodebridge.so punya DT_NEEDED ke libnode.so
+System.loadLibrary("node")        // libnode.so
+System.loadLibrary("nodebridge")  // libnodebridge.so
+```
+
+Kalau baris itu nggak ada, `startNode()` melempar `UnsatisfiedLinkError` dan
+**mesin Node nggak akan pernah nyala** — bot-nya mati total, QR nggak muncul,
+tapi build-nya tetap hijau. Ini pernah kejadian sampai v1.1.3 (lihat
+[CHANGELOG](../CHANGELOG.md#114--2026-09-27)), makanya sekarang ada dua cek:
+`readelf` memastikan `.so`-nya mengekspor
+`Java_com_xykals_warelease_NodeBridge_startNode`, dan satu lagi memastikan
+`loadLibrary` masih ada beserta urutannya.
+
+Pemanggilannya ada di dalam thread Node, bukan thread utama: `libnode.so` itu
+45–60 MB dan memuatnya butuh ratusan milidetik — kalau di thread UI, layarnya
+nge-freeze.
+
+### Di sisi native
 
 `native-lib.cpp` sengaja dibuat sesederhana mungkin — resepnya sama dengan yang
 dipakai React Native:

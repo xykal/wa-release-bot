@@ -6,6 +6,55 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.1.4] — 2026-09-27
+
+### 🐛 Diperbaiki (yang ini fatal)
+
+- **Mesin Node nggak pernah nyala di HP.** `NodeBridge` nggak pernah memanggil
+  `System.loadLibrary()`. Punya `libnode.so` dan `libnodebridge.so` di dalam
+  APK itu **tidak cukup** — Android baru menautkan sebuah `.so` kalau ada yang
+  memintanya lewat `loadLibrary()`. Akibatnya tiap panggilan native melempar:
+
+      java.lang.UnsatisfiedLinkError: No implementation found for int
+      com.xykals.warelease.NodeBridge.startNode(...)
+      - is the library loaded, e.g. System.loadLibrary?
+
+  Jadi aplikasinya jalan, tombolnya bisa ditekan, tapi **bot-nya nggak pernah
+  hidup** — QR nggak muncul, setup nggak jalan, posting nggak jalan. Kata
+  "is the library loaded" di pesan itu memang jawabannya, cuma nggak ada yang
+  sadar karena build-nya hijau dan isi APK-nya "benar".
+
+  Ini juga menjelaskan kenapa semua verifikasi sebelumnya lolos: yang diperiksa
+  itu file APK-nya (isi, tanda tangan, ukuran), bukan perilakunya di HP.
+  Build sukses, `.so`-nya ikut ke-package, simbolnya benar — yang kurang cuma
+  satu baris kode.
+
+  Sekarang `System.loadLibrary("node")` lalu `("nodebridge")` dipanggil di
+  thread Node (bukan thread utama: `libnode.so` 45 MB, memuatnya ratusan
+  milidetik). Urutannya penting — `libnodebridge.so` punya `DT_NEEDED` ke
+  `libnode.so`.
+
+### 🛡️ Supaya nggak kejadian lagi
+
+- CI build: `readelf --dyn-syms` memastikan `libnodebridge.so` benar-benar
+  mengekspor `Java_com_xykals_warelease_NodeBridge_startNode` — untuk **tiap**
+  ABI yang dipackage, langsung dari `.so` di dalam APK.
+- CI lint: memastikan `System.loadLibrary("node")` dan `("nodebridge")` masih
+  ada di `NodeBridge.kt`, **dan urutannya benar**.
+- Dua-duanya statis dan murah, dan dua-duanya bakal menangkap persis bug ini.
+
+### 🔧 Diubah
+
+- Log startup sekarang mencatat **ABI yang benar-benar dipakai** Android
+  (`primaryCpuAbi`), bukan cuma daftar ABI yang didukung HP. Kalau suatu saat
+  APK-nya nggak cocok sama HP-nya, ini yang bikin langsung ketahuan.
+- Kalau library native gagal dimuat, pesan errornya nyebut ABI HP-nya dan
+  nyaranin APK mana yang harus dipasang.
+- `FileBridge` membuang `cmd.json` sisa sesi sebelumnya waktu service dinyalakan.
+  Tanpa ini, perintah yang nggak pernah sempat diproses (mis. karena mesin Node
+  mati waktu perintahnya dikirim) disimpan di file dan baru dieksekusi
+  belakangan — jadi bot ngelakuin hal yang udah nggak relevan.
+
 ## [1.1.3] — 2026-09-27
 
 ### 🐛 Diperbaiki
@@ -268,7 +317,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.1.3...HEAD
+[Unreleased]: ../../compare/v1.1.4...HEAD
+[1.1.4]: ../../compare/v1.1.3...v1.1.4
 [1.1.3]: ../../compare/v1.1.2...v1.1.3
 [1.1.2]: ../../compare/v1.1.1...v1.1.2
 [1.1.1]: ../../compare/v1.1.0...v1.1.1

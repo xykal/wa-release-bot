@@ -83,10 +83,19 @@ object LogRecorder {
             siap = true
 
             tulisBerkas("BACA-INI.txt", penjelasan(kandidat), sekaliSaja = true)
+            // ABI yang DIPILIH Android (primaryCpuAbi) dicatat terpisah dari
+            // daftar ABI yang didukung HP: kalau APK-nya isinya arm64 tapi
+            // HP-nya 32-bit, yang ini yang bikin ketahuan.
+            val abiDipilih = try {
+                ctx.applicationInfo?.primaryCpuAbi ?: "(belum ditentukan)"
+            } catch (_: Throwable) {
+                "(nggak kebaca)"
+            }
             tulis(
                 "── app jalan ── ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) " +
                         "• ${Build.MANUFACTURER} ${Build.MODEL} • Android ${Build.VERSION.RELEASE} " +
-                        "(API ${Build.VERSION.SDK_INT}) • ${Build.SUPPORTED_ABIS.joinToString()}"
+                        "(API ${Build.VERSION.SDK_INT}) • ABI dipakai: $abiDipilih " +
+                        "• HP dukung: ${Build.SUPPORTED_ABIS.joinToString()}"
             )
             mulaiRekamLogcat()
             return kandidat

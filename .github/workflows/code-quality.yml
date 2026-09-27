@@ -62,6 +62,42 @@ jobs:
         working-directory: ${{ matrix.dir }}
         run: npm run lint
 
+      # Statis, tanpa build: jembatan JNI cuma jalan kalau NodeBridge benar-benar
+      # manggil System.loadLibrary(). Punya .so di dalam APK nggak ada gunanya
+      # kalau nggak ada yang memuatnya — dan itulah yang dulu kejadian:
+      # mesin Node nggak pernah nyala, QR nggak pernah muncul, dan nggak ada
+      # satu pun tanda bahaya di build. Gagalnya baru kelihatan di HP.
+      - name: Jembatan JNI harus dimuat eksplisit
+        if: matrix.dir == 'bot-js'
+        run: |
+          BRIDGE="app/src/main/java/com/xykals/warelease/NodeBridge.kt"
+          FAIL=0
+
+          for LIB in node nodebridge; do
+            if grep -q "System.loadLibrary(\"$LIB\")" "$BRIDGE"; then
+              echo "✅ System.loadLibrary(\"$LIB\") ada"
+            else
+              echo "❌ System.loadLibrary(\"$LIB\") HILANG dari $BRIDGE"
+              echo "   → semua panggilan native bakal UnsatisfiedLinkError,"
+              echo "     mesin Node nggak akan pernah jalan, QR nggak akan muncul."
+              FAIL=1
+            fi
+          done
+
+          # Urutannya penting: libnodebridge.so punya DT_NEEDED ke libnode.so.
+          # Diambil cuma dari baris PEMANGGILAN (bukan komentar yang nyebut
+          # System.loadLibrary), makanya polanya nyari tanda kutip + argumennya.
+          URUT="$(grep -o 'System.loadLibrary("[a-z]*")' "$BRIDGE" | sed 's/.*loadLibrary("//;s/")//' | tr '\n' ' ')"
+          if [ "$URUT" != "node nodebridge " ]; then
+            echo "❌ urutan loadLibrary salah: '$URUT' (harusnya 'node nodebridge ')"
+            echo "   libnodebridge.so butuh libnode.so — lihat readelf -d."
+            FAIL=1
+          else
+            echo "✅ urutannya benar: node dulu, baru nodebridge"
+          fi
+
+          exit $FAIL
+
       - name: Syntax check semua source
         working-directory: ${{ matrix.dir }}
         run: |

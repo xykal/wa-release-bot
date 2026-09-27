@@ -15,6 +15,9 @@ npm, di `node_modules/<paket>/LICENSE` setelah `npm ci`.
 | [pino](https://github.com/pinojs/pino) | logger engine | MIT |
 | [ws](https://github.com/websockets/ws) | WebSocket app ↔ engine | MIT |
 | dependensi transitif Baileys (libsignal, protobufjs, dll) | enkripsi & protokol WA | MIT / BSD / Apache-2.0 / GPL-3.0* |
+| [mpg123-decoder](https://github.com/eshaz/wasm-audio-decoders) 1.0.3 (WASM dari [libmpg123](https://www.mpg123.de/)) | decode potongan MP3 lagu | MIT (wrapper) + LGPL-2.1 (libmpg123)** |
+| [opusscript](https://github.com/abalabahaha/opusscript) 0.1.1 (WASM dari [libopus](https://opus-codec.org/)) | encode voice note Ogg Opus | MIT (wrapper) + BSD-3-Clause (libopus) |
+| [SwipeRefreshLayout](https://developer.android.com/jetpack/androidx/releases/swiperefreshlayout) 1.1 | tarik-buat-segerin | Apache-2.0 |
 | [OkHttp](https://github.com/square/okhttp) 4.12 | WebSocket di sisi app | Apache-2.0 |
 | [ZXing core](https://github.com/zxing/zxing) 3.5 | gambar QR | Apache-2.0 |
 | [AndroidX](https://developer.android.com/jetpack/androidx) (core, appcompat, activity, work) | kerangka app | Apache-2.0 |
@@ -30,6 +33,10 @@ Proyek ini **nggak** berusaha ngebatasi hak apa pun yang lo dapet dari GPL-3.0: 
 dua lisensi itu bentrok buat APK, hak dari GPL-3.0 yang berlaku. Lisensi pemakaian
 pribadi tetap berlaku buat kode asli di repo ini (app Kotlin, engine `bot-js/src`,
 dokumen, logo). Ini bukan nasihat hukum.
+
+\*\* libmpg123 (LGPL-2.1) masuk sebagai modul WASM terpisah yang dimuat saat jalan,
+tanpa diubah. Sumbernya: [mpg123.de](https://www.mpg123.de/) dan build WASM-nya di
+[eshaz/wasm-audio-decoders](https://github.com/eshaz/wasm-audio-decoders).
 
 Dependensi opsional Baileys yang berlisensi LGPL (`sharp` / libvips) **nggak**
 ikut dibundel — diganti stub di `bot-js/build.mjs`.

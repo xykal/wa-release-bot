@@ -31,6 +31,17 @@ const result = await esbuild.build({
     'link-preview-js': './optional-stub.cjs',
   },
   banner: { js: banner },
+  // libopus WASM (buat voice note lagu) di-embed ke bundle — lihat src/opus.mjs
+  plugins: [{
+    name: 'opus-wasm',
+    setup(b) {
+      b.onResolve({ filter: /^virtual:opus-wasm$/ }, () => ({ path: 'opus-wasm', namespace: 'opus-wasm' }));
+      b.onLoad({ filter: /.*/, namespace: 'opus-wasm' }, () => ({
+        contents: readFileSync(path.join(here, 'node_modules/opusscript/build/opusscript_native_wasm.wasm')),
+        loader: 'binary',
+      }));
+    },
+  }],
   // Buang komentar lisensi pihak ketiga dari bundle — memangkas ukuran APK.
   // (Atribusi lisensi tetap ada di THIRD_PARTY_LICENSES.md repo ini.)
   legalComments: 'none',

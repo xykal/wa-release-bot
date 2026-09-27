@@ -222,7 +222,14 @@ HP (pas "mood")  ──GET /lagu/berikut──▶  Cloudflare Worker (gratis)
                                            kata-kata dari AI (key Groq di Worker)
 HP  ◀── { judul, artis, kata, url, mulai } ──┘
 HP: download CUMA potongan ~60 dtk (HTTP Range, ±1 MB) → rapiin frame MP3
-    → kirim kata-kata + audio ke channel → file-nya langsung DIHAPUS
+    → ubah jadi VOICE NOTE (Ogg Opus, WASM, tanpa ffmpeg)
+    → kirim kata-kata + voice note ke channel → file-nya langsung DIHAPUS
+```
+
+Kenapa voice note? Saluran WA cuma nerima voice note — file audio MP3 biasa
+tampil **"tidak didukung"** di saluran.
+
+```
 ```
 
 Daftar lagunya di [`lagu/daftar.txt`](lagu/daftar.txt). Habis ngubah, deploy ulang

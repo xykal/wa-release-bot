@@ -15,6 +15,8 @@ import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createBridge } from './bridge.mjs';
+import { mp3KeVoiceNote, pcmKeOgg } from './opus.mjs';
+import { MPEGDecoder } from 'mpg123-decoder';
 import { fetchLatestRelease } from './github.mjs';
 import { connectToWhatsApp, resolveChannel, sendText, sendPertanyaan, statusSesi, hapusSesi } from './wa.mjs';
 import { bikinChannel, linkChannel, bacaTarget, JENIS } from './channel.mjs';
@@ -38,6 +40,11 @@ async function selftest() {
   const tmp = fs.mkdtempSync('/tmp/warbot-test-');
   process.env.WR_DATA_DIR = tmp;
   console.log('SELFTEST: dataDir =', tmp);
+  // voice note: libopus (WASM yang di-embed) + decoder MP3 harus bisa jalan
+  const ogg = await pcmKeOgg(new Int16Array(48000));
+  if (ogg.subarray(0, 4).toString('latin1') !== 'OggS' || ogg.length < 200) throw new Error('Opus/Ogg gagal');
+  const dec = new MPEGDecoder(); await dec.ready; dec.free();
+  console.log('SELFTEST: voice note OK (' + ogg.length + ' byte Ogg Opus)');
   const bridge = createBridge({ dataDir: tmp, wsPort: 0, log: (m) => console.log('  [bridge]', m), onCommand: (c) => {
     console.log('  [cmd diterima]', c);
     bridge.send({ type: 'selftest_cmd_ok', echo: c });
@@ -299,16 +306,26 @@ async function main() {
       const lagu = await ambilBerikut(sumber);
       const { data, detik } = await downloadPotongan(lagu.url, lagu);
       // File sementara — langsung dihapus begitu kekirim (atau gagal).
-      fs.mkdirSync(dirLaguTmp, { recursive: true });
-      file = path.join(dirLaguTmp, `lagu-${Date.now()}.mp3`);
-      fs.writeFileSync(file, data);
       log(`🎵 Dapet: ${lagu.judul} — ${lagu.artis} (potongan ${detik} dtk, ${Math.round(data.length / 1024)} KB)`);
+      // Saluran WA cuma nerima voice note (Ogg Opus) — MP3 biasa tampil
+      // "tidak didukung". Jadi diubah dulu di HP (WASM, tanpa ffmpeg).
+      // (Nggak ada cadangan MP3: di saluran MP3 cuma bakal jadi "tidak didukung".)
+      const t0 = Date.now();
+      const vn = await mp3KeVoiceNote(data).catch((e) => {
+        throw new Error('gagal ngubah ke voice note: ' + e.message, { cause: e });
+      });
+      const isi = vn.data;
+      const pesanAudio = { mimetype: 'audio/ogg; codecs=opus', seconds: vn.detik, ptt: true };
+      log(`🎙️ Diubah jadi voice note (${Math.round(isi.length / 1024)} KB, ${((Date.now() - t0) / 1000).toFixed(1)} dtk).`);
+      fs.mkdirSync(dirLaguTmp, { recursive: true });
+      file = path.join(dirLaguTmp, `lagu-${Date.now()}.ogg`);
+      fs.writeFileSync(file, isi);
       await pakaiWA('lagu', async () => {
         const { sock, close } = await sambung();
         try {
           const jid = await cariTarget(sock);
           await sendText(sock, jid, formatKataLagu(lagu));
-          await sock.sendMessage(jid, { audio: { url: file }, mimetype: 'audio/mpeg', seconds: detik, ptt: false });
+          await sock.sendMessage(jid, { audio: { url: file }, ...pesanAudio });
           // Kasih napas bentar sebelum socket ditutup: upload/ack yang masih
           // jalan di belakang kalau diputus paksa suka lempar "Connection Closed".
           await new Promise((r) => setTimeout(r, 3000));

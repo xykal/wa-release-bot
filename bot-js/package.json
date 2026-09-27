@@ -1,7 +1,7 @@
 {
   "name": "wa-release-bot-js",
   "private": true,
-  "version": "1.6.3",
+  "version": "1.6.4",
   "description": "Engine bot (Node.js) yang berjalan di dalam aplikasi Android via nodejs-mobile. Dijadikan 1 file bundle oleh esbuild.",
   "type": "module",
   "engines": {
@@ -15,6 +15,8 @@
   },
   "dependencies": {
     "@whiskeysockets/baileys": "6.7.24",
+    "mpg123-decoder": "1.0.3",
+    "opusscript": "0.1.1",
     "pino": "^9.6.0",
     "semver": "^7.8.5",
     "ws": "^8.18.0"

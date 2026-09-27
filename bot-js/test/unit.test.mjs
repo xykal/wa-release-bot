@@ -452,3 +452,32 @@ test('tar: bacaTar baca file ustar sederhana', () => {
   assert.equal(e[0].nama, 'package/a.txt');
   assert.equal(e[0].isi.toString(), 'halo');
 });
+
+// ---- voice note (opus.mjs) ----
+import { pcmKeOgg, halamanOgg, keMono48k } from '../src/opus.mjs';
+
+test('halamanOgg: header OggS + CRC keisi', () => {
+  const h = halamanOgg([Buffer.from('halo')], 0, 1, 0, 2);
+  assert.equal(h.subarray(0, 4).toString('latin1'), 'OggS');
+  assert.equal(h[5], 2);
+  assert.notEqual(h.readUInt32LE(22), 0);
+});
+
+test('keMono48k: 44.1k stereo → 48k mono, panjang pas', () => {
+  const L = new Float32Array(44100).fill(0.5);
+  const pcm = keMono48k([L, L], 44100);
+  assert.equal(pcm.length, 48000);
+  assert.ok(Math.abs(pcm[100] - 16384) < 2);
+});
+
+test('pcmKeOgg: 1 dtk → Ogg Opus valid (OpusHead + OpusTags + halaman akhir)', async () => {
+  const pcm = new Int16Array(48000);
+  for (let i = 0; i < pcm.length; i++) pcm[i] = Math.round(8000 * Math.sin(i / 48000 * 2 * Math.PI * 440));
+  const ogg = await pcmKeOgg(pcm);
+  assert.equal(ogg.subarray(0, 4).toString('latin1'), 'OggS');
+  assert.ok(ogg.includes(Buffer.from('OpusHead')));
+  assert.ok(ogg.includes(Buffer.from('OpusTags')));
+  const akhir = ogg.lastIndexOf(Buffer.from('OggS'));
+  assert.equal(ogg[akhir + 5], 4); // flag end-of-stream
+  assert.equal(Number(ogg.readBigInt64LE(akhir + 6)), 48000 + 312);
+});

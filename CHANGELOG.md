@@ -6,6 +6,17 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.6.4] — 2026-09-27
+
+### 🎙️ Lagu di saluran dikirim sebagai voice note
+- Lagu udah kekirim, tapi di saluran tampil "tidak didukung": saluran WA
+  nggak nerima file audio MP3, cuma **voice note** (Ogg Opus).
+- Potongan MP3 sekarang diubah jadi voice note langsung di HP — decoder
+  mpg123 + encoder libopus versi WASM, tanpa ffmpeg. 60 dtk ≈ 480 KB, mono
+  48 kHz 64 kbps.
+- Selftest bundle ikut ngecek encoder-nya, jadi kalau WASM-nya nggak kebawa ke
+  APK, CI langsung merah.
+
 ## [1.6.3] — 2026-09-27
 
 ### 🎵 Lagu akhirnya bisa kekirim
@@ -640,7 +651,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.6.3...HEAD
+[Unreleased]: ../../compare/v1.6.4...HEAD
+[1.6.4]: ../../compare/v1.6.3...v1.6.4
 [1.6.3]: ../../compare/v1.6.2...v1.6.3
 [1.6.2]: ../../compare/v1.6.1...v1.6.2
 [1.6.1]: ../../compare/v1.6.0...v1.6.1

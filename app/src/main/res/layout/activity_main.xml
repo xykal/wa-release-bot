@@ -306,6 +306,28 @@
                 </LinearLayout>
                 <ImageView style="@style/Saklar" />
             </LinearLayout>
+            <LinearLayout android:id="@+id/rowFormatTanya" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Kirim sebagai Pertanyaan"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Follower channel bisa bales pesan rilis (balasannya cuma sampai ke lo). Matiin kalau di WA-nya tampil aneh."
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -325,7 +347,7 @@
                     android:layout_marginStart="10dp"
                     style="@style/TombolLembut"
                     android:drawableStart="@drawable/ic_kirim"
-                    android:text="Tes kirim" />
+                    android:text="Tes kirim ke channel" />
             </LinearLayout>
             </LinearLayout>
 
@@ -394,12 +416,27 @@
                 android:padding="12dp"
                 android:textColor="@color/wr_teks"
                 android:textSize="13sp" />
-            <TextView
-                android:id="@+id/btnCekGrup"
-                style="@style/TombolGaris"
-                android:drawableStart="@drawable/ic_cek"
-                android:text="Cek grup sekarang"
-                android:layout_marginTop="12dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/btnCekGrup"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/TombolGaris"
+                    android:drawableStart="@drawable/ic_cek"
+                    android:text="Cek sekarang" />
+                <TextView
+                    android:id="@+id/btnTesGrup"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    style="@style/TombolGaris"
+                    android:drawableStart="@drawable/ic_kirim"
+                    android:text="Tes kirim" />
+            </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

@@ -327,6 +327,25 @@ class BotService : Service() {
 
             "qr" -> BotBus.publish { qr = e.optString("qr", "").orNull() }
 
+            "daftar_hitam" -> {
+                val oto = e.optJSONArray("otomatis")
+                val man = e.optJSONArray("manual")
+                val daftar = (0 until (oto?.length() ?: 0)).mapNotNull { i ->
+                    val o = oto?.optJSONObject(i) ?: return@mapNotNull null
+                    OrangHitam(
+                        o.optString("kunci"),
+                        o.optString("label", o.optString("kunci")),
+                        o.optLong("sejak", 0L).takeIf { it > 0 }
+                    )
+                }
+                val manual = (0 until (man?.length() ?: 0)).map { man!!.optString(it) }
+                BotBus.publish {
+                    daftarHitam = daftar
+                    daftarHitamManual = manual
+                    daftarHitamSeq += 1
+                }
+            }
+
             "pairing_code" -> BotBus.publish { pairingCode = e.optString("code", "").orNull() }
 
             "setup_start" -> BotBus.publish {

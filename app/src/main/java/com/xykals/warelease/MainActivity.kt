@@ -60,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etGrup: EditText
     private lateinit var etGrupInterval: EditText
     private lateinit var etGrupHitam: EditText
+    private lateinit var rowFormatTanya: View
 
     // saklar (baris yang bisa di-tap)
     private lateinit var rowPrerelease: View
@@ -89,6 +90,12 @@ class MainActivity : AppCompatActivity() {
     private var engineJalan = false
     private var setupTerakhir: String? = null
     private var tahapTerakhir: String? = null
+
+    // Daftar hitam: dialognya kebuka kalau user yang minta, dan di-refresh
+    // tiap engine ngirim daftar baru (mis. habis buka blokir).
+    private var mauLihatHitam = false
+    private var hitamSeqTerakhir = -1
+    private var dialogHitam: Dialog? = null
     private lateinit var btnKill: TextView
 
     // Aksi Mulai / Jeda / Matikan yang lagi ditunggu hasilnya. Selama belum
@@ -226,6 +233,7 @@ class MainActivity : AppCompatActivity() {
         rowPrerelease = saklar(R.id.rowPrerelease)
         rowPostFirst = saklar(R.id.rowPostFirst)
         rowTestMsg = saklar(R.id.rowTestMsg)
+        rowFormatTanya = saklar(R.id.rowFormatTanya)
         rowGrupAktif = saklar(R.id.rowGrupAktif)
         rowBoot = saklar(R.id.rowBoot)
         rowLogcat = saklar(R.id.rowLogcat)
@@ -277,7 +285,22 @@ class MainActivity : AppCompatActivity() {
                 Tombol("Batal", Gaya.LEMBUT)
             )
         }
-        pasang(R.id.btnTest, "Tes kirim") { withService { sendCmd(mapOf("type" to "test")) } }
+        pasang(R.id.btnTest, "Tes kirim channel") {
+            if (!simpanDiamDiam()) return@pasang
+            withService { sendCmd(mapOf("type" to "test")) }
+            banner("Ngirim pesan tes ke channel… hasilnya ada di kartu Log.")
+        }
+        pasang(R.id.btnTesGrup, "Tes kirim grup") {
+            ambilDariView()
+            if (settings.grupTarget.isBlank()) {
+                banner("Isi link undangan grup dulu.")
+                etGrup.requestFocus()
+                return@pasang
+            }
+            if (!simpanDiamDiam()) return@pasang
+            withService { sendCmd(mapOf("type" to "tes-grup")) }
+            banner("Ngirim pesan tes ke grup… hasilnya ada di kartu Log.")
+        }
         pasang(R.id.btnBikinChannel, "Bikin channel") {
             lembar(
                 "Bikin channel baru?",
@@ -295,8 +318,9 @@ class MainActivity : AppCompatActivity() {
             withService { sendCmd(mapOf("type" to "cek-grup")) }
         }
         pasang(R.id.btnLihatHitam, "Daftar hitam") {
+            mauLihatHitam = true
             withService { sendCmd(mapOf("type" to "lihat-hitam")) }
-            banner("Daftar hitamnya ditulis di kartu Log (paling bawah).")
+            banner("Ngambil daftar hitam…")
         }
         pasang(R.id.btnResetHitam, "Kosongin daftar hitam") {
             lembar(
@@ -339,6 +363,7 @@ class MainActivity : AppCompatActivity() {
         rowPrerelease.isSelected = settings.includePrereleases
         rowPostFirst.isSelected = settings.postOnFirstRun
         rowTestMsg.isSelected = settings.testMessageOnSetup
+        rowFormatTanya.isSelected = settings.formatPertanyaan
         rowGrupAktif.isSelected = settings.grupAktif
         rowBoot.isSelected = settings.autoStartOnBoot
         rowLogcat.isSelected = settings.rekamLogcat
@@ -355,6 +380,7 @@ class MainActivity : AppCompatActivity() {
         settings.includePrereleases = rowPrerelease.isSelected
         settings.postOnFirstRun = rowPostFirst.isSelected
         settings.testMessageOnSetup = rowTestMsg.isSelected
+        settings.formatPertanyaan = rowFormatTanya.isSelected
         settings.grupAktif = rowGrupAktif.isSelected
         settings.grupTarget = etGrup.text.toString()
         settings.grupInterval = etGrupInterval.text.toString().toIntOrNull() ?: 5
@@ -727,6 +753,15 @@ class MainActivity : AppCompatActivity() {
             setupTerakhir = ui.setupState
         }
 
+        if (ui.daftarHitamSeq != hitamSeqTerakhir) {
+            val pertama = hitamSeqTerakhir == -1
+            hitamSeqTerakhir = ui.daftarHitamSeq
+            if (!pertama && (mauLihatHitam || dialogHitam?.isShowing == true)) {
+                mauLihatHitam = false
+                tampilkanDaftarHitam(ui)
+            }
+        }
+
         if (ui.setupTahap != null && ui.setupTahap != tahapTerakhir) {
             banner(ui.setupTahap!!)
         }
@@ -905,6 +940,80 @@ class MainActivity : AppCompatActivity() {
         qrImage = null
         qrTerakhir = null
         qrBitmap = null
+    }
+
+    // ----------------------------- daftar hitam -----------------------------
+
+    /** Dialog daftar hitam: tiap orang ada tombol "Buka blokir". */
+    private fun tampilkanDaftarHitam(ui: BotUi) {
+        try {
+            dialogHitam?.dismiss()
+        } catch (_: Throwable) {
+        }
+        val tgl = java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale("id", "ID"))
+        val isi = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+
+        fun teks(s: String, warna: Int, ukuran: Float) = TextView(this).apply {
+            text = s
+            setTextColor(ContextCompat.getColor(this@MainActivity, warna))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, ukuran)
+        }
+
+        if (ui.daftarHitam.isEmpty()) {
+            isi.addView(teks("Nggak ada yang diblokir otomatis.", R.color.wr_teks2, 14f))
+        }
+        ui.daftarHitam.forEachIndexed { i, o ->
+            val baris = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setBackgroundResource(R.drawable.bg_ubin)
+                setPadding(dp(12), dp(10), dp(10), dp(10))
+            }
+            val kiri = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            kiri.addView(teks(o.label, R.color.wr_teks, 15f))
+            kiri.addView(
+                teks(
+                    o.sejak?.let { "keluar / dikeluarin ${tgl.format(java.util.Date(it))}" } ?: "dicatat bot",
+                    R.color.wr_teks2, 12f
+                )
+            )
+            baris.addView(kiri, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            val tombol = TextView(this, null, 0, R.style.TombolGaris).apply {
+                text = "Buka blokir"
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                setPadding(dp(12), 0, dp(12), 0)
+                setOnClickListener {
+                    LogRecorder.tulis("Hitam", "buka blokir ${o.label}")
+                    text = "Membuka…"
+                    isEnabled = false
+                    alpha = 0.55f
+                    withService { sendCmd(mapOf("type" to "hapus-hitam", "kunci" to o.kunci)) }
+                    banner("${o.label} bisa join lagi (di-approve pas cek berikutnya).")
+                }
+            }
+            baris.addView(tombol, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(40)))
+            val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            if (i > 0) lp.topMargin = dp(8)
+            isi.addView(baris, lp)
+        }
+        if (ui.daftarHitamManual.isNotEmpty()) {
+            val t = teks(
+                "Diblokir manual (kolom \"Selalu tolak nomor ini\"): ${ui.daftarHitamManual.joinToString(", ")}\n" +
+                        "Buat buka blokir yang ini, hapus nomornya dari kolom itu terus Simpan.",
+                R.color.wr_teks2, 12f
+            )
+            val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            lp.topMargin = dp(12)
+            isi.addView(t, lp)
+        }
+
+        dialogHitam = lembar(
+            "Daftar hitam (${ui.daftarHitam.size})",
+            "Orang yang pernah keluar / dikeluarin dari grup. Kalau minta join lagi, otomatis ditolak — " +
+                    "kecuali lo buka blokirnya di sini.",
+            isi,
+            Tombol("Tutup", Gaya.LEMBUT)
+        )
     }
 
     // ----------------------------- komponen custom -----------------------------

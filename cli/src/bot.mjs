@@ -24,7 +24,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fetchLatestRelease } from './github.mjs';
 import { formatReleasePost, formatTestMessage } from './format.mjs';
-import { connectToWhatsApp, resolveChannelJid, sendText } from './wa.mjs';
+import { connectToWhatsApp, resolveChannelJid, kirimKeChannel, pakaiPertanyaan } from './wa.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const STATE_FILE = path.join(ROOT, 'state.json');
@@ -87,7 +87,8 @@ async function postRelease(cfg, state, rel, { dryRun = false }) {
       jid = await resolveChannelJid(sock, cfg.whatsapp.channel);
       state.channelJid = jid;
     }
-    await sendText(sock, jid, text);
+    const fmt = cfg.whatsapp.format;
+    await kirimKeChannel(sock, jid, formatReleasePost(rel, cfg.github.repo, { ajakBalas: pakaiPertanyaan(jid, fmt) }), fmt);
     state.lastTag = rel.tag;
     state.lastPostedAt = new Date().toISOString();
     state.postCount = (state.postCount || 0) + 1;
@@ -144,7 +145,7 @@ async function runSetup(cfg, state) {
     log(`📡 Channel ketemu: ${jid}`);
 
     if (cfg.bot?.testMessageOnSetup !== false) {
-      await sendText(sock, jid, formatTestMessage(cfg.github.repo));
+      await kirimKeChannel(sock, jid, formatTestMessage(cfg.github.repo, { ajakBalas: pakaiPertanyaan(jid, cfg.whatsapp.format) }), cfg.whatsapp.format);
       log('📨 Test message dikirim. Cek channel-nya — kalau muncul, semua beres!');
     }
 
@@ -170,7 +171,7 @@ async function runTest(cfg, state) {
       state.channelJid = jid;
       saveState(state);
     }
-    await sendText(sock, jid, formatTestMessage(cfg.github.repo));
+    await kirimKeChannel(sock, jid, formatTestMessage(cfg.github.repo, { ajakBalas: pakaiPertanyaan(jid, cfg.whatsapp.format) }), cfg.whatsapp.format);
     log(`✅ Test message terkirim ke ${jid}`);
   } finally {
     close();

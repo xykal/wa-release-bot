@@ -19,6 +19,7 @@ import {
   fetchLatestBaileysVersion,
   DisconnectReason,
   Browsers,
+  proto,
 } from '@whiskeysockets/baileys';
 
 export { normalisasiNomor };
@@ -255,4 +256,17 @@ export async function resolveChannel(sock, target, log) {
 
 export async function sendText(sock, jid, text) {
   await sock.sendMessage(jid, { text });
+}
+
+/**
+ * Kirim pesan ke CHANNEL sebagai "Pertanyaan" (fitur saluran WA: follower bisa
+ * bales, balasannya cuma sampai ke admin). Di protokol WA ini pesan teks biasa
+ * yang dibungkus `questionMessage`. Buat grup / chat biasa → teks biasa.
+ */
+export async function sendPertanyaan(sock, jid, text) {
+  if (!String(jid).endsWith('@newsletter')) return sendText(sock, jid, text);
+  const pesan = proto.Message.fromObject({
+    questionMessage: { message: { extendedTextMessage: { text } } },
+  });
+  await sock.relayMessage(jid, pesan, {});
 }

@@ -11,6 +11,9 @@ package com.xykals.warelease
  * `publish()` bekerja di atas SALINAN state (`copy()`), baru dipublikasikan.
  * Jadi nggak ada dua thread yang nulis ke objek yang sama.
  */
+/** Satu orang di daftar hitam otomatis penjaga grup. */
+data class OrangHitam(val kunci: String, val label: String, val sejak: Long?)
+
 data class BotUi(
     var serviceRunning: Boolean = false,
     var engineRunning: Boolean = false,
@@ -36,6 +39,11 @@ data class BotUi(
     var grupDisetujui: Int = 0,
     var grupDitolak: Int = 0,
     var grupHitam: Int = 0,
+    // Daftar hitam lengkap (dikirim engine tiap diminta / berubah).
+    // `daftarHitamSeq` naik tiap ada kiriman baru → UI tau harus refresh.
+    var daftarHitam: List<OrangHitam> = emptyList(),
+    var daftarHitamManual: List<String> = emptyList(),
+    var daftarHitamSeq: Int = 0,
     var grupLastCekAt: Long? = null,
     var nextGrupAt: Long? = null,
     var engineError: String? = null,

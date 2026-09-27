@@ -60,8 +60,8 @@ Dua jalur, sengaja **dua**, karena jalur cepat nggak boleh jadi titik gagal tung
 
 | Jalur | Arah | Isi | Andalan? |
 |---|---|---|---|
-| `events.jsonl` | Node → App | `log`, `status`, `qr`, `pairing_code`, `posted`, `setup_*` (termasuk `setup_tahap`), `cmd_error` | ✅ selalu jalan |
-| `cmd.json` | App → Node | `ping`, `status`, `configure`, `start`, `stop`, `check`, `setup`, `test`, … | ✅ selalu jalan |
+| `events.jsonl` | Node → App | `log`, `status`, `qr`, `pairing_code`, `posted`, `setup_*` (termasuk `setup_tahap`), `daftar_hitam`, `cmd_error` | ✅ selalu jalan |
+| `cmd.json` | App → Node | `ping`, `status`, `configure`, `start`, `stop`, `check`, `setup`, `test`, `tes-grup`, `lihat-hitam`, `hapus-hitam`, … | ✅ selalu jalan |
 | WebSocket `127.0.0.1:18790` | dua arah | perintah saja (bukan event) | ⚡ opsional |
 
 **File bridge** — Node `appendFileSync` satu baris JSON per event; app polling

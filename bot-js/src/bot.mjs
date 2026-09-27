@@ -15,13 +15,20 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createBridge } from './bridge.mjs';
 import { fetchLatestRelease } from './github.mjs';
-import { connectToWhatsApp, resolveChannel, sendText, statusSesi, hapusSesi } from './wa.mjs';
+import { connectToWhatsApp, resolveChannel, sendText, sendPertanyaan, statusSesi, hapusSesi } from './wa.mjs';
 import { bikinChannel, linkChannel, bacaTarget, JENIS } from './channel.mjs';
 import { normalisasiNomor } from './nomor.mjs';
 import {
-  identitas, cariYangKeluar, catatAnggota, putuskan, daftarHitamManual, namaOrang,
+  identitas,
+  cariYangKeluar,
+  catatAnggota,
+  putuskan,
+  daftarHitamManual,
+  namaOrang,
+  kelompokHitam,
+  bukaBlokir,
 } from './grup.mjs';
-import { formatReleasePost, formatTestMessage } from './format.mjs';
+import { formatReleasePost, formatTestMessage, formatTesGrup } from './format.mjs';
 
 // ----------------------------- selftest ------------------------------------
 async function selftest() {
@@ -282,17 +289,33 @@ async function main() {
     return jid;
   }
 
+  // Format pesan ke channel: 'pertanyaan' (default — follower bisa bales,
+  // balasannya cuma sampai ke admin) atau 'teks' (pesan biasa).
+  const formatPertanyaan = () => cfg?.whatsapp?.format !== 'teks';
+
+  async function kirimKeChannel(sock, jid, text) {
+    if (formatPertanyaan() && String(jid).endsWith('@newsletter')) {
+      try {
+        await sendPertanyaan(sock, jid, text);
+        return;
+      } catch (e) {
+        log(`⚠️ Kirim sebagai "Pertanyaan" gagal (${e.message}) — dikirim sebagai teks biasa.`);
+      }
+    }
+    await sendText(sock, jid, text);
+  }
+  const ajak = (jid) => ({ ajakBalas: formatPertanyaan() && String(jid).endsWith('@newsletter') });
+
   async function postRelease(rel) {
     if (!cfg.whatsapp?.channel) {
       log('⚠️ Ada release baru tapi "Channel WA" masih kosong — nggak ada tujuan posting.');
       return;
     }
-    const text = formatReleasePost(rel, cfg.github.repo);
     await pakaiWA('posting', async () => {
       const { sock, close } = await sambung();
       try {
         const jid = await cariTarget(sock);
-        await sendText(sock, jid, text);
+        await kirimKeChannel(sock, jid, formatReleasePost(rel, cfg.github.repo, ajak(jid)));
         state.lastTag = rel.tag;
         state.lastPostedAt = new Date().toISOString();
         state.postCount = (state.postCount || 0) + 1;
@@ -310,7 +333,7 @@ async function main() {
     const target = String(cfg?.grup?.target || '').trim();
     if (!state.grup || state.grup.target !== target) {
       // Grup-nya ganti → catatan lama nggak berlaku.
-      state.grup = { target, jid: null, nama: null, anggota: [], hitam: [], disetujui: 0, ditolak: 0, lastCekAt: null };
+      state.grup = { target, jid: null, nama: null, anggota: [], hitam: [], hitamInfo: [], disetujui: 0, ditolak: 0, lastCekAt: null };
     }
     return state.grup;
   }
@@ -370,6 +393,7 @@ async function main() {
     const sekarang = meta.participants;
     const lamaJumlah = g.anggota.length;
     const hitam = new Set(g.hitam);
+    let hitamInfo = Array.isArray(g.hitamInfo) ? g.hitamInfo : [];
     if (sekarang.length === 0 || (lamaJumlah > 6 && sekarang.length < lamaJumlah / 2)) {
       // Jaga-jaga kalau WA balikin daftar anggota yang nggak lengkap: jangan
       // sampai separuh grup masuk daftar hitam gara-gara glitch.
@@ -377,12 +401,14 @@ async function main() {
     } else {
       for (const orang of cariYangKeluar(g.anggota, sekarang, saya)) {
         orang.forEach((i) => hitam.add(i));
+        hitamInfo.push({ ids: orang, sejak: Date.now() });
         log(`🚪 ${namaOrang(orang)} keluar/dikeluarin dari "${g.nama}" → masuk daftar hitam.`);
       }
     }
     // Yang sekarang ada di grup (mis. dimasukin lagi manual sama admin) =
     // udah dimaafin → hapus dari daftar hitam.
     for (const p of sekarang) identitas(p).forEach((i) => hitam.delete(i));
+    hitamInfo = hitamInfo.filter((o) => (o?.ids || []).some((i) => hitam.has(i)));
 
     // 2. Proses permintaan join.
     const manual = daftarHitamManual(cfg.grup.daftarHitam, normalisasiNomor);
@@ -434,6 +460,7 @@ async function main() {
     //    biar kalau mereka keluar sebelum cek berikutnya tetap ketahuan.
     g.anggota = [...catatAnggota(sekarang), ...baruMasuk];
     g.hitam = [...hitam];
+    g.hitamInfo = hitamInfo;
     g.lastCekAt = Date.now();
     saveState();
 
@@ -443,18 +470,68 @@ async function main() {
     }
   }
 
-  function lihatHitam() {
+  /** Kirim daftar hitam ke app (buat daftar yang bisa dibuka blokirnya) + tulis ke log. */
+  function lihatHitam(diamDiLog = false) {
     const g = state.grup;
     const manual = daftarHitamManual(cfg?.grup?.daftarHitam, normalisasiNomor);
-    if (!g?.hitam?.length && !manual.length) {
+    const otomatis = kelompokHitam(g?.hitam || [], g?.hitamInfo || []);
+    bridge.send({
+      type: 'daftar_hitam',
+      otomatis: otomatis.map((o) => ({ kunci: o.kunci, label: o.label, sejak: o.sejak })),
+      manual: manual.map((i) => '+' + i.split('@')[0]),
+    });
+    if (diamDiLog) return;
+    if (!otomatis.length && !manual.length) {
       log('📋 Daftar hitam kosong.');
       return;
     }
-    const hitam = g?.hitam || [];
-    const nomor = hitam.filter((i) => i.endsWith('@s.whatsapp.net')).map((i) => i.split('@')[0]);
-    const lid = hitam.filter((i) => i.endsWith('@lid')).length;
-    log(`📋 Daftar hitam otomatis: ${nomor.join(', ') || '-'}` + (lid ? ` (+${lid} ID samaran/LID)` : ''));
+    log(`📋 Daftar hitam otomatis (${otomatis.length}): ${otomatis.map((o) => o.label).join(', ') || '-'}`);
     log(`📋 Daftar hitam manual (${manual.length}): ${manual.map((i) => i.split('@')[0]).join(', ') || '-'}`);
+  }
+
+  function hapusHitam(kunci) {
+    const g = state.grup;
+    const manual = daftarHitamManual(cfg?.grup?.daftarHitam, normalisasiNomor);
+    const hasil = bukaBlokir(g?.hitam || [], g?.hitamInfo || [], kunci, normalisasiNomor);
+    if (hasil.dihapus && g) {
+      g.hitam = hasil.hitam;
+      g.hitamInfo = hasil.info;
+      saveState();
+      log(`🔓 ${hasil.dihapus.label} dikeluarin dari daftar hitam — kalau minta join lagi bakal di-approve.`);
+    } else {
+      log(`⚠️ ${kunci} nggak ada di daftar hitam otomatis.`);
+    }
+    const n = normalisasiNomor(String(kunci ?? ''));
+    if (n && manual.includes(`${n}@s.whatsapp.net`)) {
+      log(`ℹ️ Nomor +${n} juga ada di kolom "Selalu tolak nomor ini" — hapus dari situ juga, terus Simpan.`);
+    }
+    lihatHitam(true);
+    emitStatus();
+  }
+
+  async function doTesGrup() {
+    const target = String(cfg?.grup?.target || '').trim();
+    if (!target) { log('⚠️ Link grup masih kosong. Isi dulu di kartu Penjaga grup, terus Simpan.'); return; }
+    try {
+      log('🧪 Mengirim pesan tes ke grup...');
+      await pakaiWA('tes-grup', async () => {
+        const { sock, close } = await sambung();
+        try {
+          const g = grupState();
+          const jid = await cariGrup(sock, g);
+          let nama = g.nama;
+          try { nama = (await sock.groupMetadata(jid)).subject || nama; } catch { /* nggak wajib */ }
+          if (nama) g.nama = nama;
+          saveState();
+          await sendText(sock, jid, formatTesGrup(nama));
+          log(`✅ Pesan tes terkirim ke grup "${nama || jid}".`);
+        } finally {
+          close();
+        }
+      });
+    } catch (e) {
+      log(`💥 Tes grup gagal: ${e.message}`);
+    }
   }
 
   // ----------------------------- setup & test ------------------------------
@@ -530,7 +607,7 @@ async function main() {
           if (cfg?.whatsapp?.channel) {
             jid = await cariTarget(sock);
             if (cfg.bot?.testMessageOnSetup !== false) {
-              await sendText(sock, jid, formatTestMessage(cfg.github?.repo || '-'));
+              await kirimKeChannel(sock, jid, formatTestMessage(cfg.github?.repo || '-', ajak(jid)));
               log('📨 Test message dikirim ke channel. Cek channel-nya!');
             }
           }
@@ -629,7 +706,7 @@ async function main() {
           if (link) log(`🔗 Link channel (buat dibagikan): ${link}`);
 
           if (cfg.bot?.testMessageOnSetup !== false) {
-            await sendText(sock, meta.id, formatTestMessage(repo));
+            await kirimKeChannel(sock, meta.id, formatTestMessage(repo, ajak(meta.id)));
             log('📨 Test message dikirim ke channel baru. Cek tab Saluran di WA.');
           }
           bridge.send({ type: 'channel_dibuat', jid: meta.id, nama: state.channelName, link });
@@ -652,7 +729,7 @@ async function main() {
         const { sock, close } = await sambung();
         try {
           const jid = await cariTarget(sock);
-          await sendText(sock, jid, formatTestMessage(cfg.github?.repo || '-'));
+          await kirimKeChannel(sock, jid, formatTestMessage(cfg.github?.repo || '-', ajak(jid)));
           log(`✅ Test message terkirim ke ${jid}`);
         } finally {
           close();
@@ -683,7 +760,11 @@ async function main() {
             token: cmd.token || '',
             includePrereleases: Boolean(cmd.includePrereleases),
           },
-          whatsapp: { channel: cmd.channel || '', phone: cmd.phone || '' },
+          whatsapp: {
+            channel: cmd.channel || '',
+            phone: cmd.phone || '',
+            format: cmd.formatChannel === 'teks' ? 'teks' : 'pertanyaan',
+          },
           bot: {
             checkIntervalMinutes: Number(cmd.intervalMinutes) || 15,
             postOnFirstRun: Boolean(cmd.postOnFirstRun),
@@ -776,9 +857,19 @@ async function main() {
         lihatHitam();
         break;
 
+      case 'hapus-hitam':
+        hapusHitam(cmd.kunci);
+        break;
+
+      case 'tes-grup':
+        if (!perluCfg()) return;
+        void doTesGrup();
+        break;
+
       case 'reset-hitam':
-        if (state.grup) { state.grup.hitam = []; saveState(); }
+        if (state.grup) { state.grup.hitam = []; state.grup.hitamInfo = []; saveState(); }
         log('🧽 Daftar hitam otomatis dikosongin (yang manual di setting nggak disentuh).');
+        lihatHitam(true);
         emitStatus();
         break;
 

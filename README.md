@@ -131,7 +131,9 @@ anggota yang berubah antar-cek, jadi:
 - orang yang keluar **sebelum** fitur ini nyala nggak ketahuan → ketik nomornya
   di kolom **Selalu tolak nomor ini**
 - orang yang dimasukin lagi manual sama admin otomatis dihapus dari daftar hitam
-- **Daftar hitam** nampilin isinya di Log, **Kosongin** buat reset
+- **Daftar hitam** buka daftar orang yang diblokir; tiap orang ada tombol
+  **Buka blokir** biar bisa join lagi. **Kosongin** buat reset semuanya
+- **Tes kirim** (di kartu Penjaga grup) kirim pesan singkat ke grup buat ngecek
 
 ### Batre
 
@@ -187,9 +189,12 @@ JID grup (`120363...@g.us`) atau link undangan grup-nya
 | **Pakai QR** | Nautin WA pakai QR (scan dari HP lain) |
 | **Lepas WA** | Logout perangkat bot dari WA |
 | **Bikin channel** | Bikin channel WA baru dari akun lo + isi kolom Channel otomatis |
-| **Tes kirim** | Kirim pesan tes ke channel |
-| **Cek grup sekarang** | Jalanin penjaga grup sekarang |
-| **Daftar hitam / Kosongin** | Lihat / reset daftar orang yang bakal ditolak |
+| **Kirim sebagai Pertanyaan** | Pesan ke channel pakai fitur "Pertanyaan" WA — follower bisa bales (cuma lo yang baca). Matiin → teks biasa |
+| **Tes kirim ke channel** | Kirim pesan tes ke channel (formatnya sama kayak pesan rilis) |
+| **Cek sekarang** (grup) | Jalanin penjaga grup sekarang |
+| **Tes kirim** (grup) | Kirim pesan tes ke grup target |
+| **Daftar hitam** | Lihat orang yang bakal ditolak + **Buka blokir** satu-satu |
+| **Kosongin** | Reset daftar hitam otomatis |
 | **Izinkan jalan di latar** | Minta dikecualikan dari optimasi batre |
 | **Buka izin Autostart** | Buka menu Autostart (Xiaomi dll) |
 | **Buka folder / Kirim log** | Buka / bagikan file log |

@@ -46,7 +46,17 @@ export function identitas(entri) {
 /** Nomor dari daftar hitam manual → JID. Isinya dipisah koma / spasi / baris. */
 export function daftarHitamManual(teks, normalisasiNomor) {
   const hasil = new Set();
-  for (const bagian of String(teks ?? '').split(/[\s,;]+/)) {
+  // Dipisah koma / titik koma / baris baru. Spasi di DALAM nomor boleh
+  // ("0812 3456 7890") — dulu spasi juga dianggap pemisah, jadi nomor yang
+  // ditulis pakai spasi pecah jadi potongan yang nggak valid.
+  const potongan = [];
+  for (const baris of String(teks ?? '').split(/[,;\n]+/)) {
+    const t = baris.trim();
+    if (!t) continue;
+    if (!t.includes('@') && normalisasiNomor(t)) potongan.push(t);
+    else potongan.push(...t.split(/\s+/));
+  }
+  for (const bagian of potongan) {
     if (!bagian) continue;
     if (bagian.includes('@')) {
       const r = rapikanJid(bagian);
@@ -100,4 +110,54 @@ export function namaOrang(entri) {
   const ids = Array.isArray(entri) ? entri : identitas(entri);
   const pn = ids.find((i) => i.endsWith('@s.whatsapp.net'));
   return (pn || ids[0] || '?').split('@')[0];
+}
+
+// ---------------------------------------------------------------------------
+//  Daftar hitam per ORANG (buat ditampilin & dibuka blokirnya satu-satu).
+//  `hitam` = daftar identitas (flat, yang dipakai buat nolak). `info` =
+//  catatan per orang: { ids: [...], sejak }. Entri lama (dari versi
+//  sebelum ada `info`) tetap muncul, satu identitas = satu orang.
+// ---------------------------------------------------------------------------
+
+/** Label ramah: +62812… kalau ada nomor, kalau nggak "ID samaran …1234". */
+export function labelOrang(ids) {
+  const pn = ids.find((i) => i.endsWith('@s.whatsapp.net'));
+  if (pn) return '+' + pn.split('@')[0];
+  const id = (ids[0] || '?').split('@')[0];
+  return `ID samaran …${id.slice(-4)}`;
+}
+
+/** @returns {Array<{kunci: string, ids: string[], label: string, sejak: number|null}>} */
+export function kelompokHitam(hitam = [], info = []) {
+  const sisa = new Set(hitam);
+  const hasil = [];
+  for (const o of info || []) {
+    const ids = (o?.ids || []).filter((i) => sisa.has(i));
+    if (!ids.length) continue;
+    ids.forEach((i) => sisa.delete(i));
+    hasil.push({ kunci: ids[0], ids, label: labelOrang(ids), sejak: o.sejak || null });
+  }
+  for (const i of sisa) hasil.push({ kunci: i, ids: [i], label: labelOrang([i]), sejak: null });
+  return hasil;
+}
+
+/**
+ * Buka blokir satu orang. `kunci` boleh identitas lengkap (628xx@s.whatsapp.net
+ * / xxx@lid) atau nomor HP (0812… / +62812…) — dicocokin ke semua identitasnya.
+ * @returns {{hitam: string[], info: object[], dihapus: object|null}}
+ */
+export function bukaBlokir(hitam = [], info = [], kunci, normalisasiNomor = () => null) {
+  const target = new Set();
+  const r = rapikanJid(kunci);
+  if (r) target.add(r);
+  const n = normalisasiNomor(String(kunci ?? ''));
+  if (n) target.add(`${n}@s.whatsapp.net`);
+  const orang = kelompokHitam(hitam, info).find((o) => o.ids.some((i) => target.has(i)));
+  if (!orang) return { hitam: [...hitam], info: [...(info || [])], dihapus: null };
+  const buang = new Set(orang.ids);
+  return {
+    hitam: hitam.filter((i) => !buang.has(i)),
+    info: (info || []).filter((o) => !(o?.ids || []).some((i) => buang.has(i))),
+    dihapus: orang,
+  };
 }

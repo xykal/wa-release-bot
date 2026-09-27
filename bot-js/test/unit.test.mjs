@@ -10,7 +10,9 @@ import path from 'node:path';
 
 import { parseRepo } from '../src/github.mjs';
 import { bacaTarget, JENIS, pesanCaraIsiChannel, linkChannel } from '../src/channel.mjs';
-import { formatReleasePost, formatTestMessage } from '../src/format.mjs';
+import { formatReleasePost, formatTestMessage, formatTesGrup, AJAKAN_BALAS } from '../src/format.mjs';
+import { kelompokHitam, bukaBlokir, labelOrang } from '../src/grup.mjs';
+import { sendPertanyaan } from '../src/wa.mjs';
 import { createBridge } from '../src/bridge.mjs';
 import { normalisasiNomor } from '../src/nomor.mjs';
 import {
@@ -282,4 +284,56 @@ test('bridge: 2 perintah beruntun nggak ada yang hilang & event basi dibuang', a
 
   assert.deepEqual(received.map((c) => c.type), ['configure', 'setup']);
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+// ------------------------------------------------------ daftar hitam per orang
+test('daftar hitam: dikelompokin per orang & bisa dibuka blokirnya pakai nomor', () => {
+  const hitam = ['6281234@s.whatsapp.net', '999111@lid', '777000@lid'];
+  const info = [{ ids: ['6281234@s.whatsapp.net', '999111@lid'], sejak: 1 }];
+  const k = kelompokHitam(hitam, info);
+  assert.equal(k.length, 2, '1 orang (2 identitas) + 1 entri lama');
+  assert.equal(k[0].label, '+6281234');
+  assert.equal(k[1].label, 'ID samaran …7000');
+
+  const r = bukaBlokir(hitam, info, '081234', (x) => (x.replace(/\D/g, '').replace(/^0/, '62')) || null);
+  assert.equal(r.dihapus.label, '+6281234');
+  assert.deepEqual(r.hitam, ['777000@lid'], 'SEMUA identitas orang itu ikut kebuang');
+  assert.equal(r.info.length, 0);
+
+  const r2 = bukaBlokir(r.hitam, r.info, '777000@lid');
+  assert.deepEqual(r2.hitam, []);
+  assert.equal(bukaBlokir([], [], 'ngasal').dihapus, null);
+  assert.equal(labelOrang(['1@lid']), 'ID samaran …1');
+});
+
+// ------------------------------------------------------ format pertanyaan
+test('format: ajakan bales cuma muncul kalau diminta', () => {
+  const rel = { tag: 'v1', name: 'v1', body: 'x', url: 'u', author: 'a', publishedAt: 0 };
+  assert.ok(formatReleasePost(rel, 'o/r', { ajakBalas: true }).includes(AJAKAN_BALAS));
+  assert.ok(!formatReleasePost(rel, 'o/r').includes(AJAKAN_BALAS));
+  assert.ok(formatTestMessage('o/r', { ajakBalas: true }).includes(AJAKAN_BALAS));
+  assert.ok(formatTesGrup('Grup A').includes('Grup A'));
+});
+
+test('sendPertanyaan: channel → questionMessage, grup → teks biasa', async () => {
+  const kirim = [];
+  const sock = {
+    relayMessage: async (jid, msg) => kirim.push(['relay', jid, msg]),
+    sendMessage: async (jid, isi) => kirim.push(['send', jid, isi]),
+  };
+  await sendPertanyaan(sock, '123@newsletter', 'halo');
+  await sendPertanyaan(sock, '456@g.us', 'halo');
+  assert.equal(kirim[0][0], 'relay');
+  assert.equal(kirim[0][2].questionMessage.message.extendedTextMessage.text, 'halo');
+  assert.deepEqual(kirim[1], ['send', '456@g.us', { text: 'halo' }]);
+});
+
+test('daftar hitam manual: nomor pakai spasi nggak pecah', () => {
+  const hasil = daftarHitamManual('0812 3456 7890, +62 813-1111-2222\n6281399998888 6281377776666', normalisasiNomor);
+  assert.deepEqual(hasil.sort(), [
+    '6281234567890@s.whatsapp.net',
+    '6281311112222@s.whatsapp.net',
+    '6281377776666@s.whatsapp.net',
+    '6281399998888@s.whatsapp.net',
+  ]);
 });

@@ -36,6 +36,11 @@ class SettingsStore(ctx: Context) {
         get() = p.getBoolean("testMsg", true)
         set(v) = p.edit().putBoolean("testMsg", v).apply()
 
+    /** Pesan ke channel dikirim sebagai "Pertanyaan" (follower bisa bales). */
+    var formatPertanyaan: Boolean
+        get() = p.getBoolean("formatTanya", true)
+        set(v) = p.edit().putBoolean("formatTanya", v).apply()
+
     var autoStartOnBoot: Boolean
         get() = p.getBoolean("boot", true)
         set(v) = p.edit().putBoolean("boot", v).apply()
@@ -89,6 +94,7 @@ class SettingsStore(ctx: Context) {
         "repo" to repo,
         "channel" to channel,
         "phone" to phone,
+        "formatChannel" to (if (formatPertanyaan) "pertanyaan" else "teks"),
         "token" to token,
         "intervalMinutes" to intervalMinutes,
         "includePrereleases" to includePrereleases,
@@ -108,7 +114,13 @@ class SettingsStore(ctx: Context) {
                 .put("token", token)
                 .put("includePrereleases", includePrereleases)
         )
-        .put("whatsapp", JSONObject().put("channel", channel).put("phone", phone))
+        .put(
+            "whatsapp",
+            JSONObject()
+                .put("channel", channel)
+                .put("phone", phone)
+                .put("format", if (formatPertanyaan) "pertanyaan" else "teks")
+        )
         .put(
             "grup",
             JSONObject()

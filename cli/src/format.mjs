@@ -2,7 +2,10 @@
 
 const MAX_BODY = 1800;
 
-export function formatReleasePost(rel, repoStr) {
+// Penutup buat format "pertanyaan" di channel (follower bisa bales, cuma admin yang baca).
+export const AJAKAN_BALAS = '💬 _Ada pertanyaan / nemu bug di versi ini? Bales aja pesan ini — cuma admin yang bisa baca._';
+
+export function formatReleasePost(rel, repoStr, { ajakBalas = false } = {}) {
   const tanggal = new Date(rel.publishedAt || Date.now()).toLocaleString('id-ID', {
     dateStyle: 'full',
     timeStyle: 'short',
@@ -29,13 +32,14 @@ export function formatReleasePost(rel, repoStr) {
     '',
     `🔗 ${rel.url}`,
     '',
+    ...(ajakBalas ? [AJAKAN_BALAS, ''] : []),
     '_⚙️ Auto-posting oleh wa-release-bot — bot cuma bangun pas ada rilis baru_ 🦴'
   );
 
   return lines.join('\n');
 }
 
-export function formatTestMessage(repoStr) {
+export function formatTestMessage(repoStr, { ajakBalas = false } = {}) {
   return [
     '✅ *WA RELEASE BOT — SETUP SUKSES!*',
     '',

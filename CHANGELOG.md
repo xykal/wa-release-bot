@@ -6,6 +6,34 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-09-27
+
+Rilis ini juga ngebawa perbaikan tombol dari 1.2.2 (yang nggak sempat dirilis
+sendiri) — lihat bagian 1.2.2 di bawah.
+
+### ✨ Baru
+
+- **Pesan ke channel dikirim sebagai "Pertanyaan".** Fitur saluran WA yang
+  follower-nya bisa **bales** pesan (balasannya cuma sampai ke admin, nggak
+  keliatan follower lain). Pesan rilis & pesan tes ditutup ajakan *"Ada
+  pertanyaan / nemu bug? Bales aja pesan ini"*. Bisa dimatiin di kartu Rilis
+  (*Kirim sebagai Pertanyaan*) — balik ke pesan teks biasa. Kalau kirim versi
+  Pertanyaan gagal, otomatis dikirim sebagai teks biasa. Buat grup tetap teks
+  biasa. CLI: `"whatsapp": { "format": "pertanyaan" | "teks" }`.
+- **Tes kirim ke grup.** Tombol *Tes kirim* di kartu Penjaga grup: bot kirim
+  pesan singkat ke grup target — buat mastiin link grup & akunnya bener.
+- **Buka blokir dari daftar hitam.** Tombol *Daftar hitam* sekarang buka daftar
+  beneran (bukan cuma nulis di Log): tiap orang ada tanggal keluarnya + tombol
+  **Buka blokir**. Habis dibuka, kalau orang itu minta join lagi bakal
+  di-approve. Satu orang yang kecatat pakai nomor + ID samaran (LID) dibuka
+  sekaligus.
+
+### 🐛 Diperbaiki
+
+- Kolom *Selalu tolak nomor ini*: nomor yang ditulis pakai spasi
+  (`0812 3456 7890`) dulu pecah jadi potongan yang nggak valid → nggak pernah
+  ketolak. Sekarang pemisahnya koma / titik koma / baris baru.
+
 ## [1.2.2] — 2026-09-27
 
 ### 🐛 Diperbaiki
@@ -424,7 +452,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.2.2...HEAD
+[Unreleased]: ../../compare/v1.3.0...HEAD
+[1.3.0]: ../../compare/v1.2.1...v1.3.0
 [1.2.2]: ../../compare/v1.2.1...v1.2.2
 [1.2.1]: ../../compare/v1.2.0...v1.2.1
 [1.2.0]: ../../compare/v1.1.4...v1.2.0

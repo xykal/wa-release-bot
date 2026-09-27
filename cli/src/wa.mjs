@@ -11,6 +11,7 @@ import {
   fetchLatestBaileysVersion,
   DisconnectReason,
   Browsers,
+  proto,
 } from '@whiskeysockets/baileys';
 import { resolveTarget } from './channel.mjs';
 
@@ -199,6 +200,29 @@ export async function resolveChannelJid(sock, target, log = () => {}) {
   const hasil = await resolveTarget(sock, target, log);
   return hasil.jid;
 }
+
+/**
+ * Kirim ke channel. `format: 'pertanyaan'` (default) → dibungkus
+ * `questionMessage` (fitur "Pertanyaan" saluran WA: follower bisa bales,
+ * cuma admin yang baca). Grup / format 'teks' → teks biasa. Kalau gagal,
+ * otomatis jatuh ke teks biasa.
+ */
+export async function kirimKeChannel(sock, jid, text, format = 'pertanyaan') {
+  if (format !== 'teks' && String(jid).endsWith('@newsletter')) {
+    try {
+      await sock.relayMessage(jid, proto.Message.fromObject({
+        questionMessage: { message: { extendedTextMessage: { text } } },
+      }), {});
+      return;
+    } catch (e) {
+      console.log(`⚠️ Kirim sebagai "Pertanyaan" gagal (${e.message}) — dikirim sebagai teks biasa.`);
+    }
+  }
+  await sendText(sock, jid, text);
+}
+
+export const pakaiPertanyaan = (jid, format = 'pertanyaan') =>
+  format !== 'teks' && String(jid).endsWith('@newsletter');
 
 export async function sendText(sock, jid, text) {
   await sock.sendMessage(jid, { text });

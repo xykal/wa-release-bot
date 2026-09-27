@@ -6,6 +6,15 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.6.3] — 2026-09-27
+
+### 🎵 Lagu akhirnya bisa kekirim
+- Biang kerok FC v1.6.1 ketemu berkat jaring pengaman v1.6.2:
+  `ENOENT … open '/tmp/audio…'`. Baileys nulis file sementara ke
+  `os.tmpdir()`, dan di nodejs-mobile itu tetep `/tmp` (nggak ada di Android)
+  walaupun env `TMPDIR` udah diset. Sekarang `os.tmpdir()` langsung diganti
+  ke folder data app, dan sisa file sementara dibersihin tiap engine nyala.
+
 ## [1.6.2] — 2026-09-27
 
 ### 🩹 Force close pas kirim lagu (dan pas tes grup)
@@ -631,7 +640,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.6.2...HEAD
+[Unreleased]: ../../compare/v1.6.3...HEAD
+[1.6.3]: ../../compare/v1.6.2...v1.6.3
 [1.6.2]: ../../compare/v1.6.1...v1.6.2
 [1.6.1]: ../../compare/v1.6.0...v1.6.1
 [1.6.0]: ../../compare/v1.5.0...v1.6.0

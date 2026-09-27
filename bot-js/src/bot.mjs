@@ -11,6 +11,7 @@
 //  + WebSocket fast path untuk perintah.
 // ============================================================================
 
+import os from 'node:os';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createBridge } from './bridge.mjs';
@@ -103,11 +104,18 @@ async function main() {
   try { sisaFatal = fs.readFileSync(fileFatal, 'utf8').trim(); fs.rmSync(fileFatal, { force: true }); } catch { /* belum ada */ }
 
   // Baileys nulis file sementara ke os.tmpdir() waktu upload media (audio
-  // lagu ke channel). Di Android nggak ada /tmp → arahin ke folder data.
-  if (!process.env.TMPDIR) {
-    process.env.TMPDIR = path.join(dataDir, 'tmp');
-    try { fs.mkdirSync(process.env.TMPDIR, { recursive: true }); } catch { /* ignore */ }
-  }
+  // lagu ke channel). Di Android nggak ada /tmp. Ngeset env TMPDIR aja NGGAK
+  // cukup: di nodejs-mobile os.tmpdir() tetep balikin '/tmp' (kebukti dari
+  // log HP: "ENOENT … open '/tmp/audio…'"). Jadi fungsinya langsung diganti.
+  const dirTmp = path.join(dataDir, 'tmp');
+  try { fs.mkdirSync(dirTmp, { recursive: true }); } catch { /* ignore */ }
+  process.env.TMPDIR = dirTmp;
+  os.tmpdir = () => {
+    try { fs.mkdirSync(dirTmp, { recursive: true }); } catch { /* ignore */ }
+    return dirTmp;
+  };
+  // sisa file sementara dari engine sebelumnya
+  try { for (const f of fs.readdirSync(dirTmp)) fs.rmSync(path.join(dirTmp, f), { force: true, recursive: true }); } catch { /* ignore */ }
 
   // Sisa file lagu dari engine sebelumnya (mis. mati pas lagi ngirim) → buang.
   const dirLaguTmp = path.join(dataDir, 'lagu-tmp');

@@ -209,7 +209,24 @@ class BotService : Service() {
         LogRecorder.tulis("Service", "BotService.onDestroy — service dihentikan")
         isRunning = false
         instance = null
-        BotBus.publish { serviceRunning = false }
+        // Mesin Node nggak bisa dimatiin tanpa matiin seluruh app (batasan
+        // nodejs-mobile), jadi dia disuruh BERHENTI dulu: jadwal cek rilis &
+        // grup dimatiin, koneksi WA ditutup. Lewat file (WS keburu ditutup).
+        try {
+            fileBridge?.send(org.json.JSONObject().put("type", "stop"))
+        } catch (_: Throwable) {
+        }
+        BotBus.publish {
+            serviceRunning = false
+            engineRunning = false
+            busy = false
+            waConnected = false
+            nextCheckAt = null
+            nextGrupAt = null
+            qr = null
+            pairingCode = null
+            setupTahap = null
+        }
         try {
             jaringanCb?.let { getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(it) }
         } catch (_: Throwable) {

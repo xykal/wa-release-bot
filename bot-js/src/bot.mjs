@@ -725,6 +725,11 @@ async function main() {
 
       case 'stop':
         stopEngine();
+        // Setup yang lagi jalan ikut dihentiin (mis. service dimatiin pas nautin).
+        if (setupJalan && setupBatal) {
+          setupBatal.aktif = true;
+          try { setupBatal.sock?.end(undefined); } catch { /* ignore */ }
+        }
         break;
 
       case 'check':

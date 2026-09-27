@@ -89,6 +89,39 @@ class MainActivity : AppCompatActivity() {
     private var engineJalan = false
     private var setupTerakhir: String? = null
     private var tahapTerakhir: String? = null
+    private lateinit var btnKill: TextView
+
+    // Aksi Mulai / Jeda / Matikan yang lagi ditunggu hasilnya. Selama belum
+    // kejadian, tombolnya nunjukin "Menyalakan…" dst. dan nggak bisa dipencet
+    // dobel — biar jelas bot-nya udah nyala/mati atau belum.
+    private enum class Aksi(val teks: String) { NYALA("Menyalakan…"), JEDA("Menjeda…"), MATI("Mematikan…") }
+    private var aksiTunggu: Aksi? = null
+    private val aksiKelamaan = Runnable {
+        val a = aksiTunggu ?: return@Runnable
+        aksiTunggu = null
+        LogRecorder.tulis("Tombol", "aksi $a nggak ada respon 15 dtk")
+        banner(
+            when (a) {
+                Aksi.NYALA -> "Bot belum mau jalan. Cek setting (repo/channel) & kartu Log."
+                Aksi.JEDA -> "Engine belum ngejawab perintah jeda. Coba lagi, atau Matikan service."
+                Aksi.MATI -> "Service belum berhenti. Coba lagi."
+            }
+        )
+        renderUi(BotBus.ui)
+    }
+
+    private fun tungguAksi(a: Aksi) {
+        aksiTunggu = a
+        handler.removeCallbacks(aksiKelamaan)
+        handler.postDelayed(aksiKelamaan, 15_000L)
+        renderUi(BotBus.ui)
+    }
+
+    private fun aksiBeres(pesan: String) {
+        aksiTunggu = null
+        handler.removeCallbacks(aksiKelamaan)
+        banner(pesan)
+    }
 
     // QR
     private var qrDialog: Dialog? = null
@@ -212,6 +245,7 @@ class MainActivity : AppCompatActivity() {
         tvFolderLog = findViewById(R.id.tvFolderLog)
         tvBanner = findViewById(R.id.tvBanner)
         btnMulai = findViewById(R.id.btnMulai)
+        btnKill = findViewById(R.id.btnKill)
 
         findViewById<TextView>(R.id.tvVersi).text =
             "v${BuildConfig.VERSION_NAME} · rilis GitHub → WhatsApp"
@@ -220,10 +254,13 @@ class MainActivity : AppCompatActivity() {
 
         pasang(R.id.btnSave, "Simpan") { onSave(diam = false) }
         pasang(R.id.btnMulai, "Mulai/Jeda") {
+            if (aksiTunggu != null) return@pasang // lagi nunggu yang tadi
             if (engineJalan) {
+                tungguAksi(Aksi.JEDA)
                 withService { sendCmd(mapOf("type" to "stop")) }
             } else {
                 if (!simpanDiamDiam()) return@pasang
+                tungguAksi(Aksi.NYALA)
                 withService { sendCmd(mapOf("type" to "start")) }
             }
         }
@@ -281,7 +318,10 @@ class MainActivity : AppCompatActivity() {
                 "Proses Node & semua jadwal berhenti sampai lo tekan Mulai lagi " +
                         "(atau HP restart, kalau nyala otomatis aktif).",
                 null,
-                Tombol("Matikan", Gaya.BAHAYA) { BotService.stop(this) },
+                Tombol("Matikan", Gaya.BAHAYA) {
+                    tungguAksi(Aksi.MATI)
+                    BotService.stop(this)
+                },
                 Tombol("Batal", Gaya.LEMBUT)
             )
         }
@@ -569,7 +609,18 @@ class MainActivity : AppCompatActivity() {
         if (ui.serviceRunning) BotService.instance?.setUiTerlihat(true)
 
         engineJalan = ui.engineRunning
+
+        // Aksi yang ditunggu udah kejadian? → kasih tau, balikin tombol normal.
+        when (aksiTunggu) {
+            Aksi.NYALA -> if (ui.engineRunning) aksiBeres("✓ Bot jalan. Cek rilis sesuai jadwal.")
+            Aksi.JEDA -> if (!ui.engineRunning) aksiBeres("⏸ Bot dijeda — jadwal berhenti, service tetap nyala.")
+            Aksi.MATI -> if (!ui.serviceRunning) aksiBeres("⏻ Service mati. Bot berhenti total sampai lo tekan Nyalakan.")
+            null -> {}
+        }
+        val tunggu = aksiTunggu
+
         val (teksPill, warnaPill) = when {
+            tunggu != null -> tunggu.teks.uppercase() to R.color.wr_kuning
             ui.busy -> "CEK…" to R.color.wr_hijau
             ui.engineRunning -> "JALAN" to R.color.wr_hijau
             ui.serviceRunning -> "JEDA" to R.color.wr_kuning
@@ -607,10 +658,27 @@ class MainActivity : AppCompatActivity() {
         ).joinToString("  ·  ")
         tvNext.visibility = if (tvNext.text.isNullOrEmpty()) View.GONE else View.VISIBLE
 
-        btnMulai.text = if (ui.engineRunning) "Jeda" else "Mulai"
+        btnMulai.text = when {
+            tunggu == Aksi.NYALA || tunggu == Aksi.JEDA -> tunggu?.teks ?: ""
+            !ui.serviceRunning -> "Nyalakan"
+            ui.engineRunning -> "Jeda"
+            else -> "Mulai"
+        }
         btnMulai.setCompoundDrawablesRelativeWithIntrinsicBounds(
             if (ui.engineRunning) R.drawable.ic_jeda else R.drawable.ic_play, 0, 0, 0
         )
+        val mulaiAktif = tunggu == null
+        btnMulai.isEnabled = mulaiAktif
+        btnMulai.alpha = if (mulaiAktif) 1f else 0.55f
+
+        btnKill.text = when {
+            tunggu == Aksi.MATI -> tunggu?.teks ?: ""
+            !ui.serviceRunning -> "Service udah mati"
+            else -> "Matikan service"
+        }
+        val killAktif = ui.serviceRunning && tunggu == null
+        btnKill.isEnabled = killAktif
+        btnKill.alpha = if (killAktif) 1f else 0.45f
 
         tvWaStatus.text = when {
             ui.setupState == "starting" && ui.setupTahap != null -> ui.setupTahap!!

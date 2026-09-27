@@ -6,6 +6,24 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.2.2] — 2026-09-27
+
+### 🐛 Diperbaiki
+
+- **Tombol nggak ngasih tau apa-apa waktu service dimatiin / bot dijeda.**
+  Habis *Matikan service*, layar tetap bilang "JALAN" dan tombolnya tetap
+  "Jeda" — soalnya status engine nggak pernah di-reset waktu service berhenti.
+  Sekarang:
+  - Pencet Mulai / Jeda / Matikan → tombolnya langsung jadi *Menyalakan…* /
+    *Menjeda…* / *Mematikan…* (nggak bisa dipencet dobel) sampai beneran
+    kejadian, terus muncul notif singkat di atas (*✓ Bot jalan*, *⏸ Bot
+    dijeda*, *⏻ Service mati*). Kalau 15 detik nggak ada respon, dikasih tau.
+  - Service mati → status jadi **MATI**, tombol utama jadi **Nyalakan**,
+    tombol Matikan jadi abu-abu *Service udah mati*.
+  - Waktu service dimatiin, engine Node juga disuruh berhenti (jadwal cek rilis
+    & grup dimatiin, setup yang lagi jalan dibatalin). Dulu engine-nya diam-diam
+    tetap jalan di belakang.
+
 ## [1.2.1] — 2026-09-27
 
 ### 🐛 Diperbaiki
@@ -406,7 +424,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.2.1...HEAD
+[Unreleased]: ../../compare/v1.2.2...HEAD
+[1.2.2]: ../../compare/v1.2.1...v1.2.2
 [1.2.1]: ../../compare/v1.2.0...v1.2.1
 [1.2.0]: ../../compare/v1.1.4...v1.2.0
 [1.1.4]: ../../compare/v1.1.3...v1.1.4

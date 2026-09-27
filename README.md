@@ -229,9 +229,6 @@ HP: download CUMA potongan ~60 dtk (HTTP Range, ±1 MB) → rapiin frame MP3
 Kenapa voice note? Saluran WA cuma nerima voice note — file audio MP3 biasa
 tampil **"tidak didukung"** di saluran.
 
-```
-```
-
 Daftar lagunya di [`lagu/daftar.txt`](lagu/daftar.txt). Habis ngubah, deploy ulang
 Worker-nya: `python3 scripts-dev/deploy_worker_lagu.py` (butuh env `CF_API_TOKEN`,
 `CF_ACCOUNT_ID`, `CF_KV_LAGU`, opsional `GROQ_API_KEY`). Kode Worker:

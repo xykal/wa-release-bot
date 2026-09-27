@@ -83,19 +83,32 @@ object LogRecorder {
             siap = true
 
             tulisBerkas("BACA-INI.txt", penjelasan(kandidat), sekaliSaja = true)
-            // ABI yang DIPILIH Android (primaryCpuAbi) dicatat terpisah dari
-            // daftar ABI yang didukung HP: kalau APK-nya isinya arm64 tapi
-            // HP-nya 32-bit, yang ini yang bikin ketahuan.
-            val abiDipilih = try {
-                ctx.applicationInfo?.primaryCpuAbi ?: "(belum ditentukan)"
+            // ABI yang BENERAN dipakai dicatat terpisah dari daftar ABI yang
+            // didukung HP: kalau APK-nya isinya arm64 padahal HP-nya 32-bit,
+            // yang ini yang bikin langsung ketahuan.
+            //
+            // Sumbernya `nativeLibraryDir` — itu API publik dan isinya path
+            // folder .so yang dipilih sistem, jadi segmen terakhirnya nama
+            // ABI-nya (…/lib/arm atau …/lib/arm64).
+            //
+            // Catatan: `ApplicationInfo.primaryCpuAbi` kelihatan lebih pas,
+            // tapi itu @hide — pernah gue pakai dan compile-nya gagal
+            // ("Unresolved reference: primaryCpuAbi").
+            val abiDipakai = try {
+                ctx.applicationInfo?.nativeLibraryDir?.substringAfterLast('/') ?: "(belum ditentukan)"
             } catch (_: Throwable) {
                 "(nggak kebaca)"
+            }
+            val bit64 = try {
+                android.os.Process.is64Bit()
+            } catch (_: Throwable) {
+                false
             }
             tulis(
                 "── app jalan ── ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) " +
                         "• ${Build.MANUFACTURER} ${Build.MODEL} • Android ${Build.VERSION.RELEASE} " +
-                        "(API ${Build.VERSION.SDK_INT}) • ABI dipakai: $abiDipilih " +
-                        "• HP dukung: ${Build.SUPPORTED_ABIS.joinToString()}"
+                        "(API ${Build.VERSION.SDK_INT}) • ABI dipakai: $abiDipakai " +
+                        "(proses 64-bit: $bit64) • HP dukung: ${Build.SUPPORTED_ABIS.joinToString()}"
             )
             mulaiRekamLogcat()
             return kandidat

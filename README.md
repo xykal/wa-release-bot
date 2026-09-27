@@ -68,7 +68,6 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`), jadi perilakunya identik.
 - ✅ **Penjaga grup** — auto-approve permintaan join, tolak yang dulu udah keluar/dikeluarin
 - ✅ **Perintah di grup** — `!info` (khusus admin: ringkasan + daftar hitam), `!rules`, `!menu`
 - ✅ **Script bot** — tambah perintah sendiri pakai file `.js`, upload dari app ([docs/PLUGIN.md](docs/PLUGIN.md))
-- ✅ **4 mode aktivitas** — Berkala / Adaptif / Pintar (dibangunin notif WA) / Realtime
 - ✅ **Pertanyaan channel + Lihat respons** — follower bisa bales pesan rilis, lo baca balasannya dari app
 - ✅ **Post ke channel WA** (tempel link channel-nya) — atau ke **grup WA** kalau lebih gampang
 - ✅ **Bikin channel dari app** — belum punya channel? bot yang bikinin, sekali klik
@@ -110,7 +109,7 @@ Detail lengkap: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
    Punya HP kedua? Boleh juga pakai **Pakai QR**.
    Udah tertaut → kartunya berubah jadi banner hijau **✓ WA 0812-xxxx SUDAH TERTAUT**.
 3. Ikon **⚙ Setelan** (kanan atas): isi repo (`owner/nama-repo`) + link channel
-   (belum punya? tekan **Bikin channel**), pilih **mode aktivitas** → **Simpan setelan**
+   (belum punya? tekan **Bikin channel**) → **Simpan setelan**
 4. Balik ke dashboard, tekan **Mulai**
 5. Setelan → **Batre & nyala otomatis**: tekan dua tombolnya (izin batre + Autostart).
    Di Xiaomi ini **wajib**, kalau nggak bot dibunuh pas layar mati dan nggak
@@ -129,9 +128,9 @@ Buat grup yang nyalain **Setujui anggota baru** (Info grup → Setelan grup):
 Syarat: akun WA yang ditautkan harus **admin** di grup itu. Isi **link undangan
 grup** di Setelan → **Penjaga grup**, nyalain saklarnya, simpan.
 
-Seberapa cepat di-approve tergantung **mode aktivitas** (lihat bawah). Mode
-default (*Berkala*, tiap 5 menit): nyambung → cek anggota + permintaan →
-approve/tolak → baca perintah yang masuk → putus ±25 detik kemudian. "Siapa yang keluar" dihitung dari daftar
+Cara kerjanya berkala (tiap interval cek grup, default 5 menit):
+nyambung → cek anggota + permintaan → approve/tolak → baca perintah yang masuk →
+putus ±25 detik kemudian. "Siapa yang keluar" dihitung dari daftar
 anggota yang berubah antar-cek, jadi:
 
 - orang yang keluar **sebelum** fitur ini nyala nggak ketahuan → ketik nomornya
@@ -154,19 +153,6 @@ anggota yang berubah antar-cek, jadi:
 
 Perintah juga bisa diketik di chat **Pesan ke diri sendiri** (buat nyoba).
 Tambah perintah sendiri: [🧩 Script bot](docs/PLUGIN.md).
-
-### Mode aktivitas
-
-| Mode | Cara kerja | Perintah dibalas | Batre |
-|---|---|---|---|
-| **Berkala** (default) | nyambung tiap interval cek grup, ±25 dtk | pas jadwal berikutnya | hemat |
-| **Adaptif** | kayak Berkala, grup sepi → jeda 2×, 4×… sampai batas (default 60 mnt); ada kegiatan → balik rapet | pas jadwal | lebih hemat |
-| **Pintar** | tidur; dibangunin pas WhatsApp di HP ini dapet **notif** dari grup yang dijaga (butuh izin *Akses notifikasi*); cadangan tiap 30 mnt | beberapa detik setelah notif | paling hemat |
-| **Realtime** | selalu nyambung, putus → sambung ulang otomatis | langsung | boros |
-
-Mode Pintar cuma baca **judul** notifikasi WhatsApp (nama grup) buat nentuin
-kapan bangun — isi pesan nggak disimpen. Grup yang di-**mute** nggak bikin notif,
-jadi cuma kecek pas cadangan 30 menit.
 
 ### Pertanyaan channel & Lihat respons
 

@@ -338,7 +338,7 @@ class MainActivity : AppCompatActivity() {
 
         // Aksi yang ditunggu udah kejadian? → kasih tau, balikin tombol normal.
         when (aksiTunggu) {
-            Aksi.NYALA -> if (ui.engineRunning) aksiBeres("✓ Bot jalan — mode ${Mode.nama(ui.mode)}.")
+            Aksi.NYALA -> if (ui.engineRunning) aksiBeres("✓ Bot jalan.")
             Aksi.JEDA -> if (!ui.engineRunning) aksiBeres("⏸ Bot dijeda — jadwal berhenti, service tetap nyala.")
             Aksi.MATI -> if (!ui.serviceRunning) aksiBeres("⏻ Bot mati total sampai lo tekan Nyalakan.")
             null -> {}
@@ -381,7 +381,7 @@ class MainActivity : AppCompatActivity() {
             ui.waLinked -> "Tertaut"
             else -> "Belum ditautkan"
         }
-        tvUbinMode.text = Mode.nama(ui.mode) + when {
+        tvUbinMode.text = (if (ui.grupAktif) "Tiap ${settings.grupInterval} mnt" else "Tiap ${settings.intervalMinutes} mnt") + when {
             ui.busy -> " · cek…"
             ui.engineRunning -> ""
             ui.serviceRunning -> " · jeda"

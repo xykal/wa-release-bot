@@ -295,16 +295,6 @@ class BotService : Service() {
         }
     }
 
-    /**
-     * Mode pintar: dipanggil [WaNotifListener] tiap ada notifikasi WhatsApp
-     * yang relevan. Penyaringan & jeda ada di engine juga, jadi aman dipanggil
-     * beruntun.
-     */
-    fun bangun(alasan: String) {
-        if (settings.mode != "pintar") return
-        LogRecorder.tulis("Pintar", "dibangunin: $alasan")
-        sendCmd(mapOf("type" to "bangun"))
-    }
 
     /** Dipanggil MainActivity: app kebuka → polling cepat, di belakang → santai. */
     fun setUiTerlihat(terlihat: Boolean) {

@@ -195,7 +195,7 @@
                 </LinearLayout>
                 <LinearLayout style="@style/Ubin"
                     android:layout_marginStart="10dp">
-                    <TextView style="@style/UbinLabel" android:text="Mode" />
+                    <TextView style="@style/UbinLabel" android:text="Jadwal" />
                     <TextView android:id="@+id/tvUbinMode" style="@style/UbinIsi" android:text="—" />
                 </LinearLayout>
             </LinearLayout>

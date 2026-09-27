@@ -25,7 +25,7 @@ import androidx.core.content.ContextCompat
 import java.io.File
 
 /**
- * Setelan: mode aktivitas, rilis, channel, grup, script bot, batre, log, tentang.
+ * Setelan: rilis, channel, grup, script bot, batre, log, tentang.
  *
  * Semua isian disimpan ke [SettingsStore] tiap layar ditinggal (biar nggak ada
  * ketikan yang ilang), dan dikirim ke engine pas tombol Simpan ditekan.
@@ -88,7 +88,6 @@ module.exports = {
     private lateinit var etGrupHitam: EditText
     private lateinit var etLinkRules: EditText
     private lateinit var etRingkasRules: EditText
-    private lateinit var etAdaptifMaks: EditText
     private lateinit var rowPrerelease: View
     private lateinit var rowPostFirst: View
     private lateinit var rowFormatTanya: View
@@ -98,13 +97,9 @@ module.exports = {
     private lateinit var rowSamarkan: View
     private lateinit var rowBoot: View
     private lateinit var rowLogcat: View
-    private lateinit var tvIzinNotif: TextView
-    private lateinit var btnIzinNotif: View
     private lateinit var tvBatreStat: TextView
     private lateinit var wadahScript: LinearLayout
 
-    private val barisMode = LinkedHashMap<String, View>()
-    private var modeDipilih = "berkala"
     private var scriptSeqTerakhir = -1
 
     private val busListener: (BotUi) -> Unit = { ui -> handler.post { render(ui) } }
@@ -126,7 +121,6 @@ module.exports = {
     override fun onResume() {
         super.onResume()
         BotBus.subscribe(busListener)
-        renderIzin()
         renderBatre()
         BotService.instance?.sendCmd(mapOf("type" to "plugin-daftar"))
         renderScript(BotBus.ui)
@@ -155,7 +149,6 @@ module.exports = {
         etGrupHitam = findViewById(R.id.etGrupHitam)
         etLinkRules = findViewById(R.id.etLinkRules)
         etRingkasRules = findViewById(R.id.etRingkasRules)
-        etAdaptifMaks = findViewById(R.id.etAdaptifMaks)
         rowPrerelease = saklar(R.id.rowPrerelease)
         rowPostFirst = saklar(R.id.rowPostFirst)
         rowFormatTanya = saklar(R.id.rowFormatTanya)
@@ -165,16 +158,8 @@ module.exports = {
         rowSamarkan = saklar(R.id.rowSamarkan)
         rowBoot = saklar(R.id.rowBoot)
         rowLogcat = saklar(R.id.rowLogcat)
-        tvIzinNotif = findViewById(R.id.tvIzinNotif)
-        btnIzinNotif = findViewById(R.id.btnIzinNotif)
         tvBatreStat = findViewById(R.id.tvBatreStat)
         wadahScript = findViewById(R.id.wadahScript)
-
-        barisMode["berkala"] = findViewById(R.id.rowModeBerkala)
-        barisMode["adaptif"] = findViewById(R.id.rowModeAdaptif)
-        barisMode["pintar"] = findViewById(R.id.rowModePintar)
-        barisMode["realtime"] = findViewById(R.id.rowModeRealtime)
-        for ((m, v) in barisMode) v.setOnClickListener { pilihMode(m) }
 
         findViewById<TextView>(R.id.tvSetelanSub).text = "Disimpan otomatis · tekan Simpan buat nerapin"
         findViewById<TextView>(R.id.tvTentangVersi).text =
@@ -183,7 +168,6 @@ module.exports = {
 
         pasang(R.id.btnKembali, "Kembali") { finish() }
         pasang(R.id.btnSave, "Simpan setelan") { simpan() }
-        pasang(R.id.btnIzinNotif, "Izin notifikasi") { bukaIzinNotif() }
         pasang(R.id.btnBikinChannel, "Bikin channel") {
             lembar(
                 "Bikin channel baru?",
@@ -229,7 +213,6 @@ module.exports = {
             "channel" -> R.id.etChannel
             "grup" -> R.id.rowGrupAktif
             "script" -> R.id.wadahScript
-            "mode" -> R.id.rowModeBerkala
             else -> return
         }
         val sv = findViewById<ScrollView>(R.id.svUtama)
@@ -256,7 +239,6 @@ module.exports = {
         etGrupHitam.setText(settings.grupHitam)
         etLinkRules.setText(settings.linkRules)
         etRingkasRules.setText(settings.ringkasRules)
-        etAdaptifMaks.setText(settings.adaptifMaks.toString())
         rowPrerelease.isSelected = settings.includePrereleases
         rowPostFirst.isSelected = settings.postOnFirstRun
         rowFormatTanya.isSelected = settings.formatPertanyaan
@@ -266,7 +248,6 @@ module.exports = {
         rowSamarkan.isSelected = settings.samarkanNomor
         rowBoot.isSelected = settings.autoStartOnBoot
         rowLogcat.isSelected = settings.rekamLogcat
-        pilihMode(settings.mode, diam = true)
     }
 
     private fun simpanKeStore() {
@@ -279,7 +260,6 @@ module.exports = {
         settings.grupHitam = etGrupHitam.text.toString()
         settings.linkRules = etLinkRules.text.toString()
         settings.ringkasRules = etRingkasRules.text.toString()
-        settings.adaptifMaks = etAdaptifMaks.text.toString().toIntOrNull() ?: 60
         settings.includePrereleases = rowPrerelease.isSelected
         settings.postOnFirstRun = rowPostFirst.isSelected
         settings.formatPertanyaan = rowFormatTanya.isSelected
@@ -288,7 +268,6 @@ module.exports = {
         settings.perintahAktif = rowPerintah.isSelected
         settings.samarkanNomor = rowSamarkan.isSelected
         settings.autoStartOnBoot = rowBoot.isSelected
-        settings.mode = modeDipilih
 
         val logcatLama = settings.rekamLogcat
         settings.rekamLogcat = rowLogcat.isSelected
@@ -313,8 +292,6 @@ module.exports = {
         if (!diam) {
             banner(
                 when {
-                    settings.mode == "pintar" && !izinNotifAda() ->
-                        "Disimpan. Mode Pintar butuh akses notifikasi — tekan tombol izinnya."
                     settings.repo.isNotBlank() && settings.channel.isBlank() ->
                         "Disimpan. Channel masih kosong — tempel link channel atau tekan Bikin channel."
                     else -> "✓ Setelan disimpan & diterapin."
@@ -322,54 +299,6 @@ module.exports = {
             )
         }
         return true
-    }
-
-    // ----------------------------------------------------------------- mode
-
-    private fun pilihMode(m: String, diam: Boolean = false) {
-        modeDipilih = if (m in SettingsStore.MODE) m else "berkala"
-        for ((k, v) in barisMode) v.isSelected = k == modeDipilih
-        renderIzin()
-        if (!diam) {
-            banner(
-                when (modeDipilih) {
-                    "adaptif" -> "Adaptif: grup sepi → cek makin jarang (maks ${etAdaptifMaks.text.toString().ifBlank { "60" }} mnt)."
-                    "pintar" -> if (izinNotifAda()) "Pintar: bangun pas ada notif WA dari grup." else "Pintar butuh akses notifikasi — tekan tombol di bawah."
-                    "realtime" -> "Realtime: selalu nyambung. Paling cepat, paling boros batre."
-                    else -> "Berkala: nyambung tiap interval cek grup."
-                }
-            )
-        }
-    }
-
-    private fun izinNotifAda(): Boolean = try {
-        NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
-    } catch (_: Throwable) {
-        false
-    }
-
-    private fun renderIzin() {
-        if (!::tvIzinNotif.isInitialized) return
-        val pintar = modeDipilih == "pintar"
-        val ada = izinNotifAda()
-        tvIzinNotif.visibility = if (pintar) View.VISIBLE else View.GONE
-        btnIzinNotif.visibility = if (pintar && !ada) View.VISIBLE else View.GONE
-        tvIzinNotif.text = if (ada) {
-            "✓ Akses notifikasi udah diizinin. Yang dibaca cuma judul notif WhatsApp (nama grup) buat nentuin kapan bangun — isi pesan nggak disimpen."
-        } else {
-            "Mode Pintar perlu izin \"Akses notifikasi\" biar tau kapan WhatsApp dapet notif dari grup. " +
-                    "Tanpa izin, bot cuma cek tiap 30 menit. Grup yang di-mute juga nggak bikin notif."
-        }
-        tvIzinNotif.setTextColor(ContextCompat.getColor(this, if (ada) R.color.wr_hijau else R.color.wr_kuning))
-    }
-
-    private fun bukaIzinNotif() {
-        try {
-            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-            banner("Cari \"WA Release Bot\" → nyalain.")
-        } catch (_: Throwable) {
-            bukaInfoApp()
-        }
     }
 
     // ----------------------------------------------------------------- render bus

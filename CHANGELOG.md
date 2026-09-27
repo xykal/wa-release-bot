@@ -6,6 +6,17 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.4.2] — 2026-09-27
+
+### 🔙 Dibalikin
+
+- **Pilihan mode aktivitas dihapus** (Adaptif / Pintar / Realtime). Bot balik
+  kayak sebelum v1.4.0: nyambung tiap interval cek grup, lalu tidur lagi.
+  Log dari HP user nunjukin app di v1.4.0 nyala-mati puluhan kali tanpa
+  dibuka — salah satu pemicunya pendengar notifikasi mode Pintar yang bikin
+  Android terus ngebangunin app. Pendengar notifikasinya (dan izin *Akses
+  notifikasi*) ikut dihapus.
+
 ## [1.4.1] — 2026-09-27
 
 ### 🐛 Diperbaiki
@@ -525,7 +536,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.4.1...HEAD
+[Unreleased]: ../../compare/v1.4.2...HEAD
+[1.4.2]: ../../compare/v1.4.1...v1.4.2
 [1.4.1]: ../../compare/v1.4.0...v1.4.1
 [1.4.0]: ../../compare/v1.3.0...v1.4.0
 [1.3.0]: ../../compare/v1.2.1...v1.3.0

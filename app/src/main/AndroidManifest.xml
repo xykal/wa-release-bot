@@ -47,21 +47,6 @@
             android:name=".WelcomeActivity"
             android:exported="false" />
 
-        <!--
-          Mode "Pintar": baca judul notifikasi WhatsApp buat tau kapan bot perlu
-          bangun. Cuma jalan kalau user ngizinin sendiri di Setelan → Akses
-          notifikasi. Nggak nyimpen / ngirim isi notif ke mana-mana.
-        -->
-        <service
-            android:name=".WaNotifListener"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
-            <intent-filter>
-                <action android:name="android.service.notification.NotificationListenerService" />
-            </intent-filter>
-        </service>
-
         <service
             android:name=".BotService"
             android:exported="false"

@@ -90,9 +90,10 @@ class SettingsStore(ctx: Context) {
 
     // ---- mode aktivitas ----
     /** berkala | adaptif | pintar | realtime */
-    var mode: String
-        get() = p.getString("mode", "berkala")?.takeIf { it in MODE } ?: "berkala"
-        set(v) = p.edit().putString("mode", if (v in MODE) v else "berkala").apply()
+    // v1.4.2: pilihan mode dihapus (bikin berat & crash). Selalu "berkala" —
+    // nyambung tiap interval cek grup, sama kayak sebelum v1.4.0.
+    val mode: String
+        get() = "berkala"
 
     var adaptifMaks: Int
         get() = p.getInt("adaptifMaks", 60)

@@ -70,7 +70,7 @@ module.exports = {
       await ctx.balas('⚠️ Promosi wajib izin admin dulu ya.');
     }
   },
-  // Tiap putaran jaga grup (ikut jadwal mode aktivitas).
+  // Tiap putaran jaga grup (ikut interval cek grup).
   onJadwal: async (ctx) => {
     // ctx: grup, kirim(jid, teks), kirimKeGrup(teks), simpan, ambil, log, sock
   },
@@ -89,7 +89,7 @@ module.exports = {
   (yang ada cuma modul bawaan Node: `fs`, `path`, `crypto`, `https`, dll).
 - Anti-spam bawaan: satu orang maksimal 1 perintah / 4 detik.
 - Pesan yang masuk pas bot lagi tidur tetap diproses pas bot bangun, asal belum lewat **1 jam**.
-  Seberapa cepat dibalas tergantung **mode aktivitas** (Realtime = langsung, Berkala = pas jadwal, dst).
+  Bot nyambung tiap interval cek grup, jadi perintah dibalas pas jadwal berikutnya (bukan detik itu juga).
 - Script error pas dimuat → tampil ⚠️ di Setelan → Script bot, script lain tetap jalan.
 
 ## Ganti / hapus

@@ -145,7 +145,9 @@ async function main() {
 
   const repoAda = () => Boolean(cfg?.github?.repo);
   const grupAktif = () => Boolean(cfg?.grup?.aktif && cfg?.grup?.target);
-  const mode = () => normalMode(cfg?.bot?.mode);
+  // v1.4.2: pilihan mode (adaptif / pintar / realtime) dihapus — bikin HP
+  // berat & app crash di HP user. Selalu berkala, kayak sebelum v1.4.0.
+  const mode = () => 'berkala';
   const pluginDir = path.join(dataDir, 'plugins');
   const plugin = createPlugin({ dir: pluginDir, log });
 

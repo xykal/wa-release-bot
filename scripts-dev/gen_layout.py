@@ -443,7 +443,7 @@ def dashboard():
 </LinearLayout>'''
 
     status = '\n'.join([
-        baris_ubin(('tvUbinWa', 'WhatsApp'), ('tvUbinMode', 'Mode'), 14),
+        baris_ubin(('tvUbinWa', 'WhatsApp'), ('tvUbinMode', 'Jadwal'), 14),
         baris_ubin(('tvUbinRilis', 'Rilis terakhir'), ('tvUbinGrup', 'Penjaga grup'), 10),
         '''<TextView
     android:id="@+id/tvNext"
@@ -603,7 +603,7 @@ def setelan():
         android:text="Simpan setelan" />
 </FrameLayout>'''
     return halaman('Setelan (SettingsActivity).',
-                   '\n\n'.join([bar_atas('Setelan', 'tvSetelanSub'), mode, rilis, channel, grup, script, batre, log, tentang]),
+                   '\n\n'.join([bar_atas('Setelan', 'tvSetelanSub'), rilis, channel, grup, script, batre, log, tentang]),
                    simpan, pad_bawah=96, banner_bawah=88)
 
 
@@ -711,7 +711,7 @@ def sambutan():
             '🔋  Tidur hampir sepanjang waktu — hemat batre', True),
         hal('hal2', 'ic_tautan', 'Cara pakainya',
             '1.  Tautkan WhatsApp (sekali aja) — pakai kode 8 huruf, nggak perlu HP kedua\n\n'
-            '2.  Buka Setelan (ikon gerigi): isi repo / channel / link grup, pilih mode\n\n'
+            '2.  Buka Setelan (ikon gerigi): isi repo / channel / link grup\n\n'
             '3.  Tekan Mulai. Udah — bot kerja sendiri di belakang.\n\n'
             'Di Xiaomi & sejenisnya: izinkan Autostart + batre "Tanpa batasan" biar nggak dimatiin sistem.', False),
         hal('hal3', 'ic_perisai', 'Sebelum mulai',

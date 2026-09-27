@@ -6,6 +6,33 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-09-27
+
+Dibangun di atas kode v1.5.0 (= v1.3.0 yang stabil). Fitur 1.4.x yang bikin
+force close NGGAK dibalikin.
+
+### ✨ Baru
+- **Sambutan baru**: 4 halaman dengan ilustrasi 3D (dibikin AI, bukan emoji),
+  elemen yang melayang + paralaks, transisi mantul, indikator kapsul, tombol
+  yang "bernapas". Bisa digeser.
+- **Denyut di semua tombol**: pas dipencet mengecil + getar halus, pas dilepas
+  mantul balik + lingkaran cahaya dari titik sentuh. Kartu di layar utama
+  muncul satu-satu.
+- **Lagu mood**: sesekali ngirim potongan lagu lama (~60 dtk, bagian reff) +
+  kata-kata dari AI ke channel. Jadwal diacak (rata-rata N kali/hari, cuma di
+  jam aktif). Yang nyiapin lagunya GitHub Actions (yt-dlp + ffmpeg + Groq) →
+  disimpen di Cloudflare Worker/KV → HP tinggal ngirim. Daftar lagu:
+  `lagu/daftar.txt`.
+- **Hosting bot custom**: upload ZIP project Node.js, app yang jalanin di
+  worker thread (process.exit / crash di bot itu nggak matiin app). Pasang
+  modul dari npm langsung di HP kalau node_modules nggak ikut, baca `.env`,
+  konsol berwarna, kirim input (stdin), restart otomatis kalau crash, lanjut
+  jalan lagi habis HP restart. Sesi WA bot lama tetap kepakai waktu ganti ZIP.
+
+### Catatan
+- Node di app tetap Node 18 (nodejs-mobile). Versi Node cuma bisa naik lewat
+  update APK — Android nggak ngizinin app download lalu ngejalanin binary baru.
+
 ## [1.5.0] — 2026-09-27
 
 ### 🔙 Balik ke kode v1.3.0
@@ -570,7 +597,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.5.0...HEAD
+[Unreleased]: ../../compare/v1.6.0...HEAD
+[1.6.0]: ../../compare/v1.5.0...v1.6.0
 [1.5.0]: ../../compare/v1.4.3...v1.5.0
 [1.4.3]: ../../compare/v1.4.2...v1.4.3
 [1.4.2]: ../../compare/v1.4.1...v1.4.2

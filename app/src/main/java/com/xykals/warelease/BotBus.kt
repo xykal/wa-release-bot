@@ -14,6 +14,22 @@ package com.xykals.warelease
 /** Satu orang di daftar hitam otomatis penjaga grup. */
 data class OrangHitam(val kunci: String, val label: String, val sejak: Long?)
 
+/** Satu baris konsol bot custom. jenis: out | err | sys | in */
+data class BarisKonsol(val jenis: String, val teks: String)
+
+data class HostingUi(
+    val status: String = "kosong", // kosong | siap | install | jalan | mati | error
+    val pesan: String = "",
+    val nama: String? = null,
+    val versi: String? = null,
+    val file: String? = null,
+    val node: String? = null,
+    val ada: Boolean = false,
+    val punyaModul: Boolean = false,
+    val autoRestart: Boolean = true,
+    val mulaiPada: Long? = null,
+)
+
 data class BotUi(
     var serviceRunning: Boolean = false,
     var engineRunning: Boolean = false,
@@ -51,6 +67,15 @@ data class BotUi(
     // Tahapan setup buat ditampilkan (mis. "Diterima WhatsApp! Nyelesaiin tautan...")
     var setupTahap: String? = null,
     var log: List<String> = emptyList(),
+    // lagu mood
+    var laguAktif: Boolean = false,
+    var laguCount: Int = 0,
+    var laguJudul: String? = null,
+    var nextLaguAt: Long? = null,
+    // hosting bot custom
+    var hosting: HostingUi = HostingUi(),
+    var hostingLog: List<BarisKonsol> = emptyList(),
+    var hostingLogSeq: Int = 0,
 )
 
 object BotBus {
@@ -70,8 +95,7 @@ object BotBus {
      * state nggak pernah melihat objek yang setengah jadi.
      */
     fun publish(block: BotUi.() -> Unit) {
-        val next = synchronized(stateLock) { ui.copy().apply(block) }
-        ui = next
+        val next = synchronized(stateLock) { ui.copy().apply(block).also { ui = it } }
 
         val snapshot = synchronized(listeners) { listeners.toList() }
         for (l in snapshot) {

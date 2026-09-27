@@ -61,6 +61,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etGrupInterval: EditText
     private lateinit var etGrupHitam: EditText
     private lateinit var rowFormatTanya: View
+    private lateinit var etLaguPerHari: EditText
+    private lateinit var etLaguJamMulai: EditText
+    private lateinit var etLaguJamSelesai: EditText
+    private lateinit var rowLaguAktif: View
+    private lateinit var tvLaguStat: TextView
+    private lateinit var tvHostingStat: TextView
 
     // saklar (baris yang bisa di-tap)
     private lateinit var rowPrerelease: View
@@ -165,10 +171,18 @@ class MainActivity : AppCompatActivity() {
         LogRecorder.init(this)
         LogRecorder.tulis("Activity", "MainActivity dibuka")
 
-        setContentView(R.layout.activity_main)
         settings = SettingsStore(this)
+        if (!settings.sudahSambutan) {
+            startActivity(Intent(this, OnboardingActivity::class.java))
+            finish()
+            return
+        }
+        setContentView(R.layout.activity_main)
         wireViews()
         loadSettingsToViews()
+        // pemanis: tiap tombol berdenyut pas dipencet, kartu muncul satu-satu
+        Denyut.pasangSemua(window.decorView)
+        (findViewById<ScrollView>(R.id.svUtama).getChildAt(0) as? ViewGroup)?.let { Denyut.munculBerurutan(it) }
 
         if (Build.VERSION.SDK_INT >= 33) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -237,6 +251,12 @@ class MainActivity : AppCompatActivity() {
         rowGrupAktif = saklar(R.id.rowGrupAktif)
         rowBoot = saklar(R.id.rowBoot)
         rowLogcat = saklar(R.id.rowLogcat)
+        rowLaguAktif = saklar(R.id.rowLaguAktif)
+        etLaguPerHari = findViewById(R.id.etLaguPerHari)
+        etLaguJamMulai = findViewById(R.id.etLaguJamMulai)
+        etLaguJamSelesai = findViewById(R.id.etLaguJamSelesai)
+        tvLaguStat = findViewById(R.id.tvLaguStat)
+        tvHostingStat = findViewById(R.id.tvHostingStat)
 
         tvPill = findViewById(R.id.tvPill)
         tvUbinWa = findViewById(R.id.tvUbinWa)
@@ -332,6 +352,20 @@ class MainActivity : AppCompatActivity() {
                 Tombol("Batal", Gaya.LEMBUT)
             )
         }
+        pasang(R.id.btnLaguSekarang, "Kirim lagu sekarang") {
+            ambilDariView()
+            if (settings.channel.isBlank()) {
+                banner("Isi Channel WA dulu — lagunya dikirim ke sana.")
+                etChannel.requestFocus()
+                return@pasang
+            }
+            if (!simpanDiamDiam()) return@pasang
+            withService { sendCmd(mapOf("type" to "lagu-sekarang")) }
+            banner("Ngambil lagu dari antrian & ngirim ke channel… hasilnya di kartu Log.")
+        }
+        pasang(R.id.btnHosting, "Buka hosting") {
+            startActivity(Intent(this, HostingActivity::class.java))
+        }
         pasang(R.id.btnBatre, "Izin batre") { mintaIzinBatre() }
         pasang(R.id.btnAutostart, "Autostart") { bukaAutostart() }
         pasang(R.id.btnBukaLog, "Buka folder log") { bukaFolderLog() }
@@ -367,6 +401,10 @@ class MainActivity : AppCompatActivity() {
         rowGrupAktif.isSelected = settings.grupAktif
         rowBoot.isSelected = settings.autoStartOnBoot
         rowLogcat.isSelected = settings.rekamLogcat
+        rowLaguAktif.isSelected = settings.laguAktif
+        etLaguPerHari.setText(settings.laguPerHari.toString())
+        etLaguJamMulai.setText(settings.laguJamMulai.toString())
+        etLaguJamSelesai.setText(settings.laguJamSelesai.toString())
     }
 
     // ----------------------------- simpan -----------------------------
@@ -386,6 +424,10 @@ class MainActivity : AppCompatActivity() {
         settings.grupInterval = etGrupInterval.text.toString().toIntOrNull() ?: 5
         settings.grupHitam = etGrupHitam.text.toString()
         settings.autoStartOnBoot = rowBoot.isSelected
+        settings.laguAktif = rowLaguAktif.isSelected
+        settings.laguPerHari = etLaguPerHari.text.toString().toIntOrNull() ?: 2
+        settings.laguJamMulai = etLaguJamMulai.text.toString().toIntOrNull() ?: 9
+        settings.laguJamSelesai = etLaguJamSelesai.text.toString().toIntOrNull() ?: 22
 
         val logcatLama = settings.rekamLogcat
         settings.rekamLogcat = rowLogcat.isSelected
@@ -402,7 +444,7 @@ class MainActivity : AppCompatActivity() {
             return false
         }
         if (!settings.hasValidSettings()) {
-            banner("Isi repo GitHub, atau nyalain penjaga grup — minimal salah satu.")
+            banner("Isi repo GitHub, nyalain penjaga grup, atau nyalain lagu mood — minimal salah satu.")
             return false
         }
         withService { sendCmd(settings.toConfigureCmd()) }
@@ -680,8 +722,30 @@ class MainActivity : AppCompatActivity() {
         val sekarang = System.currentTimeMillis()
         tvNext.text = listOfNotNull(
             ui.nextCheckAt?.let { "cek rilis ${Durasi.human(it - sekarang)} lagi" },
-            ui.nextGrupAt?.let { "cek grup ${Durasi.human(it - sekarang)} lagi" }
+            ui.nextGrupAt?.let { "cek grup ${Durasi.human(it - sekarang)} lagi" },
+            ui.nextLaguAt?.let { "lagu ${Durasi.human(it - sekarang)} lagi" }
         ).joinToString("  ·  ")
+
+        tvLaguStat.text = when {
+            !ui.laguAktif -> "Mati. Nyalain saklarnya, terus Simpan."
+            else -> listOfNotNull(
+                ui.nextLaguAt?.let { "Lagu berikutnya kira-kira ${Durasi.human(it - sekarang)} lagi (jamnya diacak)" }
+                    ?: "Nunggu bot jalan…",
+                "${ui.laguCount} lagu udah dikirim",
+                ui.laguJudul?.let { "Terakhir: $it" }
+            ).joinToString("\n")
+        }
+        val h = ui.hosting
+        tvHostingStat.text = when {
+            !h.ada -> "Belum ada project."
+            else -> (h.nama ?: h.file ?: "Project") + " — " + when (h.status) {
+                "jalan" -> "jalan ✓"
+                "install" -> "lagi pasang modul…"
+                "error" -> "error, buka buat liat konsol"
+                "mati" -> "mati"
+                else -> "siap dijalanin"
+            }
+        }
         tvNext.visibility = if (tvNext.text.isNullOrEmpty()) View.GONE else View.VISIBLE
 
         btnMulai.text = when {

@@ -1,0 +1,42 @@
+# Nyiapin potongan "lagu mood" buat channel (lihat lagu/siapkan.py).
+# HP cuma ngambil yang udah jadi dari Cloudflare — nggak ada yt-dlp/ffmpeg di HP.
+name: Lagu mood
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lagu-mood
+  cancel-in-progress: false
+
+jobs:
+  siapkan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pasang yt-dlp, ffmpeg, numpy
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python -m pip install -q -U yt-dlp numpy
+
+      - name: Siapin antrian lagu
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_KV_LAGU: ${{ secrets.CF_KV_LAGU }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python lagu/siapkan.py

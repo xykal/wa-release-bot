@@ -339,3 +339,99 @@ test('daftar hitam manual: nomor pakai spasi nggak pecah', () => {
     '6281399998888@s.whatsapp.net',
   ]);
 });
+
+// ------------------------------------------------------------ lagu mood
+import { jadwalBerikut, jamLokal, pilihLagu, formatKataLagu } from '../src/lagu.mjs';
+
+test('jadwalBerikut: selalu di jam aktif & nggak mepet', () => {
+  const tz = 7 * 60; // WIB
+  let kini = Date.UTC(2026, 8, 27, 3, 0); // 10:00 WIB
+  for (let i = 0; i < 200; i++) {
+    const t = jadwalBerikut(kini, { perHari: 3, jamMulai: 9, jamSelesai: 22, tzMenit: tz });
+    const j = jamLokal(t, tz);
+    assert.ok(j >= 9 && j < 22, `jam ${j} di luar 9-22`);
+    assert.ok(t - kini >= 45 * 60_000, 'jarak minimal 45 menit');
+    kini = t;
+  }
+});
+
+test('jadwalBerikut: jam selesai <= mulai → balik ke bawaan', () => {
+  const t = jadwalBerikut(Date.UTC(2026, 0, 1, 0, 0), { perHari: 2, jamMulai: 20, jamSelesai: 5 }, () => 0.5);
+  const j = jamLokal(t, 0);
+  assert.ok(j >= 9 && j < 22);
+});
+
+test('pilihLagu: ambil yang paling lama & belum dikirim', () => {
+  const a = [{ id: 'b', dibuat: 2 }, { id: 'a', dibuat: 1 }, { id: 'c', dibuat: 3 }];
+  assert.equal(pilihLagu(a, []).id, 'a');
+  assert.equal(pilihLagu(a, ['a']).id, 'b');
+  assert.equal(pilihLagu(a, ['a', 'b', 'c']), null);
+  assert.equal(pilihLagu(null), null);
+});
+
+test('formatKataLagu: kata-kata + judul tebal', () => {
+  const t = formatKataLagu({ kata: 'Kangen itu berat.', judul: 'Siapa Di Hatimu', artis: 'Rahmat Ekamatra' });
+  assert.match(t, /^Kangen itu berat\./);
+  assert.match(t, /\*Siapa Di Hatimu — Rahmat Ekamatra\*/);
+});
+
+// ------------------------------------------------------------ hosting
+import { bacaSpek, cocokPlatform } from '../src/pasang-modul.mjs';
+import { cariFileUtama, bacaEnv } from '../src/hosting.mjs';
+import { bacaTar, jalurAman } from '../src/tar.mjs';
+
+test('bacaSpek: registry, alias, github, lokal', () => {
+  assert.deepEqual(bacaSpek('a', '^1.2.0'), { jenis: 'registry', nama: 'a', rentang: '^1.2.0' });
+  assert.deepEqual(bacaSpek('a', 'latest'), { jenis: 'registry', nama: 'a', rentang: '*' });
+  assert.deepEqual(bacaSpek('x', 'npm:@s/p@^2'), { jenis: 'registry', nama: '@s/p', rentang: '^2' });
+  assert.equal(bacaSpek('b', 'github:WhiskeySockets/libsignal-node').jenis, 'github');
+  assert.equal(bacaSpek('b', 'WhiskeySockets/Baileys#master').ref, 'master');
+  assert.equal(bacaSpek('b', 'git+https://github.com/u/r.git#v1').repo, 'r');
+  assert.equal(bacaSpek('c', 'file:../lokal').jenis, 'lokal');
+  assert.equal(bacaSpek('d', '1.x || >=2.5.0').jenis, 'registry');
+});
+
+test('cocokPlatform: os/cpu ala npm', () => {
+  assert.equal(cocokPlatform({}, 'android', 'arm'), true);
+  assert.equal(cocokPlatform({ os: ['win32'] }, 'android', 'arm'), false);
+  assert.equal(cocokPlatform({ os: ['!win32'] }, 'android', 'arm'), true);
+  assert.equal(cocokPlatform({ cpu: ['x64'] }, 'android', 'arm'), false);
+});
+
+test('bacaEnv: kutip, komentar, export', () => {
+  assert.deepEqual(bacaEnv('A=1\n# x\nexport B="dua # bukan komen" # komen\nC=tiga # komen\n'), {
+    A: '1', B: 'dua # bukan komen', C: 'tiga',
+  });
+});
+
+test('cariFileUtama: script start > main > index.js', () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), 'wrh-'));
+  fs.mkdirSync(path.join(d, 'src'));
+  fs.writeFileSync(path.join(d, 'src', 'main.js'), '');
+  fs.writeFileSync(path.join(d, 'index.js'), '');
+  fs.writeFileSync(path.join(d, 'package.json'), JSON.stringify({ scripts: { start: 'node --no-warnings src/main.js' } }));
+  assert.equal(path.relative(d, cariFileUtama(d).file), path.join('src', 'main.js'));
+  fs.writeFileSync(path.join(d, 'package.json'), JSON.stringify({ main: 'hilang.js' }));
+  assert.equal(path.relative(d, cariFileUtama(d).file), 'index.js');
+  fs.rmSync(d, { recursive: true, force: true });
+});
+
+test('tar: jalurAman nolak ../ & buang folder depan', () => {
+  assert.equal(jalurAman('package/lib/a.js'), 'lib/a.js');
+  assert.equal(jalurAman('package/../../etc/passwd'), null);
+  assert.equal(jalurAman('package'), null);
+});
+
+test('tar: bacaTar baca file ustar sederhana', () => {
+  const isi = Buffer.from('halo');
+  const h = Buffer.alloc(512);
+  h.write('package/a.txt', 0);
+  h.write('0000644\0', 100);
+  h.write(isi.length.toString(8).padStart(11, '0') + '\0', 124);
+  h[156] = '0'.charCodeAt(0);
+  const data = Buffer.concat([h, isi, Buffer.alloc(512 - isi.length), Buffer.alloc(1024)]);
+  const e = bacaTar(data);
+  assert.equal(e.length, 1);
+  assert.equal(e[0].nama, 'package/a.txt');
+  assert.equal(e[0].isi.toString(), 'halo');
+});

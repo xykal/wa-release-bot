@@ -1,6 +1,6 @@
 {
   "name": "wa-release-bot-cli",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Bot WA yang tidur. Bangun tiap beberapa menit, cek GitHub release, kalau ada yang baru otomatis posting ke channel WA. Nggak ada update = mati, bukan 24 jam.",
   "type": "module",
   "main": "src/bot.mjs",

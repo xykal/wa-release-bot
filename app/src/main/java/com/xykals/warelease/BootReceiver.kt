@@ -31,7 +31,7 @@ class BootReceiver : BroadcastReceiver() {
             LogRecorder.tulis("Boot", "$aksi diterima, tapi opsi nyala-otomatis dimatiin")
             return
         }
-        if (!settings.hasValidSettings()) {
+        if (!settings.hasValidSettings() && !settings.hostingDipakai) {
             LogRecorder.tulis("Boot", "$aksi diterima, tapi setting belum lengkap")
             return
         }

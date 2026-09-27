@@ -68,6 +68,34 @@ class SettingsStore(ctx: Context) {
         get() = p.getString("grupHitam", "") ?: ""
         set(v) = p.edit().putString("grupHitam", v).apply()
 
+    // ---- lagu mood ----
+    var laguAktif: Boolean
+        get() = p.getBoolean("laguAktif", false)
+        set(v) = p.edit().putBoolean("laguAktif", v).apply()
+
+    /** Rata-rata berapa kali sehari (jadwal persisnya diacak engine). */
+    var laguPerHari: Int
+        get() = p.getInt("laguPerHari", 2)
+        set(v) = p.edit().putInt("laguPerHari", v.coerceIn(1, 8)).apply()
+
+    var laguJamMulai: Int
+        get() = p.getInt("laguJamMulai", 9)
+        set(v) = p.edit().putInt("laguJamMulai", v.coerceIn(0, 23)).apply()
+
+    var laguJamSelesai: Int
+        get() = p.getInt("laguJamSelesai", 22)
+        set(v) = p.edit().putInt("laguJamSelesai", v.coerceIn(1, 24)).apply()
+
+    // ---- hosting & sambutan ----
+    /** Pernah upload project bot custom → service boleh nyala sendiri pas boot. */
+    var hostingDipakai: Boolean
+        get() = p.getBoolean("hostingDipakai", false)
+        set(v) = p.edit().putBoolean("hostingDipakai", v).apply()
+
+    var sudahSambutan: Boolean
+        get() = p.getBoolean("sambutanV2", false)
+        set(v) = p.edit().putBoolean("sambutanV2", v).apply()
+
     // ---- batre ----
     var rekamLogcat: Boolean
         get() = p.getBoolean("rekamLogcat", true)
@@ -86,7 +114,11 @@ class SettingsStore(ctx: Context) {
      * dengan pesan yang jelas — bukan gagal diam-diam.
      */
     fun hasValidSettings(): Boolean =
-        repo.isNotBlank() || (grupAktif && grupTarget.isNotBlank())
+        repo.isNotBlank() || (grupAktif && grupTarget.isNotBlank()) || laguAktif
+
+    /** Offset zona waktu HP (menit) — engine Node di Android nggak tau zona waktu lokal. */
+    private fun tzMenit(): Int =
+        java.util.TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 60_000
 
     /** Isi perintah `configure` buat engine — satu sumber, dipakai app & service. */
     fun toConfigureCmd(): Map<String, Any> = mapOf(
@@ -103,7 +135,12 @@ class SettingsStore(ctx: Context) {
         "grupAktif" to grupAktif,
         "grupTarget" to grupTarget,
         "grupInterval" to grupInterval,
-        "grupHitam" to grupHitam
+        "grupHitam" to grupHitam,
+        "laguAktif" to laguAktif,
+        "laguPerHari" to laguPerHari,
+        "laguJamMulai" to laguJamMulai,
+        "laguJamSelesai" to laguJamSelesai,
+        "tzMenit" to tzMenit()
     )
 
     fun toConfigJson(): JSONObject = JSONObject()
@@ -128,6 +165,16 @@ class SettingsStore(ctx: Context) {
                 .put("target", grupTarget)
                 .put("intervalMinutes", grupInterval)
                 .put("daftarHitam", grupHitam)
+        )
+        .put(
+            "lagu",
+            JSONObject()
+                .put("aktif", laguAktif)
+                .put("perHari", laguPerHari)
+                .put("jamMulai", laguJamMulai)
+                .put("jamSelesai", laguJamSelesai)
+                .put("tzMenit", tzMenit())
+                .put("sumber", "https://wa-release-bot-lagu.akuntiktok76y.workers.dev")
         )
         .put(
             "bot",

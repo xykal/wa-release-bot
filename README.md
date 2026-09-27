@@ -207,6 +207,48 @@ JID grup (`120363...@g.us`) atau link undangan grup-nya
 
 ---
 
+## 🎵 Lagu mood
+
+Sesekali bot ngirim **potongan ~60 detik** lagu lama (slow rock / jiwang 80-90an,
+pop lawas Indonesia) plus kata-kata ke channel. Jadwalnya diacak kayak orang lagi
+mood: rata-rata N kali sehari, cuma di jam aktif yang lo atur.
+
+HP nggak ngerjain yang berat:
+
+```
+GitHub Actions (tiap 6 jam, lagu-mood.yml)
+  yt-dlp cari & download → ffmpeg potong bagian reff → Groq bikin kata-kata
+        │
+        ▼
+Cloudflare Worker + KV  (wa-release-bot-lagu.akuntiktok76y.workers.dev)
+  /antrian · /klip/<id> · /terpakai/<id>
+        │
+        ▼
+HP: pas "mood" → ambil 1 klip → kirim kata-kata + audio ke channel
+```
+
+Daftar lagunya di [`lagu/daftar.txt`](lagu/daftar.txt) — tambah/hapus bebas.
+Secrets workflow: `CF_API_TOKEN`, `CF_ACCOUNT_ID`, `CF_KV_LAGU`, `GROQ_API_KEY`.
+
+> ⚠️ Lagunya punya orang. Yang dikirim cuma potongan, tapi channel publik
+> tetap bisa kena laporan hak cipta — pakai secukupnya.
+
+## 🧩 Hosting bot custom
+
+Punya project bot Node.js sendiri? Buka **Hosting bot** di app → upload ZIP.
+
+- ZIP isinya `package.json` + file utama (`scripts.start`, `main`, atau `index.js`).
+- `node_modules` boleh ikut atau nggak. Kalau nggak ada, app masang sendiri dari
+  npm (modul JS murni aja — paket native kayak `sharp` nggak jalan di HP).
+- `.env` ikut dibaca. Path relatif (`./session`) jalan, karena folder kerjanya
+  folder project.
+- Bot jalan di **worker thread** terpisah: `process.exit()` atau crash di bot
+  itu nggak matiin app. Ada restart otomatis, konsol, dan kolom input (stdin)
+  buat bot yang nanya nomor WA.
+- Ganti ZIP → file lama yang nggak ada di ZIP baru (sesi WA, `.env`,
+  `node_modules`) tetap dipertahankan.
+- Node-nya **Node 18** bawaan app. Versinya cuma bisa naik lewat update APK.
+
 ## 💻 CLI — Termux / PC
 
 ```bash

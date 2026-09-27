@@ -323,7 +323,41 @@ class BotService : Service() {
                 grupHitam = e.optInt("grupHitam", 0)
                 grupLastCekAt = e.optLong("grupLastCekAt", 0L).takeIf { it > 0 }
                 nextGrupAt = e.optLong("nextGrupAt", 0L).takeIf { it > 0 }
+                laguAktif = e.optBoolean("laguAktif")
+                laguCount = e.optInt("laguCount", 0)
+                laguJudul = e.optString("laguJudul", "").orNull()
+                nextLaguAt = e.optLong("nextLaguAt", 0L).takeIf { it > 0 }
             }
+
+            "hosting_status" -> BotBus.publish {
+                hosting = HostingUi(
+                    status = e.optString("status", "kosong"),
+                    pesan = e.optString("pesan", ""),
+                    nama = e.optString("nama", "").orNull(),
+                    versi = e.optString("versi", "").orNull(),
+                    file = e.optString("file", "").orNull(),
+                    node = e.optString("node", "").orNull(),
+                    ada = e.optBoolean("ada"),
+                    punyaModul = e.optBoolean("punyaModul"),
+                    autoRestart = e.optBoolean("autoRestart", true),
+                    mulaiPada = e.optLong("mulaiPada", 0L).takeIf { it > 0 }
+                )
+            }
+
+            "hosting_log" -> {
+                val arr = e.optJSONArray("baris")
+                val baru = (0 until (arr?.length() ?: 0)).mapNotNull { i ->
+                    val o = arr?.optJSONObject(i) ?: return@mapNotNull null
+                    BarisKonsol(o.optString("j", "out"), o.optString("b", ""))
+                }
+                val penuh = e.optBoolean("penuh")
+                BotBus.publish {
+                    hostingLog = (if (penuh) baru else hostingLog + baru).takeLast(400)
+                    hostingLogSeq += 1
+                }
+            }
+
+            "lagu_terkirim" -> updateNotif("Lagu terkirim ke channel: " + e.optString("judul"))
 
             "qr" -> BotBus.publish { qr = e.optString("qr", "").orNull() }
 

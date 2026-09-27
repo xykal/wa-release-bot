@@ -29,6 +29,8 @@ import {
   bukaBlokir,
 } from './grup.mjs';
 import { formatReleasePost, formatTestMessage, formatTesGrup } from './format.mjs';
+import { SUMBER_BAWAAN, jadwalBerikut, pilihLagu, formatKataLagu, ambilAntrian, ambilKlip, laporTerpakai } from './lagu.mjs';
+import { buatHosting } from './hosting.mjs';
 
 // ----------------------------- selftest ------------------------------------
 async function selftest() {
@@ -71,6 +73,13 @@ async function main() {
     process.exit(1);
   }
 
+  // Baileys nulis file sementara ke os.tmpdir() waktu upload media (audio
+  // lagu ke channel). Di Android nggak ada /tmp → arahin ke folder data.
+  if (!process.env.TMPDIR) {
+    process.env.TMPDIR = path.join(dataDir, 'tmp');
+    try { fs.mkdirSync(process.env.TMPDIR, { recursive: true }); } catch { /* ignore */ }
+  }
+
   const cfgFile = path.join(dataDir, 'config.json');
   const stateFile = path.join(dataDir, 'state.json');
   const sessionDir = path.join(dataDir, 'session');
@@ -78,6 +87,7 @@ async function main() {
   let state = {
     lastTag: null, channelJid: null, channelName: null, postCount: 0, lastPostedAt: null,
     grup: null, // { target, jid, nama, anggota: [[id...]], hitam: [id...], disetujui, ditolak, lastCekAt }
+    lagu: null, // { terkirim: [id...], count, lastAt, lastJudul }
   };
   if (fs.existsSync(stateFile)) {
     try { state = { ...state, ...JSON.parse(fs.readFileSync(stateFile, 'utf8')) }; } catch { /* abaikan */ }
@@ -99,6 +109,8 @@ async function main() {
   let nextGrupAt = null;
   let timer = null;
   let timerGrup = null;
+  let timerLagu = null;
+  let nextLaguAt = null;
 
   // ----------------------------- bridge ------------------------------------
   // `bridge` sengaja di-`let` dan dicek null: createBridge() memanggil log()
@@ -117,11 +129,15 @@ async function main() {
     dataDir,
     wsPort: Number(process.env.WR_WS_PORT || 18790),
     log,
-    onCommand: (cmd) => { void handleCommand(cmd); },
+    onCommand: (cmd) => { handleCommand(cmd).catch((e) => log('⚠️ Perintah ' + cmd?.type + ' gagal: ' + e.message)); },
   });
+
+  // Bot custom orang (worker_threads) — lihat hosting.mjs
+  const hosting = buatHosting({ dataDir, log, kirim: (e) => bridge?.send(e) });
 
   const repoAda = () => Boolean(cfg?.github?.repo);
   const grupAktif = () => Boolean(cfg?.grup?.aktif && cfg?.grup?.target);
+  const laguAktif = () => Boolean(cfg?.lagu?.aktif);
 
   function emitStatus() {
     const g = state.grup || {};
@@ -146,6 +162,11 @@ async function main() {
       grupHitam: (g.hitam || []).length,
       grupLastCekAt: g.lastCekAt || null,
       nextGrupAt,
+      laguAktif: laguAktif(),
+      laguCount: state.lagu?.count || 0,
+      laguLastAt: state.lagu?.lastAt || null,
+      laguJudul: state.lagu?.lastJudul || null,
+      nextLaguAt,
     });
   }
 
@@ -201,6 +222,75 @@ async function main() {
     timerGrup = setTimeout(() => { void runGrup('jadwal'); }, delayMs);
   }
 
+  // ----------------------------- lagu mood --------------------------------
+  function jadwalLagu(paksaMs) {
+    clearTimeout(timerLagu);
+    if (!running || !laguAktif()) { nextLaguAt = null; return; }
+    const kini = Date.now();
+    nextLaguAt = paksaMs != null ? kini + paksaMs : jadwalBerikut(kini, {
+      perHari: cfg.lagu.perHari,
+      jamMulai: cfg.lagu.jamMulai,
+      jamSelesai: cfg.lagu.jamSelesai,
+      tzMenit: cfg.lagu.tzMenit,
+    });
+    // setTimeout maksimal ~24,8 hari; jadwal lagu nggak pernah selama itu
+    timerLagu = setTimeout(() => { void runLagu('mood'); }, Math.max(1000, nextLaguAt - kini));
+    emitStatus();
+  }
+
+  let laguSibuk = false;
+  async function runLagu(source) {
+    if (laguSibuk) return;
+    if (!cfg?.whatsapp?.channel) {
+      log('🎵 Lagu mood nyala, tapi "Channel WA" masih kosong — nggak ada tujuan.');
+      if (source !== 'manual') jadwalLagu();
+      return;
+    }
+    laguSibuk = true;
+    const sumber = cfg.lagu?.sumber || SUMBER_BAWAAN;
+    try {
+      log(`🎵 Lagi mood nih… ambil lagu dari antrian (${source}).`);
+      const antrian = await ambilAntrian(sumber);
+      state.lagu = state.lagu || { terkirim: [], count: 0 };
+      const lagu = pilihLagu(antrian, state.lagu.terkirim);
+      if (!lagu) {
+        log(`🎵 Antrian lagu kosong / udah dikirim semua (${antrian.length} di antrian). Nanti dicoba lagi.`);
+        return;
+      }
+      const audio = await ambilKlip(sumber, lagu.id);
+      log(`🎵 Dapet: ${lagu.judul} — ${lagu.artis} (${Math.round(audio.length / 1024)} KB, ${lagu.detik || '?'} dtk)`);
+      await pakaiWA('lagu', async () => {
+        const { sock, close } = await sambung();
+        try {
+          const jid = await cariTarget(sock);
+          await sendText(sock, jid, formatKataLagu(lagu));
+          await sock.sendMessage(jid, {
+            audio,
+            mimetype: lagu.mime || 'audio/mp4',
+            seconds: Number(lagu.detik) || undefined,
+            ptt: false,
+          });
+        } finally {
+          close();
+        }
+      });
+      state.lagu.terkirim = [...(state.lagu.terkirim || []), lagu.id].slice(-300);
+      state.lagu.count = (state.lagu.count || 0) + 1;
+      state.lagu.lastAt = new Date().toISOString();
+      state.lagu.lastJudul = `${lagu.judul} — ${lagu.artis}`;
+      saveState();
+      void laporTerpakai(sumber, lagu.id);
+      log(`✅ Lagu terkirim ke channel: ${lagu.judul} (lagu ke-${state.lagu.count})`);
+      bridge.send({ type: 'lagu_terkirim', judul: state.lagu.lastJudul });
+    } catch (e) {
+      log(`⚠️ Kirim lagu gagal: ${e.message}`);
+    } finally {
+      laguSibuk = false;
+      if (source !== 'manual' || running) jadwalLagu();
+      emitStatus();
+    }
+  }
+
   function startEngine() {
     if (running) return;
     if (!cfg) {
@@ -211,18 +301,22 @@ async function main() {
     const bagian = [];
     if (repoAda()) bagian.push(`cek release tiap ${Math.round(intervalMs() / 60000)} mnt`);
     if (grupAktif()) bagian.push(`jaga grup tiap ${Math.round(intervalGrupMs() / 60000)} mnt`);
+    if (laguAktif()) bagian.push(`lagu mood ±${cfg.lagu.perHari}x/hari`);
     log('▶️ Engine nyala: ' + (bagian.join(' + ') || 'belum ada tugas'));
     emitStatus();
     scheduleNext(3000);
     jadwalGrup(8000);
+    jadwalLagu();
   }
 
   function stopEngine() {
     running = false;
     clearTimeout(timer);
     clearTimeout(timerGrup);
+    clearTimeout(timerLagu);
     nextCheckAt = null;
     nextGrupAt = null;
+    nextLaguAt = null;
     log('⏸️ Engine jeda (istirahat). Tekan "Mulai" di app buat lanjut.');
     emitStatus();
   }
@@ -776,9 +870,17 @@ async function main() {
             intervalMinutes: Number(cmd.grupInterval) || 5,
             daftarHitam: String(cmd.grupHitam || ''),
           },
+          lagu: {
+            aktif: Boolean(cmd.laguAktif),
+            perHari: Math.min(Math.max(Number(cmd.laguPerHari) || 2, 1), 8),
+            jamMulai: Number.isFinite(Number(cmd.laguJamMulai)) ? Number(cmd.laguJamMulai) : 9,
+            jamSelesai: Number.isFinite(Number(cmd.laguJamSelesai)) ? Number(cmd.laguJamSelesai) : 22,
+            tzMenit: Number(cmd.tzMenit) || 0,
+            sumber: String(cmd.laguSumber || '').trim() || SUMBER_BAWAAN,
+          },
         };
-        if (!next.github.repo && !next.grup.aktif) {
-          bridge.send({ type: 'cmd_error', msg: 'Isi repo GitHub, atau nyalain penjaga grup — minimal salah satu.' });
+        if (!next.github.repo && !next.grup.aktif && !next.lagu.aktif) {
+          bridge.send({ type: 'cmd_error', msg: 'Isi repo GitHub, nyalain penjaga grup, atau nyalain lagu mood — minimal salah satu.' });
           return;
         }
         if (next.grup.aktif && !next.grup.target) {
@@ -794,6 +896,9 @@ async function main() {
         if (running) {
           scheduleNext(repoAda() ? intervalMs() : 0);
           jadwalGrup(5000);
+          const laguLama = nextLaguAt;
+          if (!laguAktif()) jadwalLagu();
+          else if (!laguLama) jadwalLagu();
         }
         emitStatus();
         break;
@@ -873,7 +978,16 @@ async function main() {
         emitStatus();
         break;
 
+      case 'lagu-sekarang':
+        if (!perluCfg()) return;
+        void runLagu('manual');
+        break;
+
       default:
+        if (String(cmd?.type || '').startsWith('hosting-')) {
+          await hosting.perintah(cmd);
+          break;
+        }
         log('cmd tidak dikenal: ' + cmd?.type);
     }
   }
@@ -881,6 +995,7 @@ async function main() {
   // ----------------------------- init ---------------------------------------
   log('🦴 wa-release-bot engine siap (node ' + process.version + '). Menunggu perintah dari app.');
   emitStatus();
+  try { hosting.init(); } catch (e) { log('⚠️ Hosting gagal init: ' + e.message); }
 
   if (cfg) {
     log('Config terbaca: repo=' + (cfg.github?.repo || '-') + ', channel=' + (cfg.whatsapp?.channel || '-') +

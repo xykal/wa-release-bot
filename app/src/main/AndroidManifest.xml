@@ -31,6 +31,15 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".OnboardingActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".HostingActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
         <service
             android:name=".BotService"
             android:exported="false"

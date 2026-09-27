@@ -460,6 +460,112 @@
             </LinearLayout>
             </LinearLayout>
 
+            <!-- ================= LAGU MOOD ================= -->
+            <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_lagu"
+                android:text="Lagu mood" />
+            <TextView style="@style/KetKartu" android:text="Sesekali bot ngirim potongan lagu lama (~60 dtk) + kata-kata ke channel. Jadwalnya diacak kayak orang lagi mood — nggak tiap jam, nggak spam. Lagunya disiapin otomatis di cloud, HP cuma ngirim." />
+            <LinearLayout android:id="@+id/rowLaguAktif" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Nyalain lagu mood"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Dikirim ke channel yang sama kayak rilis"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+            <TextView style="@style/Label" android:text="Rata-rata berapa kali sehari (1–8)" />
+            <EditText
+                android:id="@+id/etLaguPerHari"
+                style="@style/Isian"
+                android:hint="2"
+                android:inputType="number" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView style="@style/Label" android:text="Mulai jam" />
+                    <EditText
+                        android:id="@+id/etLaguJamMulai"
+                        style="@style/Isian"
+                        android:hint="9"
+                        android:inputType="number" />
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView style="@style/Label" android:text="Sampai jam" />
+                    <EditText
+                        android:id="@+id/etLaguJamSelesai"
+                        style="@style/Isian"
+                        android:hint="22"
+                        android:inputType="number" />
+                </LinearLayout>
+            </LinearLayout>
+            <TextView
+                android:id="@+id/tvLaguStat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_ubin"
+                android:padding="12dp"
+                android:textColor="@color/wr_teks"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/btnLaguSekarang"
+                style="@style/TombolGaris"
+                android:layout_marginTop="12dp"
+                android:drawableStart="@drawable/ic_lagu"
+                android:text="Kirim satu lagu sekarang" />
+            </LinearLayout>
+
+            <!-- ================= HOSTING BOT ================= -->
+            <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_server"
+                android:text="Hosting bot lo sendiri" />
+            <TextView style="@style/KetKartu" android:text="Punya project bot Node.js? Upload ZIP-nya, app ini yang jalanin di HP — lengkap sama konsol, input, restart otomatis." />
+            <TextView
+                android:id="@+id/tvHostingStat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_ubin"
+                android:padding="12dp"
+                android:textColor="@color/wr_teks"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/btnHosting"
+                style="@style/TombolUtama"
+                android:layout_marginTop="12dp"
+                android:drawableStart="@drawable/ic_server"
+                android:text="Buka hosting" />
+            </LinearLayout>
+
             <!-- ================= BATRE & NYALA OTOMATIS ================= -->
             <LinearLayout style="@style/Kartu">
             <TextView

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- penanda view yang udah dipasangin efek denyut (Denyut.kt) -->
+    <item name="tag_denyut" type="id" />
+</resources>

@@ -12,7 +12,6 @@ import { parseRepo } from '../src/github.mjs';
 import { bacaTarget, JENIS, pesanCaraIsiChannel, linkChannel } from '../src/channel.mjs';
 import { formatReleasePost, formatTestMessage, formatTesGrup, AJAKAN_BALAS } from '../src/format.mjs';
 import { kelompokHitam, bukaBlokir, labelOrang } from '../src/grup.mjs';
-import { sendPertanyaan } from '../src/wa.mjs';
 import { createBridge } from '../src/bridge.mjs';
 import { normalisasiNomor } from '../src/nomor.mjs';
 import {
@@ -316,6 +315,9 @@ test('format: ajakan bales cuma muncul kalau diminta', () => {
 });
 
 test('sendPertanyaan: channel → questionMessage, grup → teks biasa', async () => {
+  // Baileys butuh WebCrypto global; Node 18 belum punya (di app ada polyfill-nya).
+  if (!globalThis.crypto) globalThis.crypto = (await import('node:crypto')).webcrypto;
+  const { sendPertanyaan } = await import('../src/wa.mjs');
   const kirim = [];
   const sock = {
     relayMessage: async (jid, msg) => kirim.push(['relay', jid, msg]),

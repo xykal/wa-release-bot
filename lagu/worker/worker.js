@@ -36,6 +36,9 @@ const GAYA = [
   { id: 'surat', arah: 'kayak potongan surat/pesan buat seseorang yang nggak pernah kekirim. Buka dengan sapaan ke "kamu".' },
   { id: 'puitis', arah: 'puitis tapi tetap gampang dicerna, pakai satu perumpamaan yang segar (bukan klise hujan/senja).' },
   { id: 'lucu-miris', arah: 'lucu tapi miris — self-roasting soal galau/cinta, bikin senyum kecut. Jangan garing.' },
+  // Kata-kata gaul berima ala tongkrongan — dibikin terpisah (bikinGaul),
+  // bobot dobel karena paling disukai.
+  { id: 'gaul', dobel: true },
   { id: 'nostalgia', arah: 'nostalgia: kenangan kecil yang spesifik (bukan umum), bikin orang inget masa itu.', lawas: true },
 ];
 const CADANGAN = [
@@ -200,8 +203,62 @@ async function daftarTrend(env) {
   return JSON.parse((await env.LAGU.get('trend:terakhir')) || '[]');
 }
 
+// ------------------------------------------------------------ kata-kata gaul
+// Bank buatan tangan (lagu/gaul.txt). AI masih suka ngasal kalau disuruh
+// bikin rima Indonesia, jadi bank ini sumber utama; AI cuma selingan dan
+// hasilnya wajib lolos cek rima.
+const BANK_GAUL = __GAUL__; // dari lagu/gaul.txt (disuntik waktu deploy)
+const PELUANG_BANK_GAUL = 0.6;
+
+const kataAkhir = (t) => (String(t).toLowerCase().match(/[a-z]+/g) || []).pop() || '';
+/** Rima beneran: punchline berakhiran 3 huruf yang sama dgn bagian sebelumnya, katanya beda. */
+export function rimaKena(teks) {
+  const bagian = String(teks).split(/[,.\n;/]|\s[-–—]\s/).map((x) => x.trim()).filter(Boolean);
+  if (bagian.length < 2) return false;
+  // punchline (bagian terakhir) harus berima sama salah satu bagian sebelumnya
+  const b = kataAkhir(bagian[bagian.length - 1]);
+  if (b.length < 3) return false;
+  return bagian.slice(0, -1).map(kataAkhir).some((a) => a.length >= 3 && a !== b && a.slice(-3) === b.slice(-3));
+}
+
+async function bikinGaul(env, konteks) {
+  const dariBank = async () => {
+    let dipakai = [];
+    try { dipakai = JSON.parse((await env.LAGU.get('gaul_terpakai')) || '[]'); } catch { /* kosong */ }
+    const sisa = BANK_GAUL.filter((x) => !dipakai.includes(x));
+    const pilih = acak(sisa.length ? sisa : BANK_GAUL);
+    await env.LAGU.put('gaul_terpakai', JSON.stringify([...dipakai, pilih].slice(-Math.min(30, BANK_GAUL.length - 1))));
+    return pilih;
+  };
+  if (BANK_GAUL.length && Math.random() < PELUANG_BANK_GAUL) return dariBank();
+  const j = await groq(env, {
+    system: 'Kamu anak tongkrongan yang jago bikin pantun receh & kata-kata gaul berima. Jawab HANYA JSON.',
+    user: `${konteks}
+Bikin kata-kata gaul berima buat caption channel musik.
+Ciri yang dimau:
+- Pendek, 1 baris: pengantar ngasal, koma, lalu punchline. Kayak pantun kilat.
+- RIMA: kata terakhir sebelum koma & kata terakhir kalimat bunyinya sama tapi KATANYA BEDA (berdering/miring, jagung/bingung, sebelah/salah). Ngulang kata yang sama = GAGAL.
+- Ada twist yang bikin nyengir, nyerempet galau/cinta/ghosting sesuai suasana lagunya.
+- Bahasa tongkrongan (boleh selip Jawa/Betawi/Sunda). Jangan puitis, jangan kaku.
+Contoh bagus (JANGAN dipakai ulang):
+- Ditelpon berdering, ternyata lagi gaya miring.
+- Burung dara makan jagung, dia yang pergi, aku yang bingung.
+- Beli pulsa di konter sebelah, udah ngalah, tetep aja salah.
+Bikin 8 kandidat, pilih yang rimanya paling kena & paling lucu.
+Jangan sebut judul/artis, jangan kutip lirik, tanpa hashtag, tanpa emoji.
+Format: {"kandidat":["..."],"terbaik":nomor_mulai_1}`,
+    json: true, suhu: 1,
+  });
+  const kandidat = (Array.isArray(j?.kandidat) ? j.kandidat : []).map(rapikan).filter((x) => x.length >= 15 && x.length <= 160);
+  const pilihanAi = kandidat[Number(j?.terbaik) - 1];
+  const kena = kandidat.filter(rimaKena);
+  if (pilihanAi && rimaKena(pilihanAi)) return pilihanAi;
+  if (kena.length) return kena[0];
+  return BANK_GAUL.length ? dariBank() : null;
+}
+
 // ------------------------------------------------------------ kata-kata
-async function bikinKata(env, lagu) {
+async function bikinKata(env, lagu, paksaGaya = null) {
   const konteks = `Lagunya: "${lagu.judul}" – ${lagu.artis}` + (lagu.trend ? ' (lagi trend/viral di Indonesia sekarang).' : ' (lagu lawas).');
   const aturanUmum = `- Bahasa Indonesia gaul yang natural (bukan baku, bukan kayak iklan).
 - JANGAN mengutip lirik lagunya, JANGAN sebut judul/artis (udah ditulis terpisah).
@@ -213,7 +270,7 @@ async function bikinKata(env, lagu) {
   const system = 'Kamu admin channel WhatsApp musik yang captionnya selalu kena di hati: relate, jujur, nggak lebay, nggak menggurui.';
 
   // Kadang-kadang ditemenin ayat. AI cuma MILIH nomor, teksnya dari daftar.
-  if (AYAT.length && Math.random() < PELUANG_AYAT) {
+  if (AYAT.length && (paksaGaya === 'ayat' || (!paksaGaya && Math.random() < PELUANG_AYAT))) {
     const j = await groq(env, {
       system: system + ' Jawab HANYA JSON.',
       user: `${konteks}
@@ -235,25 +292,29 @@ Format: {"no": nomor_ayat, "kata": "caption"}`,
     }
   }
 
-  const pilihan = GAYA.filter((g) => !g.lawas || !lagu.trend);
-  const g = acak(pilihan);
+  const pilihan = GAYA.filter((g) => !g.lawas || !lagu.trend).flatMap((g) => (g.dobel ? [g, g] : [g]));
+  const g = pilihan.find((x) => x.id === paksaGaya) || acak(pilihan);
+  if (g.id === 'gaul') {
+    const kata = await bikinGaul(env, konteks);
+    if (kata) return { gaya: 'gaul', kata };
+  }
   const teks = await groq(env, {
     system,
     user: `${konteks}
 Tulis caption pendek buat nemenin potongan lagu ini di channel.
 Gaya kali ini: ${g.arah}
 Aturan:
-- 2 sampai 3 kalimat, maksimal 280 karakter.
+- ${g.id === 'gaul' ? '1 sampai 2 baris pendek' : '2 sampai 3 kalimat'}, maksimal 280 karakter.
 ${aturanUmum}
 Balas cuma teks caption-nya.`,
   });
   const kata = rapikan(teks);
-  if (kata.length >= 40 && kata.length <= 400) return { gaya: g.id, kata };
+  if (kata.length >= (g.id === 'gaul' ? 15 : 40) && kata.length <= 400) return { gaya: g.id, kata };
   return { gaya: 'cadangan', kata: acak(CADANGAN) };
 }
 
 // ------------------------------------------------------------ utama
-async function laguBerikut(env) {
+async function laguBerikut(env, paksaGaya = null) {
   // batas harian biar endpoint publik ini nggak disalahgunain buat ngabisin kuota AI
   const hari = new Date().toISOString().slice(0, 10);
   const nHari = Number(await env.LAGU.get('hit:' + hari)) || 0;
@@ -286,7 +347,7 @@ async function laguBerikut(env) {
     try {
       const s = await cariDiSoundCloud(env, lagu);
       if (!s) { gagal.push(`${lagu.judul}: nggak nemu`); continue; }
-      const { kata, gaya } = await bikinKata(env, lagu);
+      const { kata, gaya } = await bikinKata(env, lagu, paksaGaya);
       // mulai motong di ±35% lagu (biasanya udah masuk reff pertama)
       const mulai = Math.max(30, Math.min(Math.round(s.durasi * 0.35), s.durasi - PANJANG - 5));
       riwayat.push(kunciLagu(lagu));
@@ -309,7 +370,7 @@ export default {
     const url = new URL(req.url);
     if (req.method !== 'GET') return new Response('method', { status: 405 });
     if (url.pathname === '/lagu/berikut') {
-      try { return await laguBerikut(env); } catch (e) { return json({ error: e.message }, 500); }
+      try { return await laguBerikut(env, url.searchParams.get('gaya')); } catch (e) { return json({ error: e.message }, 500); }
     }
     return new Response(`wa-release-bot · lagu mood · ${DAFTAR.length} lagu lawas + trend Indonesia harian · ${AYAT.length} ayat\n`,
       { headers: { 'content-type': 'text/plain; charset=utf-8' } });

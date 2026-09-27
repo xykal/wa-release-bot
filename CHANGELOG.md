@@ -14,6 +14,9 @@ Semua perubahan penting proyek ini. Format mengikuti
   lucu-miris, nostalgia). ±35% ditemenin ayat Al-Qur'an yang nyambung —
   teksnya dari `lagu/ayat.json` (terjemahan Kemenag, dicek ke equran.id),
   AI cuma milih nomornya dan dilarang bercanda di caption yang ada ayatnya.
+- Gaya baru **gaul berima** (pantun kilat, bobot dobel): 60% dari bank
+  buatan tangan `lagu/gaul.txt`, 40% bikinan AI yang wajib lolos cek rima
+  (akhiran 3 huruf sama, katanya beda) — kalau nggak lolos, balik ke bank.
 - Model Groq diganti: `llama-3.3-70b-versatile` udah nggak ada di Groq →
   `gpt-oss-120b` (reasoning medium), cadangan `qwen3.8-27b`.
 - Pencarian SoundCloud nolak versi edit/DJ/lirik/prod, dan ngutamain upload resmi.

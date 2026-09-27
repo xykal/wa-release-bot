@@ -36,6 +36,9 @@ kode = (AKAR / "lagu/worker/worker.js").read_text(encoding="utf-8")
 kode = kode.replace("__DAFTAR__", json.dumps(daftar, ensure_ascii=False), 1)
 ayat = json.loads((AKAR / "lagu/ayat.json").read_text(encoding="utf-8"))
 kode = kode.replace("__AYAT__", json.dumps(ayat, ensure_ascii=False), 1)
+gaul = [b.strip() for b in (AKAR / "lagu/gaul.txt").read_text(encoding="utf-8").splitlines()
+        if b.strip() and not b.strip().startswith("#")]
+kode = kode.replace("__GAUL__", json.dumps(gaul, ensure_ascii=False), 1)
 meta = {
     "main_module": "worker.js",
     "compatibility_date": "2026-09-01",

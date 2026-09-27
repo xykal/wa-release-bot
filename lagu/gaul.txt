@@ -1,0 +1,43 @@
+# Kata-kata gaul berima (pantun kilat) buat caption lagu.
+# Satu baris satu. Baris yang diawali # dilewatin.
+# Habis ngubah → deploy ulang Worker: scripts-dev/deploy_worker_lagu.py
+# (nggak perlu update app).
+Ditelpon berdering, ternyata lagi gaya miring.
+Bunga desa, rusak di kota.
+Burung dara makan jagung, dia yang pergi, aku yang bingung.
+Naik ojek ke Tanah Abang, hati dikasih, malah dibuang.
+Beli pulsa di konter sebelah, udah ngalah, tetep aja salah.
+Buah mangga buah kedondong, kamu ghosting, aku yang bengong.
+Makan pecel di Madiun, dichat "otw" dari tahun ke tahun.
+Kereta lewat bunyinya tut-tut, janji manismu bikin hati kusut.
+Jual es teh di pinggir jalan, sayang sih iya, tapi cuma teman.
+Nasi uduk lauknya semur, dibilang "nanti", nunggunya sampai umur.
+Pisang goreng dicocol sambel, hati udah nempel, dia malah nge-cancel.
+Ke warung beli gorengan, dia bahagia, aku yang ketinggalan.
+Makan mie tengah malam, chat dibaca doang, hati tenggelam.
+Beli bakso di ujung gang, chat panjang dibales "wkwk" doang.
+Motor mogok di tanjakan, cintaku tulus, dia nyari yang mapan.
+Anak ayam turun sepuluh, udah berjuang, dianggap temen buat ngeluh.
+Makan seblak level lima, dia yang salah, aku yang minta maaf paling lama.
+Sepatu baru warnanya biru, katanya udah move on, story-nya masih tentang kamu.
+Hujan gerimis di pinggir kali, sayangku tiap hari, kamu cuma sekali-kali.
+Ada kucing di atas genteng, dikira serius, ternyata cuma iseng.
+Main layangan putus talinya, pas lagi sayang-sayangnya.
+Cabe rawit pedesnya nendang, lebih pedes liat dia gandengan sama orang.
+Minum jamu rasanya pahit, lebih pahit dijanjiin, ditepatinya sedikit-sedikit.
+Ayam jago berkokok pagi, udah sayang, ditinggal lagi.
+Beli nasi padang pakai rendang, rindu datang tanpa diundang.
+Pohon kelapa tinggi menjulang, kamu yang janji, kamu yang ngilang.
+Beli cilok di depan sekolah, dibucinin salah, dicuekin juga salah.
+Jalan-jalan ke Pasar Minggu, katanya sibuk, sibuknya sama yang baru.
+Burung pipit terbang ke awan, ngarep jadi pacar, taunya cuma temen curhatan.
+Tukang parkir niup peluit, hati dikasih, balesannya irit.
+Pergi ke apotek beli obat, sayangnya ke aku, perhatiannya ke sobat.
+Ikan lele ikan gurame, janji manis cuma buat rame-rame.
+Ada sumur di ladang, ternyata hatinya udah ada yang pegang.
+Naik angkot turun di halte, nungguin balesan, centang dua doang, bete.
+Kue lapis kue bolu, udah move on, playlist-nya masih lagu kamu.
+Beli batik di Pekalongan, bilangnya sayang, kok malah diem-dieman.
+Makan rujak pedesnya nampol, kangen dikit, gengsinya segede jalan tol.
+Durian jatuh di kebun, udah mau tidur, dia nge-chat, jadi kebangun.
+Tahu bulat digoreng dadakan, jadiannya dadakan, putusnya lebih dadakan.

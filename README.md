@@ -222,8 +222,9 @@ HP (pas "mood")  ──GET /lagu/berikut──▶  Cloudflare Worker (gratis)
                                            harian Spotify ID, disaring AI)
                                            cari di SoundCloud → link stream
                                            kata-kata dari AI (key Groq di Worker):
-                                           gaya curhat / surat / puitis /
-                                           lucu-miris / nostalgia, ±35% ditemenin
+                                           gaya gaul berima (lagu/gaul.txt) /
+                                           curhat / surat / puitis / lucu-miris /
+                                           nostalgia, ±35% ditemenin
                                            ayat Al-Qur'an (lagu/ayat.json)
 HP  ◀── { judul, artis, kata, url, mulai } ──┘
 HP: download CUMA potongan ~60 dtk (HTTP Range, ±1 MB) → rapiin frame MP3
@@ -234,6 +235,11 @@ HP: download CUMA potongan ~60 dtk (HTTP Range, ±1 MB) → rapiin frame MP3
 **Semua yang di Cloudflare bisa di-update tanpa update app** (milih lagu,
 kata-kata, ayat) — cukup deploy ulang Worker. Update app cuma perlu kalau yang
 berubah bagian HP (download / ubah ke voice note / kirim).
+
+Kata-kata gaul berima (pantun kilat kayak *"Ditelpon berdering, ternyata lagi
+gaya miring"*) kebanyakan diambil dari [`lagu/gaul.txt`](lagu/gaul.txt) — AI
+masih suka ngasal kalau disuruh bikin rima Indonesia. Mau nambah? Tulis aja
+satu baris satu di file itu, terus deploy ulang Worker.
 
 Soal ayat: AI **nggak pernah nulis ayat sendiri**. Dia cuma milih nomor dari
 [`lagu/ayat.json`](lagu/ayat.json), teksnya ditempel apa adanya. Isi file itu =

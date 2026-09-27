@@ -1,21 +1,131 @@
-MIT License
+WA Release Bot — Lisensi Pemakaian Pribadi / Personal Use License
+Versi 1.0 — berlaku mulai rilis v1.4.0
 
-Copyright (c) 2026 xykal
+Copyright (c) 2025-2026 xykal (github.com/xykal). Hak cipta dilindungi.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Kode ini SOURCE-AVAILABLE (kodenya boleh dilihat), BUKAN open source.
+This code is SOURCE-AVAILABLE (you may view it), NOT open source.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+=============================================================================
+BAHASA INDONESIA
+=============================================================================
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+1. Yang BOLEH (tanpa izin, gratis)
+   a. Mengunduh, memasang, dan memakai aplikasi / kode ini untuk keperluan
+      PRIBADI dan non-komersial (termasuk buat grup / channel WhatsApp yang
+      lo kelola sendiri, selama nggak dipungut bayaran).
+   b. Membaca, mempelajari, dan mengaudit kode sumbernya.
+   c. Mengubah kode untuk dipakai sendiri, selama hasilnya TIDAK disebarkan.
+   d. Membuat fork di GitHub SEMATA-MATA untuk mengirim perbaikan (pull
+      request) ke repositori asli, atau sekadar menyimpan salinan pribadi.
+   e. Menulis dan membagikan script bot (plugin) buatan lo sendiri yang
+      memakai API script bot aplikasi ini — script itu milik lo.
+
+2. Yang DILARANG tanpa izin tertulis dari pemegang hak cipta
+   a. Menjual, menyewakan, atau memungut bayaran dalam bentuk apa pun atas
+      aplikasi ini, kode ini, atau turunannya (termasuk "jasa pasang bot",
+      bot sewaan, atau langganan).
+   b. Menyebarkan ulang (redistribusi) APK, kode sumber, atau versi yang
+      sudah diubah — baik gratis maupun berbayar — di luar GitHub resmi
+      proyek ini.
+   c. Mengganti nama, logo, atau identitas lalu menyebarkannya sebagai
+      karya sendiri (rebrand / white-label), atau menghapus pemberitahuan
+      hak cipta dan lisensi ini.
+   d. Memakai aplikasi / kode ini di dalam produk, layanan, atau kegiatan
+      komersial / bisnis.
+   e. Memakai aplikasi ini untuk spam, penipuan, atau kegiatan yang
+      melanggar hukum atau Ketentuan Layanan WhatsApp.
+
+3. Kode pihak ketiga
+   Bagian yang berasal dari pihak ketiga (antara lain Baileys, nodejs-mobile,
+   Node.js, pino, ws, esbuild, OkHttp, ZXing, AndroidX, Kotlin) TETAP tunduk
+   pada lisensi aslinya masing-masing (MIT / Apache-2.0 / dll). Lisensi ini
+   hanya berlaku untuk karya asli pemegang hak cipta di repositori ini, dan
+   TIDAK membatasi hak yang lo dapet dari lisensi pihak ketiga — termasuk
+   GPL-3.0 dari libsignal yang ikut dibundel di APK. Lihat
+   THIRD_PARTY_LICENSES.md.
+
+4. Kontribusi
+   Dengan mengirim pull request, lo setuju kontribusi itu boleh dipakai dan
+   dirilis di proyek ini di bawah lisensi ini.
+
+5. Tanpa jaminan
+   Perangkat lunak ini diberikan "APA ADANYA", tanpa jaminan apa pun. Aplikasi
+   ini alat tidak resmi dan tidak berhubungan dengan WhatsApp / Meta maupun
+   GitHub. Risiko pemakaian (termasuk akun WhatsApp dibatasi / diblokir)
+   ditanggung pemakai. Pemegang hak cipta tidak bertanggung jawab atas
+   kerugian apa pun yang timbul dari pemakaian perangkat lunak ini.
+
+6. Berakhirnya izin
+   Izin pada poin 1 otomatis gugur kalau lo melanggar poin 2. Izin bisa
+   dipulihkan kalau pelanggaran dihentikan dalam 30 hari setelah diberi tahu.
+
+7. Minta izin
+   Mau pakai di luar yang diizinkan di atas (komersial, redistribusi, dll)?
+   Hubungi pemegang hak cipta lewat GitHub: https://github.com/xykal
+
+Rilis sebelum v1.4.0 (v1.3.0 ke bawah) sudah terlanjur dirilis di bawah
+lisensi MIT; salinan versi lama itu tetap mengikuti MIT. Semua perubahan
+mulai v1.4.0 mengikuti lisensi ini.
+
+=============================================================================
+ENGLISH
+=============================================================================
+
+1. You MAY (free, no permission needed)
+   a. Download, install, and use this app / code for PERSONAL,
+      non-commercial purposes (including for WhatsApp groups / channels you
+      run yourself, as long as nobody is charged for it).
+   b. Read, study, and audit the source code.
+   c. Modify the code for your own use, as long as the result is NOT
+      distributed.
+   d. Fork on GitHub SOLELY to submit improvements (pull requests) to the
+      original repository, or to keep a private copy.
+   e. Write and share your own bot scripts (plugins) that use this app's
+      script API — those scripts are yours.
+
+2. You may NOT, without prior written permission from the copyright holder
+   a. Sell, rent, or charge for this app, this code, or any derivative in any
+      form (including "bot setup services", rented bots, or subscriptions).
+   b. Redistribute the APK, the source code, or modified versions — free or
+      paid — outside this project's official GitHub.
+   c. Rename, re-logo, or rebrand it and distribute it as your own work
+      (white-label), or remove this copyright and license notice.
+   d. Use this app / code in or for any commercial product, service, or
+      business activity.
+   e. Use this app for spam, fraud, or anything that violates the law or
+      WhatsApp's Terms of Service.
+
+3. Third-party code
+   Third-party components (including Baileys, nodejs-mobile, Node.js, pino,
+   ws, esbuild, OkHttp, ZXing, AndroidX, Kotlin) remain under their own
+   original licenses (MIT / Apache-2.0 / etc.). This license covers only the
+   copyright holder's original work in this repository and does NOT restrict
+   any rights granted by third-party licenses — including the GPL-3.0 of the
+   bundled libsignal. See THIRD_PARTY_LICENSES.md.
+
+4. Contributions
+   By submitting a pull request you agree it may be used and released in
+   this project under this license.
+
+5. No warranty
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. This is an
+   unofficial tool, not affiliated with WhatsApp / Meta or GitHub. You use it
+   at your own risk (including your WhatsApp account being limited or
+   banned). The copyright holder is not liable for any damages arising from
+   the use of this software.
+
+6. Termination
+   The permissions in section 1 end automatically if you breach section 2.
+   They are reinstated if the breach is cured within 30 days of notice.
+
+7. Asking for permission
+   Want to use it beyond what is allowed above (commercial use,
+   redistribution, etc.)? Contact the copyright holder on GitHub:
+   https://github.com/xykal
+
+Releases before v1.4.0 (v1.3.0 and earlier) were published under the MIT
+license; copies of those old versions remain under MIT. All changes from
+v1.4.0 onward are covered by this license.
+
+If the Indonesian and English texts differ, the Indonesian text prevails.

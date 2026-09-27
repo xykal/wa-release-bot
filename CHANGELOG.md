@@ -6,6 +6,56 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-09-27
+
+### ⚖️ Lisensi berubah
+
+- Mulai rilis ini **bukan MIT lagi**: lisensi **pemakaian pribadi**
+  (source-available). Boleh pakai sendiri, baca, ubah buat diri sendiri; nggak
+  boleh jual / sebar ulang / rebrand / pakai bisnis tanpa izin. Lihat
+  [LICENSE](LICENSE). v1.3.0 ke bawah tetap MIT.
+- Baru: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) — termasuk catatan
+  soal libsignal (GPL-3.0) yang ikut dibundel Baileys.
+
+### ✨ Baru
+
+- **Tampilan baru.** Dashboard (status, banner WA tertaut, ubin info, aksi
+  cepat, log) + halaman **Setelan** terpisah (auto-simpan pas ditinggal) +
+  halaman **Tentang** (versi, lisensi, pihak ketiga, privasi) + **layar sambutan**
+  3 halaman pas pertama buka.
+- **Banner "WA SUDAH TERTAUT"** gede di dashboard, lengkap nomornya. Kartu
+  Tautkan cuma muncul kalau belum tertaut.
+- **Mode aktivitas** (Setelan): **Berkala** (default), **Adaptif** (grup sepi →
+  jeda makin panjang), **Pintar** (dibangunin notifikasi WhatsApp, butuh izin
+  Akses notifikasi, cadangan tiap 30 menit), **Realtime** (selalu nyambung).
+- **Perintah di grup:** `!info` (admin: anggota, permintaan, disetujui/ditolak,
+  daftar hitam dengan nomor disamarkan), `!rules`, `!menu`, `!ping`. Bisa juga
+  dari chat "Pesan ke diri sendiri". Bisa dimatiin.
+- **Script bot (plugin).** Upload file `.js` dari Setelan → Script bot buat
+  nambah perintah sendiri. Dokumentasi: [docs/PLUGIN.md](docs/PLUGIN.md).
+- **Lihat respons** (dashboard): baca balasan follower buat Pertanyaan channel
+  terakhir.
+- **Pesan tes grup** sekarang: *🛡️ Bot penjaga grup aktif* + fitur + aturan
+  singkat + link aturan (default `https://rules.xyc.my.id/`, bisa diganti).
+
+### 🐛 Diperbaiki
+
+- **Pesan ke grup "terkirim" tapi nggak nongol.** Dua penyebab yang ketemu:
+  (1) bot dulu langsung putus habis kirim, padahal HP anggota kadang minta
+  kirim ulang — sekarang socket ditahan ±25 detik dan bot bisa ngirim ulang
+  pesannya (`getMessage`); (2) grup yang pakai **LID** (ID samaran) — Baileys
+  6.7.24 pakai identitas yang salah buat kunci pengirim, jadi HP anggota nggak
+  bisa buka pesannya. Ditambal pas build (tambalan yang sama dengan Baileys 7).
+  Kalau masih gagal, sekarang **kelihatan**: tiap kirim nunggu konfirmasi server
+  dan kode error-nya ditulis di Log (dulu dianggap sukses).
+- **Pertanyaan channel nyampe sebagai teks biasa.** Pesannya sekarang dirakit
+  lengkap (`isQuestion` + node `<meta questiontype>`), jadi tampil sebagai
+  Pertanyaan dengan tombol respons (cara yang sama dipakai elaina-baileys;
+  belum dites di semua channel). Kalau server nolak (channel belum kebagian
+  fitur ini), otomatis kirim teks biasa + alasan di Log.
+- Satu koneksi WA dipakai bareng buat cek grup, kirim channel, dan perintah —
+  nggak nyambung-putus berkali-kali dalam satu putaran.
+
 ## [1.3.0] — 2026-09-27
 
 Rilis ini juga ngebawa perbaikan tombol dari 1.2.2 (yang nggak sempat dirilis
@@ -452,7 +502,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.3.0...HEAD
+[Unreleased]: ../../compare/v1.4.0...HEAD
+[1.4.0]: ../../compare/v1.3.0...v1.4.0
 [1.3.0]: ../../compare/v1.2.1...v1.3.0
 [1.2.2]: ../../compare/v1.2.1...v1.2.2
 [1.2.1]: ../../compare/v1.2.0...v1.2.1

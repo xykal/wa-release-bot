@@ -466,7 +466,7 @@
                 style="@style/JudulKartu"
                 android:drawableStart="@drawable/ic_lagu"
                 android:text="Lagu mood" />
-            <TextView style="@style/KetKartu" android:text="Sesekali bot ngirim potongan lagu lama (~60 dtk) + kata-kata ke channel. Jadwalnya diacak kayak orang lagi mood — nggak tiap jam, nggak spam. Lagunya disiapin otomatis di cloud, HP cuma ngirim." />
+            <TextView style="@style/KetKartu" android:text="Sesekali bot ngirim potongan lagu lama (~60 dtk) + kata-kata ke channel. Jadwalnya diacak kayak orang lagi mood — nggak tiap jam, nggak spam. Cloudflare yang nyariin lagunya; HP cuma download potongan ±1 MB, kirim, terus file-nya langsung dihapus." />
             <LinearLayout android:id="@+id/rowLaguAktif" style="@style/BarisSaklar">
                 <LinearLayout
                     android:layout_width="0dp"

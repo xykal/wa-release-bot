@@ -29,7 +29,7 @@ import {
   bukaBlokir,
 } from './grup.mjs';
 import { formatReleasePost, formatTestMessage, formatTesGrup } from './format.mjs';
-import { SUMBER_BAWAAN, jadwalBerikut, pilihLagu, formatKataLagu, ambilAntrian, ambilKlip, laporTerpakai } from './lagu.mjs';
+import { SUMBER_BAWAAN, jadwalBerikut, formatKataLagu, ambilBerikut, downloadPotongan } from './lagu.mjs';
 import { buatHosting } from './hosting.mjs';
 
 // ----------------------------- selftest ------------------------------------
@@ -79,6 +79,10 @@ async function main() {
     process.env.TMPDIR = path.join(dataDir, 'tmp');
     try { fs.mkdirSync(process.env.TMPDIR, { recursive: true }); } catch { /* ignore */ }
   }
+
+  // Sisa file lagu dari engine sebelumnya (mis. mati pas lagi ngirim) → buang.
+  const dirLaguTmp = path.join(dataDir, 'lagu-tmp');
+  try { fs.rmSync(dirLaguTmp, { recursive: true, force: true }); } catch { /* ignore */ }
 
   const cfgFile = path.join(dataDir, 'config.json');
   const stateFile = path.join(dataDir, 'state.json');
@@ -248,43 +252,40 @@ async function main() {
     }
     laguSibuk = true;
     const sumber = cfg.lagu?.sumber || SUMBER_BAWAAN;
+    let file = null;
     try {
-      log(`🎵 Lagi mood nih… ambil lagu dari antrian (${source}).`);
-      const antrian = await ambilAntrian(sumber);
-      state.lagu = state.lagu || { terkirim: [], count: 0 };
-      const lagu = pilihLagu(antrian, state.lagu.terkirim);
-      if (!lagu) {
-        log(`🎵 Antrian lagu kosong / udah dikirim semua (${antrian.length} di antrian). Nanti dicoba lagi.`);
-        return;
-      }
-      const audio = await ambilKlip(sumber, lagu.id);
-      log(`🎵 Dapet: ${lagu.judul} — ${lagu.artis} (${Math.round(audio.length / 1024)} KB, ${lagu.detik || '?'} dtk)`);
+      log(`🎵 Lagi mood nih… minta lagu ke Cloudflare (${source}).`);
+      const lagu = await ambilBerikut(sumber);
+      const { data, detik } = await downloadPotongan(lagu.url, lagu);
+      // File sementara — langsung dihapus begitu kekirim (atau gagal).
+      fs.mkdirSync(dirLaguTmp, { recursive: true });
+      file = path.join(dirLaguTmp, `lagu-${Date.now()}.mp3`);
+      fs.writeFileSync(file, data);
+      log(`🎵 Dapet: ${lagu.judul} — ${lagu.artis} (potongan ${detik} dtk, ${Math.round(data.length / 1024)} KB)`);
       await pakaiWA('lagu', async () => {
         const { sock, close } = await sambung();
         try {
           const jid = await cariTarget(sock);
           await sendText(sock, jid, formatKataLagu(lagu));
-          await sock.sendMessage(jid, {
-            audio,
-            mimetype: lagu.mime || 'audio/mp4',
-            seconds: Number(lagu.detik) || undefined,
-            ptt: false,
-          });
+          await sock.sendMessage(jid, { audio: { url: file }, mimetype: 'audio/mpeg', seconds: detik, ptt: false });
         } finally {
           close();
         }
       });
-      state.lagu.terkirim = [...(state.lagu.terkirim || []), lagu.id].slice(-300);
+      state.lagu = state.lagu || { count: 0 };
       state.lagu.count = (state.lagu.count || 0) + 1;
       state.lagu.lastAt = new Date().toISOString();
       state.lagu.lastJudul = `${lagu.judul} — ${lagu.artis}`;
+      delete state.lagu.terkirim;
       saveState();
-      void laporTerpakai(sumber, lagu.id);
       log(`✅ Lagu terkirim ke channel: ${lagu.judul} (lagu ke-${state.lagu.count})`);
       bridge.send({ type: 'lagu_terkirim', judul: state.lagu.lastJudul });
     } catch (e) {
       log(`⚠️ Kirim lagu gagal: ${e.message}`);
     } finally {
+      if (file) {
+        try { fs.rmSync(file, { force: true }); log('🧹 File lagu dihapus dari HP.'); } catch { /* ignore */ }
+      }
       laguSibuk = false;
       if (source !== 'manual' || running) jadwalLagu();
       emitStatus();

@@ -213,22 +213,22 @@ Sesekali bot ngirim **potongan ~60 detik** lagu lama (slow rock / jiwang 80-90an
 pop lawas Indonesia) plus kata-kata ke channel. Jadwalnya diacak kayak orang lagi
 mood: rata-rata N kali sehari, cuma di jam aktif yang lo atur.
 
-HP nggak ngerjain yang berat:
+Pembagiannya **Cloudflare x HP** — tanpa GitHub Actions:
 
 ```
-GitHub Actions (tiap 6 jam, lagu-mood.yml)
-  yt-dlp cari & download → ffmpeg potong bagian reff → Groq bikin kata-kata
-        │
-        ▼
-Cloudflare Worker + KV  (wa-release-bot-lagu.akuntiktok76y.workers.dev)
-  /antrian · /klip/<id> · /terpakai/<id>
-        │
-        ▼
-HP: pas "mood" → ambil 1 klip → kirim kata-kata + audio ke channel
+HP (pas "mood")  ──GET /lagu/berikut──▶  Cloudflare Worker (gratis)
+                                           pilih lagu dari daftar
+                                           cari di SoundCloud → link stream
+                                           kata-kata dari AI (key Groq di Worker)
+HP  ◀── { judul, artis, kata, url, mulai } ──┘
+HP: download CUMA potongan ~60 dtk (HTTP Range, ±1 MB) → rapiin frame MP3
+    → kirim kata-kata + audio ke channel → file-nya langsung DIHAPUS
 ```
 
-Daftar lagunya di [`lagu/daftar.txt`](lagu/daftar.txt) — tambah/hapus bebas.
-Secrets workflow: `CF_API_TOKEN`, `CF_ACCOUNT_ID`, `CF_KV_LAGU`, `GROQ_API_KEY`.
+Daftar lagunya di [`lagu/daftar.txt`](lagu/daftar.txt). Habis ngubah, deploy ulang
+Worker-nya: `python3 scripts-dev/deploy_worker_lagu.py` (butuh env `CF_API_TOKEN`,
+`CF_ACCOUNT_ID`, `CF_KV_LAGU`, opsional `GROQ_API_KEY`). Kode Worker:
+[`lagu/worker/worker.js`](lagu/worker/worker.js).
 
 > ⚠️ Lagunya punya orang. Yang dikirim cuma potongan, tapi channel publik
 > tetap bisa kena laporan hak cipta — pakai secukupnya.

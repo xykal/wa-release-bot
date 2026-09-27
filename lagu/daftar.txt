@@ -2,6 +2,7 @@
 # Tipenya lagu lama yang bikin baper: slow rock / jiwang Malaysia 80-90an +
 # pop & slow rock Indonesia lawas. Tambah / hapus bebas, baris "#" diabaikan.
 # Yang dikirim ke channel cuma POTONGAN ~60 detik, bukan lagu full.
+# Habis ngubah daftar ini → deploy ulang Worker: scripts-dev/deploy_worker_lagu.py
 
 Rahmat Ekamatra - Siapa Di Hatimu
 Search - Isabella

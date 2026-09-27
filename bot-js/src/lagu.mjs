@@ -2,13 +2,11 @@
 //  Lagu mood — sesekali ngirim potongan lagu lama (slow rock / jiwang 80-90an)
 //  ke channel, lengkap sama kata-kata.
 //
-//  Pembagian kerja (biar HP enteng):
-//    GitHub Actions (terjadwal) : cari lagu di YouTube pakai yt-dlp, potong
-//                                 ~60 dtk pakai ffmpeg, bikin kata-kata pakai
-//                                 AI, simpan ke Cloudflare
-//    Cloudflare Worker + KV     : nyimpen antrian + file audionya
-//    HP (file ini)              : pas "lagi mood", ambil satu dari antrian,
-//                                 kirim ke channel
+//  Pembagian kerja Cloudflare x HP:
+//    Cloudflare Worker (lagu/worker/worker.js): pilih lagu dari daftar, cari
+//        di SoundCloud, kasih link stream + kata-kata dari AI + titik potong
+//    HP (file ini): download CUMA potongan ~60 dtk (HTTP Range, ±1 MB),
+//        rapiin per frame MP3, kirim ke channel, terus file-nya DIHAPUS
 //
 //  "Mood" = jadwalnya acak: rata-rata N kali sehari, cuma di jam aktif,
 //  jaraknya nggak pernah mepet. Jadi nggak kerasa kayak bot yang nembak tiap
@@ -48,15 +46,6 @@ export function jadwalBerikut(kini, { perHari = 2, jamMulai = 9, jamSelesai = 22
   return Math.round(t);
 }
 
-/** Ambil lagu tertua di antrian yang belum pernah dikirim. */
-export function pilihLagu(antrian, terkirim = []) {
-  const sudah = new Set(terkirim);
-  const daftar = (Array.isArray(antrian) ? antrian : [])
-    .filter((x) => x && x.id && !sudah.has(x.id))
-    .sort((a, b) => (a.dibuat || 0) - (b.dibuat || 0));
-  return daftar[0] || null;
-}
-
 /** Pesan teks yang nemenin audio-nya. */
 export function formatKataLagu(lagu) {
   const kata = String(lagu.kata || '').trim();
@@ -64,40 +53,93 @@ export function formatKataLagu(lagu) {
   return [kata, judul ? `🎧 *${judul}*` : ''].filter(Boolean).join('\n\n');
 }
 
-async function ambilDgnTimeout(url, ms) {
+async function ambilDgnTimeout(url, ms, headers = {}) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms);
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'wa-release-bot (android app)' }, signal: ctrl.signal });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(url, { headers: { 'User-Agent': 'wa-release-bot (android app)', ...headers }, signal: ctrl.signal });
+    if (!res.ok) {
+      let detail = '';
+      try { const j = await res.json(); detail = j.error ? ` — ${j.error}` : ''; } catch { /* bukan json */ }
+      throw new Error(`HTTP ${res.status}${detail}`);
+    }
     return res;
   } finally {
     clearTimeout(t);
   }
 }
 
-export async function ambilAntrian(sumber = SUMBER_BAWAAN) {
-  const res = await ambilDgnTimeout(String(sumber).replace(/\/+$/, '') + '/antrian', 20_000);
+/** Minta lagu berikutnya ke Worker: { artis, judul, kata, url, mulai, detik, kbps, ... } */
+export async function ambilBerikut(sumber = SUMBER_BAWAAN) {
+  const res = await ambilDgnTimeout(String(sumber).replace(/\/+$/, '') + '/lagu/berikut', 45_000);
   const j = await res.json();
-  return Array.isArray(j?.lagu) ? j.lagu : [];
+  if (!j?.url) throw new Error(j?.error || 'Worker nggak ngasih link lagu');
+  return j;
 }
 
-export async function ambilKlip(sumber, id) {
-  const res = await ambilDgnTimeout(`${String(sumber).replace(/\/+$/, '')}/klip/${encodeURIComponent(id)}`, 60_000);
-  return Buffer.from(await res.arrayBuffer());
+// ------------------------------------------------------------ MP3
+// Tabel bitrate (kbps) & sample rate buat MPEG-1/2/2.5 Layer III.
+const BR_V1 = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0];
+const BR_V2 = [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0];
+const SR = { 3: [44100, 48000, 32000], 2: [22050, 24000, 16000], 0: [11025, 12000, 8000] };
+
+/** Baca header frame MP3 Layer III di posisi i. @returns {{panjang, sampel, sr}|null} */
+export function headerMp3(buf, i) {
+  if (i + 4 > buf.length) return null;
+  if (buf[i] !== 0xff || (buf[i + 1] & 0xe0) !== 0xe0) return null;
+  const versi = (buf[i + 1] >> 3) & 3; // 3=MPEG1, 2=MPEG2, 0=MPEG2.5
+  const layer = (buf[i + 1] >> 1) & 3; // 1=Layer III
+  if (versi === 1 || layer !== 1) return null;
+  const brIdx = buf[i + 2] >> 4;
+  const srIdx = (buf[i + 2] >> 2) & 3;
+  if (brIdx === 0 || brIdx === 15 || srIdx === 3) return null;
+  const pad = (buf[i + 2] >> 1) & 1;
+  const br = (versi === 3 ? BR_V1 : BR_V2)[brIdx] * 1000;
+  const sr = SR[versi][srIdx];
+  const panjang = Math.floor(((versi === 3 ? 144 : 72) * br) / sr) + pad;
+  return { panjang, sampel: versi === 3 ? 1152 : 576, sr };
 }
 
-/** Lapor ke Worker "klip ini udah dikirim" → workflow bikinin yang baru. Boleh gagal. */
-export async function laporTerpakai(sumber, id) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 15_000);
-  try {
-    await fetch(`${String(sumber).replace(/\/+$/, '')}/terpakai/${encodeURIComponent(id)}`, {
-      method: 'POST',
-      headers: { 'User-Agent': 'wa-release-bot (android app)' },
-      signal: ctrl.signal,
-    });
-  } catch { /* nggak penting — paling antriannya telat keisi */ } finally {
-    clearTimeout(t);
+/**
+ * Potongan byte acak dari tengah file MP3 → rapiin: mulai dari frame utuh
+ * pertama (dicek 3 frame berturut-turut biar nggak ketipu byte 0xFF biasa)
+ * dan berhenti di frame utuh terakhir. MP3 itu kumpulan frame mandiri, jadi
+ * hasilnya file MP3 yang valid tanpa perlu ffmpeg.
+ * @returns {{data: Buffer, detik: number}}
+ */
+export function rapikanMp3(buf, maksDetik = Infinity) {
+  let mulai = -1;
+  for (let i = 0; i < Math.min(buf.length, 64 * 1024); i++) {
+    const a = headerMp3(buf, i);
+    if (!a) continue;
+    const b = headerMp3(buf, i + a.panjang);
+    const c = b && headerMp3(buf, i + a.panjang + b.panjang);
+    if (b && c && b.sr === a.sr && c.sr === a.sr) { mulai = i; break; }
   }
+  if (mulai < 0) throw new Error('bukan data MP3 (frame nggak ketemu)');
+  let i = mulai;
+  let detik = 0;
+  while (true) {
+    const h = headerMp3(buf, i);
+    if (!h || i + h.panjang > buf.length) break;
+    if (detik + h.sampel / h.sr > maksDetik) break;
+    detik += h.sampel / h.sr;
+    i += h.panjang;
+  }
+  if (detik < 5) throw new Error('potongan MP3 kependekan');
+  return { data: buf.subarray(mulai, i), detik: Math.round(detik) };
+}
+
+/** Download cuma bagian [mulai, mulai+detik] dari MP3 CBR pakai HTTP Range. */
+export async function downloadPotongan(url, { mulai = 60, detik = 60, kbps = 128 } = {}) {
+  const bps = (kbps * 1000) / 8;
+  const dari = Math.max(0, Math.floor(mulai * bps));
+  const sampai = dari + Math.ceil((detik + 2) * bps) + 8 * 1024; // lebihin dikit buat nyari frame
+  const res = await ambilDgnTimeout(url, 90_000, { Range: `bytes=${dari}-${sampai}` });
+  const buf = Buffer.from(await res.arrayBuffer());
+  if (res.status === 200 && buf.length > sampai - dari + 1) {
+    // server nggak dukung Range → potong sendiri dari file utuh
+    return rapikanMp3(buf.subarray(dari, sampai), detik);
+  }
+  return rapikanMp3(buf, detik);
 }

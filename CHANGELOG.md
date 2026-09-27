@@ -6,6 +6,19 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.6.1] — 2026-09-27
+
+### 🔁 Lagu mood: Cloudflare x HP (GitHub Actions dicabut)
+- Workflow `lagu-mood.yml` + `lagu/siapkan.py` dihapus. Nyedot lagu dari
+  Actions di repo publik itu riskan buat akun GitHub, dan YouTube juga udah
+  ngeblok IP server GitHub.
+- Sekarang Cloudflare Worker yang milih lagu, nyari di SoundCloud, & bikin
+  kata-kata (key AI disimpen sebagai secret Worker, nggak ada di APK/repo).
+- HP cuma download potongan ~60 dtk pakai HTTP Range (±1 MB, bukan lagu full),
+  dirapiin per frame MP3 tanpa ffmpeg, dikirim, terus **file-nya langsung
+  dihapus dari HP**. Sisa file dari pengiriman yang kepotong ikut dibersihin
+  tiap engine nyala.
+
 ## [1.6.0] — 2026-09-27
 
 Dibangun di atas kode v1.5.0 (= v1.3.0 yang stabil). Fitur 1.4.x yang bikin
@@ -597,7 +610,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.6.0...HEAD
+[Unreleased]: ../../compare/v1.6.1...HEAD
+[1.6.1]: ../../compare/v1.6.0...v1.6.1
 [1.6.0]: ../../compare/v1.5.0...v1.6.0
 [1.5.0]: ../../compare/v1.4.3...v1.5.0
 [1.4.3]: ../../compare/v1.4.2...v1.4.3

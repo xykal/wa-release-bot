@@ -341,7 +341,7 @@ test('daftar hitam manual: nomor pakai spasi nggak pecah', () => {
 });
 
 // ------------------------------------------------------------ lagu mood
-import { jadwalBerikut, jamLokal, pilihLagu, formatKataLagu } from '../src/lagu.mjs';
+import { jadwalBerikut, jamLokal, formatKataLagu, rapikanMp3, headerMp3 } from '../src/lagu.mjs';
 
 test('jadwalBerikut: selalu di jam aktif & nggak mepet', () => {
   const tz = 7 * 60; // WIB
@@ -361,12 +361,29 @@ test('jadwalBerikut: jam selesai <= mulai → balik ke bawaan', () => {
   assert.ok(j >= 9 && j < 22);
 });
 
-test('pilihLagu: ambil yang paling lama & belum dikirim', () => {
-  const a = [{ id: 'b', dibuat: 2 }, { id: 'a', dibuat: 1 }, { id: 'c', dibuat: 3 }];
-  assert.equal(pilihLagu(a, []).id, 'a');
-  assert.equal(pilihLagu(a, ['a']).id, 'b');
-  assert.equal(pilihLagu(a, ['a', 'b', 'c']), null);
-  assert.equal(pilihLagu(null), null);
+// frame MP3 palsu: MPEG-1 Layer III, 128 kbps, 44.1 kHz → 417 byte, 1152 sampel
+function frameMp3() {
+  const f = Buffer.alloc(417);
+  f[0] = 0xff; f[1] = 0xfb; f[2] = 0x90; f[3] = 0x64;
+  return f;
+}
+
+test('headerMp3: baca frame 128k/44.1k', () => {
+  const h = headerMp3(frameMp3(), 0);
+  assert.deepEqual(h, { panjang: 417, sampel: 1152, sr: 44100 });
+  assert.equal(headerMp3(Buffer.from([0xff, 0x00, 0, 0]), 0), null);
+});
+
+test('rapikanMp3: buang sampah depan/belakang, potong sesuai durasi', () => {
+  const frames = Buffer.concat(Array.from({ length: 2000 }, frameMp3)); // ±52 dtk
+  const kotor = Buffer.concat([Buffer.from([1, 2, 0xff, 0xfb, 9]), frames, Buffer.alloc(100, 7)]);
+  const { data, detik } = rapikanMp3(kotor);
+  assert.equal(data[0], 0xff);
+  assert.equal(data.length, 2000 * 417);
+  assert.equal(detik, 52);
+  const pendek = rapikanMp3(kotor, 30);
+  assert.equal(pendek.detik, 30);
+  assert.throws(() => rapikanMp3(Buffer.alloc(5000)), /bukan data MP3/);
 });
 
 test('formatKataLagu: kata-kata + judul tebal', () => {

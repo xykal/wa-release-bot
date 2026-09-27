@@ -54,10 +54,6 @@ class BotService : Service() {
             else ctx.startService(i)
         }
 
-        /** Folder script bot (plugin) — engine baca dari sini. */
-        fun folderScript(ctx: Context): File =
-            File(File(ctx.filesDir, "wa_release_bot"), "plugins").apply { mkdirs() }
-
         fun stop(ctx: Context) {
             ctx.stopService(Intent(ctx, BotService::class.java))
         }
@@ -98,11 +94,6 @@ class BotService : Service() {
 
         dataDir = File(filesDir, "wa_release_bot").apply { mkdirs() }
 
-        // sisa bot.log lama (numpuk terus, isinya dobel sama mesin.log)
-        try {
-            File(dataDir, "bot.log").delete()
-        } catch (_: Exception) {
-        }
         val bundleOk = ensureBundle()
         writeConfig()
 
@@ -295,7 +286,6 @@ class BotService : Service() {
         }
     }
 
-
     /** Dipanggil MainActivity: app kebuka → polling cepat, di belakang → santai. */
     fun setUiTerlihat(terlihat: Boolean) {
         fileBridge?.uiTerlihat = terlihat
@@ -318,9 +308,6 @@ class BotService : Service() {
                 busy = e.optBoolean("busy")
                 waLinked = e.optBoolean("waLinked")
                 waConnected = e.optBoolean("waConnected")
-                waNomor = e.optString("waNomor", "").takeIf { it.isNotBlank() && it != "null" }
-                mode = e.optString("mode", "berkala")
-                pluginJumlah = e.optInt("pluginJumlah", 0)
                 lastTag = e.optString("lastTag", "").orNull()
                 lastPostedAt = e.optString("lastPostedAt", "").orNull()
                 postCount = e.optInt("postCount", 0)
@@ -356,50 +343,6 @@ class BotService : Service() {
                     daftarHitam = daftar
                     daftarHitamManual = manual
                     daftarHitamSeq += 1
-                }
-            }
-
-            "plugin_daftar" -> {
-                val arr = e.optJSONArray("items")
-                val daftar = (0 until (arr?.length() ?: 0)).mapNotNull { i ->
-                    val o = arr?.optJSONObject(i) ?: return@mapNotNull null
-                    val pr = o.optJSONArray("perintah")
-                    ScriptBot(
-                        file = o.optString("file"),
-                        nama = o.optString("nama"),
-                        versi = o.optString("versi"),
-                        deskripsi = o.optString("deskripsi"),
-                        perintah = (0 until (pr?.length() ?: 0)).map { pr!!.optString(it) },
-                        error = o.optString("error", "").takeIf { it.isNotBlank() && it != "null" }
-                    )
-                }
-                BotBus.publish {
-                    scriptBot = daftar
-                    pluginJumlah = daftar.count { it.error == null }
-                    scriptBotSeq += 1
-                }
-            }
-
-            "respons" -> {
-                val arr = e.optJSONArray("items")
-                val items = (0 until (arr?.length() ?: 0)).mapNotNull { i ->
-                    val o = arr?.optJSONObject(i) ?: return@mapNotNull null
-                    Respons(
-                        o.optString("nama"),
-                        o.optString("teks"),
-                        o.optLong("t", 0L).takeIf { it > 0 },
-                        o.optBoolean("dibalas")
-                    )
-                }
-                val hasil = HasilRespons(
-                    ok = e.optBoolean("ok"),
-                    judul = e.optString("judul", "").orNull(),
-                    pesan = e.optString("msg", "").orNull(),
-                    items = items
-                )
-                BotBus.publish {
-                    respons = hasil
-                    responsSeq += 1
                 }
             }
 
@@ -464,9 +407,9 @@ class BotService : Service() {
      *  - buffer di memori → ditampilkan di kartu Log
      *  - folder Android/media/<paket>/log/mesin.log → bisa dibuka/dikirim user
      *
-     * bot.log (di dalam dataDir) udah nggak ditulis sejak v1.4.1: isinya sama
-     * persis kayak mesin.log, nggak pernah dipotong (numpuk terus), dan
-     * nggak bisa dibuka tanpa root.
+     * Yang lama (bot.log di dalam dataDir) tetap ditulis, tapi itu ada di
+     * /data/data/... yang nggak bisa dibuka siapa-siapa tanpa root. Percuma
+     * buat debugging di HP — itu sebabnya LogRecorder dipakai.
      */
     private fun appendLog(msg: String) {
         val line =
@@ -478,6 +421,12 @@ class BotService : Service() {
             BotBus.publish { log = copy }
         }
         LogRecorder.mesin(line)
+        if (::dataDir.isInitialized) {
+            try {
+                File(dataDir, "bot.log").appendText(line + "\n")
+            } catch (_: Exception) {
+            }
+        }
     }
 
     // ----------------------------- notifikasi & watchdog -----------------------------

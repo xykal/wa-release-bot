@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Dashboard (MainActivity): status, tautan WA, aksi cepat, log.
-  DIBIKIN GENERATOR: scripts-dev/gen_layout.py — edit di sana, lalu jalankan ulang.
-  Semua komponen digambar sendiri (res/values/themes.xml + res/drawable/bg_*):
-  nggak ada MaterialButton / CardView / Switch bawaan.
+  Layar utama. Semua komponen digambar sendiri (lihat res/values/themes.xml
+  + res/drawable/bg_*): nggak ada MaterialButton / CardView / Switch bawaan.
+  "Tombol" = TextView yang bisa diklik, "saklar" = baris yang di-set
+  isSelected (gambar saklarnya ikut lewat selector).
+  File ini dibikin rapi pakai generator, tapi boleh diedit langsung.
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -16,16 +17,17 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:fillViewport="true"
-        android:paddingBottom="24dp">
+        android:paddingBottom="96dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingStart="16dp"
-            android:paddingTop="16dp"
+            android:paddingTop="20dp"
             android:paddingEnd="16dp">
 
+            <!-- ================= HEADER ================= -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -55,139 +57,36 @@
                         android:layout_height="wrap_content"
                         android:text="@string/app_name"
                         android:textColor="@color/wr_teks"
-                        android:textSize="20sp"
+                        android:textSize="21sp"
                         android:textStyle="bold" />
-                    <LinearLayout
+                    <TextView
+                        android:id="@+id/tvVersi"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-                        <TextView
-                            android:id="@+id/tvPill"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:paddingStart="10dp"
-                            android:paddingTop="3dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="3dp"
-                            android:text="MATI"
-                            android:textColor="@color/wr_teks"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
-                        <TextView
-                            android:id="@+id/tvVersi"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:textColor="@color/wr_teks2"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-                <ImageView
-                    android:id="@+id/btnSetelan"
-                    android:layout_width="46dp"
-                    android:layout_height="46dp"
-                    android:background="@drawable/bg_tombol_lembut"
-                    android:clickable="true"
-                    android:contentDescription="Setelan"
-                    android:focusable="true"
-                    android:padding="11dp"
-                    android:src="@drawable/ic_setelan"
-                    android:tint="@color/wr_teks" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/kartuTertaut"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:background="@drawable/bg_tertaut"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="16dp"
-                android:visibility="gone">
-                <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="@drawable/bg_bulat_hijau"
-                    android:importantForAccessibility="no"
-                    android:padding="8dp"
-                    android:src="@drawable/ic_centang"
-                    android:tint="#FF06201A" />
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="14dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView
-                        android:id="@+id/tvTertautJudul"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="WA SUDAH TERTAUT"
-                        android:textColor="@color/wr_hijau_terang"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.03" />
-                    <TextView
-                        android:id="@+id/tvTertautKet"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
+                        android:text="rilis GitHub → WhatsApp"
                         android:textColor="@color/wr_teks2"
-                        android:textSize="12.5sp" />
+                        android:textSize="13sp" />
                 </LinearLayout>
+
                 <TextView
-                    android:id="@+id/btnLepas"
+                    android:id="@+id/tvPill"
                     android:layout_width="wrap_content"
-                    android:layout_height="38dp"
-                    android:layout_marginStart="8dp"
-                    style="@style/TombolLembut"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp"
-                    android:textSize="13sp"
-                    android:text="Lepas" />
-            </LinearLayout>
-
-            <LinearLayout style="@style/Kartu" android:id="@+id/kartuTautkan">
-                <TextView
-                    style="@style/JudulKartu"
-                    android:drawableStart="@drawable/ic_tautan"
-                    android:text="Tautkan WhatsApp" />
-                <TextView style="@style/KetKartu" android:text="Cukup sekali. Paling gampang pakai kode: isi nomor WA lo, nanti muncul 8 huruf yang diketik di WhatsApp — nggak perlu HP kedua." />
-                <TextView
-                    android:id="@+id/tvWaStatus"
-                    style="@style/KetKartu"
-                    android:layout_marginTop="10dp"
-                    android:textColor="@color/wr_hijau"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="12dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="12dp"
+                    android:paddingBottom="6dp"
+                    android:text="MATI"
+                    android:textColor="@color/wr_teks"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
-                <TextView style="@style/Label" android:text="Nomor WA (buat pairing code)" />
-                <EditText
-                    android:id="@+id/etPhone"
-                    style="@style/Isian"
-                    android:hint="contoh: 0812 3456 7890"
-                    android:importantForAutofill="no"
-                    android:inputType="phone" />
-                <TextView
-                    android:id="@+id/btnPairing"
-                    style="@style/TombolUtama"
-                    android:drawableStart="@drawable/ic_kunci"
-                    android:layout_marginTop="12dp"
-                    android:text="Tautkan pakai kode" />
-                <TextView
-                    android:id="@+id/btnQr"
-                    style="@style/TombolGaris"
-                    android:drawableStart="@drawable/ic_qr"
-                    android:layout_marginTop="12dp"
-                    android:text="Pakai QR (scan dari HP lain)" />
             </LinearLayout>
 
+            <!-- ================= STATUS ================= -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="20dp"
                 android:orientation="horizontal">
                 <LinearLayout style="@style/Ubin">
                     <TextView style="@style/UbinLabel" android:text="WhatsApp" />
@@ -195,8 +94,8 @@
                 </LinearLayout>
                 <LinearLayout style="@style/Ubin"
                     android:layout_marginStart="10dp">
-                    <TextView style="@style/UbinLabel" android:text="Jadwal" />
-                    <TextView android:id="@+id/tvUbinMode" style="@style/UbinIsi" android:text="—" />
+                    <TextView style="@style/UbinLabel" android:text="Engine" />
+                    <TextView android:id="@+id/tvUbinEngine" style="@style/UbinIsi" android:text="—" />
                 </LinearLayout>
             </LinearLayout>
             <LinearLayout
@@ -214,6 +113,7 @@
                     <TextView android:id="@+id/tvUbinGrup" style="@style/UbinIsi" android:text="—" />
                 </LinearLayout>
             </LinearLayout>
+
             <TextView
                 android:id="@+id/tvNext"
                 android:layout_width="match_parent"
@@ -222,6 +122,7 @@
                 android:gravity="center"
                 android:textColor="@color/wr_teks2"
                 android:textSize="13sp" />
+
             <TextView
                 android:id="@+id/tvError"
                 android:layout_width="match_parent"
@@ -232,6 +133,7 @@
                 android:textColor="@color/wr_merah"
                 android:textSize="13sp"
                 android:visibility="gone" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -254,106 +156,436 @@
                     android:text="Cek sekarang" />
             </LinearLayout>
 
+            <!-- ================= TAUTKAN WA ================= -->
             <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_tautan"
+                android:text="Tautkan WhatsApp" />
+            <TextView style="@style/KetKartu" android:text="Cukup sekali. Paling gampang pakai kode: isi nomor WA lo, nanti muncul 8 huruf yang diketik di WhatsApp — nggak perlu HP kedua buat scan QR." />
+            <TextView
+                android:id="@+id/tvWaStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/wr_hijau"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+            <TextView style="@style/Label" android:text="Nomor WA (buat pairing code)" />
+            <EditText
+                android:id="@+id/etPhone"
+                style="@style/Isian"
+                android:hint="contoh: 0812 3456 7890"
+                android:importantForAutofill="no"
+                android:inputType="phone" />
+            <TextView
+                android:id="@+id/btnPairing"
+                style="@style/TombolUtama"
+                android:drawableStart="@drawable/ic_kunci"
+                android:text="Tautkan pakai kode"
+                android:layout_marginTop="12dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
                 <TextView
-                    style="@style/JudulKartu"
-                    android:drawableStart="@drawable/ic_kontrol"
-                    android:text="Aksi cepat" />
+                    android:id="@+id/btnQr"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/TombolGaris"
+                    android:drawableStart="@drawable/ic_qr"
+                    android:text="Pakai QR" />
                 <TextView
-                    android:id="@+id/tvGrupStat"
-                    style="@style/KetKartu"
-                    android:layout_marginTop="10dp"
-                    android:background="@drawable/bg_ubin"
-                    android:padding="12dp"
-                    android:textColor="@color/wr_teks" />
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:id="@+id/btnTest"
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        style="@style/TombolGaris"
-                        android:drawableStart="@drawable/ic_kirim"
-                        android:text="Tes channel" />
-                    <TextView
-                        android:id="@+id/btnRespons"
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_marginStart="10dp"
-                        style="@style/TombolGaris"
-                        android:drawableStart="@drawable/ic_chat"
-                        android:text="Lihat respons" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:id="@+id/btnTesGrup"
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        style="@style/TombolLembut"
-                        android:drawableStart="@drawable/ic_grup"
-                        android:text="Tes grup" />
-                    <TextView
-                        android:id="@+id/btnLihatHitam"
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_marginStart="10dp"
-                        style="@style/TombolLembut"
-                        android:drawableStart="@drawable/ic_daftar"
-                        android:text="Daftar hitam" />
-                </LinearLayout>
+                    android:id="@+id/btnLepas"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_tutup"
+                    android:text="Lepas WA" />
+            </LinearLayout>
             </LinearLayout>
 
+            <!-- ================= RILIS → CHANNEL ================= -->
             <LinearLayout style="@style/Kartu">
-                <TextView
-                    style="@style/JudulKartu"
-                    android:drawableStart="@drawable/ic_log"
-                    android:text="Log" />
-                <TextView style="@style/KetKartu" android:text="Catatan kerja bot. Kalau ada yang aneh, tekan Kirim log." />
-                <ScrollView
-                    android:id="@+id/svLog"
-                    android:layout_width="match_parent"
-                    android:layout_height="240dp"
-                    android:layout_marginTop="12dp"
-                    android:background="@drawable/bg_log"
-                    android:padding="12dp">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_kirim"
+                android:text="Rilis GitHub → Channel" />
+            <TextView style="@style/KetKartu" android:text="Tiap ada rilis baru di repo, bot posting ke channel / grup WA. Kosongin repo kalau cuma mau pakai penjaga grup." />
+            <TextView style="@style/Label" android:text="Repo GitHub" />
+            <EditText
+                android:id="@+id/etRepo"
+                style="@style/Isian"
+                android:hint="pemilik/nama-repo"
+                android:importantForAutofill="no" />
+            <TextView style="@style/Label" android:text="Channel WA" />
+            <EditText
+                android:id="@+id/etChannel"
+                style="@style/Isian"
+                android:hint="link channel / JID / link grup"
+                android:importantForAutofill="no" />
+            <TextView style="@style/Label" android:text="Token GitHub (opsional)" />
+            <EditText
+                android:id="@+id/etToken"
+                style="@style/Isian"
+                android:hint="kosongin kalau repo publik"
+                android:importantForAutofill="no"
+                android:inputType="textPassword" />
+            <TextView style="@style/Label" android:text="Cek tiap (menit)" />
+            <EditText
+                android:id="@+id/etInterval"
+                style="@style/Isian"
+                android:hint="15"
+                android:importantForAutofill="no"
+                android:inputType="number" />
+            <LinearLayout android:id="@+id/rowPrerelease" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
                     <TextView
-                        android:id="@+id/tvLog"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:fontFamily="monospace"
-                        android:text="(belum ada log)"
-                        android:textColor="#B8C4CA"
-                        android:textIsSelectable="true"
-                        android:textSize="11.5sp" />
-                </ScrollView>
+                        android:text="Ikutkan pre-release"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Versi beta / RC ikut diposting"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/rowPostFirst" style="@style/BarisSaklar">
                 <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Posting rilis yang ada sekarang"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Pas pertama jalan, langsung posting rilis terakhir"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/rowTestMsg" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Kirim pesan tes pas setup"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Biar ketahuan channel-nya bener"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/rowFormatTanya" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Kirim sebagai Pertanyaan"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Follower channel bisa bales pesan rilis (balasannya cuma sampai ke lo). Matiin kalau di WA-nya tampil aneh."
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/btnBikinChannel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_tambah"
+                    android:text="Bikin channel" />
+                <TextView
+                    android:id="@+id/btnTest"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_kirim"
+                    android:text="Tes kirim ke channel" />
+            </LinearLayout>
+            </LinearLayout>
+
+            <!-- ================= PENJAGA GRUP ================= -->
+            <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_perisai"
+                android:text="Penjaga grup" />
+            <TextView style="@style/KetKartu" android:text="Buat grup yang pakai &quot;Setujui anggota baru&quot;: yang minta join otomatis di-approve, KECUALI yang dulu udah keluar / dikeluarin — mereka ditolak. Akun WA lo harus admin di grup itu." />
+            <LinearLayout android:id="@+id/rowGrupAktif" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Nyalain penjaga grup"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Cek permintaan join secara berkala"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+            <TextView style="@style/Label" android:text="Link undangan grup" />
+            <EditText
+                android:id="@+id/etGrup"
+                style="@style/Isian"
+                android:hint="https://chat.whatsapp.com/…"
+                android:importantForAutofill="no" />
+            <TextView style="@style/Label" android:text="Cek tiap (menit, minimal 2)" />
+            <EditText
+                android:id="@+id/etGrupInterval"
+                style="@style/Isian"
+                android:hint="5"
+                android:importantForAutofill="no"
+                android:inputType="number" />
+            <TextView style="@style/Label" android:text="Selalu tolak nomor ini (opsional)" />
+            <EditText
+                android:id="@+id/etGrupHitam"
+                style="@style/Isian"
+                android:hint="pisahin pakai koma / baris baru"
+                android:importantForAutofill="no"
+                android:gravity="top"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:singleLine="false" />
+            <TextView
+                style="@style/KetKartu"
+                android:layout_marginTop="6dp"
+                android:text="Yang keluar SEBELUM fitur ini nyala nggak ketahuan sama bot — masukin nomornya di sini." />
+            <TextView
+                android:id="@+id/tvGrupStat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_ubin"
+                android:padding="12dp"
+                android:textColor="@color/wr_teks"
+                android:textSize="13sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/btnCekGrup"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/TombolGaris"
+                    android:drawableStart="@drawable/ic_cek"
+                    android:text="Cek sekarang" />
+                <TextView
+                    android:id="@+id/btnTesGrup"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    style="@style/TombolGaris"
+                    android:drawableStart="@drawable/ic_kirim"
+                    android:text="Tes kirim" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/btnLihatHitam"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_daftar"
+                    android:text="Daftar hitam" />
+                <TextView
+                    android:id="@+id/btnResetHitam"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_hapus"
+                    android:text="Kosongin" />
+            </LinearLayout>
+            </LinearLayout>
+
+            <!-- ================= BATRE & NYALA OTOMATIS ================= -->
+            <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_batre"
+                android:text="Batre &amp; nyala otomatis" />
+            <TextView style="@style/KetKartu" android:text="Bot-nya tidur hampir sepanjang waktu, cuma bangun sebentar pas jadwal cek. Biar nggak dibunuh sistem (apalagi di Xiaomi), izinkan dua hal di bawah." />
+            <LinearLayout android:id="@+id/rowBoot" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Nyala otomatis pas HP nyala"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Nggak perlu buka app habis restart"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+            <LinearLayout android:id="@+id/rowLogcat" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Rekam log detail (debug)"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Matiin kalau udah lancar — sedikit lebih hemat"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/btnBatre"
+                style="@style/TombolLembut"
+                android:drawableStart="@drawable/ic_batre"
+                android:text="Izinkan jalan di latar (batre)"
+                android:layout_marginTop="12dp" />
+            <TextView
+                android:id="@+id/btnAutostart"
+                style="@style/TombolLembut"
+                android:drawableStart="@drawable/ic_power"
+                android:text="Buka izin Autostart (Xiaomi dll)"
+                android:layout_marginTop="10dp" />
+            <TextView
+                android:id="@+id/tvBatreStat"
+                style="@style/KetKartu"
+                android:layout_marginTop="10dp" />
+            </LinearLayout>
+
+            <!-- ================= LOG ================= -->
+            <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_log"
+                android:text="Log" />
+            <TextView style="@style/KetKartu" android:text="Catatan kerja bot. Kalau ada yang aneh, tekan Kirim log." />
+            <ScrollView
+                android:id="@+id/svLog"
+                android:layout_width="match_parent"
+                android:layout_height="260dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_log"
+                android:padding="12dp">
+                <TextView
+                    android:id="@+id/tvLog"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:id="@+id/btnKirimLog"
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        style="@style/TombolLembut"
-                        android:drawableStart="@drawable/ic_bagi"
-                        android:text="Kirim log" />
-                    <TextView
-                        android:id="@+id/btnKill"
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
-                        android:layout_marginStart="10dp"
-                        style="@style/TombolBahaya"
-                        android:drawableStart="@drawable/ic_power"
-                        android:text="Matikan" />
-                </LinearLayout>
+                    android:fontFamily="monospace"
+                    android:text="(belum ada log)"
+                    android:textColor="#B8C4CA"
+                    android:textIsSelectable="true"
+                    android:textSize="11.5sp" />
+            </ScrollView>
+            <TextView
+                android:id="@+id/tvFolderLog"
+                style="@style/KetKartu"
+                android:layout_marginTop="8dp"
+                android:fontFamily="monospace"
+                android:textSize="11sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/btnBukaLog"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_folder"
+                    android:text="Buka folder" />
+                <TextView
+                    android:id="@+id/btnKirimLog"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_bagi"
+                    android:text="Kirim log" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/btnKill"
+                style="@style/TombolBahaya"
+                android:drawableStart="@drawable/ic_power"
+                android:text="Matikan service"
+                android:layout_marginTop="12dp" />
             </LinearLayout>
 
             <View
@@ -362,6 +594,7 @@
         </LinearLayout>
     </ScrollView>
 
+    <!-- ================= BANNER (pengganti Toast) ================= -->
     <TextView
         android:id="@+id/tvBanner"
         android:layout_width="match_parent"
@@ -369,7 +602,7 @@
         android:layout_gravity="bottom"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="88dp"
         android:background="@drawable/bg_banner"
         android:elevation="8dp"
         android:padding="14dp"
@@ -377,4 +610,20 @@
         android:textSize="14sp"
         android:visibility="gone" />
 
+    <!-- ================= BAR SIMPAN ================= -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#F20B141A"
+        android:paddingStart="16dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp">
+        <TextView
+            android:id="@+id/btnSave"
+            style="@style/TombolUtama"
+            android:drawableStart="@drawable/ic_simpan"
+            android:text="Simpan setting" />
+    </FrameLayout>
 </FrameLayout>

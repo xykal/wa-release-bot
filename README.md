@@ -66,14 +66,11 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`), jadi perilakunya identik.
 - ✅ **Tidur-bangun beneran** — WhatsApp baru terhubung pas mau posting
 - ✅ **Tautkan sekali seumur hidup** — pakai **pairing code** (8 huruf, tanpa HP kedua) atau QR
 - ✅ **Penjaga grup** — auto-approve permintaan join, tolak yang dulu udah keluar/dikeluarin
-- ✅ **Perintah di grup** — `!info` (khusus admin: ringkasan + daftar hitam), `!rules`, `!menu`
-- ✅ **Script bot** — tambah perintah sendiri pakai file `.js`, upload dari app ([docs/PLUGIN.md](docs/PLUGIN.md))
-- ✅ **Pertanyaan channel + Lihat respons** — follower bisa bales pesan rilis, lo baca balasannya dari app
 - ✅ **Post ke channel WA** (tempel link channel-nya) — atau ke **grup WA** kalau lebih gampang
 - ✅ **Bikin channel dari app** — belum punya channel? bot yang bikinin, sekali klik
 - ✅ **Watchdog** — WorkManager + boot receiver: service ke-bunuh Android → nyala lagi
 - ✅ **UI status real-time** — log, tag terakhir, hitungan mundur, dialog QR
-- ✅ **Dashboard + halaman Setelan terpisah** — plus layar sambutan & halaman Tentang
+- ✅ **Semua setting bisa diubah dari UI** — repo, interval, token, prerelease, dll.
 - 🔒 **Zero secret di repo** — token cuma hidup di HP lo / GitHub Secrets
 
 ---
@@ -101,17 +98,15 @@ Detail lengkap: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ### Pakai Setelah Install
 
-0. Pertama buka muncul **layar sambutan** 3 halaman — baca bentar, atau **Lewati**.
-1. Dashboard → kartu **Tautkan WhatsApp** → isi **nomor WA** lo → **Tautkan pakai kode**
+1. Buka app → kartu **Tautkan WhatsApp** → isi **nomor WA** lo → **Tautkan pakai kode**
 2. Muncul kode 8 huruf. Di WhatsApp: **⋮ → Perangkat tertaut → Tautkan perangkat →
    Tautkan dengan nomor telepon saja** → ketik kodenya. (Biasanya WA juga ngirim
    notifikasi "masukkan kode" — tinggal tap.)
    Punya HP kedua? Boleh juga pakai **Pakai QR**.
-   Udah tertaut → kartunya berubah jadi banner hijau **✓ WA 0812-xxxx SUDAH TERTAUT**.
-3. Ikon **⚙ Setelan** (kanan atas): isi repo (`owner/nama-repo`) + link channel
-   (belum punya? tekan **Bikin channel**) → **Simpan setelan**
-4. Balik ke dashboard, tekan **Mulai**
-5. Setelan → **Batre & nyala otomatis**: tekan dua tombolnya (izin batre + Autostart).
+3. Kartu **Rilis GitHub → Channel**: isi repo (`owner/nama-repo`) + link channel
+   (belum punya? tekan **Bikin channel**) → **Simpan setting**
+4. Tekan **Mulai**
+5. Kartu **Batre & nyala otomatis**: tekan dua tombolnya (izin batre + Autostart).
    Di Xiaomi ini **wajib**, kalau nggak bot dibunuh pas layar mati dan nggak
    nyala habis restart.
 
@@ -126,11 +121,11 @@ Buat grup yang nyalain **Setujui anggota baru** (Info grup → Setelan grup):
 - yang dulu **udah keluar / dikeluarin** lalu minta join lagi → **ditolak otomatis**
 
 Syarat: akun WA yang ditautkan harus **admin** di grup itu. Isi **link undangan
-grup** di Setelan → **Penjaga grup**, nyalain saklarnya, simpan.
+grup** di kartu **Penjaga grup**, nyalain saklarnya, simpan.
 
-Cara kerjanya berkala (tiap interval cek grup, default 5 menit):
-nyambung → cek anggota + permintaan → approve/tolak → baca perintah yang masuk →
-putus ±25 detik kemudian. "Siapa yang keluar" dihitung dari daftar
+Cara kerjanya berkala (default tiap 5 menit, bisa diubah): nyambung → cek
+anggota + permintaan → approve/tolak → putus. Jadi approve-nya bisa telat
+sampai 5 menit, tapi batre aman. "Siapa yang keluar" dihitung dari daftar
 anggota yang berubah antar-cek, jadi:
 
 - orang yang keluar **sebelum** fitur ini nyala nggak ketahuan → ketik nomornya
@@ -138,29 +133,7 @@ anggota yang berubah antar-cek, jadi:
 - orang yang dimasukin lagi manual sama admin otomatis dihapus dari daftar hitam
 - **Daftar hitam** buka daftar orang yang diblokir; tiap orang ada tombol
   **Buka blokir** biar bisa join lagi. **Kosongin** buat reset semuanya
-- **Tes grup** (dashboard → Aksi cepat) kirim pesan **🛡️ Bot penjaga grup aktif** +
-  daftar fitur + aturan singkat + link aturan lengkap (default
-  `https://rules.xyc.my.id/`, bisa diganti / dikosongin di Setelan)
-
-**Perintah di grup** (bisa dimatiin di Setelan):
-
-| Perintah | Siapa | Isinya |
-|---|---|---|
-| `!info` | admin grup / lo sendiri | anggota, admin, permintaan join yang nunggu, jumlah di-approve / ditolak, daftar hitam (nomor disamarkan `+62812****7890`, bisa dimatiin) |
-| `!rules` / `!aturan` | semua | aturan singkat + link aturan lengkap |
-| `!menu` / `!bantuan` | semua | daftar perintah (termasuk dari script) |
-| `!ping` | semua | ngecek bot idup |
-
-Perintah juga bisa diketik di chat **Pesan ke diri sendiri** (buat nyoba).
-Tambah perintah sendiri: [🧩 Script bot](docs/PLUGIN.md).
-
-### Pertanyaan channel & Lihat respons
-
-Pesan rilis ke channel dikirim sebagai **Pertanyaan** (fitur saluran WA):
-follower bisa bales, balasannya cuma sampai ke admin. Tombol **Lihat respons**
-(dashboard) nampilin balasan buat pertanyaan terakhir. Kalau channel lo belum
-kebagian fitur ini dari WhatsApp, server nolak → bot otomatis kirim teks biasa
-(dan kode error-nya ditulis di Log). Bisa dimatiin di Setelan → Channel.
+- **Tes kirim** (di kartu Penjaga grup) kirim pesan singkat ke grup buat ngecek
 
 ### Batre
 

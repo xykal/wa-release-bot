@@ -14,41 +14,12 @@ package com.xykals.warelease
 /** Satu orang di daftar hitam otomatis penjaga grup. */
 data class OrangHitam(val kunci: String, val label: String, val sejak: Long?)
 
-/** Satu script bot (plugin) yang kepasang. */
-data class ScriptBot(
-    val file: String,
-    val nama: String,
-    val versi: String,
-    val deskripsi: String,
-    val perintah: List<String>,
-    val error: String?,
-)
-
-/** Satu respons follower buat Pertanyaan di channel. */
-data class Respons(val nama: String, val teks: String, val t: Long?, val dibalas: Boolean)
-
-/** Hasil "Lihat respons". */
-data class HasilRespons(
-    val ok: Boolean,
-    val judul: String?,
-    val pesan: String?,
-    val items: List<Respons>,
-)
-
 data class BotUi(
     var serviceRunning: Boolean = false,
     var engineRunning: Boolean = false,
     var busy: Boolean = false,
     var waLinked: Boolean = false,
     var waConnected: Boolean = false,
-    // Nomor WA yang tertaut (mis. "6283116632566") — buat banner "SUDAH TERTAUT".
-    var waNomor: String? = null,
-    var mode: String = "berkala",
-    var pluginJumlah: Int = 0,
-    var scriptBot: List<ScriptBot> = emptyList(),
-    var scriptBotSeq: Int = 0,
-    var respons: HasilRespons? = null,
-    var responsSeq: Int = 0,
     var lastTag: String? = null,
     var lastPostedAt: String? = null,
     var postCount: Int = 0,

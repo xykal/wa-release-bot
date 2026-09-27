@@ -38,10 +38,3 @@ ikut dibundel — diganti stub di `bot-js/build.mjs`.
 
 esbuild (MIT), ESLint (MIT), Gradle (Apache-2.0), Android Gradle Plugin (Apache-2.0),
 GitHub Actions pihak ketiga (lihat `.github/workflows/`, masing-masing ada lisensinya).
-
-## Terima kasih
-
-- [rexxzyid/elaina-baileys](https://github.com/rexxzyid/elaina-baileys) — referensi
-  cara nyusun pesan **Pertanyaan** channel (`<meta questiontype>` + `isQuestion`).
-  Nggak ada kode yang disalin; bot ini tetap pakai Baileys 6.7.24 resmi, bentuk
-  pesannya dirakit sendiri.

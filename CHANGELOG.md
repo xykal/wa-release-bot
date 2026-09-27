@@ -6,6 +6,24 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-09-27
+
+### 🔙 Balik ke kode v1.3.0
+
+v1.4.0–v1.4.3 bikin app force close terus di HP user
+(`FORTIFY: pthread_mutex_lock called on a destroyed mutex` → SIGABRT, beberapa
+detik setelah mesin Node nyala) dan HP jadi lemot. Tiga kali coba benerin nggak
+ngilangin crash-nya, dan penyebab pastinya belum ketemu. Jadi app & engine
+**dibalikin persis ke kode v1.3.0** — versi terakhir yang kebukti jalan di HP
+user. Nomor versinya naik (1.5.0) cuma biar bisa dipasang di atas 1.4.x tanpa
+uninstall; sesi WA & setelan tetap kepakai.
+
+Yang **ilang** (ikut v1.4.x): halaman Setelan terpisah, layar sambutan,
+halaman Tentang, perintah `!info` / `!rules` / `!menu`, script bot, Lihat
+respons, pesan tes grup versi baru, tambalan grup LID.
+
+Yang **tetap**: lisensi pemakaian pribadi (LICENSE, THIRD_PARTY_LICENSES.md).
+
 ## [1.4.3] — 2026-09-27
 
 ### 🐛 Diperbaiki
@@ -552,7 +570,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.4.3...HEAD
+[Unreleased]: ../../compare/v1.5.0...HEAD
+[1.5.0]: ../../compare/v1.4.3...v1.5.0
 [1.4.3]: ../../compare/v1.4.2...v1.4.3
 [1.4.2]: ../../compare/v1.4.1...v1.4.2
 [1.4.1]: ../../compare/v1.4.0...v1.4.1

@@ -19,6 +19,7 @@ import {
   fetchLatestBaileysVersion,
   DisconnectReason,
   Browsers,
+  proto,
 } from '@whiskeysockets/baileys';
 
 export { normalisasiNomor };
@@ -80,7 +81,6 @@ export async function connectToWhatsApp({
   timeoutMs = 180000,
   batal,
   onTertaut,
-  getMessage,
 }) {
   const status = (m) => { if (onStatus) onStatus(m); };
   const sesi = statusSesi(sessionDir);
@@ -139,9 +139,6 @@ export async function connectToWhatsApp({
       syncFullHistory: false,
       shouldSyncHistoryMessage: () => false,
       generateHighQualityLinkPreview: false,
-      // HP penerima yang gagal buka pesan minta dikirim ulang (retry). Tanpa
-      // ini Baileys nggak bisa ngeladenin → anggota grup liat "Menunggu pesan ini".
-      getMessage: getMessage || (async () => undefined),
       // Pairing code: kasih waktu ngetik yang lebih lega (QR-nya nggak dipakai).
       qrTimeout: mode === 'pairing' ? 60000 : undefined,
     });
@@ -257,13 +254,19 @@ export async function resolveChannel(sock, target, log) {
   return resolveTarget(sock, target, log);
 }
 
-/** Nomor WA yang lagi tertaut (dari creds.json), mis. "6283116632566". */
-export function nomorSesi(sessionDir) {
-  try {
-    const c = JSON.parse(fs.readFileSync(path.join(sessionDir, 'creds.json'), 'utf8'));
-    if (!c?.me?.id || !c?.account) return null;
-    return String(c.me.id).split(':')[0].split('@')[0] || null;
-  } catch {
-    return null;
-  }
+export async function sendText(sock, jid, text) {
+  await sock.sendMessage(jid, { text });
+}
+
+/**
+ * Kirim pesan ke CHANNEL sebagai "Pertanyaan" (fitur saluran WA: follower bisa
+ * bales, balasannya cuma sampai ke admin). Di protokol WA ini pesan teks biasa
+ * yang dibungkus `questionMessage`. Buat grup / chat biasa → teks biasa.
+ */
+export async function sendPertanyaan(sock, jid, text) {
+  if (!String(jid).endsWith('@newsletter')) return sendText(sock, jid, text);
+  const pesan = proto.Message.fromObject({
+    questionMessage: { message: { extendedTextMessage: { text } } },
+  });
+  await sock.relayMessage(jid, pesan, {});
 }

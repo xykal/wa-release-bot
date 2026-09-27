@@ -173,10 +173,14 @@ APK muncul di tab **Actions → Artifacts**.
 Bikin **release** resmi:
 
 ```bash
-git tag v1.1.0 && git push origin v1.1.0
+git tag v1.1.1 && git push origin v1.1.1
 ```
 
 → APK + `sha256` otomatis di-attach ke [GitHub Release](../../releases).
+
+> Build dari **tag** selalu `arm64-v8a`. Kalau perlu `armeabi-v7a`, jalankan
+> manual lewat *Actions → Build APK → Run workflow* lalu pilih ABI-nya — hasilnya
+> muncul sebagai artifact (bukan Release).
 
 **Pilih ABI (opsional).** Lewat *Actions → Build APK → Run workflow*:
 

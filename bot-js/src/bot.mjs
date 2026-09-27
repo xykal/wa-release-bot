@@ -60,14 +60,53 @@ async function selftest() {
   }, 5000);
 }
 
+// ----------------------------- jaga proses (Android) -------------------------
+//  Di Android, Node jalan DI DALAM proses app (nodejs-mobile). Kalau Node
+//  manggil exit() — lewat process.exit(), atau error yang nggak ketangkep —
+//  seluruh app ikut ditutup, dan pas library-library-nya dibongkar, thread
+//  lain (UI, coroutine, perekam log) nyentuh mutex yang udah dihancurin:
+//
+//    FORTIFY: pthread_mutex_lock called on a destroyed mutex
+//    Fatal signal 6 (SIGABRT) … (DefaultDispatch / RenderThread / wr-logcat)
+//
+//  Itu persis crash yang kecatat di HP user. Jadi di Android:
+//    1. jaring error dipasang PALING AWAL (sebelum apa pun jalan),
+//    2. process.exit / reallyExit diblok — cuma dicatat,
+//    3. event loop ditahan biar node::Start nggak pernah balik.
+const jaring = { log: (m) => logDarurat(m), onBanjir: () => {} };
+let pengamanGlobal = null;
+
+function logDarurat(msg) {
+  try { console.warn(msg); } catch { /* ignore */ }
+  try {
+    const dir = process.env.WR_DATA_DIR;
+    if (dir) fs.appendFileSync(path.join(dir, 'events.jsonl'), JSON.stringify({ type: 'log', msg, ts: Date.now() }) + '\n');
+  } catch { /* ignore */ }
+}
+
+function jagaProsesAndroid() {
+  pengamanGlobal = createPengaman({ log: (m) => jaring.log(m), onBanjir: () => jaring.onBanjir() });
+  pengamanGlobal.pasang();
+  const blokir = (nama) => (code) => {
+    const e = new Error('stack');
+    jaring.log(`🧱 ${nama}(${code ?? ''}) diblok — di Android itu bikin app force close. Engine tetap idup.`);
+    try { console.warn(e.stack); } catch { /* ignore */ }
+  };
+  process.exit = blokir('process.exit');
+  process.reallyExit = blokir('process.reallyExit');
+  setInterval(() => {}, 1 << 30);
+}
+
 if (process.argv.includes('--selftest')) {
   selftest().catch((e) => { console.error('SELFTEST ERROR:', e); process.exit(1); });
   // jangan lanjut ke main
   if (typeof module !== 'undefined') { /* keep cjs happy */ }
 } else {
+  jagaProsesAndroid();
   main().catch((e) => {
-    try { console.error('FATAL:', e.message); } catch { /* ignore */ }
-    process.exit(1);
+    // JANGAN process.exit di sini — lihat jagaProsesAndroid().
+    jaring.log(`💥 Engine gagal mulai: ${e?.message || e}`);
+    try { console.error(e?.stack || e); } catch { /* ignore */ }
   });
 }
 
@@ -75,8 +114,7 @@ if (process.argv.includes('--selftest')) {
 async function main() {
   const dataDir = process.env.WR_DATA_DIR;
   if (!dataDir) {
-    console.error('WR_DATA_DIR belum di-set oleh app.');
-    process.exit(1);
+    throw new Error('WR_DATA_DIR belum di-set oleh app.');
   }
 
   const cfgFile = path.join(dataDir, 'config.json');
@@ -137,11 +175,11 @@ async function main() {
   });
 
   // Error nyasar jangan sampai matiin proses — di Android itu = app force close.
-  const pengaman = createPengaman({
-    log,
-    onBanjir: () => { stopEngine(); },
-  });
-  pengaman.pasang();
+  // Jaringnya udah kepasang dari awal (jagaProsesAndroid); sekarang log-nya
+  // diarahin ke kartu Log app.
+  jaring.log = log;
+  jaring.onBanjir = () => { stopEngine(); };
+  const pengaman = pengamanGlobal || createPengaman({ log, onBanjir: () => stopEngine() });
 
   const repoAda = () => Boolean(cfg?.github?.repo);
   const grupAktif = () => Boolean(cfg?.grup?.aktif && cfg?.grup?.target);

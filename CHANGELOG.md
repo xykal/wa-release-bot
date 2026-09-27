@@ -6,6 +6,22 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.4.3] — 2026-09-27
+
+### 🐛 Diperbaiki
+
+- **Force close `FORTIFY: pthread_mutex_lock called on a destroyed mutex`
+  (SIGABRT).** Itu tandanya ada yang manggil `exit()` di dalam proses app:
+  mesin Node (jalan di proses yang sama) keluar, library-library-nya
+  dibongkar, lalu thread lain (UI, coroutine, perekam log) nyentuh kunci yang
+  udah dihancurin → app mati. Sekarang di Android:
+  - jaring error dipasang paling awal, sebelum apa pun jalan (dulu baru
+    kepasang setelah bridge siap);
+  - `process.exit()` diblok — cuma dicatat di Log, engine tetap idup;
+  - engine yang gagal mulai nggak lagi `exit(1)`, cuma nulis alasannya di Log.
+  Udah dites di Node 18.20.4: error nyasar, promise ditolak, dan
+  `process.exit(3)` dari script — proses tetap jalan.
+
 ## [1.4.2] — 2026-09-27
 
 ### 🔙 Dibalikin
@@ -536,7 +552,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.4.2...HEAD
+[Unreleased]: ../../compare/v1.4.3...HEAD
+[1.4.3]: ../../compare/v1.4.2...v1.4.3
 [1.4.2]: ../../compare/v1.4.1...v1.4.2
 [1.4.1]: ../../compare/v1.4.0...v1.4.1
 [1.4.0]: ../../compare/v1.3.0...v1.4.0

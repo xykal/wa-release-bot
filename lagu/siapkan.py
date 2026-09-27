@@ -137,15 +137,62 @@ def cari_video(artis: str, judul: str) -> dict | None:
     return None
 
 
-def download_audio(video_id: str, tujuan: Path) -> Path:
-    templ = str(tujuan / "asli.%(ext)s")
-    subprocess.run(
-        ["yt-dlp", "-f", "bestaudio[ext=m4a]/bestaudio", "--no-playlist", "--no-warnings", "--no-progress",
-         "-o", templ, f"https://www.youtube.com/watch?v={video_id}"],
-        check=True, timeout=300,
+# IP server GitHub sering kena "Sign in to confirm you're not a bot" dari
+# YouTube. Tiap client YouTube beda perlakuannya, jadi dicoba satu-satu.
+CLIENT_YT = [None, "tv_simply", "web_embedded", "mweb", "tv", "web_safari"]
+
+
+def _yt_dlp_download(url: str, tujuan: Path, extra: list[str]) -> Path | None:
+    for f in tujuan.glob("asli.*"):
+        f.unlink()
+    r = subprocess.run(
+        ["yt-dlp", "-f", "bestaudio[ext=m4a]/bestaudio/best", "--no-playlist", "--no-warnings", "--no-progress",
+         "-o", str(tujuan / "asli.%(ext)s"), *extra, url],
+        capture_output=True, text=True, timeout=300,
     )
-    file = next(tujuan.glob("asli.*"))
-    return file
+    if r.returncode == 0:
+        return next(tujuan.glob("asli.*"), None)
+    alasan = (r.stderr.strip().splitlines() or ["?"])[-1]
+    log(f"    ✗ {' '.join(extra) or 'default'}: {alasan[:140]}")
+    return None
+
+
+def download_audio(video_id: str, tujuan: Path) -> Path:
+    url = f"https://www.youtube.com/watch?v={video_id}"
+    for c in CLIENT_YT:
+        extra = ["--extractor-args", f"youtube:player_client={c}"] if c else []
+        f = _yt_dlp_download(url, tujuan, extra)
+        if f:
+            log(f"    ✓ YouTube lewat client {c or 'default'}")
+            return f
+    raise RuntimeError("YouTube nolak semua client")
+
+
+def download_soundcloud(artis: str, judul: str, tujuan: Path) -> Path | None:
+    """Cadangan kalau YouTube ngeblok: cari lagu yang sama di SoundCloud."""
+    out = subprocess.run(
+        ["yt-dlp", "--dump-json", "--flat-playlist", "--no-warnings", f"scsearch5:{artis} {judul}"],
+        capture_output=True, text=True, timeout=120,
+    )
+    butuh = kata_kunci(judul)
+    for baris in out.stdout.splitlines():
+        try:
+            v = json.loads(baris)
+        except ValueError:
+            continue
+        t = (v.get("title") or "").lower()
+        dur = v.get("duration") or 0
+        if dur and not (120 <= dur <= 540):
+            continue
+        if butuh and len(butuh & kata_kunci(t)) < max(1, len(butuh) // 2):
+            continue
+        if re.search(r"\b(cover|karaoke|remix|slowed|reverb|8d|instrumental)\b", t):
+            continue
+        f = _yt_dlp_download(v.get("url") or v.get("webpage_url"), tujuan, [])
+        if f:
+            log(f"    ✓ SoundCloud: {v.get('title')}")
+            return f
+    return None
 
 
 # ------------------------------------------------------------------ potong
@@ -284,7 +331,13 @@ def main() -> int:
                 continue
             with tempfile.TemporaryDirectory() as tmp:
                 t = Path(tmp)
-                asli = download_audio(v["id"], t)
+                try:
+                    asli = download_audio(v["id"], t)
+                except RuntimeError as e:
+                    log(f"  {e} — coba SoundCloud…")
+                    asli = download_soundcloud(artis, judul, t)
+                    if not asli:
+                        raise RuntimeError("YouTube & SoundCloud dua-duanya gagal") from e
                 mulai, durasi = cari_bagian_reff(asli)
                 klip = potong(asli, mulai, t)
                 data = klip.read_bytes()

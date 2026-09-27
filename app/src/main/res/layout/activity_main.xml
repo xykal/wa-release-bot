@@ -2,7 +2,7 @@
 <!--
   Catatan soal ikon:
   Semua ikon di layar ini gambar VEKTOR (@drawable/ic_*), bukan emoji.
-  Emoji (▶️ ⏸️ 💾 dst) dirender beda-beda di tiap HP — ada yang kotak kosong,
+  Emoji dirender beda-beda di tiap HP, ada yang muncul kotak kosong,
   ada yang jadi warna aneh, dan ukurannya nggak bisa diatur. Vektor aman
   karena warnanya diambil dari tema (app:tint / app:iconTint), jadi otomatis
   ikut terang/gelap.

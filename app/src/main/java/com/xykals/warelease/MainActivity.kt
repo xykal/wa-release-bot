@@ -225,8 +225,12 @@ class MainActivity : AppCompatActivity() {
      * (atau bundle.cjs-nya lagi di-extract), service-nya belum kelar `onCreate`
      * → perintahnya masuk ke service yang belum punya instance → hilang tanpa
      * pesan apa-apa. Sekarang dicek terus sampai siap, maksimal ~10 detik.
+     *
+     * `action` WAJIB jadi parameter terakhir. Kalau ditaruh sebelum `cobaKe`,
+     * pemanggilan `withService { ... }` (lambda di luar kurung) nggak bisa
+     * dipakai — lambda-nya nyasar ke slot Int dan compile-nya gagal.
      */
-    private fun withService(action: () -> Unit, cobaKe: Int = 0) {
+    private fun withService(cobaKe: Int = 0, action: () -> Unit) {
         if (BotService.instance != null) {
             action()
             return
@@ -250,7 +254,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val jeda = if (cobaKe < 4) 400L else 1000L
-        handler.postDelayed({ withService(action, cobaKe + 1) }, jeda)
+        handler.postDelayed({ withService(cobaKe + 1, action) }, jeda)
     }
 
     private fun sendCmd(cmd: Map<String, Any>) {
@@ -304,7 +308,10 @@ class MainActivity : AppCompatActivity() {
             toast("Folder log nggak kebaca.")
             return
         }
-        val berkas = d.listFiles { f -> f.isFile && f.name.contains(".log") }
+        // FileFilter-nya ditulis eksplisit: File.listFiles() punya dua overload
+        // yang mirip (FileFilter dan FilenameFilter), dan yang ini harus jelas
+        // yang 1-parameter.
+        val berkas = d.listFiles(java.io.FileFilter { f -> f.isFile && f.name.contains(".log") })
             ?.sortedBy { it.name } ?: emptyList()
         if (berkas.isEmpty()) {
             toast("Belum ada file log.")

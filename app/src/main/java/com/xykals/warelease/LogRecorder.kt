@@ -48,7 +48,10 @@ object LogRecorder {
     private val kunci = Any()
 
     @Volatile
-    private var prosesLogcat: Process? = null
+    // Ditulis lengkap `java.lang.Process`: di file ini `android.os.Process`
+    // sudah di-import (buat killProcess/myPid), jadi kalau cuma nulis
+    // `Process`, yang kebaca android.os.Process dan tipe-nya nggak cocok.
+    private var prosesLogcat: java.lang.Process? = null
 
     /** Folder log. null kalau penyimpanan eksternal nggak kebaca. */
     val dir: File?

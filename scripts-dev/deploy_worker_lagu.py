@@ -34,6 +34,8 @@ for baris in (AKAR / "lagu/daftar.txt").read_text(encoding="utf-8").splitlines()
 
 kode = (AKAR / "lagu/worker/worker.js").read_text(encoding="utf-8")
 kode = kode.replace("__DAFTAR__", json.dumps(daftar, ensure_ascii=False), 1)
+ayat = json.loads((AKAR / "lagu/ayat.json").read_text(encoding="utf-8"))
+kode = kode.replace("__AYAT__", json.dumps(ayat, ensure_ascii=False), 1)
 meta = {
     "main_module": "worker.js",
     "compatibility_date": "2026-09-01",

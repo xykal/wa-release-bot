@@ -2,7 +2,9 @@
 //  Cloudflare Worker "wa-release-bot-lagu" — pembantu kecil buat "lagu mood".
 //
 //  Pembagian kerja Cloudflare x HP:
-//    Worker (ini) : pilih lagu dari daftar, cari di SoundCloud, ambil link
+//    Worker (ini) : pilih lagu (50% daftar lawas, 50% yang lagi trend di
+//                   Indonesia — chart harian Spotify ID via kworb.net, disaring
+//                   AI biar cuma lagu Indo/Melayu), cari di SoundCloud, ambil link
 //                   stream-nya, bikin kata-kata pakai AI (key Groq disimpen di
 //                   sini sebagai secret, NGGAK ada di APK), tentuin mulai potong
 //    HP           : download CUMA potongan ~60 dtk (HTTP Range, ±1 MB), kirim
@@ -13,19 +15,28 @@
 //    GET /              → info singkat
 //
 //  Binding: KV `LAGU` (cache client_id, riwayat, batas harian),
-//           secret `GROQ_API_KEY`. Daftar lagu disuntik waktu deploy
-//           (scripts-dev/deploy_worker_lagu.py baca lagu/daftar.txt).
+//           secret `GROQ_API_KEY`. Daftar lagu + daftar ayat disuntik waktu
+//           deploy (scripts-dev/deploy_worker_lagu.py baca lagu/daftar.txt &
+//           lagu/ayat.json). Teks ayat = terjemahan Kemenag, dicek kata per
+//           kata ke equran.id — AI NGGAK PERNAH nulis ayat sendiri, cuma milih
+//           nomornya; teksnya ditempel apa adanya dari daftar.
 // ============================================================================
 
 const DAFTAR = __DAFTAR__;
+const AYAT = __AYAT__;
+const PELUANG_TREND = 0.5;
+const PELUANG_AYAT = 0.35;
 const PANJANG = 60;
 const BATAS_HARIAN = 80;
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36';
 
-const SUDUT = [
-  'kangen seseorang yang udah jauh', 'cinta pertama zaman sekolah', 'patah hati yang udah ikhlas',
-  'perjalanan pulang sambil dengerin radio', 'hujan dan kenangan', 'orang tua yang dulu sering muter lagu ini',
-  'persahabatan lama', 'janji yang nggak jadi ditepati', 'bersyukur pernah ngerasain', 'nongkrong sambil gitaran',
+// Gaya caption dirotasi biar nggak monoton "motivasi" terus.
+const GAYA = [
+  { id: 'curhat', arah: 'kayak caption story/TikTok yang relate banget: jujur, nyesek, kadang nyelekit. Pakai "aku/kamu" atau "gue/lo", bebas.' },
+  { id: 'surat', arah: 'kayak potongan surat/pesan buat seseorang yang nggak pernah kekirim. Buka dengan sapaan ke "kamu".' },
+  { id: 'puitis', arah: 'puitis tapi tetap gampang dicerna, pakai satu perumpamaan yang segar (bukan klise hujan/senja).' },
+  { id: 'lucu-miris', arah: 'lucu tapi miris — self-roasting soal galau/cinta, bikin senyum kecut. Jangan garing.' },
+  { id: 'nostalgia', arah: 'nostalgia: kenangan kecil yang spesifik (bukan umum), bikin orang inget masa itu.', lawas: true },
 ];
 const CADANGAN = [
   'Ada lagu yang nggak pernah benar-benar selesai diputar — cuma pindah dari telinga ke ingatan.',
@@ -72,7 +83,7 @@ async function sc(env, path) {
   throw new Error('SoundCloud nolak client_id');
 }
 
-const TERLARANG = /\b(cover|covered|karaoke|remix|slowed|reverb|8d|instrumental|minus ?one|live|tiktok|speed ?up|nightcore|unplugged|acoustic|akustik|original song by|versi)\b/i;
+const TERLARANG = /\b(cover|covered|karaoke|remix|slowed|reverb|8d|instrumental|minus ?one|live|tiktok|speed ?up|sped ?up|nightcore|unplugged|acoustic|akustik|original song by|versi|edit|prod|mashup|jedag|jedug|dj|breakbeat|lirik|lyrics?|reupload)\b/i;
 
 /** Pilih track yang paling mirip lagu aslinya (bukan cover / cuplikan 30 dtk). */
 function pilihTrack(koleksi, lagu) {
@@ -93,7 +104,8 @@ function pilihTrack(koleksi, lagu) {
     const cocokJudul = [...butuhJudul].filter((w) => k.has(w)).length;
     if (butuhJudul.size && cocokJudul < Math.max(1, Math.ceil(butuhJudul.size / 2))) continue;
     const cocokArtis = [...butuhArtis].filter((w) => k.has(w)).length;
-    const skor = cocokJudul * 2 + cocokArtis * 3 + Math.min(3, Math.log10((t.playback_count || 1) + 1));
+    const resmi = /official|resmi/i.test(t.title || '') || t.user?.verified || Boolean(t.publisher_metadata?.artist) ? 2 : 0;
+    const skor = cocokJudul * 2 + cocokArtis * 3 + resmi + Math.min(3, Math.log10((t.playback_count || 1) + 1));
     if (skor > skorTerbaik) { skorTerbaik = skor; terbaik = { t, prog }; }
   }
   return terbaik;
@@ -113,40 +125,131 @@ async function cariDiSoundCloud(env, lagu) {
   return { url, durasi: Math.round(t.duration / 1000), scJudul: t.title, scLink: t.permalink_url, preset: prog.preset };
 }
 
-// ------------------------------------------------------------ kata-kata
-async function bikinKata(env, lagu) {
-  if (!env.GROQ_API_KEY) return acak(CADANGAN);
-  const prompt = `Tulis kata-kata pendek buat caption channel WhatsApp yang nemenin potongan lagu "${lagu.judul}" – ${lagu.artis}.
-Aturan:
-- Bahasa Indonesia santai tapi puitis, nuansa nostalgia / galau manis.
-- 2 sampai 3 kalimat, maksimal 280 karakter.
-- JANGAN mengutip lirik lagunya, JANGAN sebut judul/artis (udah ditulis terpisah).
-- Tanpa hashtag, tanpa tanda kutip, maksimal 1 emoji.
-- Jangan sebut waktu (malam/pagi/sore/senja) — jam kirimnya acak.
-- Sudut pandang kali ini: ${acak(SUDUT)}.
-Balas cuma teks caption-nya.`;
-  for (const model of ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile', 'openai/gpt-oss-20b']) {
+// ------------------------------------------------------------ Groq
+async function groq(env, { system, user, json: mintaJson = false, suhu = 0.9, model: daftarModel, mikir = 'medium' }) {
+  if (!env.GROQ_API_KEY) return null;
+  for (const model of daftarModel || ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b']) {
     try {
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { Authorization: `Bearer ${env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model, temperature: 0.95, max_completion_tokens: 1200,
-          ...(model.startsWith('openai/') ? { reasoning_effort: 'low' } : {}),
-          messages: [
-            { role: 'system', content: 'Kamu penulis caption channel musik lawas yang jago bikin baper.' },
-            { role: 'user', content: prompt },
-          ],
+          model, temperature: suhu, max_completion_tokens: 2000,
+          ...(model.startsWith('openai/') ? { reasoning_effort: mikir } : {}),
+          ...(model.startsWith('qwen/') ? { reasoning_effort: 'none' } : {}),
+          ...(mintaJson ? { response_format: { type: 'json_object' } } : {}),
+          messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
         }),
       });
       if (!res.ok) continue;
       const j = await res.json();
-      if (j.choices?.[0]?.finish_reason !== 'stop') continue; // kepotong → coba model lain
-      const teks = String(j.choices?.[0]?.message?.content || '').trim().replace(/^["“”]+|["“”]+$/g, '').replace(/\u2011/g, '-');
-      if (teks.length >= 60 && teks.length <= 400) return teks;
+      if (j.choices?.[0]?.finish_reason !== 'stop') continue; // kepotong → model lain
+      const teks = String(j.choices?.[0]?.message?.content || '').trim();
+      if (!teks) continue;
+      if (!mintaJson) return teks;
+      const m = /\{[\s\S]*\}/.exec(teks);
+      if (m) return JSON.parse(m[0]);
     } catch { /* model lain */ }
   }
-  return acak(CADANGAN);
+  return null;
+}
+
+const rapikan = (t) => String(t || '').trim().replace(/^["“”]+|["“”]+$/g, '').replace(/\u2011/g, '-');
+
+// ------------------------------------------------------------ trend Indonesia
+/** "Artis - Judul (w/ X)" dari chart harian Spotify Indonesia (kworb.net). */
+async function chartSpotifyId() {
+  const html = await (await fetch('https://kworb.net/spotify/country/id_daily.html', { headers: { 'User-Agent': UA } })).text();
+  const baris = [...html.matchAll(/<td class="text mp"><div>([\s\S]*?)<\/div><\/td>/g)].map((m) => m[1]
+    .replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"').trim());
+  const hasil = [];
+  for (const b of baris.slice(0, 200)) {
+    const k = b.indexOf(' - ');
+    if (k < 1) continue;
+    hasil.push({ artis: b.slice(0, k).trim(), judul: b.slice(k + 3).replace(/\s*\((w\/|feat\.?|with)[^)]*\)\s*$/i, '').trim() });
+  }
+  return hasil;
+}
+
+/** Lagu trend yang berbahasa Indonesia/Melayu/daerah — di-cache sehari. */
+async function daftarTrend(env) {
+  const hari = new Date().toISOString().slice(0, 10);
+  const c = await env.LAGU.get('trend:' + hari);
+  if (c) return JSON.parse(c);
+  let hasil = [];
+  try {
+    const chart = await chartSpotifyId();
+    if (chart.length) {
+      const j = await groq(env, {
+        system: 'Kamu kurator musik Indonesia. Jawab HANYA JSON.',
+        user: `Ini chart lagu yang lagi rame di Indonesia hari ini:\n${chart.map((l, i) => `${i + 1}. ${l.artis} - ${l.judul}`).join('\n')}\n\n` +
+          'Pilih nomor lagu yang dinyanyikan terutama dalam bahasa Indonesia, Melayu, atau bahasa daerah (pop Indo, galau/sad, dangdut, koplo, viral TikTok, lagu Malaysia — semua boleh). ' +
+          'Buang lagu berbahasa Inggris, Korea, Jepang, Spanyol, dll. Kalau ragu, buang.\n' +
+          'Format: {"indo":[nomor,...]}',
+        json: true, suhu: 0, mikir: 'low', model: ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b'],
+      });
+      const no = new Set((j?.indo || []).map(Number));
+      hasil = chart.filter((_, i) => no.has(i + 1)).map((l) => ({ ...l, trend: true }));
+    }
+  } catch { /* pakai cadangan */ }
+  if (hasil.length >= 10) {
+    await env.LAGU.put('trend:' + hari, JSON.stringify(hasil), { expirationTtl: 2 * 86400 });
+    await env.LAGU.put('trend:terakhir', JSON.stringify(hasil));
+    return hasil;
+  }
+  return JSON.parse((await env.LAGU.get('trend:terakhir')) || '[]');
+}
+
+// ------------------------------------------------------------ kata-kata
+async function bikinKata(env, lagu) {
+  const konteks = `Lagunya: "${lagu.judul}" – ${lagu.artis}` + (lagu.trend ? ' (lagi trend/viral di Indonesia sekarang).' : ' (lagu lawas).');
+  const aturanUmum = `- Bahasa Indonesia gaul yang natural (bukan baku, bukan kayak iklan).
+- JANGAN mengutip lirik lagunya, JANGAN sebut judul/artis (udah ditulis terpisah).
+- Kalau kamu beneran kenal lagunya, sesuaikan sama tema & suasananya. Kalau nggak yakin, jangan ngarang isi lagunya — main di perasaan umum aja.
+- Hindari kata-kata motivator klise ("semangat ya", "kamu pasti bisa", "tetap kuat").
+- JANGAN buka dengan kata "Kadang" atau "kamu, kadang" — bikin pembuka yang beda & nendang.
+- Tanpa hashtag, tanpa tanda kutip di awal/akhir, maksimal 1 emoji.
+- Jangan sebut waktu (malam/pagi/sore/senja) — jam kirimnya acak.`;
+  const system = 'Kamu admin channel WhatsApp musik yang captionnya selalu kena di hati: relate, jujur, nggak lebay, nggak menggurui.';
+
+  // Kadang-kadang ditemenin ayat. AI cuma MILIH nomor, teksnya dari daftar.
+  if (AYAT.length && Math.random() < PELUANG_AYAT) {
+    const j = await groq(env, {
+      system: system + ' Jawab HANYA JSON.',
+      user: `${konteks}
+Tulis caption yang nyambungin perasaan di lagu ini ke salah satu ayat di bawah (ayatnya bakal ditempel otomatis di bawah caption-mu, jadi JANGAN tulis/kutip ayatnya).
+Aturan:
+- 1 sampai 2 kalimat, maksimal 200 karakter, lembut dan nggak menggurui/ceramah.
+- Karena ditemenin ayat Al-Qur'an: nadanya tenang & tulus. DILARANG bercanda, lebay, atau pakai perumpamaan konyol.
+- Kalau suasana lagunya nggak cocok buat ayat mana pun (misal lagunya kocak/joget), jawab {"no": 0}.
+${aturanUmum}
+Pilihan ayat (pilih yang temanya paling nyambung):
+${AYAT.map((a, i) => `${i + 1}. ${a.ref} — ${a.tema}`).join('\n')}
+Format: {"no": nomor_ayat, "kata": "caption"}`,
+      json: true, suhu: 0.8,
+    });
+    const a = AYAT[Number(j?.no) - 1];
+    const kata = rapikan(j?.kata);
+    if (a && kata.length >= 30 && kata.length <= 320) {
+      return { gaya: 'ayat', kata: `${kata}\n\n_“${a.teks}”_\n— ${a.ref}` };
+    }
+  }
+
+  const pilihan = GAYA.filter((g) => !g.lawas || !lagu.trend);
+  const g = acak(pilihan);
+  const teks = await groq(env, {
+    system,
+    user: `${konteks}
+Tulis caption pendek buat nemenin potongan lagu ini di channel.
+Gaya kali ini: ${g.arah}
+Aturan:
+- 2 sampai 3 kalimat, maksimal 280 karakter.
+${aturanUmum}
+Balas cuma teks caption-nya.`,
+  });
+  const kata = rapikan(teks);
+  if (kata.length >= 40 && kata.length <= 400) return { gaya: g.id, kata };
+  return { gaya: 'cadangan', kata: acak(CADANGAN) };
 }
 
 // ------------------------------------------------------------ utama
@@ -159,24 +262,38 @@ async function laguBerikut(env) {
 
   let riwayat = JSON.parse((await env.LAGU.get('riwayat')) || '[]');
   if (!Array.isArray(riwayat)) riwayat = [];
-  const dipakai = new Set(riwayat.slice(-Math.max(0, DAFTAR.length - 5)));
-  let calon = DAFTAR.filter((l) => !dipakai.has(kunciLagu(l)));
-  if (!calon.length) calon = DAFTAR.slice();
-  calon.sort(() => Math.random() - 0.5);
+  const saring = (daftar, simpan) => {
+    const baruDipakai = new Set(riwayat.slice(-simpan));
+    const baru = daftar.filter((l) => !baruDipakai.has(kunciLagu(l)));
+    return (baru.length ? baru : daftar.slice()).sort(() => Math.random() - 0.5);
+  };
+  const lawas = saring(DAFTAR, Math.max(0, DAFTAR.length - 5));
+  let trend = [];
+  try { trend = saring(await daftarTrend(env), 60); } catch { /* lawas aja */ }
+  // Selang-seling: mulai dari trend (50%) atau lawas, gantian kalau gagal nemu.
+  const mulaiTrend = trend.length && Math.random() < PELUANG_TREND;
+  const urutan = [];
+  for (let i = 0; i < 3; i++) {
+    const a = mulaiTrend ? trend : lawas;
+    const b = mulaiTrend ? lawas : trend;
+    if (a[i]) urutan.push(a[i]);
+    if (b[i]) urutan.push(b[i]);
+  }
+  const calon = urutan;
 
   const gagal = [];
-  for (const lagu of calon.slice(0, 4)) {
+  for (const lagu of calon.slice(0, 5)) {
     try {
       const s = await cariDiSoundCloud(env, lagu);
       if (!s) { gagal.push(`${lagu.judul}: nggak nemu`); continue; }
-      const kata = await bikinKata(env, lagu);
+      const { kata, gaya } = await bikinKata(env, lagu);
       // mulai motong di ±35% lagu (biasanya udah masuk reff pertama)
       const mulai = Math.max(30, Math.min(Math.round(s.durasi * 0.35), s.durasi - PANJANG - 5));
       riwayat.push(kunciLagu(lagu));
       await env.LAGU.put('riwayat', JSON.stringify(riwayat.slice(-200)));
       return json({
         id: kunciLagu(lagu) + '-' + Date.now().toString(36),
-        artis: lagu.artis, judul: lagu.judul, kata,
+        artis: lagu.artis, judul: lagu.judul, kata, gaya, jenis: lagu.trend ? 'trend' : 'lawas',
         url: s.url, mulai, detik: PANJANG, durasi: s.durasi, kbps: 128,
         mime: 'audio/mpeg', sumber: 'soundcloud', scJudul: s.scJudul, scLink: s.scLink,
       });
@@ -194,7 +311,7 @@ export default {
     if (url.pathname === '/lagu/berikut') {
       try { return await laguBerikut(env); } catch (e) { return json({ error: e.message }, 500); }
     }
-    return new Response(`wa-release-bot · lagu mood · ${DAFTAR.length} lagu di daftar\n`,
+    return new Response(`wa-release-bot · lagu mood · ${DAFTAR.length} lagu lawas + trend Indonesia harian · ${AYAT.length} ayat\n`,
       { headers: { 'content-type': 'text/plain; charset=utf-8' } });
   },
 };

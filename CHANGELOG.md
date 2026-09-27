@@ -6,6 +6,18 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+### ☁️ Worker lagu (backend — nggak perlu update app)
+- Lagu sekarang 50% dari daftar lawas, 50% yang lagi trend di Indonesia
+  (chart harian Spotify ID via kworb.net, disaring AI biar cuma lagu
+  Indo/Melayu/daerah — pop galau, dangdut, viral, dll). Di-cache sehari.
+- Kata-kata nggak cuma motivasi: gayanya dirotasi (curhat, surat, puitis,
+  lucu-miris, nostalgia). ±35% ditemenin ayat Al-Qur'an yang nyambung —
+  teksnya dari `lagu/ayat.json` (terjemahan Kemenag, dicek ke equran.id),
+  AI cuma milih nomornya dan dilarang bercanda di caption yang ada ayatnya.
+- Model Groq diganti: `llama-3.3-70b-versatile` udah nggak ada di Groq →
+  `gpt-oss-120b` (reasoning medium), cadangan `qwen3.8-27b`.
+- Pencarian SoundCloud nolak versi edit/DJ/lirik/prod, dan ngutamain upload resmi.
+
 ## [1.6.4] — 2026-09-27
 
 ### 🎙️ Lagu di saluran dikirim sebagai voice note

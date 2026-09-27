@@ -217,14 +217,27 @@ Pembagiannya **Cloudflare x HP** — tanpa GitHub Actions:
 
 ```
 HP (pas "mood")  ──GET /lagu/berikut──▶  Cloudflare Worker (gratis)
-                                           pilih lagu dari daftar
+                                           pilih lagu: 50% daftar lawas,
+                                           50% lagi trend di Indonesia (chart
+                                           harian Spotify ID, disaring AI)
                                            cari di SoundCloud → link stream
-                                           kata-kata dari AI (key Groq di Worker)
+                                           kata-kata dari AI (key Groq di Worker):
+                                           gaya curhat / surat / puitis /
+                                           lucu-miris / nostalgia, ±35% ditemenin
+                                           ayat Al-Qur'an (lagu/ayat.json)
 HP  ◀── { judul, artis, kata, url, mulai } ──┘
 HP: download CUMA potongan ~60 dtk (HTTP Range, ±1 MB) → rapiin frame MP3
     → ubah jadi VOICE NOTE (Ogg Opus, WASM, tanpa ffmpeg)
     → kirim kata-kata + voice note ke channel → file-nya langsung DIHAPUS
 ```
+
+**Semua yang di Cloudflare bisa di-update tanpa update app** (milih lagu,
+kata-kata, ayat) — cukup deploy ulang Worker. Update app cuma perlu kalau yang
+berubah bagian HP (download / ubah ke voice note / kirim).
+
+Soal ayat: AI **nggak pernah nulis ayat sendiri**. Dia cuma milih nomor dari
+[`lagu/ayat.json`](lagu/ayat.json), teksnya ditempel apa adanya. Isi file itu =
+terjemahan Kemenag, dicek kata per kata ke [equran.id](https://equran.id).
 
 Kenapa voice note? Saluran WA cuma nerima voice note — file audio MP3 biasa
 tampil **"tidak didukung"** di saluran.

@@ -8,8 +8,8 @@ plugins {
 def releaseKeystoreFile = System.getenv("RELEASE_KEYSTORE_FILE")
 
 // Versi bisa di-override dari CI:  ./gradlew assembleRelease -PversionName=1.2.0 -PversionCode=5
-def appVersionName = (project.findProperty('versionName') ?: '1.1.1').toString()
-def appVersionCode = (project.findProperty('versionCode') ?: '3').toString().toInteger()
+def appVersionName = (project.findProperty('versionName') ?: '1.1.2').toString()
+def appVersionCode = (project.findProperty('versionCode') ?: '4').toString().toInteger()
 
 android {
     namespace 'com.xykals.warelease'
@@ -76,8 +76,19 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
-            shrinkResources false
+            // R8: perkecil APK dengan membuang kode & resource yang nggak
+            // dipakai, plus me-rename nama class jadi pendek.
+            //
+            // Di app ini risikonya kecil karena nggak ada reflection dan
+            // nggak ada WebView/addJavascriptInterface — bridge ke Node lewat
+            // file, bukan lewat nama class. Sisanya dijaga di
+            // app/proguard-rules.pro (JNI, WorkManager, komponen manifest).
+            //
+            // Efeknya ke ukuran terbatas: yang paling gedek di APK ini
+            // libnode.so (±49 MB mentah), bukan kode Kotlin. R8 memangkas
+            // classes.dex ±9,6 MB jadi sekitar sepertiganya.
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig = releaseKeystoreFile ? signingConfigs.release : signingConfigs.debug
         }

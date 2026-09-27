@@ -20,6 +20,7 @@ push / PR ──┬─→ build-apk.yml    ─→ APK artifact  (+ GitHub Releas
 | pull request | build engine → APK **debug** (cuma buat cek compile) |
 | push tag `v*` | semua di atas **+ GitHub Release** dengan APK & `sha256` |
 | `workflow_dispatch` | build manual, bisa pilih `release` / `debug` **dan ABI-nya** |
+| push tag `v*` | **tiga APK sekaligus** (arm64, armeabi-v7a, universal) → GitHub Release |
 
 Dua job:
 
@@ -33,13 +34,23 @@ pernah dibuild.
 dari secrets (kalau ada) → `:app:testDebugUnitTest` → `:app:lintDebug` →
 `assembleRelease` → rename + `sha256sum` → **verifikasi isi APK** → upload.
 
-Verifikasi isi APK-nya cek dua hal, dan dua-duanya penting:
+Job `apk`-nya pakai **matrix**: tiap set ABI jadi satu job sendiri, jalan
+paralel. Jadi menerbitkan tiga APK nggak bikin CI-nya tiga kali lebih lama.
+Grup `concurrency`-nya memuat ABI, supaya ketiga job itu nggak saling
+membatalkan.
+
+Verifikasi isi APK-nya cek tiga hal, dan ketiganya penting:
 1. `bundle.cjs` + `libnode.so` + `libnodebridge.so` benar-benar ada — tanpa itu
    APK bisa "berhasil" dibuild tapi kosong dari engine, dan baru ketahuan
    setelah di-install ke HP.
 2. **Tiap ABI yang diminta** ada di `lib/<abi>/libnode.so`. Kalau minta dua ABI
    tapi cuma satu yang kepackage, APK-nya tetap "berhasil" — dan HP yang satunya
    cuma dapat crash. Jadi dicek per-ABI, bukan asal ada salah satu.
+3. **Dex hasil R8 masih memuat nama yang dipanggil lewat string.** R8 me-rename
+   class jadi `a`, `b`, `c`; kalau yang ke-rename itu `NodeBridge` (dipanggil
+   JNI), worker WorkManager, atau komponen manifest, aplikasinya crash **di HP**
+   — bukan di CI. Jadi `classes*.dex`-nya dibaca, dicari deskriptor class-nya.
+   Tanpa langkah ini, `minifyEnabled true` itu taruhan.
 
 **`release`** — cuma jalan kalau ref-nya tag `v*`. Pakai
 `softprops/action-gh-release@v2`, `generate_release_notes: true`, dan
@@ -53,6 +64,11 @@ menandai prerelease otomatis kalau tag-nya mengandung `-rc` atau `-beta`.
 | `KEYSTORE_PASSWORD` | password store |
 | `KEY_ALIAS` | alias key |
 | `KEY_PASSWORD` | password key |
+
+Build release juga menyalakan **R8** (`minifyEnabled` + `shrinkResources`).
+Aturan keep-nya ada di `app/proguard-rules.pro`, sengaja pendek karena
+aplikasi ini nggak pakai reflection. Efeknya ke ukuran terbatas — yang
+mendominiasi APK ini `libnode.so`, bukan `classes.dex`.
 
 Tanpa keempatnya, APK di-sign pakai debug key **bawaan runner** — tetap bisa
 di-install dan workflow tetap hijau, tapi runner itu bersih tiap kali, jadi

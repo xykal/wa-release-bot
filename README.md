@@ -178,20 +178,28 @@ git tag v1.1.1 && git push origin v1.1.1
 
 → APK + `sha256` otomatis di-attach ke [GitHub Release](../../releases).
 
-> Build dari **tag** menghasilkan APK **universal** (`arm64-v8a` + `armeabi-v7a`),
-> jadi satu file itu jalan di HP 64-bit maupun 32-bit. Build push/PR cuma
-> `arm64-v8a` biar cepat.
+> Build dari **tag** menghasilkan **ketiga APK** sekaligus (arm64, v7a, dan
+> universal) dan semuanya di-attach ke Release. Build push/PR cuma `arm64-v8a`
+> biar CI-nya cepat.
 
-**Pilih ABI (opsional).** Lewat *Actions → Build APK → Run workflow*:
+**APK-nya ada tiga, pilih satu.** Ketiganya aplikasi yang sama — bedanya cuma
+arsitektur prosesor yang disertakan, dan itu yang bikin ukurannya beda jauh:
 
-| Input `abis` | Buat siapa | Perkiraan APK |
+| File | Buat HP | Ukuran |
 |---|---|---|
-| `arm64-v8a` (default) | HP 64-bit — hampir semua HP sekarang | ±22 MB |
-| `armeabi-v7a` | HP 32-bit (HP lama) | ±20 MB |
-| `arm64-v8a,armeabi-v7a` | satu APK buat dua-duanya | ±42 MB |
+| `wa-release-bot-arm64-release.apk` | 64-bit — hampir semua HP sekarang | ±21 MB |
+| `wa-release-bot-armeabi-v7a-release.apk` | 32-bit — HP lama | ±20 MB |
+| `wa-release-bot-universal-release.apk` | nggak yakin? pakai ini | ±37 MB |
 
-Kalau nggak yakin HP-nya yang mana: pakai `arm64-v8a,armeabi-v7a`. APK-nya
-lebih besar tapi dijamin jalan di dua-duanya.
+Nggak tahu HP-nya yang mana? Pakai `universal` — jalan di dua-duanya.
+
+Ukurannya beda jauh karena `libnode.so` (mesin Node.js-nya) gemuk: ±49 MB
+mentah, ±19 MB setelah dikompresi. Satu HP cuma butuh satu arsitektur, jadi
+mengirim dua-duanya sekaligus cuma bikin unduhannya dua kali lebih besar.
+
+Kalau mau build sendiri dengan ABI tertentu: *Actions → Build APK → Run
+workflow* lalu pilih input `abis` (`arm64-v8a`, `armeabi-v7a`, atau
+`arm64-v8a,armeabi-v7a`).
 
 > nodejs-mobile v18.20.4 nyediain 3 prebuilt: `arm64-v8a`, `armeabi-v7a`, dan
 > `x86_64` (buat emulator). Yang nggak diambil di langkah fetch nggak bisa

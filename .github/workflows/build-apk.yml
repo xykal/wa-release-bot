@@ -1,9 +1,17 @@
 name: Build APK
 
 # Alur:
-#   push ke main / PR      → build APK, upload sebagai artifact
-#   push tag v*            → build APK + bikin GitHub Release (APK + sha256)
-#   workflow_dispatch      → build manual, bisa disign pakai keystore release
+#   push ke main / PR  → build APK arm64-v8a, upload sebagai artifact
+#   push tag v*        → build TIGA APK (arm64-v8a, armeabi-v7a, universal)
+#                        + bikin GitHub Release berisi ketiganya
+#   workflow_dispatch  → build manual, bisa pilih varian dan ABI-nya
+#
+# Kenapa tiga APK di Release, bukan cuma universal:
+#   file libnode.so itu gemuk (±49 MB mentah, ±19 MB setelah dikompresi APK).
+#   Kalau digabung jadi satu APK universal, ukurannya ±37 MB — padahal satu HP
+#   cuma butuh SATU arsitektur. Dengan APK terpisah, yang 64-bit dapat ±21 MB
+#   dan yang 32-bit dapat ±20 MB. Yang universal tetap disediakan buat yang
+#   nggak mau mikir HP-nya 32 atau 64 bit.
 on:
   push:
     branches: [main, master]
@@ -31,18 +39,14 @@ on:
           - armeabi-v7a
           - arm64-v8a,armeabi-v7a
 
-# Push ke branch yang sama berturut-turut → batalkan yang lama biar nggak numpuk.
-# Tag TIDAK ikut dibatalkan (release harus selesai).
-concurrency:
-  # Daftar ABI ikut masuk ke grup concurrency, supaya build manual buat
-  # armeabi-v7a nggak membatalkan build push buat arm64-v8a (dua-duanya
-  # memakai ref yang sama, 'refs/heads/main').
-  group: build-apk-${{ github.ref }}-${{ github.event_name }}-${{ inputs.abis || 'arm64-v8a' }}
-  # Contoh grup: 'build-apk-refs/heads/main-push-arm64-v8a'.
-  # Tujuannya: push berturut-turut tetap saling membatalkan (nggak buang CI buat
-  # commit basi), tapi build MANUAL nggak pernah membatalkan build push —
-  # memang itu disengaja, bukan commit basi.
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+# Concurrency-nya per-job, bukan di level workflow.
+# Alasannya: build dari tag sekarang memakai MATRIX (3 APK sekaligus). Kalau
+# concurrency-nya di level workflow, ketiga sel matrix itu masuk grup yang sama
+# dan saling membatalkan — cuma satu yang selesai.
+#   - job `apk`  : grupnya memuat ABI-nya, jadi ketiga sel jalan berdampingan,
+#                  tapi push berturut-turut dengan ABI sama tetap saling batalkan.
+#   - job `engine`: sekali jalan saja, batalkan kalau ada push baru.
+#   - job `release`: SENGAJA tanpa concurrency — release nggak boleh dibatalkan.
 
 permissions:
   contents: read
@@ -56,14 +60,39 @@ env:
   COMPILE_SDK: '35'
   BUILD_TOOLS: '35.0.0'
   NODEJS_MOBILE_VERSION: 'v18.20.4'
-  # Aturan urutannya:
-  #   1. build manual (workflow_dispatch) → pakai pilihan input 'abis'
-  #   2. build dari TAG v* → universal (arm64-v8a + armeabi-v7a), supaya APK di
-  #      GitHub Release jalan di HP 64-bit MAUPUN 32-bit
-  #   3. selain itu (push/PR) → arm64-v8a saja (paling cepat & kecil)
-  ABIS: ${{ inputs.abis || (startsWith(github.ref, 'refs/tags/v') && 'arm64-v8a,armeabi-v7a' || 'arm64-v8a') }}
+  # Catatan: ABIS TIDAK di sini, tapi di job `apk` sebagai env job
+  # (ABIS: ${{ matrix.abis }}). Daftar ABI-nya sendiri dihitung di job `setup`.
 
 jobs:
+  # ==========================================================================
+  #  0) Tentukan daftar ABI yang mau dibuild
+  # ==========================================================================
+  setup:
+    name: Tentukan ABI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      abi-matrix: ${{ steps.pick.outputs.matrix }}
+      jumlah: ${{ steps.pick.outputs.jumlah }}
+    steps:
+      - name: Pilih set ABI
+        id: pick
+        run: |
+          # 1. build manual → hormati pilihan input 'abis'
+          # 2. build dari TAG v* → tiga-tiganya (arm64, v7a, universal)
+          # 3. selain itu (push/PR) → arm64-v8a saja, biar CI-nya cepat.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SET='["${{ inputs.abis }}"]'
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            SET='["arm64-v8a","armeabi-v7a","arm64-v8a,armeabi-v7a"]'
+          else
+            SET='["arm64-v8a"]'
+          fi
+
+          echo "matrix=$SET" >> "$GITHUB_OUTPUT"
+          echo "jumlah=$(echo "$SET" | tr ',' '\n' | grep -c '"')" >> "$GITHUB_OUTPUT"
+          echo "Daftar ABI yang dibuild: $SET"
+
   # ==========================================================================
   #  1) Engine Node.js — lint, unit test, bundle, smoke test di Node 18
   # ==========================================================================
@@ -71,6 +100,9 @@ jobs:
     name: Engine (bot-js)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:
+      group: build-apk-engine-${{ github.ref }}
+      cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -127,16 +159,29 @@ jobs:
           retention-days: 14
 
   # ==========================================================================
-  #  2) APK Android arm64
+  #  2) APK Android — satu job per set ABI (matrix)
   # ==========================================================================
   apk:
-    name: APK (${{ inputs.abis || (startsWith(github.ref, 'refs/tags/v') && 'arm64-v8a,armeabi-v7a' || 'arm64-v8a') }})
-    needs: engine
+    name: APK (${{ matrix.abis }})
+    needs: [engine, setup]
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    outputs:
-      variant: ${{ steps.vars.outputs.variant }}
-      apk-name: ${{ steps.vars.outputs.apk-name }}
+
+    # env job: semua step di bawah tetap bisa pakai $ABIS seperti biasa.
+    env:
+      ABIS: ${{ matrix.abis }}
+
+    # Grupnya memuat ABI, jadi ketiga sel matrix nggak saling membatalkan —
+    # tapi push berturut-turut dengan ABI sama tetap saling batalkan.
+    concurrency:
+      group: build-apk-apk-${{ github.ref }}-${{ matrix.abis }}
+      cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        abis: ${{ fromJSON(needs.setup.outputs.abi-matrix) }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -301,12 +346,63 @@ jobs:
           done
           exit $FAIL
 
+      # R8 me-rename class & method. Kalau ada yang dipanggil lewat nama
+      # (JNI, WorkManager, sistem Android) dan ikut ke-rename, aplikasinya
+      # crash DI HP — bukan di CI. Jadi nama-nama penting itu diperiksa
+      # langsung di dalam classes.dex hasil build.
+      - name: Cek dex hasil R8 (nama yang dipanggil lewat string masih utuh)
+        run: |
+          APK="dist/${{ steps.vars.outputs.apk-name }}"
+          TMP="$(mktemp -d)"
+          unzip -q -j "$APK" 'classes*.dex' -d "$TMP"
+
+          # Nama class WAJIB masih ada di dex (deskriptor dalvik-nya).
+          WAJIB="
+          Lcom/xykals/warelease/NodeBridge;
+          Lcom/xykals/warelease/BotService;
+          Lcom/xykals/warelease/MainActivity;
+          Lcom/xykals/warelease/BootReceiver;
+          Lcom/xykals/warelease/BotWatchdogWorker;
+          "
+          FAIL=0
+          for NAMA in $WAJIB; do
+            if grep -aq "$NAMA" "$TMP"/*.dex; then
+              echo "✅ $NAMA"
+            else
+              echo "❌ $NAMA HILANG dari dex — R8 ke-rename, nanti crash di HP"; FAIL=1
+            fi
+          done
+
+          # Method JNI-nya juga: native-lib.cpp nyari
+          # Java_com_xykals_warelease_NodeBridge_startNode, jadi 'startNode'
+          # harus tetap ada namanya.
+          if grep -aq "startNode" "$TMP"/*.dex; then
+            echo "✅ method startNode (dipanggil JNI)"
+          else
+            echo "❌ method startNode hilang — JNI bakal gagal (UnsatisfiedLinkError)"; FAIL=1
+          fi
+
+          rm -rf "$TMP"
+          exit $FAIL
+
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.vars.outputs.apk-name }}
           path: dist/*
           if-no-files-found: error
+          retention-days: 30
+
+      # mapping.txt: peta nama lama → nama baru hasil R8. Disimpan buat
+      # menerjemahkan stack trace dari HP (yang namanya udah di-obfuscate)
+      # balik jadi nama class asli. Cuma berguna kalau versinya sama.
+      - name: Upload mapping R8 (buat baca crash log)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: r8-mapping-${{ steps.vars.outputs.abi-slug }}
+          path: app/build/outputs/mapping/*/mapping.txt
+          if-no-files-found: ignore
           retention-days: 30
 
       - name: Ringkasan
@@ -335,17 +431,35 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write
+    # SENGAJA tanpa concurrency: release nggak boleh dibatalkan di tengah jalan.
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Ambil APK
+      # Ambil SEMUA APK hasil matrix. Artifact name-nya berawalan
+      # 'wa-release-bot-' dan isinya unik per ABI, jadi aman digabung.
+      # merge-multiple: true menaruh semua file di satu folder 'dist/'.
+      - name: Ambil semua APK hasil matrix
         uses: actions/download-artifact@v8
         with:
-          name: ${{ needs.apk.outputs.apk-name }}
+          pattern: wa-release-bot-*.apk
+          merge-multiple: true
           path: dist
+
+      - name: Pastikan ketiga APK lengkap
+        run: |
+          ls -la dist/
+          FAIL=0
+          for W in arm64 armeabi-v7a universal; do
+            if ls dist/wa-release-bot-$W-release.apk >/dev/null 2>&1; then
+              echo "✅ wa-release-bot-$W-release.apk ($(du -h dist/wa-release-bot-$W-release.apk | cut -f1))"
+            else
+              echo "❌ wa-release-bot-$W-release.apk TIDAK ada"; FAIL=1
+            fi
+          done
+          exit $FAIL
 
       - name: Buat Release + attach APK
         uses: softprops/action-gh-release@v3
@@ -361,23 +475,37 @@ jobs:
           body: |
             ## 🦴 WA Release Bot ${{ github.ref_name }}
 
-            APK ${{ env.ABIS }} — pasang langsung di HP Android 8.0+.
+            Tersedia **tiga APK**. Pilih satu — ketiganya aplikasi yang sama,
+            bedanya cuma arsitektur prosesor yang disertakan.
+
+            | File | Buat HP | Ukuran |
+            |---|---|---|
+            | `wa-release-bot-arm64-release.apk` | 64-bit — hampir semua HP sekarang | ±21 MB |
+            | `wa-release-bot-armeabi-v7a-release.apk` | 32-bit — HP lama | ±20 MB |
+            | `wa-release-bot-universal-release.apk` | nggak yakin? pakai ini | ±37 MB |
+
+            **Nggak tahu HP-nya 32 atau 64 bit?** Pakai yang `universal` — jalan
+            di dua-duanya. Yang 64/32-bit itu lebih kecil, jadi unduhannya lebih
+            cepat.
 
             | Item | Nilai |
             |---|---|
-            | Arsitektur | ${{ env.ABIS }} |
             | minSdk / targetSdk | 26 / 34 |
             | Engine | Node.js 18.20.4 (nodejs-mobile) |
             | WhatsApp client | Baileys 6.7.24 |
+            | Optimasi | R8 (minify + resource shrinking) |
 
-            **Install:** unduh `${{ needs.apk.outputs.apk-name }}`, aktifkan
-            "Install unknown apps", pasang, lalu ikuti bagian
+            **Install:** aktifkan "Install unknown apps" di HP, pasang APK-nya,
+            lalu ikuti bagian
             [Pakai Setelah Install](https://github.com/${{ github.repository }}#-pakai-setelah-install).
 
             **Verifikasi unduhan** (opsional tapi disarankan):
             ```bash
-            sha256sum -c ${{ needs.apk.outputs.apk-name }}.sha256
+            sha256sum -c <nama-file>.apk.sha256
             ```
+
+            Ketiganya ditandatangani dengan kunci yang sama, jadi update berikutnya
+            bisa dipasang langsung tanpa uninstall.
 
             > ⚠️ Ini automation WhatsApp pihak ketiga. Risiko akun dibatasi Meta
             > ada dan sepenuhnya tanggung jawab pemakai. Jangan pakai buat spam.

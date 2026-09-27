@@ -6,6 +6,40 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.1.2] — 2026-09-27
+
+### ✨ Ditambahkan
+
+- **Tiga APK di setiap Release**, bukan satu:
+  `arm64-v8a` (HP 64-bit), `armeabi-v7a` (HP 32-bit), dan `universal`
+  (buat yang nggak mau mikir). Ketiganya dibuild **paralel** lewat matrix,
+  jadi nggak nambah waktu CI.
+- **Verifikasi dex setelah R8** di CI. R8 me-rename class jadi nama pendek;
+  kalau ada nama yang masih dipanggil lewat string (JNI, WorkManager,
+  komponen manifest) ikut ke-rename, aplikasinya crash di HP — bukan di CI.
+  Jadi nama-nama itu sekarang diperiksa langsung di dalam `classes.dex`.
+- Artifact `r8-mapping-*` berisi `mapping.txt`, buat menerjemahkan stack trace
+  dari HP (yang namanya sudah di-obfuscate) balik ke nama class asli.
+
+### ⚡️ Ukuran APK
+
+- **R8 diaktifkan** untuk build release: `minifyEnabled` + `shrinkResources`.
+  Kode dan resource yang nggak kepakai dibuang, sisanya di-rename jadi pendek.
+- Efeknya terbatas dan itu wajar: yang bikin APK ini besar adalah `libnode.so`
+  (±49 MB mentah), bukan kode Kotlin. R8 memangkas `classes.dex`, dan itu
+  bagian yang jauh lebih kecil.
+- Karena `libnode.so` inilah APK-nya dipisah per-arsitektur: satu HP cuma butuh
+  satu, jadi mengirim keduanya sekaligus cuma bikin unduhan dua kali lebih
+  besar dari yang perlu.
+
+### 🔒 Keamanan
+
+- Aturan keep R8 ditulis eksplisit di `app/proguard-rules.pro` (4 titik:
+  JNI, WorkManager, komponen manifest, anotasi). Sengaja pendek — aplikasi ini
+  nggak pakai reflection dan nggak ada `addJavascriptInterface`, karena
+  bridge ke Node lewat file (`events.jsonl` / `cmd.json`), bukan lewat nama
+  class.
+
 ## [1.1.1] — 2026-09-26
 
 Versi ini soal **tanda tangan APK** dan **dukungan HP 32-bit**.
@@ -165,7 +199,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.1.1...HEAD
+[Unreleased]: ../../compare/v1.1.2...HEAD
+[1.1.2]: ../../compare/v1.1.1...v1.1.2
 [1.1.1]: ../../compare/v1.1.0...v1.1.1
 [1.1.0]: ../../compare/v1.0.0...v1.1.0
 [1.0.0]: ../../releases/tag/v1.0.0

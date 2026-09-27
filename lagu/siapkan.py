@@ -139,7 +139,7 @@ def cari_video(artis: str, judul: str) -> dict | None:
 
 # IP server GitHub sering kena "Sign in to confirm you're not a bot" dari
 # YouTube. Tiap client YouTube beda perlakuannya, jadi dicoba satu-satu.
-CLIENT_YT = [None, "tv_simply", "web_embedded", "mweb", "tv", "web_safari"]
+CLIENT_YT = [None, "tv_simply"]
 
 
 def _yt_dlp_download(url: str, tujuan: Path, extra: list[str]) -> Path | None:

@@ -42,6 +42,19 @@ cli/state.json
 cli/wa-session/
 cli/*.log
 
+# ------------------------------- TikTok render --------------------------------
+# Aset (wav2t/sfxw/stiker/fonts) DI-COMMIT biar Actions bisa render.
+# Output JANGAN di-commit (ambil dari Artifacts).
+konten-tiktok/tmp/
+konten-tiktok/cek_*.png
+konten-tiktok/cek4_*.png
+konten-tiktok/tiktok-*.mp4
+konten-tiktok/assets/
+
+# Python cache
+__pycache__/
+*.pyc
+
 # ------------------------------- OS / editor --------------------------------
 .DS_Store
 Thumbs.db

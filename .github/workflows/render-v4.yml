@@ -1,0 +1,101 @@
+name: Render TikTok v4
+
+# Render konten TikTok v4 (1080x1920, 60fps) di GitHub Actions — BUKAN lokal.
+# Kenapa di sini: 8425 frame PIL + libx264, berat buat laptop/HP.
+#   - Cloudflare Workers: nggak bisa (tanpa ffmpeg, CPU milidetik)
+#   - Vercel: nggak bisa (timeout 60 dtk, tanpa ffmpeg persistent)
+#   - Actions: BISA (4-core, ffmpeg via imageio, timeout jam-jaman)
+#
+# Cara pakai: tab Actions → Render TikTok v4 → Run workflow.
+# Hasil: artifact `tiktok-v4-mp4` (2 MP4: musik + tanpa-musik, 30 hari).
+# Timing kata (wav2t/*.json) sudah jadi — TIDAK perlu Whisper/Torch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      cek_saja:
+        description: 'Cuma frame preview (--cek), tanpa render penuh'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-v4-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    name: Render 60fps
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install deps (Pillow + numpy + imageio-ffmpeg)
+        run: pip install --no-cache-dir Pillow numpy imageio imageio-ffmpeg
+
+      - name: Siapkan logo XyVerse
+        run: |
+          mkdir -p konten-tiktok/assets
+          cp app/src/main/res/drawable-nodpi/xyverse_logo.webp konten-tiktok/assets/
+          ls -la konten-tiktok/assets/
+
+      - name: Verifikasi aset suara + timing
+        run: |
+          python3 - <<'EOF'
+          import os, sys
+          urut = ['00a','00b','02','10','03','11','12','04','05','13','06','07','08','14','15']
+          hilang = [v for v in urut if not (
+              os.path.exists(f'konten-tiktok/wav2t/{v}.wav') and
+              os.path.exists(f'konten-tiktok/wav2t/{v}.json'))]
+          if hilang:
+              print('TIMING HILANG:', hilang); sys.exit(1)
+          print('aset lengkap: 15 VO + 15 timing + SFX + stiker OK')
+          EOF
+
+      - name: Timeline check (--kata)
+        working-directory: konten-tiktok
+        run: python3 render4.py --kata
+
+      - name: Frame preview (--cek)
+        working-directory: konten-tiktok
+        run: python3 render4.py --cek 2 28 56 85 135
+
+      - name: Render penuh (60fps, 4 proses)
+        if: inputs.cek_saja != true
+        working-directory: konten-tiktok
+        run: python3 render4.py
+
+      - name: Upload MP4 + preview
+        uses: actions/upload-artifact@v7
+        with:
+          name: tiktok-v4-mp4
+          path: |
+            konten-tiktok/tiktok-v4-*.mp4
+            konten-tiktok/cek4_*.png
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Ringkasan
+        if: always()
+        run: |
+          {
+            echo "### TikTok v4"
+            echo ""
+            echo "| File | Ukuran |"
+            echo "|---|---|"
+            for f in konten-tiktok/tiktok-v4-*.mp4; do
+              [ -f "$f" ] && echo "| \`$(basename $f)\` | $(du -h $f | cut -f1) |"
+            done
+            echo ""
+            echo "Download di **Artifacts → tiktok-v4-mp4**. Upload manual ke TikTok."
+            echo "Panduan: \`konten-tiktok/CARA-UPLOAD.md\`."
+          } >> "$GITHUB_STEP_SUMMARY"

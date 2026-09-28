@@ -1,0 +1,123 @@
+name: Render TikTok v6
+
+# Render konten TikTok v6 LANGSUNG 720p60 satu pass di GitHub Actions — BUKAN lokal.
+# v6 = v5 + cue di-stagger (tanpa tabrakan) + meme tanpa border putih +
+#   scene Kall gaya WA + HP 1.08x + judul naik + VO Kall di-tune (rate+25%, pitch-30Hz).
+#   - Cloudflare Workers: nggak bisa (tanpa ffmpeg, CPU milidetik)
+#   - Vercel: nggak bisa (timeout 60 dtk, tanpa ffmpeg persistent)
+#   - Actions: BISA (4-core, ffmpeg via imageio, timeout jam-jaman)
+#
+# Cara pakai: tab Actions → Render TikTok v6 → Run workflow.
+# Hasil: artifact `tiktok-v6-mp4` (2 MP4 720x1280 60fps: musik + tanpa-musik, 30 hari).
+# Timing kata (wav2t/*.json) sudah jadi — TIDAK perlu Whisper/Torch.
+
+on:
+  workflow_dispatch:
+    inputs:
+      cek_saja:
+        description: 'Cuma frame preview (--cek), tanpa render penuh'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-v6-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    name: Render 720p60
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install deps (Pillow + numpy + shapely + imageio-ffmpeg)
+        run: pip install --no-cache-dir Pillow numpy shapely imageio imageio-ffmpeg
+
+      - name: Siapkan logo XyVerse
+        run: |
+          mkdir -p konten-tiktok/assets
+          cp app/src/main/res/drawable-nodpi/xyverse_logo.webp konten-tiktok/assets/
+          ls -la konten-tiktok/assets/
+
+      - name: Verifikasi aset suara + timing
+        run: |
+          python3 - <<'EOF'
+          import os, sys
+          urut = ['00a','00b','02','10','03','11','12','04','05','13','06','07','08','14','16','15']
+          hilang = [v for v in urut if not (
+              os.path.exists(f'konten-tiktok/wav2t/{v}.wav') and
+              os.path.exists(f'konten-tiktok/wav2t/{v}.json'))]
+          if hilang:
+              print('TIMING HILANG:', hilang); sys.exit(1)
+          print('aset lengkap: 16 VO + 16 timing + SFX + stiker OK')
+          EOF
+
+      - name: Timeline check (--kata)
+        working-directory: konten-tiktok
+        run: python3 render6.py --kata
+
+      - name: Frame preview (--cek)
+        working-directory: konten-tiktok
+        run: python3 render6.py --cek 2 24 58 98 133 143
+
+      - name: Render penuh (720p60, 4 proses)
+        if: inputs.cek_saja != true
+        working-directory: konten-tiktok
+        run: python3 render6.py
+
+      - name: Verifikasi MP4 (resolusi + fps + durasi)
+        if: inputs.cek_saja != true
+        run: |
+          python3 - <<'EOF'
+          import subprocess, re, glob, sys
+          import imageio_ffmpeg  # ffprobe sistem nggak ada di runner — pakai ffmpeg imageio
+          ff = imageio_ffmpeg.get_ffmpeg_exe()
+          files = sorted(glob.glob('konten-tiktok/tiktok-v6-*.mp4'))
+          assert len(files) == 2, f'harusnya 2 MP4, ketemu {len(files)}'
+          for f in files:
+              out = subprocess.run([ff, '-i', f], capture_output=True, text=True).stderr
+              assert '720x1280' in out, 'resolusi bukan 720p!'
+              assert '60 fps' in out, 'fps bukan 60!'
+              m = re.search(r'Duration: (\d+):(\d+):([\d.]+)', out)
+              dur = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3))
+              print(f'{f} = {dur:.1f}s 720p60 (minimal 143s)', flush=True)
+              if dur < 143:
+                  print('KEPOTONG! Render ulang.', flush=True); sys.exit(1)
+          print('720p60 OK')
+          EOF
+
+      - name: Upload MP4 + preview
+        uses: actions/upload-artifact@v7
+        with:
+          name: tiktok-v6-mp4
+          path: |
+            konten-tiktok/tiktok-v6-*.mp4
+            konten-tiktok/cek6_*.png
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Ringkasan
+        if: always()
+        run: |
+          {
+            echo "### TikTok v6 (720p60 langsung)"
+            echo ""
+            echo "| File | Ukuran |"
+            echo "|---|---|"
+            for f in konten-tiktok/tiktok-v6-*.mp4; do
+              [ -f "$f" ] && echo "| \`$(basename $f)\` | $(du -h $f | cut -f1) |"
+            done
+            echo ""
+            echo "Download di **Artifacts → tiktok-v6-mp4**. Upload manual ke TikTok."
+            echo "Panduan: \`konten-tiktok/CARA-UPLOAD.md\`."
+          } >> "$GITHUB_STEP_SUMMARY"

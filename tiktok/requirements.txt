@@ -1,5 +1,5 @@
 # Renderer TikTok — SENGAJA minimal biar Actions cepat (install < 60 detik).
 # Tanpa remotion, tanpa next.js, tanpa browser, tanpa torch/whisper.
 edge-tts==7.0.0
-Pillow==11.1.0
+Pillow==12.3.0
 mutagen==1.10.1

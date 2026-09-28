@@ -1,11 +1,19 @@
 # Konten TikTok — WA Release Bot (Eps 1)
 
-File terbaru (versi 4, ±140 detik, 60fps) — PAKAI INI:
+File terbaru (versi 5, ±154 detik, 60fps) — PAKAI INI:
+- `tiktok-v5-wa-release-bot.mp4` — lengkap
+- `tiktok-v5-tanpa-musik.mp4` — tanpa musik latar (buat pasang sound viral)
+
+Render di **GitHub Actions** (tab Actions → Render TikTok v5 → Run workflow),
+hasilnya di Artifacts. JANGAN render di lokal/HP — 9231 frame, berat.
+
+Yang baru di v5: scene "si Kall ngapain wok" (kenalin developer + komentar),
+kartu varian APK (arm64/32-bit/universal + ukuran rilis beneran), chip interval
++ token anti rate-limit, balasan Kall di CTA, 9 SFX + 3 meme + 4 stiker baru.
+
+Versi 4 (±140 detik):
 - `tiktok-v4-wa-release-bot.mp4` — lengkap
 - `tiktok-v4-tanpa-musik.mp4` — tanpa musik latar (buat pasang sound viral)
-
-Render di **GitHub Actions** (tab Actions → Render TikTok v4 → Run workflow),
-hasilnya di Artifacts. JANGAN render di lokal/HP — 8425 frame, berat.
 
 Yang baru di v4: penjelasan hosting detail (Node.js di dalam APK, bukan Termux;
 perangkat tertaut; rilis GitHub → channel; pipa lagu Cloudflare + HP; hosting

@@ -1,6 +1,6 @@
 # Konten TikTok — WA Release Bot (Eps 1)
 
-File terbaru (versi 5, ±154 detik, 60fps) — PAKAI INI:
+File terbaru (versi 5, ±154 detik, 720p30, ringan) — PAKAI INI:
 - `tiktok-v5-wa-release-bot.mp4` — lengkap
 - `tiktok-v5-tanpa-musik.mp4` — tanpa musik latar (buat pasang sound viral)
 

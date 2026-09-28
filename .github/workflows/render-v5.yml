@@ -10,6 +10,7 @@ name: Render TikTok v5
 #
 # Cara pakai: tab Actions → Render TikTok v5 → Run workflow.
 # Hasil: artifact `tiktok-v5-mp4` (2 MP4: musik + tanpa-musik, 30 hari).
+# Output 720x1280 30fps (ringan buat upload) — di-downscale otomatis dari render 1080p60.
 # Timing kata (wav2t/*.json) sudah jadi — TIDAK perlu Whisper/Torch.
 
 on:
@@ -76,6 +77,17 @@ jobs:
         working-directory: konten-tiktok
         run: python3 render5.py
 
+
+      - name: Downscale ke 720p30 (ganti file 1080p)
+        if: inputs.cek_saja != true
+        run: |
+          FF=$(python3 -c "import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())")
+          for f in konten-tiktok/tiktok-v5-*.mp4; do
+            "$FF" -v error -y -i "$f" -vf scale=720:1280:flags=lanczos,fps=30 \
+              -c:v libx264 -preset medium -crf 20 -pix_fmt yuv420p \
+              -c:a copy -movflags +faststart "${f%.mp4}-720p30.mp4" && mv "${f%.mp4}-720p30.mp4" "$f"
+          done
+          ls -la konten-tiktok/*.mp4
       - name: Verifikasi durasi MP4 (anti-kepotong)
         if: inputs.cek_saja != true
         run: |
@@ -89,7 +101,9 @@ jobs:
               out = subprocess.run([ff, '-i', f], capture_output=True, text=True).stderr
               m = re.search(r'Duration: (\d+):(\d+):([\d.]+)', out)
               dur = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3))
-              print(f'{f} = {dur:.1f}s (minimal 145s)', flush=True)
+              assert '720x1280' in out, f'resolusi bukan 720p!'
+              assert '30 fps' in out, f'fps bukan 30!'
+              print(f'{f} = {dur:.1f}s 720p30 (minimal 145s)', flush=True)
               if dur < 145:
                   print('KEPOTONG! Render ulang.', flush=True); sys.exit(1)
           print('durasi OK')

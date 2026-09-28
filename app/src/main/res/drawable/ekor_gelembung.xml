@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ekor kecil di atas gelembung, nunjuk ke bentuk yang lagi morph. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="9dp"
+    android:viewportWidth="16"
+    android:viewportHeight="9">
+    <path
+        android:fillColor="@color/wr_hijau_tua"
+        android:pathData="M0,9 L8,0.6 Q8.0,0.2 8.4,0.6 L16,9 Z" />
+</vector>

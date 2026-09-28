@@ -44,7 +44,7 @@ class MorphView @JvmOverloads constructor(
     /** Dipanggil tiap ganti bentuk (0 bot, 1 chat, 2 lagu, 3 otomatis). */
     var onGantiBentuk: ((Int) -> Unit)? = null
 
-    private val jumlahTitik = 200
+    private val jumlahTitik = 360 // makin banyak makin mulus lengkungnya
     private val bentuk: List<FloatArray> = listOf(bikinBot(), bikinChat(), bikinNada(), bikinGear())
     private val sekarang = FloatArray(jumlahTitik * 2)
     private val gearPutar = FloatArray(jumlahTitik * 2)
@@ -66,6 +66,7 @@ class MorphView @JvmOverloads constructor(
     private val catHalo = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val catHias = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = warnaLatar }
     private val oval = RectF()
+    private val posisiMata = floatArrayOf(76f, 124f)
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
@@ -90,7 +91,8 @@ class MorphView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (width == 0 || height == 0) return
-        val t = SystemClock.uptimeMillis() - mulaiPada
+        // drawingTime = waktu vsync frame ini (bukan jam "sekarang") → gerak rata, nggak patah-patah
+        val t = (drawingTime - mulaiPada).coerceAtLeast(0L)
         val putaran = (t / satuBentuk).toInt()
         val ke = putaran % bentuk.size
         val lokal = t % satuBentuk
@@ -98,9 +100,11 @@ class MorphView @JvmOverloads constructor(
         val u = if (lagiUbah) lentur.getInterpolation((lokal - diam).toFloat() / ubah) else 0f
         val tujuan = (ke + 1) % bentuk.size
 
-        if (ke != bentukTerakhir) {
-            bentukTerakhir = ke
-            onGantiBentuk?.invoke(ke)
+        // tulisan ganti pas morph MULAI (bareng bentuk baru kebentuk), bukan telat
+        val tampil = if (lagiUbah) tujuan else ke
+        if (tampil != bentukTerakhir) {
+            bentukTerakhir = tampil
+            onGantiBentuk?.invoke(tampil)
         }
 
         // gear muter pelan terus (termasuk pas lagi morph dari/ke gear)
@@ -147,7 +151,7 @@ class MorphView @JvmOverloads constructor(
         when (ke) {
             0 -> { // mata bot (kedip) + mulut
                 val kedip = if (t % 2400 < 110) 0.15f else 1f
-                for (x in floatArrayOf(76f, 124f)) {
+                for (x in posisiMata) {
                     val ex = px(x, cx, s)
                     val ey = px(108f, cy, s)
                     val r = 11f * skala

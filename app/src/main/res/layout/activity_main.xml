@@ -714,32 +714,29 @@
                 style="@style/TombolLembut"
                 android:text="Buka repo GitHub"
                 android:layout_marginTop="12dp" />
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:background="@color/wr_garis" />
+            </LinearLayout>
+
+            <!-- footer paling bawah: BUILT IN XyVerse -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:gravity="center"
-                android:orientation="horizontal">
+                android:layout_marginTop="28dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:letterSpacing="0.18"
+                    android:letterSpacing="0.22"
                     android:text="BUILT IN"
                     android:textColor="@color/wr_teks2"
                     android:textSize="10.5sp" />
                 <ImageView
                     android:layout_width="wrap_content"
-                    android:layout_height="22dp"
-                    android:layout_marginStart="10dp"
+                    android:layout_height="26dp"
+                    android:layout_marginTop="8dp"
                     android:adjustViewBounds="true"
                     android:contentDescription="XyVerse Tech"
                     android:src="@drawable/xyverse_logo" />
-            </LinearLayout>
             </LinearLayout>
 
             <View
@@ -803,27 +800,43 @@
                 android:id="@+id/morph"
                 android:layout_width="200dp"
                 android:layout_height="200dp" />
-            <TextView
-                android:id="@+id/tvSplashLabel"
+            <!-- tulisan di dalam gelembung chat, "pop" tiap ganti bentuk -->
+            <LinearLayout
+                android:id="@+id/gelembungSplash"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:textColor="@color/wr_teks"
-                android:textSize="17sp"
-                android:textStyle="bold" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="@string/app_name"
-                android:textColor="@color/wr_teks2"
-                android:textSize="13sp" />
+                android:layout_marginTop="22dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="9dp"
+                    android:layout_marginBottom="-1dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ekor_gelembung" />
+                <TextView
+                    android:id="@+id/tvSplashLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_gelembung"
+                    android:elevation="3dp"
+                    android:minWidth="170dp"
+                    android:gravity="center"
+                    android:paddingStart="20dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="20dp"
+                    android:paddingBottom="11dp"
+                    android:text="Bot penjaga siap"
+                    android:textColor="@color/wr_teks"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="40dp"
+            android:layout_marginBottom="28dp"
             android:gravity="center_horizontal"
             android:orientation="vertical">
             <TextView

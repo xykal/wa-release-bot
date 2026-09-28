@@ -6,6 +6,18 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.6.7] — 2026-09-28
+
+### ✨ Splash dipoles
+- Tulisan di splash sekarang di dalam **gelembung chat** (warna bubble WA,
+  ada ekornya nunjuk ke animasi) yang "pop" tiap ganti bentuk. Tulisannya
+  ganti pas morph mulai — nggak telat satu bentuk lagi.
+- Lebih mulus & tajam: keliling bentuk 360 titik (sebelumnya 200), waktu
+  animasi pakai jam vsync (`drawingTime`) biar gerak rata di 60/30 fps, dan
+  nggak ada alokasi memori tiap frame.
+- "BUILT IN XyVerse" di kartu Tentang dipindah jadi footer paling bawah
+  halaman; di splash ditaruh lebih mepet bawah.
+
 ## [1.6.6] — 2026-09-28
 
 ### ✨ Splash animasi morph + "Built in XyVerse"
@@ -690,7 +702,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.6.6...HEAD
+[Unreleased]: ../../compare/v1.6.7...HEAD
+[1.6.7]: ../../compare/v1.6.6...v1.6.7
 [1.6.6]: ../../compare/v1.6.5...v1.6.6
 [1.6.5]: ../../compare/v1.6.4...v1.6.5
 [1.6.4]: ../../compare/v1.6.3...v1.6.4

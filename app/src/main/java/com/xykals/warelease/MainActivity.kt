@@ -237,12 +237,19 @@ class MainActivity : AppCompatActivity() {
         splash.alpha = 1f
         splashMulai = System.currentTimeMillis()
         LogRecorder.tulis("Activity", "splash tampil")
+        val gelembung = findViewById<View>(R.id.gelembungSplash)
+        gelembung.pivotY = 0f
         findViewById<MorphView>(R.id.morph).onGantiBentuk = { i ->
-            label.animate().cancel()
-            label.animate().alpha(0f).setDuration(120).withEndAction {
-                label.text = labelSplash[i % labelSplash.size]
-                label.animate().alpha(1f).setDuration(180).start()
-            }.start()
+            // gelembung "pop" kayak chat baru masuk, tulisannya ganti di tengah pop
+            gelembung.animate().cancel()
+            gelembung.pivotX = gelembung.width / 2f
+            gelembung.animate().scaleX(0.86f).scaleY(0.86f).alpha(0.4f).setDuration(110)
+                .setInterpolator(android.view.animation.AccelerateInterpolator())
+                .withEndAction {
+                    label.text = labelSplash[i % labelSplash.size]
+                    gelembung.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(260)
+                        .setInterpolator(android.view.animation.OvershootInterpolator(2.2f)).start()
+                }.start()
         }
         handler.postDelayed(cekSplash, 100)
     }

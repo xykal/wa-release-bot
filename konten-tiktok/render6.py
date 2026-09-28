@@ -21,13 +21,19 @@ from render import (W, H, font, F_BLACK, F_SEMI, F_REG, BG, KARTU, KARTU2, GARIS
 ROOT = os.path.dirname(os.path.abspath(__file__))
 w = R2.w
 SCENES6 = R5.SCENES5
-SFX6 = R5.SFX5
+# layering pro: tawa manusia asli (bukan 'hihi' TTS) pas punchline 'wok?'
+SFX6 = []
+for _c in R5.SFX5:
+    if _c[0] == R5.I5('16') and _c[1] == 'wok?':
+        SFX6.append((R5.I5('16'), 'wok?', 'cute-girl-laughing-sound-effect', .5, .1, 'akhir', 2.0))
+    else:
+        SFX6.append(_c)
 ZOOM6 = R5.ZOOM5
 
 # ---------- stagger stiker (detik, +telat/-maju) + GOKIL pindah ke 'kan?' ----------
 _SD = {'STOP!': .20, 'ENTENG!': -.25, 'BUKAN TERMUX!': .30, 'TETEP NYALA': -.25,
        'NYAMBUNG!': -.25, 'DADAH~': .30, 'AUTO DIHAPUS': .30, 'WKWKWK': -.25,
-       'CAKEP!': -.25, 'APP AMAN': -.25}
+       'CAKEP!': -.25, 'APP AMAN': -.25, 'GOKIL SIH': .15}
 STIKER6 = []
 for _si, _ka, _tx, _c, _x, _y, _sd in R5.STIKER5:
     if _tx == 'GOKIL SIH':
@@ -214,6 +220,7 @@ def render_bagian6(a, b, total, out):
 
 def pasang6():
     R5.pasang5()
+    R2.SFX = SFX6
     R4.LAYAR4 = LAYAR6
     R2.LAYAR = LAYAR6
     R4.STIKER4 = STIKER6

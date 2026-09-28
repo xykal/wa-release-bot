@@ -1,0 +1,16 @@
+# Meme SFX — direct mp3 dari myinstants (atau mirror aman).
+# Format: nama | url | catatan
+# Catatan lisensi: potongan meme pendek = fair-use buat konten. Kalau TikTok bisukan videonya, ganti barisnya, render ulang.
+# Semua di-download SEKALI di Actions terus di-cache (lihat fetch_assets.py).
+vine-boom | https://www.myinstants.com/media/sounds/vine-boom.mp3 | hook 0 detik, wajib kenceng
+record-scratch | https://www.myinstants.com/media/sounds/scratch_1.mp3 | habis hook, efek freeze
+faahhh | https://www.myinstants.com/media/sounds/faahhh.mp3 | pas bagian "capek gak sih"
+discord-notification | https://www.myinstants.com/media/sounds/discord-notification.mp3 | pas "posting ke channel"
+get-out | https://www.myinstants.com/media/sounds/get-out.mp3 | pas bagian Termux/F-Droid
+phone-ringing | https://www.myinstants.com/media/sounds/marimba-phone-ringtone.mp3 | pantun: "ditelpon berdering"
+ketawa-cewek | https://www.myinstants.com/media/sounds/girl-laugh.mp3 | pantun: nahan tawa 2 detik (kalau 404, fallback ke tawa-cowo.mp3 di bawah)
+gak-rispek-wok | https://www.myinstants.com/media/sounds/gak-rispek-wok.mp3 | pas bonus fitur (kalau 404, pakai backup lokal)
+saya-akan-lawan | https://www.myinstants.com/media/sounds/saya-akan-melawan.mp3 | CTA awal (kalau 404, pakai backup lokal)
+airhorn | https://www.myinstants.com/media/sounds/airhorn.mp3 | penutup "GAS INSTALL"
+# Backup (dibikin lokal pakai ffmpeg kalau URL di atas 404 — lihat fetch_assets.py):
+# backup-tawa: sine sweep 600→900Hz 1.5s | backup-rispek: 200Hz square 0.8s

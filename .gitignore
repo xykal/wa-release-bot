@@ -42,9 +42,20 @@ cli/state.json
 cli/wa-session/
 cli/*.log
 
+# ------------------------------- TikTok renderer ------------------------------
+# Hasil download stiker/SFX + output render (dibangun ulang di Actions tiap run)
+tiktok/assets/
+tiktok/dist/
+dist/
+*_kerja_tiktok/
+
 # ------------------------------- OS / editor --------------------------------
 .DS_Store
 Thumbs.db
 *.log
 *.swp
 *~
+
+# Python cache
+__pycache__/
+*.pyc

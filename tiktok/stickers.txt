@@ -1,0 +1,15 @@
+# Stiker meme — dari getstickerpack.com/stickers/stiker-meme
+# Format: nama | url_gambar | posisi_default
+# ATURAN TEGAS: tegak tajem, TANPA radius/bulat. fetch_assets.py akan: download → trim transparan → resize max 320px → TIDAK ada rounded mask.
+# Kalau URL berubah (getstickerpack sering ganti CDN), buka halamannya, klik kanan stiker → Copy image address → tempel di sini.
+# Sementara URL di bawah pakai pola umum getstickerpack CDN — fetch_assets.py akan verifikasi + fallback ke stiker lokal (digambar Pillow) kalau 404.
+kaget-melongo | https://getstickerpack.com/stickers/stiker-meme/kaget.png | kanan_atas
+capek-banget | https://getstickerpack.com/stickers/stiker-meme/capek.png | kiri_bawah
+tidur-pulas | https://getstickerpack.com/stickers/stiker-meme/tidur.png | kiri_atas
+baterai-penuh | https://getstickerpack.com/stickers/stiker-meme/batre.png | kanan_bawah
+hp-charger | https://getstickerpack.com/stickers/stiker-meme/hp-charger.png | kiri_tengah
+terminal-hacker | https://getstickerpack.com/stickers/stiker-meme/hacker.png | kanan_tengah
+gratis-mantap | https://getstickerpack.com/stickers/stiker-meme/mantap.png | tengah_bawah
+ngakak-airmata | https://getstickerpack.com/stickers/stiker-meme/ngakak.png | tengah_atas
+panah-follow | https://getstickerpack.com/stickers/stiker-meme/follow.png | kanan_bawah
+gas-poll | https://getstickerpack.com/stickers/stiker-meme/gas.png | kiri_bawah

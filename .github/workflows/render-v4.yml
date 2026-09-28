@@ -39,8 +39,8 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install deps (Pillow + numpy + imageio-ffmpeg)
-        run: pip install --no-cache-dir Pillow numpy imageio imageio-ffmpeg
+      - name: Install deps (Pillow + numpy + shapely + imageio-ffmpeg)
+        run: pip install --no-cache-dir Pillow numpy shapely imageio imageio-ffmpeg
 
       - name: Siapkan logo XyVerse
         run: |
@@ -73,6 +73,15 @@ jobs:
         if: inputs.cek_saja != true
         working-directory: konten-tiktok
         run: python3 render4.py
+
+      - name: Verifikasi durasi MP4 (anti-kepotong)
+        if: inputs.cek_saja != true
+        run: |
+          for f in konten-tiktok/tiktok-v4-*.mp4; do
+            DUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$f" | cut -d. -f1)
+            echo "$f = ${DUR}s (minimal 135s)"
+            [ "$DUR" -ge 135 ] || { echo "KEPOTONG! Render ulang."; exit 1; }
+          done
 
       - name: Upload MP4 + preview
         uses: actions/upload-artifact@v7

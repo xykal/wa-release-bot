@@ -581,7 +581,16 @@ if __name__ == '__main__':
     R2.buat_audio(total, os.path.join(tmp, 'audio_musik.wav'), os.path.join(tmp, 'audio_vo.wav'))
     b = [(0, nf // 4), (nf // 4, nf // 2), (nf // 2, 3 * nf // 4), (3 * nf // 4, nf)]
     ps = [subprocess.Popen([sys.executable, __file__, '--bagian', str(a), str(z), os.path.join(tmp, f'b{k}.mp4')]) for k, (a, z) in enumerate(b)]
-    for p in ps: p.wait()
+    # FAIL LOUD: kalau satu worker crash, ffmpeg tetap nulis mp4 PENDEK yang
+    # valid — tanpa cek ini hasilnya video kepotong tapi workflow ijo (kejadian!).
+    gagal = 0
+    for k, p in enumerate(ps):
+        rc = p.wait()
+        if rc != 0:
+            print(f'WORKER b{k} GAGAL (rc={rc}) — cek traceback di atas', file=sys.stderr)
+            gagal += 1
+    if gagal:
+        sys.exit(3)
     with open(os.path.join(tmp, 'daftar.txt'), 'w') as f: f.write(''.join(f"file 'b{k}.mp4'\n" for k in range(4)))
     subprocess.run([R.ffmpeg(), '-v', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', os.path.join(tmp, 'daftar.txt'), '-c', 'copy', os.path.join(tmp, 'video.mp4')], check=True)
     for nama, au in [('tiktok-v4-wa-release-bot.mp4', 'audio_musik.wav'), ('tiktok-v4-tanpa-musik.mp4', 'audio_vo.wav')]:

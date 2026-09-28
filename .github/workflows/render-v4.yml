@@ -77,11 +77,21 @@ jobs:
       - name: Verifikasi durasi MP4 (anti-kepotong)
         if: inputs.cek_saja != true
         run: |
-          for f in konten-tiktok/tiktok-v4-*.mp4; do
-            DUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$f" | cut -d. -f1)
-            echo "$f = ${DUR}s (minimal 135s)"
-            [ "$DUR" -ge 135 ] || { echo "KEPOTONG! Render ulang."; exit 1; }
-          done
+          python3 - <<'EOF'
+          import subprocess, re, glob, sys
+          import imageio_ffmpeg  # ffprobe sistem nggak ada di runner — pakai ffmpeg imageio
+          ff = imageio_ffmpeg.get_ffmpeg_exe()
+          files = sorted(glob.glob('konten-tiktok/tiktok-v4-*.mp4'))
+          assert len(files) == 2, f'harusnya 2 MP4, ketemu {len(files)}'
+          for f in files:
+              out = subprocess.run([ff, '-i', f], capture_output=True, text=True).stderr
+              m = re.search(r'Duration: (\d+):(\d+):([\d.]+)', out)
+              dur = int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3))
+              print(f'{f} = {dur:.1f}s (minimal 135s)', flush=True)
+              if dur < 135:
+                  print('KEPOTONG! Render ulang.', flush=True); sys.exit(1)
+          print('durasi OK')
+          EOF
 
       - name: Upload MP4 + preview
         uses: actions/upload-artifact@v7

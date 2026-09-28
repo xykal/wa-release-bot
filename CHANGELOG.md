@@ -6,6 +6,19 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.6.6] — 2026-09-28
+
+### ✨ Splash animasi morph + "Built in XyVerse"
+- Splash baru: satu siluet hijau yang terus morph — bot (kedip) → gelembung
+  chat (titik-titik ngetik) → not lagu → gear muter → balik ke bot. Digambar
+  pakai Canvas (`MorphView.kt`), tanpa library / file animasi.
+- Lamanya ngikutin loading: ditutup begitu UI udah kegambar dan (kalau
+  service nyala) status engine udah nyampe. Minimal 1,6 dtk, maksimal 4,5 dtk.
+  Cuma muncul pas app dibuka dari nol, nggak pas layar diputar.
+- Kartu **Tentang** baru di paling bawah: versi, fungsi, lisensi singkat,
+  tombol buka repo, dan logo "BUILT IN XyVerse Tech".
+- Logo XyVerse (brand kit resmi, versi putih transparan) ikut di splash.
+
 ## [1.6.5] — 2026-09-27
 
 ### 🌐 "Kirim lagu gagal: fetch failed"
@@ -677,7 +690,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.6.5...HEAD
+[Unreleased]: ../../compare/v1.6.6...HEAD
+[1.6.6]: ../../compare/v1.6.5...v1.6.6
 [1.6.5]: ../../compare/v1.6.4...v1.6.5
 [1.6.4]: ../../compare/v1.6.3...v1.6.4
 [1.6.3]: ../../compare/v1.6.2...v1.6.3

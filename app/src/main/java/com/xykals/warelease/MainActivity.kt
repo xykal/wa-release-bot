@@ -185,7 +185,11 @@ class MainActivity : AppCompatActivity() {
         loadSettingsToViews()
         // pemanis: tiap tombol berdenyut pas dipencet, kartu muncul satu-satu
         Denyut.pasangSemua(window.decorView)
-        (findViewById<ScrollView>(R.id.svUtama).getChildAt(0) as? ViewGroup)?.let { Denyut.munculBerurutan(it) }
+        if (savedInstanceState == null) {
+            mulaiSplash()
+        } else {
+            (findViewById<ScrollView>(R.id.svUtama).getChildAt(0) as? ViewGroup)?.let { Denyut.munculBerurutan(it) }
+        }
 
         if (Build.VERSION.SDK_INT >= 33) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -209,7 +213,53 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
     }
 
+    // ----------------------------- splash -----------------------------------
+    // Animasi morph (MorphView) nutupin layar sampai app beneran siap:
+    // UI udah kegambar + kalau service nyala, status engine udah nyampe.
+    // Minimal 1,6 dtk biar animasinya sempat kelihatan, maksimal 4,5 dtk.
+    private var splashMulai = 0L
+    private var uiPernahTampil = false
+    private val labelSplash = arrayOf("Bot penjaga siap", "Ngobrol di grup", "Lagu buat channel", "Semua jalan otomatis")
+
+    private val cekSplash = object : Runnable {
+        override fun run() {
+            val lama = System.currentTimeMillis() - splashMulai
+            val service = BotService.instance
+            val siap = uiPernahTampil && (service == null || BotBus.ui.serviceRunning)
+            if ((lama >= 1600 && siap) || lama >= 4500) tutupSplash() else handler.postDelayed(this, 100)
+        }
+    }
+
+    private fun mulaiSplash() {
+        val splash = findViewById<View>(R.id.splash)
+        val label = findViewById<TextView>(R.id.tvSplashLabel)
+        splash.visibility = View.VISIBLE
+        splash.alpha = 1f
+        splashMulai = System.currentTimeMillis()
+        LogRecorder.tulis("Activity", "splash tampil")
+        findViewById<MorphView>(R.id.morph).onGantiBentuk = { i ->
+            label.animate().cancel()
+            label.animate().alpha(0f).setDuration(120).withEndAction {
+                label.text = labelSplash[i % labelSplash.size]
+                label.animate().alpha(1f).setDuration(180).start()
+            }.start()
+        }
+        handler.postDelayed(cekSplash, 100)
+    }
+
+    private fun tutupSplash() {
+        val splash = findViewById<View>(R.id.splash)
+        if (splash.visibility != View.VISIBLE) return
+        LogRecorder.tulis("Activity", "splash selesai (${System.currentTimeMillis() - splashMulai} ms)")
+        splash.animate().alpha(0f).scaleX(1.06f).scaleY(1.06f).setDuration(320).withEndAction {
+            splash.visibility = View.GONE
+            findViewById<MorphView>(R.id.morph).onGantiBentuk = null
+        }.start()
+        (findViewById<ScrollView>(R.id.svUtama).getChildAt(0) as? ViewGroup)?.let { Denyut.munculBerurutan(it) }
+    }
+
     override fun onDestroy() {
+        handler.removeCallbacks(cekSplash)
         qrScope.cancel()
         tutupDialogQr()
         tutupDialogKode()
@@ -286,6 +336,17 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvVersi).text =
             "v${BuildConfig.VERSION_NAME} · rilis GitHub → WhatsApp"
         tvFolderLog.text = LogRecorder.dir?.absolutePath ?: "(folder log nggak kebaca)"
+        findViewById<TextView>(R.id.tvTentang).text =
+            "${getString(R.string.app_name)} v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n" +
+                    "Bot pribadi: rilis GitHub → saluran WA, penjaga grup, lagu mood, hosting bot.\n" +
+                    "Lisensi: pemakaian pribadi — nggak boleh dijual / disebar ulang tanpa izin."
+        pasang(R.id.btnRepo, "Buka repo") {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/xykal/wa-release-bot")))
+            } catch (_: Exception) {
+                banner("Nggak ada browser buat buka link-nya.")
+            }
+        }
         tvBanner.setOnClickListener { handler.removeCallbacks(sembunyikanBanner); sembunyikanBanner.run() }
 
         pasang(R.id.btnSave, "Simpan") { onSave(diam = false) }
@@ -681,6 +742,7 @@ class MainActivity : AppCompatActivity() {
     // ----------------------------- render -----------------------------
 
     private fun renderUi(ui: BotUi) {
+        uiPernahTampil = true
         if (isFinishing || isDestroyed) return
         if (ui.serviceRunning) BotService.instance?.setUiTerlihat(true)
 

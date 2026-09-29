@@ -41,3 +41,9 @@ Blocked:
 Next:
 - Disetujui, belum dikerjakan: notifikasi Android saat 3x gagal (S), M10 pecah
   `bot.mjs`/`cli.mjs`/`MainActivity.kt` (M), M9 i18n `values-en` (M). PR terpisah setelah #10.
+- kall: "merge". PR #10 di-merge ke main (`8ff5ba3`). Bump 1.6.7 → 1.7.0 (gradle versionCode 24,
+  3 package.json + lockfile, CHANGELOG [1.7.0]) lewat PR `chore/rilis-1.7.0`, lalu tag `v1.7.0`
+  → job `release` build-apk.yml bikin GitHub Release otomatis. Belum ada tes di HP asli.
+- Konten: repo `wa-release-bot-konten` Eps 2 (render di Actions) v1 → v4: aset asli app, stiker +
+  SFX meme (unduh saat render, sha256, tidak di-commit), hook spam jam 02.00 (judol disamarkan),
+  2 scene teknis (stack + siklus 15 menit), subtitle gaya CapCut. Durasi 2:30, menunggu review kall.

@@ -6,14 +6,16 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
-Belum di-tag: kall tes dulu di HP. Semua perubahan di bawah sudah lewat CI.
+## [1.7.0] — 2026-09-29
+
+Semua perubahan lewat CI (Build APK, Code quality, CodeQL, Security).
 
 ### Ditambah
 - `bot-js/src/rilis.mjs`: keputusan rilis pakai **semver** (`putuskanRilis`).
   Tag lebih rendah dari baseline dianggap rollback, tidak diumumkan ulang.
 - `bot-js/src/config/brand.mjs` + `app/src/main/res/values/brand.xml`: satu
   sumber string brand. CI menolak literal brand di layout.
-- CLI `--version` → `wa-release-bot 1.6.7 — XyVerse Technology Global`;
+- CLI `--version` → `wa-release-bot 1.7.0 — XyVerse Technology Global`;
   `npm run once -- --ulang` untuk reset hitungan gagal kirim.
 - `docs/PRD.md`, `docs/ROADMAP.md`, `docs/KONTEN-TIKTOK.md`, `CODE_OF_CONDUCT.md`,
   `.github/CODEOWNERS`, `.github/FUNDING.yml`, `PROGRESS.md`, `IDEAS.md`.
@@ -78,8 +80,6 @@ Belum di-tag: kall tes dulu di HP. Semua perubahan di bawah sudah lewat CI.
   workflow render video, **termasuk dari history git** (commit setelah v1.6.7
   ditulis ulang, tag lama tidak berubah). Panduannya dipindah ke
   `docs/KONTEN-TIKTOK.md`.
-
-## [Unreleased]
 
 ## [1.6.7] — 2026-09-28
 
@@ -777,7 +777,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.6.7...HEAD
+[Unreleased]: ../../compare/v1.7.0...HEAD
+[1.7.0]: ../../compare/v1.6.7...v1.7.0
 [1.6.7]: ../../compare/v1.6.6...v1.6.7
 [1.6.6]: ../../compare/v1.6.5...v1.6.6
 [1.6.5]: ../../compare/v1.6.4...v1.6.5

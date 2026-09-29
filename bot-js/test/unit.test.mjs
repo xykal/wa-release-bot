@@ -766,6 +766,23 @@ test('rekam: node <message><plaintext> -> jenis + JSON ringkas; string panjang d
 //  repo.mjs — multi repo: parsing daftar + state per repo + migrasi state lama
 // ----------------------------------------------------------------------------
 import { daftarRepo, repoTidakValid, teksRepo, stateRepo, sinkronState, ringkasTag, pendingAktif } from '../src/repo.mjs';
+import { pecahEntri, channelRepo, teksEntri } from '../src/repo.mjs';
+
+test('channel per repo: "owner/a|link" dipecah, channelRepo, teksEntri mempertahankan, teksRepo tidak', () => {
+  const nilai = 'octo/demo|https://whatsapp.com/channel/0029Va, octo/kedua, https://github.com/octo/ketiga|120363@newsletter';
+  assert.deepEqual(pecahEntri(nilai), [
+    { repo: 'octo/demo', channel: 'https://whatsapp.com/channel/0029Va' },
+    { repo: 'octo/kedua', channel: '' },
+    { repo: 'octo/ketiga', channel: '120363@newsletter' },
+  ]);
+  assert.deepEqual(daftarRepo(nilai), ['octo/demo', 'octo/kedua', 'octo/ketiga']);
+  assert.equal(channelRepo(nilai, 'octo/demo'), 'https://whatsapp.com/channel/0029Va');
+  assert.equal(channelRepo(nilai, 'octo/kedua'), '');
+  assert.equal(channelRepo(nilai, 'tidak/ada'), '');
+  assert.equal(teksEntri(nilai + ', salah format|link'), 'octo/demo|https://whatsapp.com/channel/0029Va, octo/kedua, octo/ketiga|120363@newsletter');
+  assert.equal(teksRepo(nilai), 'octo/demo, octo/kedua, octo/ketiga');
+  assert.equal(teksEntri(''), '');
+});
 
 test('daftarRepo: koma/baris baru/URL github, unik, urutan dijaga, entri salah dipisah', () => {
   assert.deepEqual(daftarRepo('octo/demo'), ['octo/demo']);

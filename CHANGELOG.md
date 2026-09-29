@@ -7,6 +7,10 @@ Semua perubahan penting proyek ini. Format mengikuti
 ## [Unreleased]
 
 ### Ditambah
+- **Layar Repo** di app: daftar repo yang dipantau (tambah/hapus, ganti channel) dengan
+  channel WA khusus per repo; kartu depan cuma menampilkan ringkasan + tombol **Kelola repo**.
+  Format simpanan tetap satu string `owner/a|link-channel, owner/b` sehingga engine dan CLI
+  (`github.repo`) membaca hal yang sama tanpa migrasi; tanpa `|` repo memakai channel utama.
 - **Situs**: landing page + halaman unduh (`web/`, statis, dua bahasa id/en, tanpa CDN)
   di Cloudflare Workers Static Assets, domain <https://wabot.projectkal.my.id>
   (workers.dev diarahkan ke sana). Sebelum launching halaman unduh menampilkan

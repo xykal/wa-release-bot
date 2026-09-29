@@ -34,6 +34,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.xykals.warelease.util.Durasi
+import com.xykals.warelease.util.RepoDaftar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -54,7 +55,9 @@ class MainActivity : AppCompatActivity() {
 
     // input
     private lateinit var etPhone: EditText
-    private lateinit var etRepo: EditText
+    private lateinit var tvRepoRingkas: TextView
+    /** Isi pref repo saat terakhir dikirim ke engine; dibandingkan di onResume sepulang dari RepoActivity. */
+    private var repoTerkirim: String? = null
     private lateinit var etChannel: EditText
     private lateinit var etToken: EditText
     private lateinit var etInterval: EditText
@@ -205,6 +208,23 @@ class MainActivity : AppCompatActivity() {
         BotBus.subscribe(busListener)
         BotService.instance?.setUiTerlihat(true)
         renderBatre()
+        // Pulang dari layar Repo: daftar mungkin berubah; kirim ke engine lewat satu
+        // jalur yang sama dengan tombol Simpan supaya tidak ada dua sumber kebenaran.
+        val repoSekarang = settings.repo
+        if (repoTerkirim != null && repoTerkirim != repoSekarang) {
+            renderRepoRingkas()
+            if (settings.hasValidSettings()) {
+                withService { sendCmd(settings.toConfigureCmd()) }
+                banner("Daftar repo diperbarui.")
+            } else {
+                banner("Daftar repo kosong — bot nggak mantau apa-apa sampai lo nambah repo.")
+            }
+        }
+        repoTerkirim = repoSekarang
+    }
+
+    private fun renderRepoRingkas() {
+        tvRepoRingkas.text = RepoDaftar.ringkas(settings.repo)
     }
 
     override fun onPause() {
@@ -296,7 +316,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun wireViews() {
         etPhone = findViewById(R.id.etPhone)
-        etRepo = findViewById(R.id.etRepo)
+        tvRepoRingkas = findViewById(R.id.tvRepoRingkas)
+        pasang(R.id.btnKelolaRepo, "Kelola repo") { startActivity(Intent(this, RepoActivity::class.java)) }
         etChannel = findViewById(R.id.etChannel)
         etToken = findViewById(R.id.etToken)
         etInterval = findViewById(R.id.etInterval)
@@ -463,7 +484,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadSettingsToViews() {
         etPhone.setText(settings.phone)
-        etRepo.setText(settings.repo)
+        renderRepoRingkas()
         etChannel.setText(settings.channel)
         etToken.setText(settings.token)
         etInterval.setText(settings.intervalMinutes.toString())
@@ -487,7 +508,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun ambilDariView() {
         settings.phone = etPhone.text.toString()
-        settings.repo = etRepo.text.toString()
         settings.channel = etChannel.text.toString()
         settings.token = etToken.text.toString()
         settings.intervalMinutes = etInterval.text.toString().toIntOrNull() ?: 15
@@ -524,6 +544,7 @@ class MainActivity : AppCompatActivity() {
             return false
         }
         withService { sendCmd(settings.toConfigureCmd()) }
+        repoTerkirim = settings.repo
         if (!diam) {
             banner(
                 when {

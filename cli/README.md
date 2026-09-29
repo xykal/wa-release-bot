@@ -63,7 +63,7 @@ nano config.json
 
 | Field | Isi |
 |---|---|
-| `github.repo` | `owner/nama-repo`, contoh: `vercel/next.js`. Boleh banyak: `"vercel/next.js, xykal/wa-release-bot"` (atau array) — tiap repo dicek berurutan dan punya baseline sendiri |
+| `github.repo` | `owner/nama-repo`, contoh: `vercel/next.js`. Boleh banyak: `"vercel/next.js, xykal/wa-release-bot"` (atau array) — tiap repo dicek berurutan dan punya baseline sendiri. Channel khusus per repo: `owner/a\|https://whatsapp.com/channel/...` (tanpa itu pakai `whatsapp.channel`). |
 | `github.token` | Opsional. Isikan kalau repo **private** atau sering kena rate limit (buat di [github.com/settings/tokens](https://github.com/settings/tokens), scope `public_repo` udah cukup) |
 | `github.includePrereleases` | `true` kalau mau hitung beta/prerelease juga |
 | `whatsapp.channel` | **Link** channel (`https://whatsapp.com/channel/0029...`), atau JID `<angka>@newsletter`, atau grup `<angka>@g.us` |

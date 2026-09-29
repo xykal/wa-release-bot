@@ -22,7 +22,7 @@ import { fetchLatestRelease } from '../../bot-js/src/github.mjs';
 import { formatReleasePost, formatTestMessage, formatLaporGagal } from '../../bot-js/src/format.mjs';
 import { connectToWhatsApp, resolveChannel, kirimKeChannel, pakaiPertanyaan, laporKeDiri } from '../../bot-js/src/wa.mjs';
 import { putuskanRilis, pendingBerikut, MAKS_PERCOBAAN } from '../../bot-js/src/rilis.mjs';
-import { daftarRepo, repoTidakValid, teksRepo, stateRepo, sinkronState } from '../../bot-js/src/repo.mjs';
+import { daftarRepo, repoTidakValid, teksRepo, channelRepo, stateRepo, sinkronState } from '../../bot-js/src/repo.mjs';
 import { rekamChannel } from '../../bot-js/src/rekam.mjs';
 
 // Folder config.json / state.json / wa-session. Default: folder cli/ ini.
@@ -92,10 +92,15 @@ async function sambung(cfg, opsi = {}) {
   }
 }
 
-async function targetJid(sock, cfg, state) {
-  if (state.channelJid) return state.channelJid;
-  const hasil = await resolveChannel(sock, cfg.whatsapp.channel, log);
-  state.channelJid = hasil.jid;
+async function targetJid(sock, cfg, state, channel = cfg.whatsapp.channel) {
+  // Channel khusus repo ("owner/a|link" di github.repo) di-cache terpisah dari
+  // channel utama supaya --test / --setup tetap memakai state.channelJid lama.
+  const utama = channel === cfg.whatsapp.channel;
+  if (utama && state.channelJid) return state.channelJid;
+  if (!utama && state.targetLain?.[channel]) return state.targetLain[channel];
+  const hasil = await resolveChannel(sock, channel, log);
+  if (utama) state.channelJid = hasil.jid;
+  else (state.targetLain ||= {})[channel] = hasil.jid;
   saveState(state);
   log(`Target ketemu: ${hasil.nama || '(tanpa nama)'} -> ${hasil.jid}`);
   return hasil.jid;
@@ -120,7 +125,7 @@ async function postRelease(cfg, state, repo, st, rel, { dryRun = false, manual =
   const { sock, close } = await sambung(cfg);
   try {
     try {
-      const jid = await targetJid(sock, cfg, state);
+      const jid = await targetJid(sock, cfg, state, channelRepo(cfg.github?.repo, repo) || cfg.whatsapp.channel);
       const { format, ajak } = opsiKirim(cfg, jid);
       await kirimKeChannel(sock, jid, formatReleasePost(rel, repo, ajak), { format, log });
     } catch (e) {

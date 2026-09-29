@@ -36,6 +36,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".RepoActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".HostingActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />

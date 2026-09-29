@@ -34,7 +34,7 @@ Checklist PR launching (`chore/rilis-1.0.0`, dibuat H-1):
 | Item | Effort | Kenapa |
 |---|---|---|
 | Pecah `bot.mjs` (~1100 baris) jadi modul per fitur | selesai 2026-09-29 (`bot-js/src/mesin/*`, uji `test/engine.test.mjs`) | file > 250 baris susah di-review; test per modul jadi mungkin |
-| Pecah `MainActivity.kt` (1263 baris): `TampilanStatus`, `FormKonfigurasi`, `JembatanEngine` | M | alasan sama; sekarang satu file pegang UI, service, dan bridge |
+| Pecah `MainActivity.kt` (1285 baris) per tanggung jawab | selesai 2026-09-29 (`FormPengaturan`, `PanelStatus`, `DialogTautan`, `LembarHitam`, `AksiSistem`, `SplashUtama`, `Lembar`) | alasan sama; sekarang satu file pegang UI, service, dan bridge |
 | i18n Android: pindahkan 77 literal `android:text` ke `strings.xml`, tambah `values-en` | M | app cuma bisa Bahasa Indonesia; brand sudah dipisah ke `brand.xml` |
 | CLI: `--json` untuk `--dry-run` | S | gampang dipakai skrip / cron alert |
 | Test integrasi CLI di CI (`--version`, `--dry-run` dengan `fetch` palsu) | S | sekarang CLI cuma `node --check` |

@@ -31,8 +31,8 @@ tetap menerima update.
   `dry-run`, `test`.
 - **Situs** <https://wabot.projectkal.my.id>: landing page + halaman unduh yang membaca
   release terbaru otomatis.
-- **Dua bahasa di layar utama**: Indonesia (bawaan) atau Inggris mengikuti bahasa HP;
-  layar Onboarding, Repo dan Hosting masih Indonesia.
+- **Dua bahasa**: seluruh UI app Indonesia (bawaan) atau Inggris mengikuti bahasa HP;
+  pesan bot di WhatsApp dan log tetap Indonesia.
 - **Keamanan**: cek release pakai ETag (repo tidak berubah = 0 byte), timeout 20 detik,
   cleartext hanya ke 127.0.0.1, `allowBackup=false`, APK dari GitHub Actions dengan
   `.sha256`; action dipin SHA, gitleaks, CodeQL, Scorecard.

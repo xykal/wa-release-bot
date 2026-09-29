@@ -34,7 +34,7 @@ bukan lebih awal, supaya `main` tetap 1.8.0 sampai hari launching):
 
 | Item | Effort | Kenapa |
 |---|---|---|
-| Pecah `bot.mjs` (~1100 baris) jadi `perintah/*.mjs` per fitur + `state.mjs` | M | file > 250 baris susah di-review; test per modul jadi mungkin |
+| Pecah `bot.mjs` (~1100 baris) jadi modul per fitur | selesai 2026-09-29 (`bot-js/src/mesin/*`, uji `test/engine.test.mjs`) | file > 250 baris susah di-review; test per modul jadi mungkin |
 | Pecah `MainActivity.kt` (1263 baris): `TampilanStatus`, `FormKonfigurasi`, `JembatanEngine` | M | alasan sama; sekarang satu file pegang UI, service, dan bridge |
 | i18n Android: pindahkan 77 literal `android:text` ke `strings.xml`, tambah `values-en` | M | app cuma bisa Bahasa Indonesia; brand sudah dipisah ke `brand.xml` |
 | CLI: `--json` untuk `--dry-run` | S | gampang dipakai skrip / cron alert |
@@ -55,6 +55,8 @@ bukan lebih awal, supaya `main` tetap 1.8.0 sampai hari launching):
 - Fitur yang butuh server berbayar di sisi proyek. Satu-satunya komponen cloud adalah
   Worker lagu di free tier, dan itu opsional.
 - Konten promosi (video TikTok) di repo produk: dipindah keluar, lihat `docs/KONTEN-TIKTOK.md`.
+  Setelah launching: bikin ulang Eps 2 versi lengkap (TikTok kini mengizinkan sampai 10 menit) di repo
+  konten, bukan di sini.
 
 ## Arah produk
 

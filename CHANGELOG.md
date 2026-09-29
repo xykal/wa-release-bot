@@ -52,6 +52,10 @@ tetap menerima update.
   Deploy: `scripts-dev/deploy_web.py` (tanpa wrangler) + workflow `deploy-web.yml`.
 
 #### Diubah
+- Engine `bot-js/src/bot.mjs` (1162 baris) dipecah jadi `bot.mjs` (entry, scheduler) +
+  `src/mesin/{rilis,lagu-mood,penjaga-grup,tautan,perintah}.mjs`; keadaan bersama lewat satu
+  objek `ctx`. Perilaku tidak berubah. Uji ujung-ke-ujung baru `test/engine.test.mjs`
+  menjalankan engine dengan GitHub palsu (`WR_GITHUB_API`, khusus tes) di Node 18/20/22.
 - Release v1.7.0 dan v1.8.0 (draft) beserta tag-nya dihapus saat rilis 1.0.0.
 - Dokumen (README, docs/, CHANGELOG, template PR) tanpa emoji; anchor README dislug ulang;
   CI menolak emoji di dokumen dan `web/` (`scripts-dev/bersihkan_emoji.py --cek`).

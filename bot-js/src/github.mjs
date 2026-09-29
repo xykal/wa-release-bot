@@ -2,7 +2,9 @@
 // perubahan, request-nya conditional (ETag) sehingga jawabannya 304 tanpa body
 // dan tidak dihitung ke rate limit GitHub.
 
-const API = 'https://api.github.com';
+// WR_GITHUB_API hanya untuk uji ujung-ke-ujung (test/engine.test.mjs mengarahkan
+// engine ke server HTTP lokal). Produksi tidak pernah men-set-nya.
+const API = process.env.WR_GITHUB_API || 'https://api.github.com';
 const API_VERSION = '2022-11-28';
 export const TIMEOUT_MS = 20000;
 

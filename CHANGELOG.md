@@ -34,6 +34,10 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 - `docs/PITCH.md`: satu halaman pitch (masalah, solusi, untuk siapa, batasan yang jujur).
 
+- Uji engine kedua (`test/engine.test.mjs`): dua repo sekaligus (satu prerelease dengan
+  `includePrereleases`), ETag 304 pada cek kedua, release baru terdeteksi dan berhenti di
+  "Channel WA masih kosong" tanpa menyentuh WhatsApp; `lastTag` tidak berubah sampai terkirim.
+
 ### Diubah
 - App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,
   `DialogTautan`, `LembarHitam`, `AksiSistem`, `SplashUtama`, `Lembar` (komponen dialog).

@@ -1,0 +1,97 @@
+package com.xykals.warelease
+
+import android.app.Activity
+import android.app.Dialog
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+
+/**
+ * Lembar daftar hitam penjaga grup: tiap orang yang dicatat bot ada tombol
+ * "Buka blokir". Datanya datang dari engine (BotUi.daftarHitam), jadi lembar
+ * ini digambar ulang tiap engine ngirim daftar baru selama masih tampil.
+ */
+internal class LembarHitam(
+    private val a: Activity,
+    private val banner: (String) -> Unit,
+    private val kirim: (Map<String, Any>) -> Unit
+) {
+    private var dialog: Dialog? = null
+
+    val sedangTampil: Boolean
+        get() = dialog?.isShowing == true
+
+    fun tampilkan(ui: BotUi) {
+        try {
+            dialog?.dismiss()
+        } catch (_: Throwable) {
+        }
+        val tgl = java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale("id", "ID"))
+        val isi = LinearLayout(a).apply { orientation = LinearLayout.VERTICAL }
+
+        fun teks(s: String, warna: Int, ukuran: Float) = TextView(a).apply {
+            text = s
+            setTextColor(ContextCompat.getColor(a, warna))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, ukuran)
+        }
+
+        if (ui.daftarHitam.isEmpty()) {
+            isi.addView(teks("Nggak ada yang diblokir otomatis.", R.color.wr_teks2, 14f))
+        }
+        ui.daftarHitam.forEachIndexed { i, o ->
+            val baris = LinearLayout(a).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setBackgroundResource(R.drawable.bg_ubin)
+                setPadding(a.dp(12), a.dp(10), a.dp(10), a.dp(10))
+            }
+            val kiri = LinearLayout(a).apply { orientation = LinearLayout.VERTICAL }
+            kiri.addView(teks(o.label, R.color.wr_teks, 15f))
+            kiri.addView(
+                teks(
+                    o.sejak?.let { "keluar / dikeluarin ${tgl.format(java.util.Date(it))}" } ?: "dicatat bot",
+                    R.color.wr_teks2, 12f
+                )
+            )
+            baris.addView(kiri, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            val tombol = TextView(a, null, 0, R.style.TombolGaris).apply {
+                text = "Buka blokir"
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+                setPadding(a.dp(12), 0, a.dp(12), 0)
+                setOnClickListener {
+                    LogRecorder.tulis("Hitam", "buka blokir ${o.label}")
+                    text = "Membuka…"
+                    isEnabled = false
+                    alpha = 0.55f
+                    kirim(mapOf("type" to "hapus-hitam", "kunci" to o.kunci))
+                    banner("${o.label} bisa join lagi (di-approve pas cek berikutnya).")
+                }
+            }
+            baris.addView(tombol, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, a.dp(40)))
+            val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            if (i > 0) lp.topMargin = a.dp(8)
+            isi.addView(baris, lp)
+        }
+        if (ui.daftarHitamManual.isNotEmpty()) {
+            val t = teks(
+                "Diblokir manual (kolom \"Selalu tolak nomor ini\"): ${ui.daftarHitamManual.joinToString(", ")}\n" +
+                        "Buat buka blokir yang ini, hapus nomornya dari kolom itu terus Simpan.",
+                R.color.wr_teks2, 12f
+            )
+            val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            lp.topMargin = a.dp(12)
+            isi.addView(t, lp)
+        }
+
+        dialog = a.lembar(
+            "Daftar hitam (${ui.daftarHitam.size})",
+            "Orang yang pernah keluar / dikeluarin dari grup. Kalau minta join lagi, otomatis ditolak — " +
+                    "kecuali lo buka blokirnya di sini.",
+            isi,
+            Tombol("Tutup", Gaya.LEMBUT)
+        )
+    }
+}

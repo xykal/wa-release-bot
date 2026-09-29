@@ -75,3 +75,6 @@ Next:
   tanya kenapa M10/M9 tidak sebelum launching -> jawab: bisa, penundaan cuma soal risiko. M10 bagian
   engine dikerjakan: `bot.mjs` -> `src/mesin/*` + uji ujung-ke-ujung engine (GitHub palsu).
   Belum: pecah `MainActivity.kt`, M9 i18n, PR launching (draft).
+- kall: "gas aja". `MainActivity.kt` 1285 -> 507 baris + 7 file kecil (form, panel status, dialog
+  tautan, lembar hitam, aksi sistem, splash, komponen lembar). Verifikasi: compile CI + workflow
+  Screenshot app di branch sebagai smoke test UI. Belum: M9 i18n, PR launching (draft).

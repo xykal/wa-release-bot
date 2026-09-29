@@ -2,6 +2,10 @@
 //  Unit test engine bot — jalan di Node biasa (nggak butuh HP / WhatsApp).
 //  Jalankan:  npm test
 // ============================================================================
+// Polyfill WebCrypto HARUS paling atas: wa.mjs (diimpor di bawah) memuat Baileys
+// yang membaca globalThis.crypto.subtle saat modul dievaluasi; di Node 18.20.4
+// (runtime APK) global itu belum ada. Di Node 20+ baris ini tidak berefek.
+import '../polyfills/webcrypto.cjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

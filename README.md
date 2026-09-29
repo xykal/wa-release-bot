@@ -123,6 +123,14 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`): CLI meng-import modul `bot-
 Panduan lengkap tiap kartu (cara kerja, penjaga grup, batre, cara dapat link channel,
 lagu mood, hosting bot custom): [docs/PANDUAN-APP.md](docs/PANDUAN-APP.md).
 
+### Bahasa
+
+UI app mengikuti bahasa HP: Indonesia (bawaan) atau Inggris. Tangkapan di bawah dari
+emulator CI (workflow Screenshot app, input `bahasa`); pesan bot di WhatsApp dan isi log
+tetap Indonesia.
+
+![Layar beranda dan pengaturan dalam Bahasa Indonesia dan Inggris](docs/img/i18n-app.webp)
+
 ---
 
 ## CLI — Termux / PC

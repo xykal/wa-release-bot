@@ -28,6 +28,9 @@ Semua perubahan penting proyek ini. Format mengikuti
   `scripts-dev/i18n_kotlin.py` + `i18n_peta_kotlin.json`/`i18n_peta_manual.json`.
   Workflow Screenshot app mengunci bahasa emulator (input `bahasa`: `id-ID` bawaan atau
   `en-US`); runner GitHub aslinya en-US sehingga tangkapan situs bisa berubah bahasa.
+  Galeri situs versi English memakai tangkapan en-US (`web/img/hp-*-en.webp`, ditukar
+  `app.js` lewat `data-src-en`; `bingkai_screenshot.py --akhiran en`); README memuat
+  sandingan id/en (`docs/img/i18n-app.webp`).
 
 ### Diubah
 - App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,

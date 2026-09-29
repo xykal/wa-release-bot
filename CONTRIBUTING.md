@@ -62,7 +62,7 @@ dulu sebelum ngapus dari git.
 ### 4. Tulis pesan log dalam bahasa Indonesia
 
 Semua output log & pesan error proyek ini pakai bahasa Indonesia santai
-(`😴 Nggak ada update...`). Ikuti gaya itu biar konsisten.
+(` Nggak ada update...`). Ikuti gaya itu biar konsisten.
 
 ## Alur PR
 

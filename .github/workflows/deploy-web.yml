@@ -81,9 +81,35 @@ jobs:
           python3 -m pip install --quiet --disable-pip-version-check 'blake3==1.0.10'
           python3 scripts-dev/deploy_web.py --cek | head -n 5
 
+  tangkapan:
+    name: Responsif (Chromium, 14 ukuran layar)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Playwright + Chromium
+        run: |
+          python3 -m pip install --quiet --disable-pip-version-check 'playwright==1.63.0' 'pillow==12.3.0'
+          python3 -m playwright install --with-deps chromium-headless-shell
+
+      - name: Render semua ukuran layar, gagal kalau ada overflow horizontal
+        run: python3 scripts-dev/tangkap_web.py tangkapan
+
+      - name: Upload screenshot
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: web-tangkapan
+          path: tangkapan/*.png
+          retention-days: 7
+
   deploy:
     name: Deploy Cloudflare Workers
-    needs: cek
+    needs: [cek, tangkapan]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10

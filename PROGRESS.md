@@ -61,3 +61,8 @@ Next:
   Workers Static Assets lewat `scripts-dev/deploy_web.py`, workflow `deploy-web.yml`, rencana
   launching di ROADMAP. kall: logo web harus logo asli app (bulan sabit) -> diganti; domain
   `wabot.projectkal.my.id` dipasang (workers/domains). Belum: layar Repo, M10, M9, PR launching 1.0.0.
+- kall: "gas kejar waktu", web wajib responsif semua layar, README bersih tanpa emoji, cek stars,
+  screenshot app asli di web. Dikerjakan: QA Chromium 14 layar (bug: HP hero/cara keluar layar di
+  HP kecil dan 1024 px, modal terpotong di landscape, nav 320 px) -> diperbaiki + job CI `tangkapan`;
+  emoji dihapus dari 11 dokumen + cek CI; `bingkai_screenshot.py` siap terima screenshot asli.
+  Stars: API GitHub bilang 0 stargazer di wa-release-bot (XyDownloader dan AppPerms masing-masing 1).

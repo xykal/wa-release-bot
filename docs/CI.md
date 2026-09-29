@@ -215,6 +215,7 @@ plus `workflow_dispatch`.
 | Job | Isi | Bukti |
 |---|---|---|
 | `cek` | `node --check` semua JS + `worker.js`; HTML: referensi lokal ada, semua `data-i18n` punya teks id+en, brand tepat, tidak ada `style=`/handler inline (CSP `style-src 'self'`), tidak ada URL selain github.com / api.github.com / tiktok.com; `deploy_web.py --cek` (manifest hash) | gagal = merah |
+| `tangkapan` | `scripts-dev/tangkap_web.py`: Chromium headless render `/`, `/unduh/`, `/unduh/?t=<lewat>`, `/?bahasa=en` pada 14 ukuran layar (320 px sampai ultrawide 2560, portrait + landscape); gagal kalau `scrollWidth` > viewport atau ada elemen keluar layar | artifact `web-tangkapan` (PNG, 7 hari) |
 | `deploy` (bukan PR) | `python3 scripts-dev/deploy_web.py` kalau secret `CF_API_TOKEN` ada; kalau kosong: `::notice` lalu lewat | curl: header CSP ada + `/unduh/` punya `#tirai` |
 
 Deploy manual dari mesin sendiri (token Cloudflare hanya perlu izin *Workers Scripts: Edit*):

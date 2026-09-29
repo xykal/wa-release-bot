@@ -20,6 +20,7 @@ body {
   background-image: radial-gradient(900px 500px at 85% -10%, rgba(0, 168, 132, 0.18), transparent 60%),
     radial-gradient(700px 400px at -10% 30%, rgba(37, 211, 102, 0.08), transparent 60%);
 }
+html { overflow-x: clip; }
 img { max-width: 100%; height: auto; display: block; }
 a { color: var(--hijau-t); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -60,13 +61,22 @@ p { margin: 0 0 1em; }
   background: rgba(11, 20, 26, 0.82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(42, 57, 66, 0.6);
 }
-.nav-logo { display: flex; align-items: center; gap: 10px; color: var(--teks); font-weight: 600; font-size: 1.05rem; }
+.nav-logo { display: flex; align-items: center; gap: 10px; color: var(--teks); font-weight: 600; font-size: 1.05rem; white-space: nowrap; min-width: 0; }
+.nav-aksi .tombol { white-space: nowrap; }
 .nav-logo:hover { text-decoration: none; }
 .nav-tautan { display: flex; gap: 22px; margin-left: auto; }
 .nav-tautan a { color: var(--teks2); font-weight: 600; font-size: 0.95rem; }
 .nav-tautan a:hover { color: var(--teks); text-decoration: none; }
 .nav-aksi { display: flex; align-items: center; gap: 10px; }
 @media (max-width: 760px) { .nav-tautan { display: none; } .nav { gap: 10px; } }
+@media (max-width: 420px) {
+  .nav { padding: 10px 14px; gap: 8px; }
+  .nav-logo { font-size: 0.95rem; gap: 8px; }
+  .nav-aksi { margin-left: auto; gap: 6px; }
+  .nav-aksi .tombol { padding: 8px 12px; font-size: 0.85rem; }
+  .tombol-bahasa { padding: 7px 10px; font-size: 0.85rem; }
+}
+@media (max-width: 330px) { .nav-logo span { display: none; } }
 
 /* -------------------------------- footer ----------------------------- */
 .kaki {
@@ -83,7 +93,7 @@ p { margin: 0 0 1em; }
 body.terkunci { overflow: hidden; }
 body.terkunci .unduh-utama, body.terkunci .nav, body.terkunci .kaki { filter: blur(7px); pointer-events: none; user-select: none; }
 .tirai {
-  position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; padding: 20px;
+  position: fixed; inset: 0; z-index: 40; display: flex; align-items: safe center; justify-content: center; padding: 20px;
   background: rgba(6, 12, 16, 0.55); backdrop-filter: blur(14px) saturate(120%); -webkit-backdrop-filter: blur(14px) saturate(120%);
   overflow: auto;
 }
@@ -92,7 +102,7 @@ body.terkunci .unduh-utama, body.terkunci .nav, body.terkunci .kaki { filter: bl
 [hidden] { display: none !important; }
 .modal {
   width: min(560px, 100%); background: linear-gradient(180deg, #16232b, #0f1a20); border: 1px solid var(--garis);
-  border-radius: 26px; padding: 34px 30px 26px; text-align: center; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(37, 211, 102, 0.08) inset;
+  border-radius: 26px; padding: 34px 30px 26px; text-align: center; margin: auto; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(37, 211, 102, 0.08) inset;
   position: relative; overflow: hidden;
 }
 .modal::before {
@@ -112,6 +122,29 @@ body.terkunci .unduh-utama, body.terkunci .nav, body.terkunci .kaki { filter: bl
 .modal-tunggu { color: var(--kuning); font-weight: 600; }
 .modal-aksi { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 6px 0 14px; }
 .modal-kembali { color: var(--teks2); font-size: 0.9rem; }
+@media (max-width: 480px) {
+  .tirai { padding: 12px; }
+  .modal { padding: 26px 18px 20px; border-radius: 22px; }
+  .hitung { gap: 6px; }
+  .hitung div { padding: 12px 2px 8px; border-radius: 12px; }
+  .hitung b { font-size: clamp(1.5rem, 8.5vw, 2.2rem); }
+  .hitung span { font-size: 0.62rem; letter-spacing: 0.05em; }
+  .modal-aksi .tombol { width: 100%; }
+}
+@media (max-width: 360px) { .hitung span { font-size: 0.56rem; letter-spacing: 0.02em; } }
+@media (max-height: 560px) {
+  .tirai { padding: 10px; }
+  .modal { padding: 18px 20px 14px; }
+  .modal img { display: none; }
+  .modal h2 { font-size: 1.3rem; margin-bottom: 0.3em; }
+  .modal-sub { margin-bottom: 0.8em; font-size: 0.92rem; }
+  .hitung { gap: 8px; margin-bottom: 10px; }
+  .hitung div { padding: 8px 4px 6px; }
+  .hitung b { font-size: 1.6rem; }
+  .hitung span { margin-top: 4px; }
+  .modal-aksi { margin: 4px 0 8px; }
+  .modal-aksi .tombol { padding: 9px 16px; font-size: 0.92rem; }
+}
 .muncul-modal { animation: modalMasuk 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 @keyframes modalMasuk { from { opacity: 0; transform: translateY(24px) scale(0.97); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .muncul-modal { animation: none; } html { scroll-behavior: auto; } }

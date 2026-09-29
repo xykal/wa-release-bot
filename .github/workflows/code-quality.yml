@@ -276,6 +276,14 @@ jobs:
           sys.exit(1 if bad else 0)
           PY
 
+      - name: Dokumen tanpa emoji, anchor Markdown valid (permintaan kall 2026-09-29)
+        run: python3 scripts-dev/bersihkan_emoji.py --cek
+
+      - name: Web tanpa emoji (HTML/JS/CSS)
+        run: |
+          if LC_ALL=C.UTF-8 grep -rPn '[\x{1F000}-\x{1FAFF}\x{2600}-\x{27BF}\x{FE0F}]' web/index.html web/unduh web/js web/css; then
+            echo 'ada emoji di web/'; exit 1; fi
+
       - name: File executable harus punya bit +x
         run: |
           fail=0

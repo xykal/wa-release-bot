@@ -45,7 +45,7 @@ Naik ke **`6.7.24`** (dist-tag `legacy`, rilis 2026-07-29). Dipilih ketimbang
 
 ```bash
 cd bot-js && npm ci && npm run build
-node dist/bundle.cjs --selftest        # → SELFTEST OK ✅
+node dist/bundle.cjs --selftest        # → SELFTEST OK
 ```
 
 Plus uji koneksi WA nyata di **Node 18.20.4**: bundle berhasil load, ambil
@@ -103,7 +103,7 @@ folder kerja. Sekarang:
   di seluruh isi repo.
 - Token di CI dibaca dari **GitHub Secrets**, nggak pernah ditulis ke file.
 
-> ⚠️ **Kalau token pernah masuk ke chat, file yang di-upload, atau repo publik —
+> **Kalau token pernah masuk ke chat, file yang di-upload, atau repo publik —
 > token itu harus dianggap sudah bocor.** Rotate semuanya. Lihat
 > [SECURITY.md](../SECURITY.md#kalau-token-kamu-pernah-bocor).
 

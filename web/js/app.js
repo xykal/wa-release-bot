@@ -158,6 +158,9 @@
     if (await cekRilis()) return;
     $('#hitung').hidden = true;
     $('#modalTunggu').hidden = false;
+    // sudah lewat: label "segera" dan tombol kalender tidak relevan lagi
+    $('#modalLabel').hidden = true;
+    $('#tombolIcs').hidden = true;
     const ulang = setInterval(async () => { if (await cekRilis()) clearInterval(ulang); }, 60000);
   }
 

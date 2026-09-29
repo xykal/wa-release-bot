@@ -32,7 +32,9 @@ exact same engine. Release checks use conditional requests (ETag), so an unchang
 repo costs 0 bytes and no API quota. Extras: group gatekeeper (auto-approve joins,
 reject members who left), optional "mood song" voice notes, and hosting for your own
 small Node.js bot. Source-available under a personal-use license; see LICENSE.
-Built by xykal — XyVerse Technology Global.
+The app's main screen follows the phone language (Indonesian by default, English when the
+system language is English); the Onboarding, Repo and Hosting screens and the bot's WhatsApp
+messages are still Indonesian only. Built by xykal — XyVerse Technology Global.
 
 </details>
 

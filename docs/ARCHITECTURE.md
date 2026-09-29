@@ -126,6 +126,15 @@ Bagian-bagian itu menerima `Activity` dan lambda `banner` lewat konstruktor;
 tidak ada yang menyimpan status engine sendiri, semuanya membaca `BotUi` yang
 dikirim `BotBus`. Perubahan ini pemindahan mekanis (2026-09-29), perilaku sama.
 
+Teks layar utama tinggal di `res/values/strings.xml` (`u_*` dari layout, `k_*` dari
+Kotlin) dengan padanan Inggris di `res/values-en/`; Android memilih berdasarkan bahasa
+sistem. Pemindahannya dilakukan skrip supaya bisa diulang untuk layar lain:
+`scripts-dev/i18n_layout.py` (peta `i18n_peta.json`) dan `scripts-dev/i18n_kotlin.py`
+(peta `i18n_peta_kotlin.json`; `i18n_peta_manual.json` untuk teks yang ditulis tangan,
+misalnya enum `Aksi` dan status hosting yang kuncinya nilai protokol engine). Kedua
+file `strings.xml` harus punya nama entri yang sama persis; nama log di
+`pasang(R.id.x, "nama")` sengaja tetap Indonesia.
+
 ## Siklus hidup engine (mode "tidur")
 
 ```

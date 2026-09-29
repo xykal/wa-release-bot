@@ -98,19 +98,15 @@ internal class DialogTautan(
         kodeTeks = kotak
 
         val d = a.lembar(
-            "Masukin kode ini di WhatsApp",
-            "1. Buka WhatsApp di HP yang nomornya ${nomor()}\n" +
-                    "2. Titik tiga ⋮ → Perangkat tertaut → Tautkan perangkat\n" +
-                    "3. Pilih \"Tautkan dengan nomor telepon saja\" (di bawah kamera)\n" +
-                    "4. Ketik kode di bawah\n\n" +
-                    "Biasanya WA juga ngirim notifikasi \"masukkan kode\" — tinggal tap itu.",
+            a.getString(R.string.k_masukin_kode_ini_di_whatsapp),
+            a.getString(R.string.k_1_buka_whatsapp_di_hp, nomor()),
             kotak,
-            Tombol("Salin kode", Gaya.UTAMA, tutup = false) {
+            Tombol(a.getString(R.string.k_salin_kode), Gaya.UTAMA, tutup = false) {
                 aksi.salin(kode.replace("-", ""))
-                banner("Kode disalin.")
+                banner(a.getString(R.string.k_kode_disalin))
             },
-            Tombol("Buka WhatsApp", Gaya.GARIS, tutup = false) { aksi.bukaWhatsApp() },
-            Tombol("Tutup", Gaya.LEMBUT)
+            Tombol(a.getString(R.string.k_buka_whatsapp), Gaya.GARIS, tutup = false) { aksi.bukaWhatsApp() },
+            Tombol(a.getString(R.string.k_tutup), Gaya.LEMBUT)
         )
         d.setOnDismissListener {
             if (!sedangTutupPaksa) {
@@ -163,7 +159,7 @@ internal class DialogTautan(
                 if (a.isFinishing || a.isDestroyed) return@post
                 if (hasil == null) {
                     LogRecorder.galat("Qr", "QR gagal digambar", null)
-                    banner("QR-nya gagal digambar — coba pakai kode aja.")
+                    banner(a.getString(R.string.k_qr_nya_gagal_digambar_coba))
                     return@post
                 }
                 if (teks == qrTerakhir) {
@@ -189,16 +185,14 @@ internal class DialogTautan(
             adjustViewBounds = true
             setBackgroundResource(R.drawable.bg_qr)
             setPadding(a.dp(14), a.dp(14), a.dp(14), a.dp(14))
-            contentDescription = "Kode QR WhatsApp"
+            contentDescription = a.getString(R.string.k_kode_qr_whatsapp)
         }
         qrImage = iv
         val d = a.lembar(
-            "Scan pakai WhatsApp",
-            "Dari HP LAIN yang ada WA-nya: ⋮ → Perangkat tertaut → Tautkan perangkat, " +
-                    "lalu arahkan kamera ke sini. QR-nya ganti sendiri tiap ±20 detik.\n\n" +
-                    "Bot-nya di HP yang sama dengan WA? Tutup ini, pakai \"Tautkan pakai kode\".",
+            a.getString(R.string.k_scan_pakai_whatsapp),
+            a.getString(R.string.k_dari_hp_lain_yang_ada),
             iv,
-            Tombol("Tutup", Gaya.LEMBUT)
+            Tombol(a.getString(R.string.k_tutup), Gaya.LEMBUT)
         )
         d.setOnDismissListener {
             if (!sedangTutupPaksa) {

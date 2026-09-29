@@ -78,3 +78,6 @@ Next:
 - kall: "gas aja". `MainActivity.kt` 1285 -> 507 baris + 7 file kecil (form, panel status, dialog
   tautan, lembar hitam, aksi sistem, splash, komponen lembar). Verifikasi: compile CI + workflow
   Screenshot app di branch sebagai smoke test UI. Belum: M9 i18n, PR launching (draft).
+- M9 i18n tahap 1: layar utama app dua bahasa (75 literal layout + 126 literal Kotlin ke
+  `strings.xml` + `values-en`), dipindah oleh `scripts-dev/i18n_layout.py` dan `i18n_kotlin.py`
+  supaya layar lain bisa menyusul. Belum: Onboarding/Repo/Hosting, PR launching (draft).

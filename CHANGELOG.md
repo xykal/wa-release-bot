@@ -24,8 +24,34 @@ Belum di-tag: kall tes dulu di HP. Semua perubahan di bawah sudah lewat CI.
   test `scripts-dev/cek-batas-worker.sh` lolos.
 - CLI: `WA_RELEASE_BOT_DIR` (lokasi config/state/sesi) dan tes integrasi
   `cli/test/cli.test.mjs` (proses CLI sungguhan, GitHub palsu, tanpa WA).
+- Laporan ke **chat diri sendiri** kalau percobaan terakhir (ke-3) kirim rilis
+  gagal: tag, repo, error terakhir, cara mengulang. App dan CLI (`laporKeDiri`,
+  `formatLaporGagal`).
+- Kartu lagu di app menampilkan **jatah hari ini dari server** (`laguJatah`,
+  dari `GET /lagu/batas`, diperbarui tiap habis kirim lagu). `/lagu/batas` tidak
+  memakai token burst kecuali `?uji=1` (proving test).
+- Post rilis ke channel ditulis ulang: judul `<repo> <tag> udah rilis!`, kalimat
+  pembuka (dipilih dari tag, jadi retry teksnya identik), bagian *Apa yang baru*,
+  daftar **file lampiran** (maks 3 + ukuran, `formatUkuran`), footer lebih
+  manusiawi. `github.mjs` sekarang membawa `assets` (nama + ukuran).
+- Caption lagu: judul bold, artis biasa, plus keterangan `lagi rame diputer` untuk
+  lagu dari chart trend (`jenis: 'trend'` dari Worker).
+- Worker lagu: 5 gaya caption baru (`motivasi`, `ngatain`, `nyindir`, `tanya`,
+  `sok-bijak`), prompt dibikin lebih natural (kalimat pendek, anti gaya AI),
+  cadangan ditambah. `lagu/ayat.json` 20 → 42 ayat, teks terjemahan Kemenag
+  diambil dari API equran.id (bukan ditulis dari ingatan). `lagu/daftar.txt`
+  48 → 148 lagu (pop/rock 2000-an, indie 2015-2023, jiwang Malaysia).
+- `bot-js/src/rekam.mjs` + CLI `npm run rekam [-- --jumlah N --tunggu detik]`:
+  perekam pesan channel (riwayat + live) ke `rekaman-channel.json`, protobuf
+  di-decode, string dipotong, media dibuang. Dipakai untuk menangkap bentuk asli
+  post "Pertanyaan" dari HP.
 
 ### Diperbaiki
+- Post "Pertanyaan" channel tidak bisa dipastikan tampil: WA tidak membuka
+  formatnya dan Baileys 6.7.24 tidak mendukungnya. Sekarang **default `teks`**
+  (app: saklar mati; CLI: `"format": "teks"`), `pertanyaan` jadi opt-in
+  bertanda eksperimental. Payload tebakan ditambah `messageContextInfo.messageSecret`
+  (pola poll/komentar) — BELUM TERVERIFIKASI, hanya bisa dites di HP.
 - **Fitur lagu mati sejak v1.6.0**: URL Worker default menunjuk subdomain yang
   tidak pernah ada (`*.akuntiktok76y.workers.dev`, NXDOMAIN). Subdomain akun
   yang benar `dikanjut`. URL sekarang hanya ada di `bot-js/src/lagu.mjs`;

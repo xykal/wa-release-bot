@@ -328,7 +328,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Follower channel bisa bales pesan rilis (balasannya cuma sampai ke lo). Matiin kalau di WA-nya tampil aneh."
+                        android:text="Eksperimental: format Pertanyaan WA belum terbuka protokolnya, jadi belum tentu tampil bener. Default mati = pesan rilis dikirim sebagai teks biasa yang pasti nyampe. Nyalain cuma buat nyoba."
                         android:textColor="@color/wr_teks2"
                         android:textSize="12sp" />
                 </LinearLayout>

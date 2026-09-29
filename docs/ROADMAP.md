@@ -28,7 +28,6 @@ Semua item di sini menunggu "gas" dari kall kecuali ditandai *sedang jalan*.
 | Play Store / 16 KB page size | L | butuh libnode.so build ulang dengan alignment 16 KB (upstream nodejs-mobile) |
 | Multi-repo per channel | M | permintaan wajar kalau ada pengguna; sekarang 1 repo per instalasi |
 | Sumber selain GitHub Releases (GitLab, tag saja, RSS) | M | abstraksi `sumber/*.mjs` di atas `rilis.mjs` |
-| Notifikasi gagal ke nomor pribadi (bukan channel) | S | kalau 3x gagal kirim, sekarang cuma tercatat di status |
 | Counter Worker pakai Durable Object (SQLite, free plan) | M | hanya kalau butuh angka tepat: Rate Limiting binding permisif dan KV eventually consistent, keduanya bisa bocor 2-3x saat burst |
 
 ## Tidak akan dikerjakan

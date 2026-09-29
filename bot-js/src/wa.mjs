@@ -10,6 +10,7 @@
 
 import pino from 'pino';
 import fs from 'node:fs';
+import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import { resolveTarget } from './channel.mjs';
 import { normalisasiNomor } from './nomor.mjs';
@@ -263,20 +264,29 @@ export async function sendText(sock, jid, text) {
 
 /**
  * Kirim pesan ke CHANNEL sebagai "Pertanyaan" (fitur saluran WA: follower bisa
- * bales, balasannya cuma sampai ke admin). Di protokol WA ini pesan teks biasa
- * yang dibungkus `questionMessage`. Buat grup / chat biasa → teks biasa.
+ * bales, balasannya cuma sampai ke admin).
+ *
+ * STATUS: EKSPERIMENTAL / BELUM TERBUKTI. WA tidak mendokumentasikan formatnya
+ * dan Baileys 6.7.24 belum punya dukungan Pertanyaan; yang ada cuma field
+ * `questionMessage` (FutureProofMessage) di proto. Tebakan di sini: teks biasa
+ * dibungkus questionMessage + messageSecret (pola yang dipakai poll/komentar,
+ * karena balasan private butuh kunci). Kalau di HP tampil aneh, pakai format
+ * 'teks' dan rekam post Pertanyaan asli dari HP lewat `npm run rekam` supaya
+ * strukturnya bisa ditiru persis.
  */
 export async function sendPertanyaan(sock, jid, text) {
   if (!String(jid).endsWith('@newsletter')) return sendText(sock, jid, text);
   const pesan = proto.Message.fromObject({
+    messageContextInfo: { messageSecret: randomBytes(32) },
     questionMessage: { message: { extendedTextMessage: { text } } },
   });
   await sock.relayMessage(jid, pesan, {});
 }
 
 /**
- * Kirim ke channel/grup dengan format yang dipilih. 'pertanyaan' (default)
- * cuma berlaku untuk channel; grup selalu teks biasa.
+ * Kirim ke channel/grup dengan format yang dipilih. Default 'teks' — format
+ * 'pertanyaan' opt-in (belum terbukti tampil benar) dan cuma berlaku untuk
+ * channel; grup selalu teks biasa.
  *
  * Kalau kirim "pertanyaan" gagal dengan error yang JELAS (fitur ditolak
  * server, payload salah), jatuh ke teks biasa. Kalau errornya ambigu
@@ -285,7 +295,7 @@ export async function sendPertanyaan(sock, jid, text) {
  *
  * @returns {Promise<'pertanyaan'|'teks'>} format yang benar-benar terkirim
  */
-export async function kirimKeChannel(sock, jid, text, { format = 'pertanyaan', log = () => {} } = {}) {
+export async function kirimKeChannel(sock, jid, text, { format = 'teks', log = () => {} } = {}) {
   if (pakaiPertanyaan(jid, format)) {
     try {
       await sendPertanyaan(sock, jid, text);
@@ -299,5 +309,30 @@ export async function kirimKeChannel(sock, jid, text, { format = 'pertanyaan', l
   return 'teks';
 }
 
-export const pakaiPertanyaan = (jid, format = 'pertanyaan') =>
-  format !== 'teks' && String(jid).endsWith('@newsletter');
+export const pakaiPertanyaan = (jid, format = 'teks') =>
+  format === 'pertanyaan' && String(jid).endsWith('@newsletter');
+
+/** JID akun sendiri tanpa suffix device: "628xx:12@s.whatsapp.net" -> "628xx@s.whatsapp.net". */
+export function jidSendiri(sock) {
+  const angka = String(sock?.user?.id || '').split(':')[0].replace(/@.*$/, '');
+  return /^\d+$/.test(angka) ? `${angka}@s.whatsapp.net` : null;
+}
+
+/**
+ * Kirim teks ke chat diri sendiri ("Anda"). Dipakai buat lapor kegagalan
+ * terakhir kirim rilis: channel tidak dapat pesan, tapi pemilik bot tahu.
+ * Tidak pernah melempar -- kalau ini pun gagal, cukup dicatat.
+ * @returns {Promise<boolean>} true kalau terkirim
+ */
+export async function laporKeDiri(sock, teks, log = () => {}) {
+  const jid = jidSendiri(sock);
+  if (!jid) { log('Lapor ke diri sendiri dilewati: JID akun tidak diketahui.'); return false; }
+  try {
+    await sock.sendMessage(jid, { text: teks });
+    log('Laporan kegagalan dikirim ke chat diri sendiri.');
+    return true;
+  } catch (e) {
+    log(`Lapor ke diri sendiri gagal: ${e.message}`);
+    return false;
+  }
+}

@@ -14,9 +14,11 @@ import path from 'node:path';
 
 import { parseRepo, fetchLatestRelease } from '../src/github.mjs';
 import { bacaTarget, JENIS, pesanCaraIsiChannel, linkChannel } from '../src/channel.mjs';
-import { formatReleasePost, formatTestMessage, formatTesGrup, AJAKAN_BALAS, mdKeWa, potongAman, formatTanggal } from '../src/format.mjs';
+import { formatReleasePost, formatTestMessage, formatTesGrup, AJAKAN_BALAS, mdKeWa, potongAman, formatTanggal, formatLaporGagal, formatUkuran } from '../src/format.mjs';
 import { putuskanRilis, pendingBerikut, errorAmbigu, tagKeSemver, MAKS_PERCOBAAN } from '../src/rilis.mjs';
-import { kirimKeChannel } from '../src/wa.mjs';
+import { kirimKeChannel, jidSendiri, laporKeDiri, pakaiPertanyaan, sendPertanyaan } from '../src/wa.mjs';
+import { proto } from '@whiskeysockets/baileys';
+import { kumpulkanNodeMessage, susunEntri, jenisPesan } from '../src/rekam.mjs';
 import { BRAND, TANDA_TANGAN } from '../src/config/brand.mjs';
 import { kelompokHitam, bukaBlokir, labelOrang } from '../src/grup.mjs';
 import { createBridge } from '../src/bridge.mjs';
@@ -60,7 +62,8 @@ test('formatReleasePost: memuat tag, repo, author, link', () => {
   assert.match(msg, /releases\/tag\/v1\.4\.0/);
   assert.match(msg, /Fitur A/);
   // markdown WhatsApp: bold pakai *...*
-  assert.match(msg, /\*RELEASE BARU DETEKSI!\*/);
+  assert.match(msg, /\*wa-release-bot v1\.4\.0 udah rilis!\*/);
+  assert.match(msg, /\*Apa yang baru:\*/);
   // bukan prerelease → nggak ada penanda
   assert.doesNotMatch(msg, /prerelease/);
 });
@@ -79,7 +82,31 @@ test('formatReleasePost: body panjang dipotong, tetap ada link', () => {
 
 test('formatReleasePost: release tanpa deskripsi tetap valid', () => {
   const msg = formatReleasePost({ ...sampleRel, body: '' }, 'a/b');
-  assert.match(msg, /tidak ada deskripsi/);
+  assert.match(msg, /nggak ada catatan/);
+});
+
+test('formatReleasePost: lampiran maks 3 baris + sisa dihitung, ukuran pakai koma', () => {
+  const assets = [
+    { name: 'app-arm64.apk', size: 26004000 },
+    { name: 'engine.zip', size: 1150000 },
+    { name: 'a.sha256', size: 90 },
+    { name: 'b.sig', size: 2048 },
+  ];
+  const msg = formatReleasePost({ ...sampleRel, assets }, 'a/b');
+  assert.match(msg, /📎 \*File:\*/);
+  assert.match(msg, /• app-arm64\.apk \(24,8 MB\)/);
+  assert.match(msg, /• a\.sha256 \(90 B\)/);
+  assert.doesNotMatch(msg, /b\.sig/);
+  assert.match(msg, /\+1 file lain di link/);
+  assert.doesNotMatch(formatReleasePost({ ...sampleRel, assets: [] }, 'a/b'), /📎/);
+});
+
+test('formatReleasePost: pembuka ditentukan tag → retry ngirim teks identik', () => {
+  const a = formatReleasePost(sampleRel, 'a/b');
+  const b = formatReleasePost(sampleRel, 'a/b');
+  assert.equal(a, b);
+  assert.equal(formatUkuran(1024), '1 KB');
+  assert.equal(formatUkuran(0), '0 B');
 });
 
 test('formatTestMessage: menyebut repo yang dipantau', () => {
@@ -396,7 +423,10 @@ test('rapikanMp3: buang sampah depan/belakang, potong sesuai durasi', () => {
 test('formatKataLagu: kata-kata + judul tebal', () => {
   const t = formatKataLagu({ kata: 'Kangen itu berat.', judul: 'Siapa Di Hatimu', artis: 'Rahmat Ekamatra' });
   assert.match(t, /^Kangen itu berat\./);
-  assert.match(t, /\*Siapa Di Hatimu — Rahmat Ekamatra\*/);
+  assert.match(t, /🎧 \*Siapa Di Hatimu\* — Rahmat Ekamatra/);
+  assert.doesNotMatch(t, /lagi rame/);
+  assert.match(formatKataLagu({ kata: 'x', judul: 'J', artis: 'A', jenis: 'trend' }), /\*J\* — A\n_lagi rame diputer/);
+  assert.doesNotMatch(formatKataLagu({ kata: 'x', judul: 'J', artis: 'A', jenis: 'lawas' }), /lagi rame/);
 });
 
 // ------------------------------------------------------------ hosting
@@ -603,20 +633,34 @@ function sockPalsu({ relayError = null } = {}) {
   };
 }
 
-test('kirimKeChannel: channel -> pertanyaan; grup -> teks', async () => {
+test('kirimKeChannel: default teks; pertanyaan cuma kalau diminta DAN target channel', async () => {
+  const s0 = sockPalsu();
+  assert.equal(await kirimKeChannel(s0, '1@newsletter', 'hai'), 'teks', 'default harus teks (format Pertanyaan belum terbukti)');
+  assert.deepEqual(s0.dikirim, [['teks', '1@newsletter']]);
   const s1 = sockPalsu();
-  assert.equal(await kirimKeChannel(s1, '1@newsletter', 'hai'), 'pertanyaan');
+  assert.equal(await kirimKeChannel(s1, '1@newsletter', 'hai', { format: 'pertanyaan' }), 'pertanyaan');
   const s2 = sockPalsu();
-  assert.equal(await kirimKeChannel(s2, '1@g.us', 'hai'), 'teks');
-  assert.equal(await kirimKeChannel(sockPalsu(), '1@newsletter', 'hai', { format: 'teks' }), 'teks');
+  assert.equal(await kirimKeChannel(s2, '1@g.us', 'hai', { format: 'pertanyaan' }), 'teks');
+  assert.equal(pakaiPertanyaan('1@newsletter'), false);
+  assert.equal(pakaiPertanyaan('1@newsletter', 'pertanyaan'), true);
+  assert.equal(pakaiPertanyaan('1@g.us', 'pertanyaan'), false);
+});
+
+test('sendPertanyaan: payload questionMessage + messageSecret 32 byte (tebakan, ditandai eksperimental)', async () => {
+  let terkirim = null;
+  const sock = { relayMessage: async (jid, pesan) => { terkirim = { jid, pesan }; } };
+  await sendPertanyaan(sock, '1@newsletter', 'halo');
+  assert.equal(terkirim.jid, '1@newsletter');
+  assert.equal(terkirim.pesan.questionMessage.message.extendedTextMessage.text, 'halo');
+  assert.equal(terkirim.pesan.messageContextInfo.messageSecret.length, 32);
 });
 
 test('kirimKeChannel: error jelas -> jatuh ke teks; error ambigu -> TIDAK kirim ulang', async () => {
   const s1 = sockPalsu({ relayError: new Error('not-acceptable') });
-  assert.equal(await kirimKeChannel(s1, '1@newsletter', 'hai'), 'teks');
+  assert.equal(await kirimKeChannel(s1, '1@newsletter', 'hai', { format: 'pertanyaan' }), 'teks');
   assert.deepEqual(s1.dikirim, [['teks', '1@newsletter']]);
   const s2 = sockPalsu({ relayError: new Error('Timed Out') });
-  await assert.rejects(kirimKeChannel(s2, '1@newsletter', 'hai'), /Timed Out/);
+  await assert.rejects(kirimKeChannel(s2, '1@newsletter', 'hai', { format: 'pertanyaan' }), /Timed Out/);
   assert.deepEqual(s2.dikirim, [], 'pesan mungkin sudah masuk, jangan dobel');
 });
 
@@ -658,4 +702,62 @@ test('formatTanggal: Indonesia tanpa ICU, zona ikut proses', () => {
   assert.equal(formatTanggal(t, { jam: false }), 'Selasa, 29 September 2026');
   assert.equal(formatTanggal('bukan tanggal'), '');
   assert.match(formatReleasePost({ tag: 'v1', name: 'x', body: '', url: 'u', publishedAt: t.toISOString() }, 'a/b'), /Selasa, 29 September 2026/);
+});
+
+test('jidSendiri: buang suffix device, tolak yang bukan nomor', () => {
+  assert.equal(jidSendiri({ user: { id: '6281234567890:12@s.whatsapp.net' } }), '6281234567890@s.whatsapp.net');
+  assert.equal(jidSendiri({ user: { id: '6281234567890@s.whatsapp.net' } }), '6281234567890@s.whatsapp.net');
+  assert.equal(jidSendiri({ user: { id: '' } }), null);
+  assert.equal(jidSendiri({}), null);
+});
+
+test('laporKeDiri: kirim ke JID sendiri, tidak pernah melempar', async () => {
+  const terkirim = [];
+  const sock = { user: { id: '628111:3@s.whatsapp.net' }, sendMessage: async (jid, isi) => { terkirim.push([jid, isi.text]); } };
+  assert.equal(await laporKeDiri(sock, 'halo', () => {}), true);
+  assert.deepEqual(terkirim, [['628111@s.whatsapp.net', 'halo']]);
+
+  const catatan = [];
+  const rusak = { user: { id: '628111@s.whatsapp.net' }, sendMessage: async () => { throw new Error('putus'); } };
+  assert.equal(await laporKeDiri(rusak, 'halo', (m) => catatan.push(m)), false);
+  assert.match(catatan.join('\n'), /putus/);
+  assert.equal(await laporKeDiri({}, 'halo', (m) => catatan.push(m)), false);
+});
+
+test('formatLaporGagal: sebut tag, repo, jumlah percobaan, error, cara ulang', () => {
+  const app = formatLaporGagal({ tag: 'v2.0.0', repo: 'octo/demo', percobaan: 3, maks: 3, error: 'Timeout kirim' });
+  assert.match(app, /v2\.0\.0/);
+  assert.match(app, /octo\/demo/);
+  assert.match(app, /3x berturut-turut/);
+  assert.match(app, /Timeout kirim/);
+  assert.match(app, /Cek sekarang/);
+  assert.match(app, /wa-release-bot — XyVerse Technology Global/);
+  const cli = formatLaporGagal({ tag: 'v2.0.0', repo: 'octo/demo', percobaan: 3, maks: 3, error: 'x'.repeat(1000), cli: true });
+  assert.match(cli, /npm run once -- --ulang/);
+  assert.ok(cli.length < 700, 'error panjang dipotong');
+});
+
+// ------------------------------------------------ rekam.mjs (perekam channel)
+test('rekam: node <message><plaintext> -> jenis + JSON ringkas; string panjang dipotong', () => {
+  const bytes = proto.Message.encode(proto.Message.fromObject({
+    messageContextInfo: { messageSecret: new Uint8Array(32) },
+    questionMessage: { message: { extendedTextMessage: { text: 'z'.repeat(500) } } },
+  })).finish();
+  const hasil = {
+    tag: 'iq', attrs: {}, content: [
+      { tag: 'messages', attrs: {}, content: [
+        { tag: 'message', attrs: { server_id: '7', type: 'text' }, content: [{ tag: 'plaintext', attrs: {}, content: bytes }] },
+        { tag: 'message', attrs: { server_id: '8' }, content: [{ tag: 'reactions', attrs: {}, content: [] }] },
+      ] },
+    ],
+  };
+  const entri = kumpulkanNodeMessage(hasil).map(susunEntri);
+  assert.equal(entri.length, 2);
+  assert.equal(entri[0].jenis, 'questionMessage>extendedTextMessage');
+  assert.equal(entri[0].attrs.server_id, '7');
+  assert.match(entri[0].pesan.questionMessage.message.extendedTextMessage.text, /…\[\+300\]$/);
+  assert.equal(entri[0].pesan.messageContextInfo.messageSecret, '[bytes 32]');
+  assert.deepEqual(entri[1].tanpaPlaintext, ['reactions']);
+  assert.equal(jenisPesan({ conversation: 'x' }), 'conversation');
+  assert.equal(jenisPesan({}), '(kosong)');
 });

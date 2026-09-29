@@ -15,6 +15,14 @@ node cli/src/bot.mjs --version
 bash scripts/build-local.sh assembleDebug
 ```
 
+## Alur perubahan
+
+Semua perubahan lewat **branch + pull request** ke `main`, termasuk dari pemilik repo
+(permintaan kall, 2026-09-29): CI (Code quality, Build APK, Security, CodeQL) jalan di
+PR, kall me-review dan merge dari HP kapan sempat. Satu PR per ronde kerja; kalau PR
+sebelumnya belum di-merge, commit berikutnya ditumpuk ke branch yang sama supaya cuma
+ada satu tombol merge.
+
 ## Aturan penting
 
 ### 1. Engine harus tetap jalan di Node 18

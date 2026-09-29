@@ -809,7 +809,8 @@ class MainActivity : AppCompatActivity() {
                 ui.nextLaguAt?.let { "Lagu berikutnya kira-kira ${Durasi.human(it - sekarang)} lagi (jamnya diacak)" }
                     ?: "Nunggu bot jalan…",
                 "${ui.laguCount} lagu udah dikirim",
-                ui.laguJudul?.let { "Terakhir: $it" }
+                ui.laguJudul?.let { "Terakhir: $it" },
+                ui.laguJatah?.let { "Jatah hari ini dari server: $it (reset tengah malam UTC)" }
             ).joinToString("\n")
         }
         val h = ui.hosting

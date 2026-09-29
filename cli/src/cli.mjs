@@ -19,9 +19,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import qrcode from 'qrcode-terminal';
 import { fetchLatestRelease } from '../../bot-js/src/github.mjs';
-import { formatReleasePost, formatTestMessage } from '../../bot-js/src/format.mjs';
-import { connectToWhatsApp, resolveChannel, kirimKeChannel, pakaiPertanyaan } from '../../bot-js/src/wa.mjs';
+import { formatReleasePost, formatTestMessage, formatLaporGagal } from '../../bot-js/src/format.mjs';
+import { connectToWhatsApp, resolveChannel, kirimKeChannel, pakaiPertanyaan, laporKeDiri } from '../../bot-js/src/wa.mjs';
 import { putuskanRilis, pendingBerikut, MAKS_PERCOBAAN } from '../../bot-js/src/rilis.mjs';
+import { rekamChannel } from '../../bot-js/src/rekam.mjs';
 
 // Folder config.json / state.json / wa-session. Default: folder cli/ ini.
 // WA_RELEASE_BOT_DIR memindahkannya (beberapa bot di satu mesin, atau tes).
@@ -93,7 +94,7 @@ async function targetJid(sock, cfg, state) {
 }
 
 const opsiKirim = (cfg, jid) => ({
-  format: cfg.whatsapp.format === 'teks' ? 'teks' : 'pertanyaan',
+  format: cfg.whatsapp.format === 'pertanyaan' ? 'pertanyaan' : 'teks',
   ajak: { ajakBalas: pakaiPertanyaan(jid, cfg.whatsapp.format) },
 });
 
@@ -110,9 +111,17 @@ async function postRelease(cfg, state, rel, { dryRun = false, manual = false }) 
   // WA baru nyambung DI SINI. Nggak ada release = nggak pernah nyambung.
   const { sock, close } = await sambung(cfg);
   try {
-    const jid = await targetJid(sock, cfg, state);
-    const { format, ajak } = opsiKirim(cfg, jid);
-    await kirimKeChannel(sock, jid, formatReleasePost(rel, cfg.github.repo, ajak), { format, log });
+    try {
+      const jid = await targetJid(sock, cfg, state);
+      const { format, ajak } = opsiKirim(cfg, jid);
+      await kirimKeChannel(sock, jid, formatReleasePost(rel, cfg.github.repo, ajak), { format, log });
+    } catch (e) {
+      // Percobaan terakhir: lapor ke chat diri sendiri selagi socket masih ada.
+      if (state.pending.percobaan >= MAKS_PERCOBAAN) {
+        await laporKeDiri(sock, formatLaporGagal({ tag: rel.tag, repo: cfg.github.repo, percobaan: state.pending.percobaan, maks: MAKS_PERCOBAAN, error: e.message, cli: true }), log);
+      }
+      throw e;
+    }
     state.lastTag = rel.tag;
     state.pending = null;
     state.lastPostedAt = new Date().toISOString();
@@ -239,6 +248,24 @@ async function runLoop(cfg, state, intervalMin) {
   }
 }
 
+/**
+ * Alat debug: rekam pesan channel (riwayat + live) ke rekaman-channel.json.
+ * Dipakai buat nangkep bentuk asli post "Pertanyaan" yang dibuat dari HP.
+ */
+async function runRekam(cfg, state, { jumlah, tungguDetik }) {
+  const { sock, close } = await sambung(cfg);
+  try {
+    const jid = await targetJid(sock, cfg, state);
+    const rekaman = await rekamChannel(sock, jid, { jumlah, tungguDetik, log });
+    const tujuan = path.join(ROOT, 'rekaman-channel.json');
+    writeFileSync(tujuan, JSON.stringify(rekaman, null, 2));
+    for (const e of [...rekaman.diambil, ...rekaman.masuk]) log(`  ${e.attrs?.server_id ?? 'live'}: ${e.jenis ?? e.gagalDecode ?? 'tanpa plaintext'}`);
+    log(`Rekaman disimpan: ${tujuan} (kirim file ini ke dev, isinya udah dipotong & tanpa media).`);
+  } finally {
+    close();
+  }
+}
+
 // ------------------------------- main ------------------------------------
 const args = process.argv.slice(2);
 const flag = (f) => args.includes(f);
@@ -247,7 +274,7 @@ const flagVal = (f) => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 
-const mode = flag('--setup') ? 'setup' : flag('--test') ? 'test' : flag('--loop') ? 'loop' : flag('--dry-run') ? 'dry-run' : 'once';
+const mode = flag('--setup') ? 'setup' : flag('--test') ? 'test' : flag('--loop') ? 'loop' : flag('--dry-run') ? 'dry-run' : flag('--rekam') ? 'rekam' : 'once';
 
 if (mode === 'loop') {
   process.on('SIGINT', () => {
@@ -265,6 +292,7 @@ try {
   else if (mode === 'test') await runTest(cfg, state);
   else if (mode === 'dry-run') await runDryRun(cfg, state);
   else if (mode === 'loop') await runLoop(cfg, state, intervalMin);
+  else if (mode === 'rekam') await runRekam(cfg, state, { jumlah: parseInt(flagVal('--jumlah') ?? 10, 10), tungguDetik: parseInt(flagVal('--tunggu') ?? 0, 10) });
   else await checkOnce(cfg, state, { manual: flag('--ulang') }); // --once (default)
 } catch (e) {
   log(`Gagal: ${e.message}`);

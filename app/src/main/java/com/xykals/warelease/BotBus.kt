@@ -74,6 +74,8 @@ data class BotUi(
     var laguAktif: Boolean = false,
     var laguCount: Int = 0,
     var laguJudul: String? = null,
+    // "n/12": lagu yang sudah diminta perangkat ini hari ini / jatah harian Worker
+    var laguJatah: String? = null,
     var nextLaguAt: Long? = null,
     // hosting bot custom
     var hosting: HostingUi = HostingUi(),

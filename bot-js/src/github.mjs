@@ -27,6 +27,8 @@ function bentukRelease(rel, etag) {
     author: rel.author?.login || 'unknown',
     publishedAt: rel.published_at,
     isPrerelease: Boolean(rel.prerelease),
+    // Cuma yang dipakai di post: nama + ukuran. URL unduh nggak perlu, link release udah cukup.
+    assets: Array.isArray(rel.assets) ? rel.assets.map((a) => ({ name: a.name, size: a.size })) : [],
     etag,
     notModified: false,
   };

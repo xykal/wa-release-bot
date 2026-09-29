@@ -326,6 +326,7 @@ class BotService : Service() {
                 laguAktif = e.optBoolean("laguAktif")
                 laguCount = e.optInt("laguCount", 0)
                 laguJudul = e.optString("laguJudul", "").orNull()
+                laguJatah = e.optString("laguJatah", "").orNull()
                 nextLaguAt = e.optLong("nextLaguAt", 0L).takeIf { it > 0 }
             }
 

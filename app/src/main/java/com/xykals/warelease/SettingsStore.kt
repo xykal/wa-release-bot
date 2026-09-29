@@ -38,7 +38,7 @@ class SettingsStore(ctx: Context) {
 
     /** Pesan ke channel dikirim sebagai "Pertanyaan" (follower bisa bales). */
     var formatPertanyaan: Boolean
-        get() = p.getBoolean("formatTanya", true)
+        get() = p.getBoolean("formatTanya", false)
         set(v) = p.edit().putBoolean("formatTanya", v).apply()
 
     var autoStartOnBoot: Boolean

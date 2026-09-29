@@ -20,8 +20,6 @@ Format: apa — kenapa penting buat pengguna nyata — dampak/usaha (S/M/L). Dip
 ## Keamanan dan platform
 - Counter Worker lagu yang tepat (Durable Object SQLite) kalau suatu saat kuota AI beneran jadi
   masalah; sekarang burst limiter + KV cukup buat penyalahgunaan kasual — M.
-- App menampilkan sisa jatah lagu hari ini dari `GET /lagu/batas` — pengguna tahu kenapa lagu
-  nggak muncul — S.
 - Pantau nodejs-mobile untuk build 16 KB; kalau ada, jalur Play Store terbuka — L (upstream).
 
 ## Pertumbuhan

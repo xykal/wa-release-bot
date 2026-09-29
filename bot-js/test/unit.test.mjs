@@ -761,3 +761,50 @@ test('rekam: node <message><plaintext> -> jenis + JSON ringkas; string panjang d
   assert.equal(jenisPesan({ conversation: 'x' }), 'conversation');
   assert.equal(jenisPesan({}), '(kosong)');
 });
+
+// ----------------------------------------------------------------------------
+//  repo.mjs — multi repo: parsing daftar + state per repo + migrasi state lama
+// ----------------------------------------------------------------------------
+import { daftarRepo, repoTidakValid, teksRepo, stateRepo, sinkronState, ringkasTag, pendingAktif } from '../src/repo.mjs';
+
+test('daftarRepo: koma/baris baru/URL github, unik, urutan dijaga, entri salah dipisah', () => {
+  assert.deepEqual(daftarRepo('octo/demo'), ['octo/demo']);
+  assert.deepEqual(daftarRepo(' https://github.com/octo/demo.git/ ,octo/kedua\nocto/demo'), ['octo/demo', 'octo/kedua']);
+  assert.deepEqual(daftarRepo(['a/b', 'c/d']), ['a/b', 'c/d']);
+  assert.deepEqual(daftarRepo(''), []);
+  assert.deepEqual(daftarRepo(null), []);
+  assert.deepEqual(repoTidakValid('octo/demo, bukan-repo, a/b/c'), ['bukan-repo', 'a/b/c']);
+  assert.equal(teksRepo('octo/demo;octo/kedua salah'), 'octo/demo, octo/kedua');
+});
+
+test('sinkronState: field era satu repo pindah ke repo pertama sekali, repo hilang dibuang, reset kosongkan', () => {
+  const state = { lastTag: 'v1.0.0', rilisEtag: '"e1"', pending: { tag: 'v1.1.0', percobaan: 2 }, postCount: 3 };
+  assert.equal(sinkronState(state, ['a/x', 'b/y']), true);
+  assert.deepEqual(state.repos['a/x'], { lastTag: 'v1.0.0', rilisEtag: '"e1"', pending: { tag: 'v1.1.0', percobaan: 2 } });
+  assert.equal(state.lastTag, null);
+  assert.equal(state.pending, null);
+  assert.equal(state.postCount, 3, 'hitungan post lintas repo tidak disentuh');
+  assert.equal(sinkronState(state, ['a/x', 'b/y']), false, 'panggilan kedua tidak mengubah apa-apa');
+
+  stateRepo(state, 'b/y').lastTag = 'v2.0.0';
+  assert.equal(sinkronState(state, ['b/y']), true);
+  assert.equal(state.repos['a/x'], undefined, 'a/x dihapus dari setelan -> baseline-nya dibuang');
+  assert.equal(state.repos['b/y'].lastTag, 'v2.0.0');
+
+  assert.equal(sinkronState(state, ['b/y'], { reset: true }), true);
+  assert.deepEqual(state.repos, {}, 'includePrereleases berubah -> semua dari nol');
+  const tanpaRepo = { lastTag: 'v1' };
+  sinkronState(tanpaRepo, []);
+  assert.equal(tanpaRepo.lastTag, 'v1', 'belum ada repo (config kosong): warisan dibiarkan, tidak hilang');
+});
+
+test('ringkasTag + pendingAktif: satu repo tampil tag saja, banyak repo diringkas per nama', () => {
+  const state = { repos: { 'a/x': { lastTag: 'v1.2.0', pending: null }, 'b/y': { lastTag: null, pending: { tag: 'v0.2.0', percobaan: 1 } } } };
+  assert.equal(ringkasTag(state, ['a/x']), 'v1.2.0');
+  assert.equal(ringkasTag(state, ['a/x', 'b/y']), 'x v1.2.0');
+  state.repos['b/y'].lastTag = 'v0.1.0';
+  assert.equal(ringkasTag(state, ['a/x', 'b/y']), 'x v1.2.0 · y v0.1.0');
+  assert.equal(ringkasTag({}, ['a/x']), null);
+  assert.deepEqual(pendingAktif(state, ['a/x', 'b/y']), { repo: 'b/y', tag: 'v0.2.0', percobaan: 1 });
+  assert.equal(pendingAktif(state, ['a/x']), null);
+});

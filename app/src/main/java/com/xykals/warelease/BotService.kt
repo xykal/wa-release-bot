@@ -3,6 +3,7 @@ package com.xykals.warelease
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -40,6 +41,10 @@ class BotService : Service() {
     companion object {
         private const val CHANNEL_ID = "wa_release_bot_service"
         private const val NOTIF_ID = 42
+        // Channel terpisah (IMPORTANCE_HIGH) buat kegagalan kirim: notifikasi
+        // service-nya sengaja senyap, tapi "3x gagal" harus kelihatan.
+        private const val CHANNEL_GAGAL_ID = "wa_release_bot_gagal"
+        private const val NOTIF_GAGAL_ID = 43
 
         @Volatile
         var isRunning = false
@@ -413,6 +418,21 @@ class BotService : Service() {
             "posted" -> {
                 val tag = e.optString("tag")
                 updateNotif("Release $tag udah diposting ke channel")
+                cancelNotifGagal()
+            }
+
+            // Percobaan terakhir kirim release gagal (engine sudah lapor ke chat
+            // diri sendiri kalau socket-nya ada). Di sini: notifikasi yang nyaring.
+            "gagal_kirim" -> {
+                val tag = e.optString("tag")
+                val repo = e.optString("repo")
+                val ke = e.optInt("percobaan", 0)
+                val maks = e.optInt("maks", 3)
+                val err = e.optString("error").take(200)
+                notifGagal(
+                    "Gagal kirim $tag ($repo)",
+                    "$ke dari $maks percobaan gagal. Bot berhenti nyoba sampai kamu tekan \"Cek sekarang\".\n$err"
+                )
             }
 
             // Bot selesai bikin channel baru: simpan JID-nya biar nggak perlu
@@ -479,6 +499,40 @@ class BotService : Service() {
         )
         ch.description = "Status bot wa-release-bot (cek release GitHub)"
         nm.createNotificationChannel(ch)
+        val gagal = NotificationChannel(
+            CHANNEL_GAGAL_ID,
+            "Gagal kirim release",
+            NotificationManager.IMPORTANCE_HIGH
+        )
+        gagal.description = "Muncul kalau release gagal dikirim ke channel setelah percobaan terakhir"
+        nm.createNotificationChannel(gagal)
+    }
+
+    private fun notifGagal(judul: String, isi: String) {
+        try {
+            val buka = PendingIntent.getActivity(
+                this, 0, Intent(this, MainActivity::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val n = Notification.Builder(this, CHANNEL_GAGAL_ID)
+                .setSmallIcon(R.drawable.ic_notif)
+                .setContentTitle(judul)
+                .setContentText(isi)
+                .setStyle(Notification.BigTextStyle().bigText(isi))
+                .setContentIntent(buka)
+                .setAutoCancel(true)
+                .build()
+            getSystemService(NotificationManager::class.java).notify(NOTIF_GAGAL_ID, n)
+        } catch (_: Exception) {
+            // Izin POST_NOTIFICATIONS ditolak: log di kartu Log tetap ada.
+        }
+    }
+
+    private fun cancelNotifGagal() {
+        try {
+            getSystemService(NotificationManager::class.java).cancel(NOTIF_GAGAL_ID)
+        } catch (_: Exception) {
+        }
     }
 
     private fun buildNotif(text: String): Notification =

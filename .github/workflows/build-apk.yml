@@ -324,9 +324,24 @@ jobs:
 
       - name: Build APK (${{ steps.vars.outputs.task }})
         run: |
+          # Versi ikut TAG: v1.7.0 -> versionName 1.7.0, versionCode 10700
+          # (major*10000 + minor*100 + patch). Android cuma mau update kalau
+          # versionCode naik; 24 (rilis manual terakhir) -> 10700 aman, dan
+          # tag berikutnya otomatis lebih besar tanpa edit gradle. Build dari
+          # branch/PR memakai default gradle (dulu versionName-nya nama branch).
+          ARGS=()
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSI="${GITHUB_REF_NAME#v}"
+            ARGS+=("-PversionName=$VERSI")
+            if [[ "$VERSI" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+              KODE=$(( 10#${BASH_REMATCH[1]} * 10000 + 10#${BASH_REMATCH[2]} * 100 + 10#${BASH_REMATCH[3]} ))
+              ARGS+=("-PversionCode=$KODE")
+            fi
+          fi
+          echo "Argumen versi: ${ARGS[*]:-(default gradle)}"
           ./gradlew --no-daemon ${{ steps.vars.outputs.task }} \
             -Pabis="${{ env.ABIS }}" \
-            -PversionName="${GITHUB_REF_NAME#v}" \
+            "${ARGS[@]}" \
             --stacktrace
 
       - name: Rename + checksum

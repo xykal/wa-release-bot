@@ -24,8 +24,8 @@ Nggak ada update? 0% CPU, 0% data.
 <details>
 <summary><strong>English summary</strong></summary>
 
-WA Release Bot watches a GitHub repository and posts every new release to a WhatsApp
-channel (or group) from your own phone, no server needed. It runs a real Node.js 18
+WA Release Bot watches one or more GitHub repositories and posts every new release to a
+WhatsApp channel (or group) from your own phone, no server needed. It runs a real Node.js 18
 engine inside an Android app (nodejs-mobile) and only connects to WhatsApp for the few
 seconds it takes to post; between checks it sleeps. A CLI for Termux/PC shares the
 exact same engine. Release checks use conditional requests (ETag), so an unchanged
@@ -87,6 +87,8 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`): CLI meng-import modul `bot-
 - ✅ **Watchdog** — WorkManager + boot receiver: service ke-bunuh Android → nyala lagi
 - ✅ **UI status real-time** — log, tag terakhir, hitungan mundur, dialog QR
 - ✅ **Semua setting bisa diubah dari UI** — repo, interval, token, prerelease, dll.
+- ✅ **Banyak repo sekaligus** — isi kolom repo pakai koma (`a/x, b/y`); tiap repo punya baseline sendiri
+- ✅ **Notifikasi kalau gagal kirim** — percobaan ke-3 gagal → notifikasi Android + laporan ke chat diri sendiri
 - 🔒 **Zero secret di repo** — token cuma hidup di HP lo / GitHub Secrets
 
 ---
@@ -119,7 +121,7 @@ Detail lengkap: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
    Tautkan dengan nomor telepon saja** → ketik kodenya. (Biasanya WA juga ngirim
    notifikasi "masukkan kode" — tinggal tap.)
    Punya HP kedua? Boleh juga pakai **Pakai QR**.
-3. Kartu **Rilis GitHub → Channel**: isi repo (`owner/nama-repo`) + link channel
+3. Kartu **Rilis GitHub → Channel**: isi repo (`owner/nama-repo`; boleh banyak, pisah koma) + link channel
    (belum punya? tekan **Bikin channel**) → **Simpan setting**
 4. Tekan **Mulai**
 5. Kartu **Batre & nyala otomatis**: tekan dua tombolnya (izin batre + Autostart).

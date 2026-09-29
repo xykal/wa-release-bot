@@ -23,6 +23,7 @@ import { MPEGDecoder } from 'mpg123-decoder';
 import { fetchLatestRelease } from './github.mjs';
 import { connectToWhatsApp, resolveChannel, sendText, kirimKeChannel as kirimWA, pakaiPertanyaan, statusSesi, hapusSesi, laporKeDiri } from './wa.mjs';
 import { putuskanRilis, pendingBerikut, MAKS_PERCOBAAN } from './rilis.mjs';
+import { daftarRepo, repoTidakValid, teksRepo, stateRepo, sinkronState, ringkasTag, pendingAktif } from './repo.mjs';
 import { bikinChannel, linkChannel, bacaTarget, JENIS } from './channel.mjs';
 import { normalisasiNomor } from './nomor.mjs';
 import {
@@ -200,7 +201,10 @@ async function main() {
   // Bot custom orang (worker_threads) — lihat hosting.mjs
   const hosting = buatHosting({ dataDir, log, kirim: (e) => bridge?.send(e) });
 
-  const repoAda = () => Boolean(cfg?.github?.repo);
+  // Bisa lebih dari satu repo ("a/x, b/y"); lihat repo.mjs.
+  const repos = () => daftarRepo(cfg?.github?.repo);
+  const repoAda = () => repos().length > 0;
+  if (cfg && sinkronState(state, repos())) saveState(); // pindahkan state era satu repo
   const grupAktif = () => Boolean(cfg?.grup?.aktif && cfg?.grup?.target);
   const laguAktif = () => Boolean(cfg?.lagu?.aktif);
 
@@ -212,16 +216,16 @@ async function main() {
       busy,
       waLinked: statusSesi(sessionDir) === 'siap',
       waConnected,
-      lastTag: state.lastTag,
+      lastTag: ringkasTag(state, repos()),
       lastPostedAt: state.lastPostedAt,
       postCount: state.postCount,
-      pendingTag: state.pending?.tag || null,
-      pendingPercobaan: state.pending?.percobaan || 0,
+      pendingTag: pendingAktif(state, repos())?.tag || null,
+      pendingPercobaan: pendingAktif(state, repos())?.percobaan || 0,
       lastCheckAt,
       nextCheckAt,
       channel: cfg?.whatsapp?.channel || null,
       channelName: state.channelName || null,
-      repo: cfg?.github?.repo || null,
+      repo: teksRepo(cfg?.github?.repo) || null,
       grupAktif: grupAktif(),
       grupNama: g.nama || null,
       grupDisetujui: g.disetujui || 0,
@@ -418,47 +422,59 @@ async function main() {
     emitStatus();
     const manual = source === 'manual';
     try {
-      log(`👀 Cek GitHub ${cfg.github.repo} ... (trigger: ${source})`);
-      const rel = await fetchLatestRelease(cfg.github.repo, {
-        token: cfg.github?.token || '',
-        includePrereleases: Boolean(cfg.github?.includePrereleases),
-        etag: state.rilisEtag || '',
-      });
-      if (!rel.notModified && rel.etag && rel.etag !== state.rilisEtag) {
-        state.rilisEtag = rel.etag;
-        saveState();
+      // Berurutan, bukan Promise.all: satu socket WA saja yang boleh hidup,
+      // dan repo yang error tidak boleh menggagalkan repo lain.
+      for (const repo of repos()) {
+        try {
+          await cekSatuRepo(repo, { source, manual });
+        } catch (e) {
+          log(`⚠️ Gagal cek ${repo}: ${e.message}`);
+        }
       }
-
-      const { aksi, alasan } = putuskanRilis({ state, rel, postOnFirstRun: Boolean(cfg.bot?.postOnFirstRun), manual });
-      switch (aksi) {
-        case 'tidur':
-          log(`😴 Nggak ada update (${alasan}). Bot tidur lagi.`);
-          return;
-        case 'baseline':
-          state.lastTag = rel.tag;
-          saveState();
-          log(`🌱 First run. Baseline dicatat: ${rel.tag}. Baru post kalau ada yang lebih baru.`);
-          return;
-        case 'rollback':
-          state.lastTag = rel.tag;
-          state.pending = null;
-          saveState();
-          log(`↩️ Release terbaru di GitHub sekarang ${rel.tag} (${alasan}) — dianggap rollback, nggak diumumkan.`);
-          return;
-        case 'lewati-gagal':
-          log(`⏭️ ${alasan}. Dilewati sampai lo tekan "Cek sekarang" (itu ngulang dari nol).`);
-          return;
-        default:
-          log(state.lastTag ? `🚀 ADA RELEASE BARU! ${alasan}` : `✨ ${alasan} → posting release yang sedang ada.`);
-          await postRelease(rel, { manual });
-      }
-    } catch (e) {
-      log(`⚠️ Gagal cek: ${e.message}`);
     } finally {
       busy = false;
       if (running) scheduleNext(intervalMs());
       else nextCheckAt = null;
       emitStatus();
+    }
+  }
+
+  async function cekSatuRepo(repo, { source, manual }) {
+    const st = stateRepo(state, repo);
+    const nama = repos().length > 1 ? `${repo}: ` : '';
+    log(`👀 Cek GitHub ${repo} ... (trigger: ${source})`);
+    const rel = await fetchLatestRelease(repo, {
+      token: cfg.github?.token || '',
+      includePrereleases: Boolean(cfg.github?.includePrereleases),
+      etag: st.rilisEtag || '',
+    });
+    if (!rel.notModified && rel.etag && rel.etag !== st.rilisEtag) {
+      st.rilisEtag = rel.etag;
+      saveState();
+    }
+
+    const { aksi, alasan } = putuskanRilis({ state: st, rel, postOnFirstRun: Boolean(cfg.bot?.postOnFirstRun), manual });
+    switch (aksi) {
+      case 'tidur':
+        log(`😴 ${nama}Nggak ada update (${alasan}). Bot tidur lagi.`);
+        return;
+      case 'baseline':
+        st.lastTag = rel.tag;
+        saveState();
+        log(`🌱 ${nama}First run. Baseline dicatat: ${rel.tag}. Baru post kalau ada yang lebih baru.`);
+        return;
+      case 'rollback':
+        st.lastTag = rel.tag;
+        st.pending = null;
+        saveState();
+        log(`↩️ ${nama}Release terbaru di GitHub sekarang ${rel.tag} (${alasan}) — dianggap rollback, nggak diumumkan.`);
+        return;
+      case 'lewati-gagal':
+        log(`⏭️ ${nama}${alasan}. Dilewati sampai lo tekan "Cek sekarang" (itu ngulang dari nol).`);
+        return;
+      default:
+        log(st.lastTag ? `🚀 ${nama}ADA RELEASE BARU! ${alasan}` : `✨ ${nama}${alasan} → posting release yang sedang ada.`);
+        await postRelease(repo, st, rel, { manual });
     }
   }
 
@@ -491,42 +507,51 @@ async function main() {
   }
   const ajak = (jid) => ({ ajakBalas: pakaiPertanyaan(jid, formatPertanyaan() ? 'pertanyaan' : 'teks') });
 
-  async function postRelease(rel, { manual = false } = {}) {
+  async function postRelease(repo, st, rel, { manual = false } = {}) {
     if (!cfg.whatsapp?.channel) {
       log('⚠️ Ada release baru tapi "Channel WA" masih kosong — nggak ada tujuan posting.');
       return;
     }
     // Write-ahead: kalau proses mati di tengah kirim, cek berikutnya tahu
     // percobaan ke berapa ini dan berhenti setelah MAKS_PERCOBAAN.
-    state.pending = pendingBerikut(state.pending, rel.tag, { manual });
+    st.pending = pendingBerikut(st.pending, rel.tag, { manual });
     saveState();
-    const ke = state.pending.percobaan;
-    if (ke > 1) log(`🔁 Kirim ${rel.tag} percobaan ke-${ke} dari ${MAKS_PERCOBAAN}.`);
-    await pakaiWA('posting', async () => {
-      const { sock, close } = await sambung();
-      try {
+    const ke = st.pending.percobaan;
+    if (ke > 1) log(`🔁 Kirim ${repo} ${rel.tag} percobaan ke-${ke} dari ${MAKS_PERCOBAAN}.`);
+    try {
+      await pakaiWA('posting', async () => {
+        const { sock, close } = await sambung();
         try {
-          const jid = await cariTarget(sock);
-          await kirimKeChannel(sock, jid, formatReleasePost(rel, cfg.github.repo, ajak(jid)));
-        } catch (e) {
-          // Percobaan terakhir gagal: channel tidak dapat pesan, tapi pemilik
-          // bot dikasih tahu lewat chat ke diri sendiri (socket masih ada).
-          if (ke >= MAKS_PERCOBAAN) {
-            await laporKeDiri(sock, formatLaporGagal({ tag: rel.tag, repo: cfg.github.repo, percobaan: ke, maks: MAKS_PERCOBAAN, error: e.message }), log);
+          try {
+            const jid = await cariTarget(sock);
+            await kirimKeChannel(sock, jid, formatReleasePost(rel, repo, ajak(jid)));
+          } catch (e) {
+            // Percobaan terakhir gagal: channel tidak dapat pesan, tapi pemilik
+            // bot dikasih tahu lewat chat ke diri sendiri (socket masih ada).
+            if (ke >= MAKS_PERCOBAAN) {
+              await laporKeDiri(sock, formatLaporGagal({ tag: rel.tag, repo, percobaan: ke, maks: MAKS_PERCOBAAN, error: e.message }), log);
+            }
+            throw e;
           }
-          throw e;
+          st.lastTag = rel.tag;
+          st.pending = null;
+          state.lastPostedAt = new Date().toISOString();
+          state.postCount = (state.postCount || 0) + 1;
+          saveState();
+          log(`✅ POSTINGAN TERKIRIM ke channel! (postingan ke-${state.postCount})`);
+          bridge.send({ type: 'posted', tag: rel.tag, repo, count: state.postCount });
+        } finally {
+          close();
         }
-        state.lastTag = rel.tag;
-        state.pending = null;
-        state.lastPostedAt = new Date().toISOString();
-        state.postCount = (state.postCount || 0) + 1;
-        saveState();
-        log(`✅ POSTINGAN TERKIRIM ke channel! (postingan ke-${state.postCount})`);
-        bridge.send({ type: 'posted', tag: rel.tag, count: state.postCount });
-      } finally {
-        close();
+      });
+    } catch (e) {
+      // Termasuk gagal nyambung WA (belum ada socket buat laporKeDiri):
+      // app tetap dapat notifikasi Android lewat BotService.
+      if (ke >= MAKS_PERCOBAAN) {
+        bridge.send({ type: 'gagal_kirim', tag: rel.tag, repo, percobaan: ke, maks: MAKS_PERCOBAAN, error: String(e?.message || e).slice(0, 300) });
       }
-    });
+      throw e;
+    }
   }
 
   // ----------------------------- penjaga grup ------------------------------
@@ -808,21 +833,21 @@ async function main() {
           if (cfg?.whatsapp?.channel) {
             jid = await cariTarget(sock);
             if (cfg.bot?.testMessageOnSetup !== false) {
-              await kirimKeChannel(sock, jid, formatTestMessage(cfg.github?.repo || '-', ajak(jid)));
+              await kirimKeChannel(sock, jid, formatTestMessage(teksRepo(cfg.github?.repo) || '-', ajak(jid)));
               log('📨 Test message dikirim ke channel. Cek channel-nya!');
             }
           }
-          if (repoAda()) {
-            const rel = await fetchLatestRelease(cfg.github.repo, {
+          for (const repo of repos()) {
+            const st = stateRepo(state, repo);
+            if (st.lastTag) continue; // baseline lama tetap dipakai
+            const rel = await fetchLatestRelease(repo, {
               token: cfg.github?.token || '',
               includePrereleases: Boolean(cfg.github?.includePrereleases),
             });
-            if (!state.lastTag) {
-              state.lastTag = rel.tag;
-              state.rilisEtag = rel.etag || null;
-              saveState();
-              log(`🌱 Baseline release dicatat: ${rel.tag}`);
-            }
+            st.lastTag = rel.tag;
+            st.rilisEtag = rel.etag || null;
+            saveState();
+            log(`🌱 Baseline release dicatat: ${repo} ${rel.tag}`);
           }
           if (grupAktif()) await jagaGrup(sock, 'setup');
           bridge.send({ type: 'setup_done', jid });
@@ -892,7 +917,7 @@ async function main() {
       await pakaiWA('bikin-channel', async () => {
         const { sock, close } = await sambung();
         try {
-          const repo = cfg.github?.repo || 'bot';
+          const repo = repos()[0] || 'bot';
           const nama = (namaMinta && String(namaMinta).trim()) || `Release ${repo}`;
           const meta = await bikinChannel(sock, nama, `Info release dari ${repo} — dijaga sama wa-release-bot.`);
           const link = linkChannel(meta);
@@ -931,7 +956,7 @@ async function main() {
         const { sock, close } = await sambung();
         try {
           const jid = await cariTarget(sock);
-          await kirimKeChannel(sock, jid, formatTestMessage(cfg.github?.repo || '-', ajak(jid)));
+          await kirimKeChannel(sock, jid, formatTestMessage(teksRepo(cfg.github?.repo) || '-', ajak(jid)));
           log(`✅ Test message terkirim ke ${jid}`);
         } finally {
           close();
@@ -956,9 +981,14 @@ async function main() {
         break;
 
       case 'configure': {
+        const repoSalah = repoTidakValid(cmd.repo);
+        if (repoSalah.length) {
+          bridge.send({ type: 'cmd_error', msg: `Repo nggak valid: ${repoSalah.join(', ')}. Formatnya pemilik/nama-repo; pisahkan pakai koma kalau lebih dari satu.` });
+          return;
+        }
         const next = {
           github: {
-            repo: String(cmd.repo || '').trim(),
+            repo: teksRepo(cmd.repo),
             token: cmd.token || '',
             includePrereleases: Boolean(cmd.includePrereleases),
           },
@@ -996,13 +1026,12 @@ async function main() {
           return;
         }
         if (cfg?.whatsapp?.channel !== next.whatsapp.channel) state.channelJid = null;
-        if (cfg?.github?.repo !== next.github.repo || Boolean(cfg?.github?.includePrereleases) !== next.github.includePrereleases) {
-          // Repo lain = baseline dari nol. Tanpa ini, tag repo lama dibandingkan
-          // dengan repo baru dan release yang sudah ada langsung "diumumkan".
-          state.lastTag = null;
-          state.rilisEtag = null;
-          state.pending = null;
-        }
+        // Repo yang dihapus dibuang dari state (repo baru otomatis mulai dari
+        // nol); includePrereleases berubah = semua baseline dari nol, karena
+        // tag stable dan prerelease tidak sebanding.
+        sinkronState(state, daftarRepo(next.github.repo), {
+          reset: Boolean(cfg?.github?.includePrereleases) !== next.github.includePrereleases,
+        });
         cfg = next;
         fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 2));
         saveState();
@@ -1113,7 +1142,7 @@ async function main() {
   try { hosting.init(); } catch (e) { log('⚠️ Hosting gagal init: ' + e.message); }
 
   if (cfg) {
-    log('Config terbaca: repo=' + (cfg.github?.repo || '-') + ', channel=' + (cfg.whatsapp?.channel || '-') +
+    log('Config terbaca: repo=' + (teksRepo(cfg.github?.repo) || '-') + ', channel=' + (cfg.whatsapp?.channel || '-') +
       (cfg.grup?.aktif ? ', penjaga grup nyala' : ''));
     if (cfg._autoStart) startEngine();
   }

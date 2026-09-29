@@ -9,8 +9,16 @@ const HEADER = {
   'Content-Security-Policy': "default-src 'self'; img-src 'self' data:; font-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self' https://api.github.com; frame-ancestors 'none'; base-uri 'self'; form-action 'none'",
 };
 
+// Domain kanonik; alamat workers.dev tetap hidup sebagai cadangan tapi diarahkan ke sini.
+const HOST = 'wabot.projectkal.my.id';
+
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.hostname.endsWith('.workers.dev')) {
+      url.hostname = HOST;
+      return Response.redirect(url.toString(), 301);
+    }
     const res = await env.ASSETS.fetch(request);
     const h = new Headers(res.headers);
     for (const [k, v] of Object.entries(HEADER)) h.set(k, v);

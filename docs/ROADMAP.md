@@ -7,7 +7,7 @@ Semua item di sini menunggu "gas" dari kall kecuali ditandai *sedang jalan*.
 
 Keputusan kall (2026-09-29): versi rilis publik pertama adalah **1.0.0**; versi internal
 1.7.x/1.8.x tetap ada sebagai release **draft** (hanya kolaborator yang lihat, aset tidak bisa
-diunduh publik). Situs: <https://wa-release-bot-web.dikanjut.workers.dev> — halaman unduh
+diunduh publik). Situs: <https://wabot.projectkal.my.id> — halaman unduh
 menampilkan hitung mundur sampai `LAUNCH_ISO` (`web/js/teks.js`), lalu otomatis membaca
 `releases/latest` (draft tidak ikut) dan mengisi kartu APK.
 

@@ -13,7 +13,9 @@ dependensi runtime tambahan; cuma butuh paket Python `blake3`):
      belum ada di server (file yang tidak berubah tidak diunggah ulang);
   3. POST /workers/assets/upload?base64=true per bucket (Bearer jwt) -> jwt penyelesaian;
   4. PUT /workers/scripts/<nama> multipart: metadata (assets.jwt, binding ASSETS) + worker.js;
-  5. POST /workers/scripts/<nama>/subdomain {enabled: true} -> <nama>.<akun>.workers.dev.
+  5. POST /workers/scripts/<nama>/subdomain {enabled: true} -> <nama>.<akun>.workers.dev;
+  6. PUT /workers/domains: pasang custom domain CF_WEB_DOMAIN (default wabot.projectkal.my.id,
+     zone dicari otomatis; DNS + sertifikat dibuat Cloudflare). Kosongkan env untuk melewati.
 --cek: hanya cetak manifest (tanpa token, tanpa jaringan).
 """
 import base64
@@ -112,6 +114,24 @@ def main():
     r = api("POST", f"{acc}/workers/scripts/{NAMA}/subdomain", json.dumps({"enabled": True, "previews_enabled": False}).encode())
     sub = api("GET", f"{acc}/workers/subdomain")["result"]["subdomain"]
     print(f"workers.dev: {r['success']} -> https://{NAMA}.{sub}.workers.dev")
+    pasang_domain(acc, os.environ.get("CF_WEB_DOMAIN", "wabot.projectkal.my.id"))
+
+
+def pasang_domain(acc, host):
+    """Custom domain Worker (idempoten): cari zone dari nama host, lalu PUT workers/domains."""
+    if not host:
+        return
+    label = host.split(".")
+    zone = None
+    for i in range(1, len(label) - 1):  # wabot.projectkal.my.id -> projectkal.my.id -> my.id
+        hasil = api("GET", "/zones?name=" + ".".join(label[i:]))["result"]
+        if hasil:
+            zone = hasil[0]
+            break
+    if not zone:
+        sys.exit(f"zone untuk {host} tidak ditemukan di akun ini")
+    r = api("PUT", f"{acc}/workers/domains", json.dumps({"hostname": host, "service": NAMA, "environment": "production", "zone_id": zone["id"]}).encode())
+    print(f"domain: {r['success']} -> https://{host}")
 
 
 if __name__ == "__main__":

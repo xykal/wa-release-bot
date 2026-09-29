@@ -107,7 +107,7 @@ jobs:
       - name: Verifikasi (header keamanan + halaman unduh)
         if: env.CF_API_TOKEN != ''
         run: |
-          U=https://wa-release-bot-web.dikanjut.workers.dev
+          U=https://wabot.projectkal.my.id
           sleep 5
           curl -sSfI "$U/" | grep -qi 'content-security-policy'
           curl -sSf "$U/unduh/" | grep -q 'id="tirai"'

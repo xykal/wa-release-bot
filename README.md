@@ -97,9 +97,9 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`): CLI meng-import modul `bot-
 
 ### Instal
 
-**Cara cepat** — unduh APK dari [**halaman unduh**](https://wa-release-bot-web.dikanjut.workers.dev/unduh/)
+**Cara cepat** — unduh APK dari [**halaman unduh**](https://wabot.projectkal.my.id/unduh/)
 (atau [Releases](../../releases)), pasang di HP (aktifkan *Install unknown apps*), lanjut ke
-[Pakai Setelah Install](#-pakai-setelah-install). Situs: <https://wa-release-bot-web.dikanjut.workers.dev>.
+[Pakai Setelah Install](#-pakai-setelah-install). Situs: <https://wabot.projectkal.my.id>.
 
 **Build sendiri** — lihat [🏗️ Build](#%EF%B8%8F-build-dari-source).
 

@@ -59,4 +59,5 @@ Next:
   supaya tidak bisa diunduh publik, hosting Cloudflare. Dikerjakan: v1.7.0/v1.8.0 -> draft,
   73 artifact Actions dihapus, `web/` (statis, id/en, CSP ketat, font Archivo subset) tayang di
   Workers Static Assets lewat `scripts-dev/deploy_web.py`, workflow `deploy-web.yml`, rencana
-  launching di ROADMAP. Belum: layar Repo, M10, M9, PR launching 1.0.0 (H-1).
+  launching di ROADMAP. kall: logo web harus logo asli app (bulan sabit) -> diganti; domain
+  `wabot.projectkal.my.id` dipasang (workers/domains). Belum: layar Repo, M10, M9, PR launching 1.0.0.

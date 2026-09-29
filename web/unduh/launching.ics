@@ -9,8 +9,8 @@ DTSTAMP:20260929T170000Z
 DTSTART:20261009T120000Z
 DTEND:20261009T130000Z
 SUMMARY:Launching WA Release Bot v1.0.0
-DESCRIPTION:APK bisa diunduh di halaman unduh. Kode: https://github.com/xykal/wa-release-bot
-URL:https://github.com/xykal/wa-release-bot
+DESCRIPTION:APK: https://wabot.projectkal.my.id/unduh/ - Kode: https://github.com/xykal/wa-release-bot
+URL:https://wabot.projectkal.my.id/unduh/
 BEGIN:VALARM
 TRIGGER:-PT1H
 ACTION:DISPLAY

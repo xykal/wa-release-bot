@@ -6,6 +6,8 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-09-29
+
 ### Ditambah
 - **Multi repo**: kolom "Repo GitHub" (app) dan `github.repo` (CLI) menerima
   lebih dari satu repo dipisah koma/baris baru (URL `https://github.com/...`
@@ -28,6 +30,9 @@ Semua perubahan penting proyek ini. Format mengikuti
 ## [1.7.0] — 2026-09-29
 
 Semua perubahan lewat CI (Build APK, Code quality, CodeQL, Security).
+Catatan: release dan tag v1.1.1 sampai v1.6.7 dihapus 2026-09-29 atas permintaan
+kall (disisakan v1.7.0 sebagai stable dan rilis terbaru); link compare versi
+lama di bawah tidak berlaku lagi.
 
 ### Ditambah
 - `bot-js/src/rilis.mjs`: keputusan rilis pakai **semver** (`putuskanRilis`).
@@ -796,7 +801,8 @@ kritikal di dependency.
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.7.0...HEAD
+[Unreleased]: ../../compare/v1.8.0...HEAD
+[1.8.0]: ../../compare/v1.7.0...v1.8.0
 [1.7.0]: ../../compare/v1.6.7...v1.7.0
 [1.6.7]: ../../compare/v1.6.6...v1.6.7
 [1.6.6]: ../../compare/v1.6.5...v1.6.6

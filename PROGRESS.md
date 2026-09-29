@@ -51,3 +51,6 @@ Next:
   `rekaman-channel.json`). PR `feat/multi-repo`: `repo.mjs` (daftar repo + state per repo + migrasi),
   bot.mjs/cli.mjs cek semua repo berurutan, notifikasi Android 3x gagal (BotService), versionCode
   dari tag di CI, tes unit + integrasi CLI baru. Belum: M10 pecah modul, M9 i18n, Eps 2 versi pendek.
+- kall: "merge final semua, rilis versi terbaru, hapus release lama sisakan terbaru + stable"
+  (dipilih: stable = v1.7.0; release + tag lama dihapus). PR #12 di-merge, bump 1.8.0 (versionCode
+  default 10800 ikut rumus CI), tag `v1.8.0` -> release otomatis. Eps 2 potongan pendek 1:13 jadi.

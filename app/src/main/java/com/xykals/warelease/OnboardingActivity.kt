@@ -28,28 +28,30 @@ import kotlin.math.abs
  */
 class OnboardingActivity : AppCompatActivity() {
 
-    private data class Halaman(val gambar: Int, val judul: String, val isi: String)
+    // judul/isi berupa id resource: properti ini diinisialisasi sebelum onCreate,
+    // getString() belum boleh dipanggil di sini.
+    private data class Halaman(val gambar: Int, val judul: Int, val isi: Int)
 
     private val halaman = listOf(
         Halaman(
             R.drawable.ilus_rilis,
-            "Rilis baru, langsung ke channel",
-            "Tiap ada rilis baru di GitHub, bot ngabarin channel WhatsApp lo otomatis. Lo tinggal fokus ngoding."
+            R.string.k_ob_rilis_judul,
+            R.string.k_ob_rilis_isi
         ),
         Halaman(
             R.drawable.ilus_grup,
-            "Grup aman tanpa ribet",
-            "Yang minta join di-approve otomatis. Yang dulu cabut atau dikick? Ditolak sama bot, lo nggak usah jagain."
+            R.string.k_ob_grup_judul,
+            R.string.k_ob_grup_isi
         ),
         Halaman(
             R.drawable.ilus_lagu,
-            "Lagu lama, pas lagi mood",
-            "Sesekali bot ngirim potongan lagu jadul plus kata-kata kece ke channel. Nggak spam — cuma pas lagi mood."
+            R.string.k_ob_lagu_judul,
+            R.string.k_ob_lagu_isi
         ),
         Halaman(
             R.drawable.ilus_hosting,
-            "HP lo jadi hosting bot",
-            "Punya project bot sendiri? Upload ZIP-nya, app ini yang jalanin. Log, input, restart — semua dari HP."
+            R.string.k_ob_hosting_judul,
+            R.string.k_ob_hosting_isi
         ),
     )
 
@@ -111,7 +113,7 @@ class OnboardingActivity : AppCompatActivity() {
         }
 
         btnLewati = TextView(this).apply {
-            text = "Lewati"
+            text = getString(R.string.k_lewati)
             setTextColor(warna(R.color.wr_teks2))
             textSize = 14f
             setPadding(dp(14), dp(10), dp(14), dp(10))
@@ -229,9 +231,9 @@ class OnboardingActivity : AppCompatActivity() {
         posisi = i
         val h = halaman[i]
         ivIlus.setImageResource(h.gambar)
-        tvJudul.text = h.judul
-        tvIsi.text = h.isi
-        btnLanjut.text = if (i == halaman.lastIndex) "Mulai sekarang" else "Lanjut"
+        tvJudul.text = getString(h.judul)
+        tvIsi.text = getString(h.isi)
+        btnLanjut.text = if (i == halaman.lastIndex) getString(R.string.k_mulai_sekarang) else getString(R.string.k_lanjut)
         btnLewati.animate().alpha(if (i == halaman.lastIndex) 0f else 1f).setDuration(200).start()
         btnLewati.isEnabled = i != halaman.lastIndex
         melayang.setParalaks(i.toFloat())

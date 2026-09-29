@@ -95,7 +95,7 @@ class BotService : Service() {
         LogRecorder.init(this)
         LogRecorder.tulis("Service", "BotService.onCreate — folder log: ${LogRecorder.dir?.absolutePath}")
         createNotifChannel()
-        startForeground(NOTIF_ID, buildNotif("Service aktif — bot siap"))
+        startForeground(NOTIF_ID, buildNotif(getString(R.string.k_service_aktif_bot_siap)))
 
         dataDir = File(filesDir, "wa_release_bot").apply { mkdirs() }
 
@@ -271,8 +271,7 @@ class BotService : Service() {
                 if (!tmp.renameTo(dest)) tmp.copyTo(dest, overwrite = true)
                 stampFile.writeText(stamp)
                 appendLog(
-                    "Engine (bundle.cjs) disalin dari APK — ${dest.length() / 1024} KB, " +
-                            "versi app ${BuildConfig.VERSION_NAME}."
+                    "Engine (bundle.cjs) disalin dari APK — ${dest.length() / 1024} KB, versi app ${BuildConfig.VERSION_NAME}."
                 )
             }
             true
@@ -404,7 +403,7 @@ class BotService : Service() {
                     qr = null
                     pairingCode = null
                 }
-                updateNotif("WhatsApp tertaut — bot siap")
+                updateNotif(getString(R.string.k_whatsapp_tertaut_bot_siap))
             }
 
             "setup_error" -> BotBus.publish {
@@ -417,7 +416,7 @@ class BotService : Service() {
 
             "posted" -> {
                 val tag = e.optString("tag")
-                updateNotif("Release $tag udah diposting ke channel")
+                updateNotif(getString(R.string.k_release_udah_diposting_ke_channel, tag))
                 cancelNotifGagal()
             }
 
@@ -430,8 +429,8 @@ class BotService : Service() {
                 val maks = e.optInt("maks", 3)
                 val err = e.optString("error").take(200)
                 notifGagal(
-                    "Gagal kirim $tag ($repo)",
-                    "$ke dari $maks percobaan gagal. Bot berhenti nyoba sampai kamu tekan \"Cek sekarang\".\n$err"
+                    getString(R.string.k_gagal_kirim, tag, repo),
+                    getString(R.string.k_dari_percobaan_gagal_bot_berhenti, ke, maks, err)
                 )
             }
 
@@ -494,17 +493,17 @@ class BotService : Service() {
         val nm = getSystemService(NotificationManager::class.java)
         val ch = NotificationChannel(
             CHANNEL_ID,
-            "Layanan Bot",
+            getString(R.string.k_layanan_bot),
             NotificationManager.IMPORTANCE_LOW
         )
-        ch.description = "Status bot wa-release-bot (cek release GitHub)"
+        ch.description = getString(R.string.k_status_bot_wa_release_bot)
         nm.createNotificationChannel(ch)
         val gagal = NotificationChannel(
             CHANNEL_GAGAL_ID,
-            "Gagal kirim release",
+            getString(R.string.k_gagal_kirim_release),
             NotificationManager.IMPORTANCE_HIGH
         )
-        gagal.description = "Muncul kalau release gagal dikirim ke channel setelah percobaan terakhir"
+        gagal.description = getString(R.string.k_muncul_kalau_release_gagal_dikirim)
         nm.createNotificationChannel(gagal)
     }
 

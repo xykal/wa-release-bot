@@ -6,6 +6,15 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+### Ditambah
+- **Situs**: landing page + halaman unduh (`web/`, statis, dua bahasa id/en, tanpa CDN)
+  di Cloudflare Workers Static Assets. Sebelum launching halaman unduh menampilkan
+  hitung mundur; setelahnya kartu APK terisi otomatis dari `releases/latest`.
+  Deploy: `scripts-dev/deploy_web.py` (tanpa wrangler) + workflow `deploy-web.yml`.
+
+### Diubah
+- Release v1.7.0 dan v1.8.0 jadi **draft** (tidak publik) sampai launching 1.0.0.
+
 ## [1.8.0] — 2026-09-29
 
 ### Ditambah

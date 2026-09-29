@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WA Release Bot: rilis GitHub ke channel WhatsApp, dari HP sendiri</title>
+<meta name="description" content="Bot WhatsApp yang jalan dari HP Android kamu: ngumumin rilis GitHub ke channel, jagain grup, kirim lagu harian. Tanpa server, tanpa Termux.">
+<meta name="theme-color" content="#0b141a">
+<meta property="og:title" content="WA Release Bot">
+<meta property="og:description" content="Rilis GitHub langsung ke channel WhatsApp. Tanpa server.">
+<meta property="og:type" content="website">
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="stylesheet" href="/css/dasar.css">
+<link rel="stylesheet" href="/css/bagian.css">
+</head>
+<body>
+<a class="lompat" href="#utama">Langsung ke isi</a>
+<header class="nav">
+  <a class="nav-logo" href="/"><img src="/img/xyverse_mark.webp" alt="" width="30" height="30"><span>WA Release Bot</span></a>
+  <nav class="nav-tautan" aria-label="Navigasi">
+    <a href="#fitur" data-i18n="nav_fitur">Fitur</a>
+    <a href="#cara" data-i18n="nav_cara">Cara kerja</a>
+    <a href="#faq" data-i18n="nav_faq">FAQ</a>
+    <a href="https://github.com/xykal/wa-release-bot" rel="noopener" data-i18n="nav_github">GitHub</a>
+  </nav>
+  <div class="nav-aksi">
+    <button class="tombol-bahasa" type="button" id="tombolBahasa" aria-label="Switch language">EN</button>
+    <a class="tombol tombol-kecil" href="/unduh/" data-i18n="nav_unduh">Unduh APK</a>
+  </div>
+</header>
+
+<main id="utama">
+  <section class="hero">
+    <div class="hero-teks">
+      <p class="label" data-i18n="hero_label">Bot WhatsApp yang jalan dari HP Android kamu sendiri</p>
+      <h1 data-i18n="hero_judul">Rilis GitHub langsung ke channel WhatsApp. Tanpa server.</h1>
+      <p class="hero-sub" data-i18n="hero_sub">WA Release Bot ngumumin tiap release baru ke channel atau grup WA, jagain permintaan gabung grup, dan ngirim lagu harian biar channel nggak sepi. Semuanya dari satu APK, nggak perlu VPS, laptop, atau Termux.</p>
+      <div class="hero-cta">
+        <a class="tombol" href="/unduh/" data-i18n="hero_cta">Unduh APK</a>
+        <a class="tombol tombol-garis" href="https://github.com/xykal/wa-release-bot" rel="noopener" data-i18n="hero_cta2">Lihat kode di GitHub</a>
+      </div>
+      <ul class="hero-poin">
+        <li data-i18n="hero_poin1">Node.js 18 beneran di dalam APK</li>
+        <li data-i18n="hero_poin2">WhatsApp cuma nyambung pas mau kirim</li>
+        <li data-i18n="hero_poin3">Token dan sesi tetap di HP kamu</li>
+      </ul>
+    </div>
+    <div class="hero-hp muncul">
+      <img class="hp hp-utama" src="/img/hp-beranda.webp" alt="Layar beranda WA Release Bot" width="560" height="928" fetchpriority="high">
+      <img class="hp hp-belakang" src="/img/hp-rilis.webp" alt="" width="560" height="928" aria-hidden="true">
+    </div>
+  </section>
+
+  <section class="bagian" id="masalah">
+    <h2 data-i18n="masalah_judul">Kenal sama yang ini?</h2>
+    <div class="grid tiga">
+      <article class="kartu muncul"><img src="/img/ilus_grup.webp" alt="" width="72" height="72"><h3 data-i18n="masalah1_j">Grup kemasukan akun spam jam dua pagi</h3><p data-i18n="masalah1_i">Penjaga grup nyaring permintaan gabung satu-satu. Yang dulu udah keluar atau pernah dikeluarin, ditolak otomatis.</p></article>
+      <article class="kartu muncul"><img src="/img/ilus_lagu.webp" alt="" width="72" height="72"><h3 data-i18n="masalah2_j">Channel sepi kayak kuburan</h3><p data-i18n="masalah2_i">Tiap hari bot ngirim potongan lagu 60 detik sebagai voice note, lengkap dengan caption yang dibikin AI.</p></article>
+      <article class="kartu muncul"><img src="/img/ilus_rilis.webp" alt="" width="72" height="72"><h3 data-i18n="masalah3_j">Rilis aplikasi lupa diumumin</h3><p data-i18n="masalah3_i">Begitu ada tag baru di GitHub, bot posting: apa yang baru, file yang bisa diunduh, sampai ukurannya.</p></article>
+    </div>
+  </section>
+
+  <section class="bagian" id="fitur">
+    <h2 data-i18n="fitur_judul">Fitur</h2>
+    <p class="sub" data-i18n="fitur_sub">Semua bisa diatur dari layar app. Nggak ada file config yang harus diedit.</p>
+    <div class="grid tiga">
+      <article class="kartu muncul"><span class="ikon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12l5 5L20 6"/></svg></span><h3 data-i18n="f1_j">Rilis ke channel</h3><p data-i18n="f1_i">Cek release tiap 15 menit (bisa diubah), pakai ETag jadi repo yang belum berubah nggak makan kuota API. Multi repo, tiap repo baseline sendiri.</p></article>
+      <article class="kartu muncul"><span class="ikon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg></span><h3 data-i18n="f2_j">Penjaga grup</h3><p data-i18n="f2_i">Auto-approve permintaan gabung, tolak yang pernah keluar atau dikeluarin, daftar hitam manual.</p></article>
+      <article class="kartu muncul"><span class="ikon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg></span><h3 data-i18n="f3_j">Lagu mood harian</h3><p data-i18n="f3_i">148 lagu plus yang lagi tren, dikirim sebagai voice note dengan caption 11 gaya: galau, motivasi, ayat, sampai nyindir.</p></article>
+      <article class="kartu muncul"><span class="ikon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 8l9-4 9 4-9 4z"/><path d="M3 8v8l9 4 9-4V8"/><path d="M12 12v8"/></svg></span><h3 data-i18n="f4_j">Hosting bot custom</h3><p data-i18n="f4_i">Punya bot Node.js kecil sendiri? Unggah ZIP-nya, jalan di dalam app yang sama.</p></article>
+      <article class="kartu muncul"><span class="ikon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4z"/><path d="M10 21h4"/></svg></span><h3 data-i18n="f5_j">Notifikasi kalau gagal</h3><p data-i18n="f5_i">Kirim gagal tiga kali berturut-turut: notifikasi Android plus laporan ke chat kamu sendiri. Nggak ada yang hilang diam-diam.</p></article>
+      <article class="kartu muncul"><span class="ikon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></svg></span><h3 data-i18n="f6_j">Tautkan sekali seumur hidup</h3><p data-i18n="f6_i">Pairing code 8 huruf tanpa HP kedua, atau QR. Sesi disimpan terenkripsi di HP.</p></article>
+    </div>
+  </section>
+
+  <section class="bagian" id="cara">
+    <h2 data-i18n="cara_judul">Kok bisa tanpa server?</h2>
+    <p class="sub" data-i18n="cara_sub">Yang dipakai di dalam APK, apa adanya.</p>
+    <div class="cara">
+      <ol class="tumpukan">
+        <li class="muncul"><b data-i18n="cara1_j">Kotlin</b><span data-i18n="cara1_i">Service Android di foreground, watchdog WorkManager, dan boot receiver. Kalau Android bunuh service-nya, dia nyala lagi.</span></li>
+        <li class="muncul"><b data-i18n="cara2_j">Node.js 18 (nodejs-mobile)</b><span data-i18n="cara2_i">Engine bot ditulis JavaScript dan jalan di Node beneran di dalam APK. Kode yang sama dipakai versi CLI buat Termux/PC.</span></li>
+        <li class="muncul"><b data-i18n="cara3_j">Baileys</b><span data-i18n="cara3_i">Protokol WhatsApp Web multi-device. Nyambung cuma beberapa detik waktu posting, sisanya tidur.</span></li>
+        <li class="muncul"><b data-i18n="cara4_j">Cloudflare Worker + AI</b><span data-i18n="cara4_i">Caption lagu dibikin di Worker (model Groq) dengan batas harian per perangkat. Token AI nggak pernah ada di HP.</span></li>
+      </ol>
+      <div class="cara-hp muncul">
+        <img class="hp" src="/img/hp-stack.webp" alt="Diagram isi APK: Kotlin, Node.js, Baileys, WhatsApp" width="560" height="928" loading="lazy">
+        <img class="hp" src="/img/hp-kerja.webp" alt="Siklus 15 menit bot" width="560" height="928" loading="lazy">
+      </div>
+    </div>
+    <div class="siklus muncul">
+      <h3 data-i18n="siklus_judul">Satu siklus, 15 menit</h3>
+      <ol>
+        <li data-i18n="siklus1">Bangun</li><li data-i18n="siklus2">Cek rilis GitHub</li><li data-i18n="siklus3">Cek permintaan gabung</li><li data-i18n="siklus4">Kirim lagu harian (kalau jadwalnya)</li><li data-i18n="siklus5">Tidur lagi</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="bagian" id="galeri">
+    <h2 data-i18n="galeri_judul">Tampilannya</h2>
+    <p class="sub" data-i18n="galeri_sub">Ilustrasi dari layar app, bukan tangkapan layar dari HP orang.</p>
+    <div class="galeri">
+      <figure><img class="hp" src="/img/hp-beranda.webp" alt="" width="560" height="928" loading="lazy"><figcaption data-i18n="g_beranda">Beranda</figcaption></figure>
+      <figure><img class="hp" src="/img/hp-rilis.webp" alt="" width="560" height="928" loading="lazy"><figcaption data-i18n="g_rilis">Post rilis</figcaption></figure>
+      <figure><img class="hp" src="/img/hp-grup.webp" alt="" width="560" height="928" loading="lazy"><figcaption data-i18n="g_grup">Penjaga grup</figcaption></figure>
+      <figure><img class="hp" src="/img/hp-lagu.webp" alt="" width="560" height="928" loading="lazy"><figcaption data-i18n="g_lagu">Lagu mood</figcaption></figure>
+      <figure><img class="hp" src="/img/hp-caption.webp" alt="" width="560" height="928" loading="lazy"><figcaption data-i18n="g_caption">Caption AI</figcaption></figure>
+      <figure><img class="hp" src="/img/hp-lapor.webp" alt="" width="560" height="928" loading="lazy"><figcaption data-i18n="g_lapor">Status bot</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="bagian" id="aman">
+    <h2 data-i18n="aman_judul">Privasi dan keamanan</h2>
+    <p class="sub" data-i18n="aman_sub">Botnya di HP kamu, datanya juga.</p>
+    <div class="grid dua">
+      <article class="kartu muncul"><h3 data-i18n="aman1_j">Nggak ada server tengah</h3><p data-i18n="aman1_i">HP kamu ngobrol langsung ke GitHub dan WhatsApp. Nggak ada akun, nggak ada dashboard, nggak ada pihak ketiga yang lihat pesan.</p></article>
+      <article class="kartu muncul"><h3 data-i18n="aman2_j">Token tetap di HP</h3><p data-i18n="aman2_i">Token GitHub (opsional, buat repo privat) dan sesi WA disimpan di penyimpanan privat app.</p></article>
+      <article class="kartu muncul"><h3 data-i18n="aman3_j">Kode bisa dilihat</h3><p data-i18n="aman3_i">Source-available di GitHub: CI publik, CodeQL, audit dependensi, APK dibangun otomatis dari tag dengan checksum SHA-256.</p></article>
+      <article class="kartu muncul"><h3 data-i18n="aman4_j">Lisensi pemakaian pribadi</h3><p data-i18n="aman4_i">Boleh dipakai dan dipelajari. Nggak boleh dijual atau disebar ulang tanpa izin.</p></article>
+    </div>
+  </section>
+
+  <section class="bagian" id="faq">
+    <h2 data-i18n="faq_judul">Pertanyaan yang sering muncul</h2>
+    <div class="faq">
+      <details><summary data-i18n="q1">Perlu root atau Termux?</summary><p data-i18n="a1">Nggak dua-duanya. Pasang APK, tautkan WA, isi repo dan channel, tekan Mulai.</p></details>
+      <details><summary data-i18n="q2">HP-nya harus nyala terus?</summary><p data-i18n="a2">Iya, ini bot yang jalan dari HP. Paling cocok buat HP nganggur yang dicolok charger. Konsumsi baterainya kecil karena WA cuma nyambung waktu ada yang mau dikirim.</p></details>
+      <details><summary data-i18n="q3">Nomor WA-nya kena banned nggak?</summary><p data-i18n="a3">Bot cuma ngirim ke channel atau grup milik kamu sendiri, dengan jeda wajar, bukan broadcast ke orang. Tetap pakai nomor khusus bot kalau mau lebih aman.</p></details>
+      <details><summary data-i18n="q4">Bisa lebih dari satu repo?</summary><p data-i18n="a4">Bisa. Isi kolom repo pakai koma, tiap repo dicek dan diumumkan terpisah.</p></details>
+      <details><summary data-i18n="q5">Repo privat?</summary><p data-i18n="a5">Bisa, isi token GitHub dengan scope repo di setelan. Tokennya nggak pernah keluar dari HP.</p></details>
+      <details><summary data-i18n="q6">Android versi berapa?</summary><p data-i18n="a6">Android 8.0 (API 26) ke atas, arm64 atau armeabi-v7a. Ada APK universal kalau nggak yakin.</p></details>
+    </div>
+  </section>
+
+  <section class="bagian ajakan" id="unduh">
+    <div class="ajakan-kotak muncul">
+      <img src="/img/xyverse_mark.webp" alt="" width="56" height="56">
+      <h2 data-i18n="unduh_judul">Unduh APK</h2>
+      <p data-i18n="unduh_sub">Dibangun otomatis di GitHub Actions dari tag rilis. Cocokkan SHA-256 sebelum pasang.</p>
+      <a class="tombol tombol-besar" href="/unduh/" data-i18n="hero_cta">Unduh APK</a>
+    </div>
+  </section>
+</main>
+
+<footer class="kaki">
+  <img src="/img/xyverse_logo.webp" alt="XyVerse" width="160" height="36">
+  <p><span data-i18n="footer_built">Built by xykal</span> &mdash; <span data-brand></span></p>
+  <p class="kaki-tautan">
+    <a href="https://github.com/xykal/wa-release-bot" rel="noopener">GitHub</a>
+    <a href="https://github.com/xykal/wa-release-bot/blob/main/LICENSE" rel="noopener" data-i18n="footer_lisensi">Lisensi pemakaian pribadi</a>
+    <a href="https://www.tiktok.com/@xykal" rel="noopener">TikTok @xykal</a>
+  </p>
+</footer>
+<script src="/js/teks.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

@@ -97,8 +97,9 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`): CLI meng-import modul `bot-
 
 ### Instal
 
-**Cara cepat** — unduh APK dari halaman [**Releases**](../../releases), pasang di HP
-(aktifkan *Install unknown apps*), lanjut ke [Pakai Setelah Install](#-pakai-setelah-install).
+**Cara cepat** — unduh APK dari [**halaman unduh**](https://wa-release-bot-web.dikanjut.workers.dev/unduh/)
+(atau [Releases](../../releases)), pasang di HP (aktifkan *Install unknown apps*), lanjut ke
+[Pakai Setelah Install](#-pakai-setelah-install). Situs: <https://wa-release-bot-web.dikanjut.workers.dev>.
 
 **Build sendiri** — lihat [🏗️ Build](#%EF%B8%8F-build-dari-source).
 
@@ -539,8 +540,9 @@ Laporan kerentanan: lihat [SECURITY.md](SECURITY.md).
 │   └── build.mjs             #    esbuild → bundle.cjs (1 file)
 ├── cli/                      # 💻 versi Termux/PC — import langsung modul bot-js/src (engine identik)
 ├── scripts/                  # 🔧 build-local.sh, fetch-nodejs-mobile.sh
+├── web/                      # 🌐 landing page + halaman unduh (statis, Cloudflare Workers)
 ├── docs/                     # 📚 ARCHITECTURE, CI, SECURITY-AUDIT, CHANGELOG
-└── .github/workflows/        # ⚙️ build-apk, code-quality, codeql, security
+└── .github/workflows/        # ⚙️ build-apk, code-quality, codeql, security, deploy-web
 ```
 
 ---

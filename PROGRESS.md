@@ -54,3 +54,9 @@ Next:
 - kall: "merge final semua, rilis versi terbaru, hapus release lama sisakan terbaru + stable"
   (dipilih: stable = v1.7.0; release + tag lama dihapus). PR #12 di-merge, bump 1.8.0 (versionCode
   default 10800 ikut rumus CI), tag `v1.8.0` -> release otomatis. Eps 2 potongan pendek 1:13 jadi.
+- kall: minta layar Repo sendiri di app (PR terpisah), landing page + halaman unduh dengan popup
+  hitung mundur launching (Jumat 2026-10-09 19.00 WIB, versi publik 1.0.0), release jadi draft
+  supaya tidak bisa diunduh publik, hosting Cloudflare. Dikerjakan: v1.7.0/v1.8.0 -> draft,
+  73 artifact Actions dihapus, `web/` (statis, id/en, CSP ketat, font Archivo subset) tayang di
+  Workers Static Assets lewat `scripts-dev/deploy_web.py`, workflow `deploy-web.yml`, rencana
+  launching di ROADMAP. Belum: layar Repo, M10, M9, PR launching 1.0.0 (H-1).

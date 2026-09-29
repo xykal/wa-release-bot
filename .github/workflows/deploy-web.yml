@@ -1,0 +1,114 @@
+# Landing page (web/): cek statis di tiap PR/push, deploy ke Cloudflare Workers
+# (Static Assets) hanya kalau secret CF_API_TOKEN ada. Tanpa secret, job deploy
+# dilewati dengan catatan -- deploy manual: scripts-dev/deploy_web.py.
+name: Web
+
+on:
+  push:
+    branches: [main]
+    paths: ['web/**', 'scripts-dev/deploy_web.py', '.github/workflows/deploy-web.yml']
+  pull_request:
+    paths: ['web/**', 'scripts-dev/deploy_web.py', '.github/workflows/deploy-web.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  cek:
+    name: Cek statis web/
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node 22 (node --check)
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      - name: Sintaks JS + worker
+        run: |
+          for f in web/js/*.js web/worker.js; do node --check "$f"; done
+
+      - name: HTML valid, referensi lokal ada, kunci i18n lengkap, tanpa URL eksternal liar
+        run: |
+          node - <<'EOF'
+          const fs = require('fs');
+          const src = fs.readFileSync('web/js/teks.js', 'utf8') + '\nmodule.exports = { TEKS, BRAND, LAUNCH_ISO };';
+          const m = {}; new Function('module', src)(m); const { TEKS, BRAND, LAUNCH_ISO } = m.exports;
+          if (BRAND !== 'XyVerse Technology Global') throw new Error('brand salah: ' + BRAND);
+          if (Number.isNaN(Date.parse(LAUNCH_ISO))) throw new Error('LAUNCH_ISO tidak valid');
+          const halaman = ['web/index.html', 'web/unduh/index.html'];
+          const boleh = ['https://github.com/xykal/wa-release-bot', 'https://www.tiktok.com/@xykal', 'https://api.github.com'];
+          let masalah = [];
+          for (const h of halaman) {
+            const html = fs.readFileSync(h, 'utf8');
+            for (const [, k] of html.matchAll(/data-i18n="([^"]+)"/g)) {
+              if (!(k in TEKS.id) || !(k in TEKS.en)) masalah.push(`${h}: kunci i18n ${k} hilang`);
+            }
+            for (const [, ref] of html.matchAll(/(?:src|href)="(\/[^"#]*)"/g)) {
+              const p = 'web' + (ref.endsWith('/') ? ref + 'index.html' : ref);
+              if (!fs.existsSync(p)) masalah.push(`${h}: referensi ${ref} tidak ada`);
+            }
+            if (/ style="|<style|<script>[^<]| on[a-z]+="/.test(html)) masalah.push(`${h}: inline style/script/handler (CSP)`);
+          }
+          for (const f of ['web/index.html', 'web/unduh/index.html', 'web/css/dasar.css', 'web/css/bagian.css', 'web/js/app.js', 'web/js/teks.js']) {
+            for (const [u] of fs.readFileSync(f, 'utf8').matchAll(/https?:\/\/[^\s"')<>;]+/g)) {
+              if (!boleh.some((b) => u.startsWith(b))) masalah.push(`${f}: URL eksternal ${u}`);
+            }
+          }
+          const idK = Object.keys(TEKS.id), enK = Object.keys(TEKS.en);
+          for (const k of idK) if (!enK.includes(k)) masalah.push('teks.js: kunci ' + k + ' tidak ada di en');
+          for (const k of enK) if (!idK.includes(k)) masalah.push('teks.js: kunci ' + k + ' tidak ada di id');
+          if (masalah.length) { console.error(masalah.join('\n')); process.exit(1); }
+          console.log(`ok: ${halaman.length} halaman, ${idK.length} kunci i18n`);
+          EOF
+
+      - name: Manifest aset (hash wrangler) terbentuk
+        run: |
+          python3 -m pip install --quiet --disable-pip-version-check 'blake3==1.0.10'
+          python3 scripts-dev/deploy_web.py --cek | head -n 5
+
+  deploy:
+    name: Deploy Cloudflare Workers
+    needs: cek
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Deploy (dilewati kalau secret CF_API_TOKEN belum ada)
+        run: |
+          if [ -z "$CF_API_TOKEN" ]; then
+            echo "::notice::Secret CF_API_TOKEN belum ada. Deploy manual: CF_API_TOKEN=... python3 scripts-dev/deploy_web.py"
+            exit 0
+          fi
+          python3 -m pip install --quiet --disable-pip-version-check 'blake3==1.0.10'
+          python3 scripts-dev/deploy_web.py
+
+      - name: Verifikasi (header keamanan + halaman unduh)
+        if: env.CF_API_TOKEN != ''
+        run: |
+          U=https://wa-release-bot-web.dikanjut.workers.dev
+          sleep 5
+          curl -sSfI "$U/" | grep -qi 'content-security-policy'
+          curl -sSf "$U/unduh/" | grep -q 'id="tirai"'
+          echo "web ok: $U"

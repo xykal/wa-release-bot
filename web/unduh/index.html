@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unduh APK WA Release Bot</title>
+<meta name="description" content="Unduh APK WA Release Bot: arm64, armeabi-v7a, universal. Dibangun otomatis dari tag rilis GitHub dengan checksum SHA-256.">
+<meta name="theme-color" content="#0b141a">
+<meta name="robots" content="index,follow">
+<link rel="icon" href="/img/favicon.png" type="image/png">
+<link rel="stylesheet" href="/css/dasar.css">
+<link rel="stylesheet" href="/css/bagian.css">
+</head>
+<body class="halaman-unduh">
+<header class="nav">
+  <a class="nav-logo" href="/"><img src="/img/xyverse_mark.webp" alt="" width="30" height="30"><span>WA Release Bot</span></a>
+  <nav class="nav-tautan" aria-label="Navigasi">
+    <a href="/#fitur" data-i18n="nav_fitur">Fitur</a>
+    <a href="/#cara" data-i18n="nav_cara">Cara kerja</a>
+    <a href="/#faq" data-i18n="nav_faq">FAQ</a>
+    <a href="https://github.com/xykal/wa-release-bot" rel="noopener" data-i18n="nav_github">GitHub</a>
+  </nav>
+  <div class="nav-aksi">
+    <button class="tombol-bahasa" type="button" id="tombolBahasa" aria-label="Switch language">EN</button>
+  </div>
+</header>
+
+<main id="utama" class="unduh-utama">
+  <section class="bagian unduh-isi" id="unduh" aria-describedby="unduhSub">
+    <h1 data-i18n="unduh_judul">Unduh APK</h1>
+    <p class="sub" id="unduhSub" data-i18n="unduh_sub">Dibangun otomatis di GitHub Actions dari tag rilis. Cocokkan SHA-256 sebelum pasang.</p>
+    <p class="unduh-meta" id="unduhMeta" hidden>
+      <span><b data-i18n="unduh_versi">Versi</b> <span id="metaVersi">-</span></span>
+      <span><b data-i18n="unduh_tanggal">Dirilis</b> <span id="metaTanggal">-</span></span>
+    </p>
+    <div class="grid tiga unduh-kartu" id="daftarApk">
+      <article class="kartu apk" data-abi="arm64">
+        <h3>arm64-v8a</h3>
+        <p data-i18n="unduh_arm64">Kebanyakan HP 2018 ke atas</p>
+        <p class="apk-ukuran"><b data-i18n="unduh_ukuran">Ukuran</b> <span data-ukuran>-</span></p>
+        <a class="tombol" data-unduh href="https://github.com/xykal/wa-release-bot/releases" rel="noopener" aria-disabled="true"><span data-i18n="unduh_tombol">Unduh</span> arm64</a>
+        <a class="apk-sha" data-sha href="https://github.com/xykal/wa-release-bot/releases" rel="noopener" data-i18n="unduh_sha">SHA-256</a>
+      </article>
+      <article class="kartu apk" data-abi="armeabi-v7a">
+        <h3>armeabi-v7a</h3>
+        <p data-i18n="unduh_v7a">HP lama 32-bit</p>
+        <p class="apk-ukuran"><b data-i18n="unduh_ukuran">Ukuran</b> <span data-ukuran>-</span></p>
+        <a class="tombol" data-unduh href="https://github.com/xykal/wa-release-bot/releases" rel="noopener" aria-disabled="true"><span data-i18n="unduh_tombol">Unduh</span> v7a</a>
+        <a class="apk-sha" data-sha href="https://github.com/xykal/wa-release-bot/releases" rel="noopener" data-i18n="unduh_sha">SHA-256</a>
+      </article>
+      <article class="kartu apk" data-abi="universal">
+        <h3>universal</h3>
+        <p data-i18n="unduh_univ">Dua arsitektur sekaligus, file lebih besar</p>
+        <p class="apk-ukuran"><b data-i18n="unduh_ukuran">Ukuran</b> <span data-ukuran>-</span></p>
+        <a class="tombol" data-unduh href="https://github.com/xykal/wa-release-bot/releases" rel="noopener" aria-disabled="true"><span data-i18n="unduh_tombol">Unduh</span> universal</a>
+        <a class="apk-sha" data-sha href="https://github.com/xykal/wa-release-bot/releases" rel="noopener" data-i18n="unduh_sha">SHA-256</a>
+      </article>
+    </div>
+    <p class="unduh-catatan"><span data-i18n="unduh_catatan">Semua rilis dan changelog ada di halaman Releases GitHub.</span> <a href="https://github.com/xykal/wa-release-bot/releases" rel="noopener">github.com/xykal/wa-release-bot/releases</a></p>
+    <p class="unduh-gagal" id="unduhGagal" hidden data-i18n="unduh_gagal">Nggak bisa ngambil data rilis dari GitHub sekarang. Buka halaman Releases langsung.</p>
+  </section>
+</main>
+
+<!-- Popup tetap (tanpa tombol tutup) sampai launching; latar di belakangnya di-blur. -->
+<div class="tirai" id="tirai" role="dialog" aria-modal="true" aria-labelledby="modalJudul" hidden>
+  <div class="modal muncul-modal">
+    <img src="/img/xyverse_mark.webp" alt="" width="64" height="64">
+    <p class="label" data-i18n="modal_label">Segera</p>
+    <h2 id="modalJudul" data-i18n="modal_judul">Launching WA Release Bot</h2>
+    <p class="modal-sub" data-i18n="modal_sub">Versi publik pertama, v1.0.0. APK bisa diunduh di halaman ini begitu hitung mundurnya habis.</p>
+    <div class="hitung" id="hitung" aria-live="polite">
+      <div><b id="hHari">00</b><span data-i18n="hari">hari</span></div>
+      <div><b id="hJam">00</b><span data-i18n="jam">jam</span></div>
+      <div><b id="hMenit">00</b><span data-i18n="menit">menit</span></div>
+      <div><b id="hDetik">00</b><span data-i18n="detik">detik</span></div>
+    </div>
+    <p class="modal-waktu"><b data-i18n="modal_waktu">Jumat, 9 Oktober 2026, 19.00 WIB</b><br><span data-i18n="modal_lokal">Waktu lokal kamu:</span> <span id="waktuLokal">-</span></p>
+    <p class="modal-tunggu" id="modalTunggu" hidden data-i18n="modal_tunggu">Waktunya udah lewat. File rilis lagi diunggah, halaman ini ngecek ulang tiap menit.</p>
+    <div class="modal-aksi">
+      <a class="tombol" id="tombolIcs" href="/unduh/launching.ics" download="wa-release-bot-launching.ics" data-i18n="modal_ics">Ingatkan di kalender</a>
+      <a class="tombol tombol-garis" href="https://github.com/xykal/wa-release-bot" rel="noopener" data-i18n="modal_github">Pantau di GitHub</a>
+    </div>
+    <a class="modal-kembali" href="/" data-i18n="modal_kembali">Kembali ke beranda</a>
+  </div>
+</div>
+
+<footer class="kaki">
+  <img src="/img/xyverse_logo.webp" alt="XyVerse" width="160" height="36">
+  <p><span data-i18n="footer_built">Built by xykal</span> &mdash; <span data-brand></span></p>
+  <p class="kaki-tautan">
+    <a href="https://github.com/xykal/wa-release-bot" rel="noopener">GitHub</a>
+    <a href="https://github.com/xykal/wa-release-bot/blob/main/LICENSE" rel="noopener" data-i18n="footer_lisensi">Lisensi pemakaian pribadi</a>
+    <a href="https://www.tiktok.com/@xykal" rel="noopener">TikTok @xykal</a>
+  </p>
+</footer>
+<script src="/js/teks.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

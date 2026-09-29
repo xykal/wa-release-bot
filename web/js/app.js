@@ -21,6 +21,14 @@
       if (t[k] != null) el.textContent = t[k];
     });
     $$('[data-brand]').forEach((el) => { el.textContent = BRAND; });
+    // <title> dan meta description ikut bahasa (HTML statis memuat versi Indonesia
+    // untuk crawler tanpa JS). Halaman dikenali dari <body data-halaman>.
+    const halaman = document.body.dataset.halaman || 'beranda';
+    if (t['judul_' + halaman]) document.title = t['judul_' + halaman];
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta && t['deskripsi_' + halaman]) meta.setAttribute('content', t['deskripsi_' + halaman]);
+    const og = document.querySelector('meta[property="og:description"]');
+    if (og && t['deskripsi_' + halaman]) og.setAttribute('content', t['deskripsi_' + halaman]);
     // Tangkapan layar app asli ada dua versi (UI app ikut bahasa HP); ilustrasi sisi WA cuma satu.
     $$('img[data-src-en]').forEach((img) => {
       if (!img.dataset.srcId) img.dataset.srcId = img.getAttribute('src');

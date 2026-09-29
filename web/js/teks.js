@@ -11,6 +11,10 @@ const VERSI_LAUNCH = '1.0.0';
 const TEKS = {
   id: {
     nav_fitur: 'Fitur', nav_cara: 'Cara kerja', nav_faq: 'FAQ', nav_unduh: 'Unduh APK', nav_github: 'GitHub',
+    judul_beranda: 'WA Release Bot: rilis GitHub ke channel WhatsApp, dari HP sendiri',
+    deskripsi_beranda: 'Bot WhatsApp yang jalan dari HP Android kamu: ngumumin rilis GitHub ke channel, jagain grup, ngirim lagu harian. Tanpa server.',
+    judul_unduh: 'Unduh APK WA Release Bot',
+    deskripsi_unduh: 'Unduh APK WA Release Bot: arm64, armeabi-v7a, universal. Dibangun otomatis dari tag rilis di GitHub Actions, dengan SHA-256.',
     hero_label: 'Bot WhatsApp yang jalan dari HP Android kamu sendiri',
     hero_judul: 'Rilis GitHub langsung ke channel WhatsApp. Tanpa server.',
     hero_sub: 'WA Release Bot ngumumin tiap release baru ke channel atau grup WA, jagain permintaan gabung grup, dan ngirim lagu harian biar channel nggak sepi. Semuanya dari satu APK, nggak perlu VPS, laptop, atau Termux.',
@@ -64,6 +68,10 @@ const TEKS = {
   },
   en: {
     nav_fitur: 'Features', nav_cara: 'How it works', nav_faq: 'FAQ', nav_unduh: 'Download APK', nav_github: 'GitHub',
+    judul_beranda: 'WA Release Bot: GitHub releases to a WhatsApp channel, from your own phone',
+    deskripsi_beranda: 'A WhatsApp bot that runs on your Android phone: announces GitHub releases to a channel, guards your group, posts a daily song. No server.',
+    judul_unduh: 'Download the WA Release Bot APK',
+    deskripsi_unduh: 'Download the WA Release Bot APK: arm64, armeabi-v7a, universal. Built automatically from release tags on GitHub Actions, with SHA-256.',
     hero_label: 'A WhatsApp bot that runs on your own Android phone',
     hero_judul: 'GitHub releases straight to your WhatsApp channel. No server.',
     hero_sub: 'WA Release Bot announces every new release to a WhatsApp channel or group, gatekeeps group join requests, and posts a daily song so the channel never goes quiet. All from one APK, no VPS, laptop, or Termux.',

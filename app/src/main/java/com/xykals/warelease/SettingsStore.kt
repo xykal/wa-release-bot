@@ -174,7 +174,9 @@ class SettingsStore(ctx: Context) {
                 .put("jamMulai", laguJamMulai)
                 .put("jamSelesai", laguJamSelesai)
                 .put("tzMenit", tzMenit())
-                .put("sumber", "https://wa-release-bot-lagu.akuntiktok76y.workers.dev")
+                // "sumber" sengaja tidak dikirim: URL Worker cuma ada di
+                // bot-js/src/lagu.mjs (SUMBER_BAWAAN). Dulu ditulis dua kali dan
+                // yang di sini salah subdomain, fitur lagu mati diam-diam.
         )
         .put(
             "bot",

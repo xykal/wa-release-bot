@@ -27,11 +27,20 @@ const AYAT = __AYAT__;
 const PELUANG_TREND = 0.5;
 const PELUANG_AYAT = 0.35;
 const PANJANG = 60;
-// Tiga lapis batas harian. Dulu cuma satu angka global (80) yang dibagi semua
+// Batas request, dua lapis. Dulu cuma satu angka global (80) yang dibagi semua
 // pemasang APK: 80 request dari satu skrip = fitur mati buat semua orang.
-//   per pemasang : app kirim header X-Pemasang (id acak per instalasi); app
-//                  sendiri maksimal 8 lagu/hari, jadi 12 sudah longgar.
-//   per IP       : pagar buat yang nggak kirim id / ganti-ganti id.
+//
+// Lapis 1, burst (Rate Limiting binding, jendela 60 detik, per lokasi CF):
+//   PEMBATAS_PERANGKAT 2/menit per X-Pemasang, PEMBATAS_IP 6/menit per IP.
+//   Ini yang benar-benar menahan skrip yang menembak cepat. Binding dipasang
+//   oleh scripts-dev/deploy_worker_lagu.py; kalau tidak ada, lapis ini dilewati.
+// Lapis 2, harian (KV): per pemasang, per IP, global. KV itu eventually
+//   consistent dan hasil get() di-cache 60 detik per lokasi, jadi counter ini
+//   BISA bocor 2-3x kalau request datang rapat -- makanya lapis 1 wajib ada.
+//   Angkanya pagar kasar buat penyalahgunaan pelan dan kuota AI, bukan akuntansi.
+//   per pemasang : app kirim X-Pemasang (id acak per instalasi); app sendiri
+//                  maksimal 8 lagu/hari, jadi 12 sudah longgar.
+//   per IP       : buat yang nggak kirim id / ganti-ganti id.
 //   global       : pagar terakhir kuota AI + KV (free tier 1000 write/hari,
 //                  tiap request yang lolos ~5 write).
 const BATAS_PER_PEMASANG = 12;
@@ -335,6 +344,13 @@ async function kunciAman(teks) {
  * @returns {Response|null} 429 kalau kena batas, null kalau boleh lanjut
  */
 async function cekBatas(env, { ip, pemasang }) {
+  // Lapis 1: burst. limit() menghitung sekali panggil, jadi dipanggil hanya
+  // kalau kuncinya ada. Request yang ditolak di sini tidak menyentuh KV.
+  const kenaBurst = async (pembatas, key) => Boolean(pembatas && key) && !(await pembatas.limit({ key })).success;
+  if (await kenaBurst(env.PEMBATAS_PERANGKAT, pemasang)) return json({ error: 'terlalu cepat dari perangkat ini, tunggu semenit' }, 429);
+  if (await kenaBurst(env.PEMBATAS_IP, ip)) return json({ error: 'terlalu cepat dari jaringan ini, tunggu semenit' }, 429);
+
+  // Lapis 2: harian (KV).
   const hari = new Date().toISOString().slice(0, 10);
   const kunci = [['hit:' + hari, BATAS_HARIAN, 'batas harian habis, besok lagi']];
   if (pemasang) kunci.push([`pemasang:${hari}:${await kunciAman(pemasang)}`, BATAS_PER_PEMASANG, 'jatah lagu hari ini buat perangkat ini habis']);
@@ -345,6 +361,26 @@ async function cekBatas(env, { ip, pemasang }) {
   }
   await Promise.all(kunci.map(([k], i) => env.LAGU.put(k, String(nilai[i] + 1), { expirationTtl: 3 * 86400 })));
   return null;
+}
+
+/**
+ * GET /lagu/batas -- lihat sisa jatah tanpa minta lagu. Tidak menulis KV;
+ * satu panggilan limit() ikut terhitung di lapis burst (jatah pemanggil sendiri).
+ * Dipakai scripts-dev/cek-batas-worker.sh supaya proving test tidak membakar
+ * kuota Groq/SoundCloud, dan bisa dipakai app buat menampilkan sisa jatah.
+ */
+async function lihatBatas(env, { ip, pemasang, colo }) {
+  const hari = new Date().toISOString().slice(0, 10);
+  const baca = async (k) => Number(await env.LAGU.get(k)) || 0;
+  const burst = env.PEMBATAS_PERANGKAT && pemasang ? (await env.PEMBATAS_PERANGKAT.limit({ key: pemasang })).success : null;
+  return json({
+    hari,
+    colo: colo || null, // lapis burst dihitung per lokasi Cloudflare
+    burst: burst === null ? 'tidak ada pembatas' : burst ? 'ok' : 'kena',
+    pemasang: pemasang ? `${await baca(`pemasang:${hari}:${await kunciAman(pemasang)}`)}/${BATAS_PER_PEMASANG}` : null,
+    ip: ip ? `${await baca(`ip:${hari}:${await kunciAman(ip)}`)}/${BATAS_PER_IP}` : null,
+    global: `${await baca('hit:' + hari)}/${BATAS_HARIAN}`,
+  });
 }
 
 async function laguBerikut(env, paksaGaya = null, siapa = {}) {
@@ -405,6 +441,10 @@ export default {
         pemasang: (req.headers.get('x-pemasang') || '').slice(0, 64),
       };
       try { return await laguBerikut(env, url.searchParams.get('gaya'), siapa); } catch (e) { return json({ error: e.message }, 500); }
+    }
+    if (url.pathname === '/lagu/batas') {
+      const siapa = { ip: req.headers.get('cf-connecting-ip') || '', pemasang: (req.headers.get('x-pemasang') || '').slice(0, 64), colo: req.cf?.colo };
+      try { return await lihatBatas(env, siapa); } catch (e) { return json({ error: e.message }, 500); }
     }
     return new Response(`wa-release-bot · lagu mood · ${DAFTAR.length} lagu lawas + trend Indonesia harian · ${AYAT.length} ayat\n`,
       { headers: { 'content-type': 'text/plain; charset=utf-8' } });

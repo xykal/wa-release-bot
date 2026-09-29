@@ -17,8 +17,20 @@ Belum di-tag: kall tes dulu di HP. Semua perubahan di bawah sudah lewat CI.
   `npm run once -- --ulang` untuk reset hitungan gagal kirim.
 - `docs/PRD.md`, `docs/ROADMAP.md`, `docs/KONTEN-TIKTOK.md`, `CODE_OF_CONDUCT.md`,
   `.github/CODEOWNERS`, `.github/FUNDING.yml`, `PROGRESS.md`, `IDEAS.md`.
-- Worker lagu: batas harian **per perangkat** (header `X-Pemasang`) dan
-  **per IP**, bukan cuma satu angka global (belum di-deploy, lihat ROADMAP).
+- Worker lagu: dua lapis batas, **burst** (Rate Limiting binding, 2/menit per
+  perangkat via header `X-Pemasang`, 6/menit per IP) dan **harian** (KV: 12 per
+  perangkat, 20 per IP, 180 global) menggantikan satu angka global 80. Endpoint
+  `GET /lagu/batas` buat melihat sisa jatah. Sudah di-deploy 2026-09-29; proving
+  test `scripts-dev/cek-batas-worker.sh` lolos.
+- CLI: `WA_RELEASE_BOT_DIR` (lokasi config/state/sesi) dan tes integrasi
+  `cli/test/cli.test.mjs` (proses CLI sungguhan, GitHub palsu, tanpa WA).
+
+### Diperbaiki
+- **Fitur lagu mati sejak v1.6.0**: URL Worker default menunjuk subdomain yang
+  tidak pernah ada (`*.akuntiktok76y.workers.dev`, NXDOMAIN). Subdomain akun
+  yang benar `dikanjut`. URL sekarang hanya ada di `bot-js/src/lagu.mjs`;
+  `SettingsStore.kt` tidak menulisnya lagi dan CI menolak literal `workers.dev`
+  di `app/` serta mengecek hostname-nya resolve.
 
 ### Diubah
 - **npm workspaces**: satu `npm install` di root untuk `bot-js` + `cli`. CLI
@@ -37,7 +49,9 @@ Belum di-tag: kall tes dulu di HP. Semua perubahan di bawah sudah lewat CI.
 
 ### Dihapus
 - `konten-tiktok/` (39 MB aset pihak ketiga tanpa lisensi tercatat) dan tiga
-  workflow render video. Panduannya dipindah ke `docs/KONTEN-TIKTOK.md`.
+  workflow render video, **termasuk dari history git** (commit setelah v1.6.7
+  ditulis ulang, tag lama tidak berubah). Panduannya dipindah ke
+  `docs/KONTEN-TIKTOK.md`.
 
 ## [Unreleased]
 

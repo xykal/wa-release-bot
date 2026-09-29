@@ -9,7 +9,7 @@ Semua item di sini menunggu "gas" dari kall kecuali ditandai *sedang jalan*.
 |---|---|---|
 | Audit 2026-09-29 + perbaikan [HIGH]/[MED] | di CI | lihat `docs/AUDIT-2026-09-29.md` |
 | Tes di HP: APK dari CI + CLI di Termux | menunggu kall | baru tag `v1.7.0` setelah lolos |
-| Deploy Worker lagu (batas per perangkat + per IP) | menunggu kall | `python3 scripts-dev/deploy_worker_lagu.py`, butuh `CF_API_TOKEN`, `CF_ACCOUNT_ID`, `CF_KV_LAGU` |
+| Deploy Worker lagu (burst + harian) | selesai 2026-09-29 | `scripts-dev/deploy_worker_lagu.py`; bukti: `scripts-dev/cek-batas-worker.sh` |
 
 ## Berikutnya (v1.7)
 
@@ -29,6 +29,7 @@ Semua item di sini menunggu "gas" dari kall kecuali ditandai *sedang jalan*.
 | Multi-repo per channel | M | permintaan wajar kalau ada pengguna; sekarang 1 repo per instalasi |
 | Sumber selain GitHub Releases (GitLab, tag saja, RSS) | M | abstraksi `sumber/*.mjs` di atas `rilis.mjs` |
 | Notifikasi gagal ke nomor pribadi (bukan channel) | S | kalau 3x gagal kirim, sekarang cuma tercatat di status |
+| Counter Worker pakai Durable Object (SQLite, free plan) | M | hanya kalau butuh angka tepat: Rate Limiting binding permisif dan KV eventually consistent, keduanya bisa bocor 2-3x saat burst |
 
 ## Tidak akan dikerjakan
 
@@ -37,10 +38,12 @@ Semua item di sini menunggu "gas" dari kall kecuali ditandai *sedang jalan*.
   Worker lagu di free tier, dan itu opsional.
 - Konten promosi (video TikTok) di repo produk: dipindah keluar, lihat `docs/KONTEN-TIKTOK.md`.
 
-## Arah produk (belum diputuskan kall)
+## Arah produk
 
-1. **Portofolio + donasi**: repo tetap seperti sekarang, `FUNDING.yml` aktif, tidak ada fitur berbayar.
-2. **Open-core**: engine tetap source-available, fitur "hosting bot sendiri" + dukungan
-   jadi paket berbayar. Butuh: pemisahan modul hosting, lisensi ganda, halaman produk.
+Dipakai sementara (kall menjawab "gas aja" 2026-09-29 tanpa memilih; bisa diubah kapan saja):
+**portofolio + donasi** — repo tetap seperti sekarang, `FUNDING.yml` aktif, tidak ada fitur
+berbayar, tidak ada pengumpulan data pengguna. Alternatif yang tidak dipilih: open-core
+(engine source-available, "hosting bot sendiri" + dukungan berbayar; butuh pemisahan modul
+hosting, lisensi ganda, halaman produk).
 
 Built by xykal — XyVerse Technology Global

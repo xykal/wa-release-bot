@@ -11,11 +11,12 @@ Per 2026-09-29 folder `konten-tiktok/` (render `render*.py`, SFX, stiker, VO, ti
 
 ## Ambil ulang aset (kalau perlu render episode baru)
 
-Semuanya masih ada di riwayat git, commit `371f5da` (versi terakhir v6):
+Riwayat git di GitHub sudah ditulis ulang (2026-09-29) supaya aset pihak ketiga itu tidak
+ikut repo publik lagi, jadi `git checkout <sha-lama>` tidak jalan dari clone baru. Sumbernya:
 
-```bash
-git checkout 371f5da -- konten-tiktok .github/workflows/render-v6.yml
-```
+- clone lokal kall yang dibuat sebelum 2026-09-29 (commit lama `371f5da`, versi v6), atau
+- artefak MP4 dari run workflow render lama di tab Actions (retensi 30 hari sejak 2026-09-27), atau
+- unduh ulang dari sumber aslinya pakai daftar di `konten-tiktok/README` versi lama tersebut.
 
 Jangan commit lagi ke repo ini. Kalau mau lanjut bikin episode: repo terpisah, dan ganti SFX
 dengan yang berlisensi CC0 (mis. freesound dengan filter CC0) atau bikin sendiri; stiker bikin

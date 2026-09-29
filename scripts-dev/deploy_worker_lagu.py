@@ -5,6 +5,11 @@ Deploy Cloudflare Worker "wa-release-bot-lagu" (lagu/worker/worker.js).
   CF_API_TOKEN=... CF_ACCOUNT_ID=... CF_KV_LAGU=... [GROQ_API_KEY=...] \\
       python3 scripts-dev/deploy_worker_lagu.py
 
+CF_ACCOUNT_ID dan CF_KV_LAGU bisa dilihat dari API dengan token yang sama:
+  GET /accounts                                   -> result[0].id
+  GET /accounts/<id>/workers/scripts/<NAMA>/settings -> bindings[].namespace_id
+Setelah deploy, buktikan batas burst-nya: bash scripts-dev/cek-batas-worker.sh
+
 - daftar lagu dari lagu/daftar.txt disuntik ke kode (ganti daftar → deploy ulang)
 - GROQ_API_KEY (kalau di-set) dipasang sebagai secret Worker, bukan di kode
 """
@@ -42,7 +47,14 @@ kode = kode.replace("__GAUL__", json.dumps(gaul, ensure_ascii=False), 1)
 meta = {
     "main_module": "worker.js",
     "compatibility_date": "2026-09-01",
-    "bindings": [{"type": "kv_namespace", "name": "LAGU", "namespace_id": os.environ["CF_KV_LAGU"]}],
+    "bindings": [
+        {"type": "kv_namespace", "name": "LAGU", "namespace_id": os.environ["CF_KV_LAGU"]},
+        # Rate Limiting binding (gratis, jendela 10/60 detik, per lokasi CF).
+        # namespace_id = angka bebas yang unik per akun; kalau dua Worker memakai
+        # angka sama, counter-nya ikut dibagi. 7601/7602 khusus proyek ini.
+        {"type": "ratelimit", "name": "PEMBATAS_PERANGKAT", "namespace_id": "7601", "simple": {"limit": 2, "period": 60}},
+        {"type": "ratelimit", "name": "PEMBATAS_IP", "namespace_id": "7602", "simple": {"limit": 6, "period": 60}},
+    ],
     "keep_bindings": ["secret_text"],
 }
 bd = "----wrb-lagu-deploy"

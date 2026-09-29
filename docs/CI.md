@@ -107,14 +107,18 @@ lewat `GITHUB_TOKEN`). Di PR dari fork hanya melaporkan.
 Langkahnya: `npm ci --ignore-scripts` di root → ESLint (`-w bot-js`) →
 `node --check` semua `.mjs` di `bot-js/src` **dan** `cli/src` → `node --test`
 → `esbuild` → jalankan bundle hasilnya (`--selftest`) → `node cli/src/bot.mjs
---version` (mengecek CLI bisa me-resolve modul engine dan brand-nya benar).
+--version` → `node --test cli/test/` (proses CLI sungguhan dengan GitHub palsu
+lewat `--import`: `--dry-run`, `--once` baseline/tidur/304, config hilang; WA
+tidak pernah disentuh).
 Node 18 ada di matrix **khususnya** karena itu runtime yang dipakai di HP.
 
 **Job `android-statis`** — tanpa Gradle: urutan `System.loadLibrary` di
 `NodeBridge.kt`, validasi XML semua resource + manifest, wajib ada
 `res/values/brand.xml` dan `bot-js/src/config/brand.mjs`, dan **menolak**
 literal brand di layout (`android:text="BUILT IN|Powered by|XyVerse Tech"`).
-Ini yang menjaga aturan "satu sumber string brand".
+Ini yang menjaga aturan "satu sumber string brand". Juga menolak literal
+`workers.dev` di `app/` dan mengecek hostname `SUMBER_BAWAAN` (bot-js/src/lagu.mjs)
+resolve — bug v1.6.0-1.6.7 memakai subdomain yang tidak ada.
 
 **Job `audit`** — `npm audit --omit=dev --audit-level=high` di root (mencakup
 kedua workspace). Cuma dependency produksi yang bisa menggagalkan. Plus grep

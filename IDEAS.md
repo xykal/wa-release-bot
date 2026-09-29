@@ -18,8 +18,10 @@ Format: apa — kenapa penting buat pengguna nyata — dampak/usaha (S/M/L). Dip
 - Health ping opsional (healthchecks.io) tiap siklus — pengguna tahu botnya mati tanpa buka app — S.
 
 ## Keamanan dan platform
-- Proving test buat batas Worker lagu (kode per perangkat/IP sudah ada): skrip yang menembak
-  endpoint 13x dengan `X-Pemasang` sama dan memastikan yang ke-13 dijawab 429 — S (butuh deploy dulu).
+- Counter Worker lagu yang tepat (Durable Object SQLite) kalau suatu saat kuota AI beneran jadi
+  masalah; sekarang burst limiter + KV cukup buat penyalahgunaan kasual — M.
+- App menampilkan sisa jatah lagu hari ini dari `GET /lagu/batas` — pengguna tahu kenapa lagu
+  nggak muncul — S.
 - Pantau nodejs-mobile untuk build 16 KB; kalau ada, jalur Play Store terbuka — L (upstream).
 
 ## Pertumbuhan

@@ -23,7 +23,11 @@ import { formatReleasePost, formatTestMessage } from '../../bot-js/src/format.mj
 import { connectToWhatsApp, resolveChannel, kirimKeChannel, pakaiPertanyaan } from '../../bot-js/src/wa.mjs';
 import { putuskanRilis, pendingBerikut, MAKS_PERCOBAAN } from '../../bot-js/src/rilis.mjs';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// Folder config.json / state.json / wa-session. Default: folder cli/ ini.
+// WA_RELEASE_BOT_DIR memindahkannya (beberapa bot di satu mesin, atau tes).
+const ROOT = process.env.WA_RELEASE_BOT_DIR
+  ? path.resolve(process.env.WA_RELEASE_BOT_DIR)
+  : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const STATE_FILE = path.join(ROOT, 'state.json');
 
 function log(msg) {
@@ -35,7 +39,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function loadConfig() {
   const p = path.join(ROOT, 'config.json');
   if (!existsSync(p)) {
-    console.error('config.json belum ada.\n   Salin dulu:  cp config.example.json config.json\n   Terus isi:  nano config.json');
+    console.error(`config.json belum ada di ${ROOT}\n   Salin dulu:  cp config.example.json config.json\n   Terus isi:  nano config.json`);
     process.exit(1);
   }
   const cfg = JSON.parse(readFileSync(p, 'utf8'));

@@ -18,10 +18,13 @@ Done:
   M6 Worker batas per perangkat/IP (kode saja); M7 network_security_config; M8 brand tunggal;
   L1/L2/L4 dokumen, `formatTanggal` tanpa ICU, file standar (PRD, ROADMAP, CoC, CODEOWNERS, FUNDING).
 - Unit test bertambah ~21 (github mock fetch, rilis, kirimKeChannel, mdKeWa, potongAman, brand, tanggal).
+- kall: "gas aja" (ronde 2). Deploy Worker lagu pakai token Cloudflare kall: ketemu URL default
+  salah subdomain (NXDOMAIN) -> fitur lagu mati sejak v1.6.0, diperbaiki + cek DNS di CI. Batas
+  harian KV terbukti bocor saat burst (13 request, counter cuma 7) -> tambah lapis Rate Limiting
+  binding; proving test `scripts-dev/cek-batas-worker.sh` lolos. Tes integrasi CLI (5 skenario).
+  History `konten-tiktok` dihapus (filter-branch, force-push; tag v1.6.7 ke bawah tidak berubah).
 
 Blocked:
-- Purge history `konten-tiktok` (filter-repo, force-push): menunggu kall.
-- Deploy Worker lagu: butuh token Cloudflare kall, tidak dilakukan dari sesi ini.
 - Tag `v1.7.0`: setelah kall tes APK dari CI dan CLI di Termux.
 
 Next:

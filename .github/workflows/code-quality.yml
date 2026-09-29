@@ -106,6 +106,11 @@ jobs:
       - name: CLI bisa dimuat (--version)
         run: node cli/src/bot.mjs --version
 
+      # Proses CLI sungguhan dengan GitHub palsu (--import), tanpa WA/jaringan:
+      # --dry-run, --once (baseline, tidur, 304), config hilang.
+      - name: Tes integrasi CLI
+        run: node --test cli/test/
+
   # ---------------------------------------------------------------- Android statis
   android-statis:
     name: Cek statis Android
@@ -140,6 +145,23 @@ jobs:
           if grep -rnE 'android:text="(BUILT IN|Powered by|XyVerse Tech)' app/src/main/res/layout; then
             echo "brand literal di layout - pakai @string/brand_*"; exit 1
           fi
+
+      # URL Worker lagu cuma boleh ada di bot-js/src/lagu.mjs. Versi 1.6.0-1.6.7
+      # menulisnya juga di SettingsStore.kt dengan subdomain yang salah.
+      - name: URL Worker tidak ditulis ulang di sisi Android
+        run: |
+          if grep -rn 'workers\.dev' app/src/main/java app/src/main/res; then
+            echo "URL workers.dev di app/ - biarkan engine (bot-js/src/lagu.mjs) yang menentukan"; exit 1
+          fi
+          test "$(grep -c 'workers\.dev' bot-js/src/lagu.mjs)" -ge 1
+
+      # Bug v1.6.0-1.6.7: URL default menunjuk subdomain yang tidak pernah ada
+      # (NXDOMAIN), fitur lagu mati diam-diam. Sekarang hostname-nya wajib resolve.
+      - name: Hostname Worker lagu resolve
+        run: |
+          HOST="$(grep -oE "SUMBER_BAWAAN = 'https://[^/']+" bot-js/src/lagu.mjs | sed "s#.*'https://##")"
+          echo "SUMBER_BAWAAN host: $HOST"
+          getent hosts "$HOST" || { echo "hostname $HOST tidak resolve"; exit 1; }
 
       - name: Semua XML resource + manifest valid
         run: |

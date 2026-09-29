@@ -199,6 +199,10 @@ wa-release-bot/                 # ROOT repo: npm install di sini (npm workspaces
     └── wa-session/             # (otomatis) credentials WA — JANGAN di-share
 ```
 
+Variabel lingkungan `WA_RELEASE_BOT_DIR` memindahkan lokasi `config.json`, `state.json`,
+dan `wa-session/` (default: folder `cli/` ini) — berguna kalau satu mesin menjalankan
+beberapa bot, dan dipakai tes integrasi di `cli/test/`.
+
 Tidak ada salinan kode engine di `cli/src` lagi: perbaikan di `bot-js/src` otomatis
 berlaku di CLI. Kalau muncul `Dependensi "@whiskeysockets/baileys" belum terpasang`,
 artinya `npm install` dijalankan di `cli/`, bukan di root repo.

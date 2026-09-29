@@ -67,9 +67,10 @@ Produk ini portofolio + dipakai sendiri; metriknya sederhana:
 - Nol laporan "rilis diumumkan dobel" atau "rilis kelewat" dari kall selama satu bulan pemakaian.
 - Waktu dari `git clone` sampai pesan tes masuk channel di Termux < 10 menit mengikuti README.
 
-## 8. Keputusan terbuka
+## 8. Arah produk
 
-Lihat `docs/ROADMAP.md` bagian "Arah produk": portofolio + donasi, atau open-core.
-Sampai diputuskan, tidak ada fitur berbayar dan tidak ada pengumpulan data pengguna.
+Sementara: portofolio + donasi (lihat `docs/ROADMAP.md`). Tidak ada fitur berbayar dan
+tidak ada pengumpulan data pengguna. Satu-satunya data yang sampai ke server proyek adalah
+id acak per instalasi (`X-Pemasang`) ke Worker lagu, itu pun hanya kalau fitur lagu dinyalakan.
 
 Built by xykal — XyVerse Technology Global

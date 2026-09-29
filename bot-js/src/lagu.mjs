@@ -13,7 +13,12 @@
 //  jam pas.
 // ============================================================================
 
-export const SUMBER_BAWAAN = 'https://wa-release-bot-lagu.akuntiktok76y.workers.dev';
+// Satu-satunya tempat URL Worker ditulis. Sisi Android TIDAK menulis URL ini
+// (CI menolak literal workers.dev di app/), jadi kalau subdomain berubah cukup
+// ganti di sini. Subdomain workers.dev akun = "dikanjut" (cek: GET
+// /accounts/<id>/workers/subdomain); URL lama *.akuntiktok76y.workers.dev
+// tidak pernah ada (NXDOMAIN) -- fitur lagu mati sejak v1.6.0 karena ini.
+export const SUMBER_BAWAAN = 'https://wa-release-bot-lagu.dikanjut.workers.dev';
 
 /** Jam lokal (0-23.99) dari timestamp + offset zona waktu HP (menit). */
 export function jamLokal(ts, tzMenit = 0) {

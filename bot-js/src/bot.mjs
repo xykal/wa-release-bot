@@ -23,7 +23,7 @@ import { MPEGDecoder } from 'mpg123-decoder';
 import { fetchLatestRelease } from './github.mjs';
 import { connectToWhatsApp, resolveChannel, sendText, kirimKeChannel as kirimWA, pakaiPertanyaan, statusSesi, hapusSesi, laporKeDiri } from './wa.mjs';
 import { putuskanRilis, pendingBerikut, MAKS_PERCOBAAN } from './rilis.mjs';
-import { daftarRepo, repoTidakValid, teksRepo, stateRepo, sinkronState, ringkasTag, pendingAktif } from './repo.mjs';
+import { daftarRepo, repoTidakValid, teksRepo, teksEntri, channelRepo, stateRepo, sinkronState, ringkasTag, pendingAktif } from './repo.mjs';
 import { bikinChannel, linkChannel, bacaTarget, JENIS } from './channel.mjs';
 import { normalisasiNomor } from './nomor.mjs';
 import {
@@ -482,14 +482,25 @@ async function main() {
    * Cari JID channel/grup tujuan posting. Hasilnya di-cache di state supaya
    * nggak query WhatsApp terus tiap mau posting.
    */
-  async function cariTarget(sock) {
-    let jid = state.channelJid;
+  async function cariTarget(sock, channel = cfg.whatsapp?.channel) {
+    const utama = channel === cfg.whatsapp?.channel;
+    if (!utama) {
+      // channel khusus repo (repo.mjs PEMISAH_CHANNEL): cache per channel, tidak
+      // menyentuh channelJid utama supaya tombol tes/bikin channel tetap seperti biasa
+      state.targetLain ||= {};
+      if (state.targetLain[channel]?.jid) return state.targetLain[channel].jid;
+    }
+    let jid = utama ? state.channelJid : null;
     if (jid) return jid;
 
-    const hasil = await resolveChannel(sock, cfg.whatsapp.channel, log);
+    const hasil = await resolveChannel(sock, channel, log);
     jid = hasil.jid;
-    state.channelJid = jid;
-    state.channelName = hasil.nama;
+    if (utama) {
+      state.channelJid = jid;
+      state.channelName = hasil.nama;
+    } else {
+      state.targetLain[channel] = { jid, nama: hasil.nama };
+    }
     saveState();
 
     const subs = hasil.subscribers != null ? `, ${hasil.subscribers} subscriber` : '';
@@ -508,7 +519,9 @@ async function main() {
   const ajak = (jid) => ({ ajakBalas: pakaiPertanyaan(jid, formatPertanyaan() ? 'pertanyaan' : 'teks') });
 
   async function postRelease(repo, st, rel, { manual = false } = {}) {
-    if (!cfg.whatsapp?.channel) {
+    // channel khusus repo (kalau diisi di layar Repo) menang atas channel utama
+    const channel = channelRepo(cfg.github?.repo, repo) || cfg.whatsapp?.channel;
+    if (!channel) {
       log('⚠️ Ada release baru tapi "Channel WA" masih kosong — nggak ada tujuan posting.');
       return;
     }
@@ -523,7 +536,7 @@ async function main() {
         const { sock, close } = await sambung();
         try {
           try {
-            const jid = await cariTarget(sock);
+            const jid = await cariTarget(sock, channel);
             await kirimKeChannel(sock, jid, formatReleasePost(rel, repo, ajak(jid)));
           } catch (e) {
             // Percobaan terakhir gagal: channel tidak dapat pesan, tapi pemilik
@@ -988,7 +1001,7 @@ async function main() {
         }
         const next = {
           github: {
-            repo: teksRepo(cmd.repo),
+            repo: teksEntri(cmd.repo), // pertahankan channel per repo ("a/x|link")
             token: cmd.token || '',
             includePrereleases: Boolean(cmd.includePrereleases),
           },

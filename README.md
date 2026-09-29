@@ -122,8 +122,9 @@ Detail lengkap: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
    Tautkan dengan nomor telepon saja** → ketik kodenya. (Biasanya WA juga ngirim
    notifikasi "masukkan kode" — tinggal tap.)
    Punya HP kedua? Boleh juga pakai **Pakai QR**.
-3. Kartu **Rilis GitHub → Channel**: isi repo (`owner/nama-repo`; boleh banyak, pisah koma) + link channel
-   (belum punya? tekan **Bikin channel**) → **Simpan setting**
+3. Kartu **Rilis GitHub → Channel**: tekan **Kelola repo**, tambah repo (`owner/nama-repo` atau
+   link GitHub; boleh banyak, tiap repo boleh punya channel khusus) → kembali, isi link channel
+   utama (belum punya? tekan **Bikin channel**) → **Simpan setting**
 4. Tekan **Mulai**
 5. Kartu **Batre & nyala otomatis**: tekan dua tombolnya (izin batre + Autostart).
    Di Xiaomi ini **wajib**, kalau nggak bot dibunuh pas layar mati dan nggak

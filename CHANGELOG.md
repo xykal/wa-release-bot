@@ -6,6 +6,22 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+### Ditambah
+- **Situs**: landing page + halaman unduh (`web/`, statis, dua bahasa id/en, tanpa CDN)
+  di Cloudflare Workers Static Assets, domain <https://wabot.projectkal.my.id>
+  (workers.dev diarahkan ke sana). Sebelum launching halaman unduh menampilkan
+  hitung mundur; setelahnya kartu APK terisi otomatis dari `releases/latest`.
+  Deploy: `scripts-dev/deploy_web.py` (tanpa wrangler) + workflow `deploy-web.yml`.
+
+### Diubah
+- Release v1.7.0 dan v1.8.0 jadi **draft** (tidak publik) sampai launching 1.0.0.
+- Dokumen (README, docs/, CHANGELOG, template PR) tanpa emoji; anchor README dislug ulang;
+  CI menolak emoji di dokumen dan `web/` (`scripts-dev/bersihkan_emoji.py --cek`).
+- Web responsif diverifikasi di 14 ukuran layar (320 px sampai ultrawide, portrait dan
+  landscape) lewat `scripts-dev/tangkap_web.py`; job CI `tangkapan` gagal kalau ada
+  overflow horizontal. `scripts-dev/bingkai_screenshot.py` memasang tangkapan layar HP
+  asli ke bingkai mockup web.
+
 ## [1.8.0] — 2026-09-29
 
 ### Ditambah
@@ -107,7 +123,7 @@ lama di bawah tidak berlaku lagi.
 
 ## [1.6.7] — 2026-09-28
 
-### ✨ Splash dipoles
+### Splash dipoles
 - Tulisan di splash sekarang di dalam **gelembung chat** (warna bubble WA,
   ada ekornya nunjuk ke animasi) yang "pop" tiap ganti bentuk. Tulisannya
   ganti pas morph mulai — nggak telat satu bentuk lagi.
@@ -119,7 +135,7 @@ lama di bawah tidak berlaku lagi.
 
 ## [1.6.6] — 2026-09-28
 
-### ✨ Splash animasi morph + "Built in XyVerse"
+### Splash animasi morph + "Built in XyVerse"
 - Splash baru: satu siluet hijau yang terus morph — bot (kedip) → gelembung
   chat (titik-titik ngetik) → not lagu → gear muter → balik ke bot. Digambar
   pakai Canvas (`MorphView.kt`), tanpa library / file animasi.
@@ -132,7 +148,7 @@ lama di bawah tidak berlaku lagi.
 
 ## [1.6.5] — 2026-09-27
 
-### 🌐 "Kirim lagu gagal: fetch failed"
+### "Kirim lagu gagal: fetch failed"
 - Engine sekarang milih IPv4 duluan + otomatis pindah jalur kalau satu
   jalur mati (`ipv4first` + `autoSelectFamily`). Node 18 defaultnya nyoba
   IPv6 dulu kalau ada; di data seluler yang IPv6-nya ngadat, fetch ke
@@ -141,7 +157,7 @@ lama di bawah tidak berlaku lagi.
 - Pesan error nggak cuma "fetch failed" lagi: kelihatan tahapnya (minta ke
   Cloudflare / download potongan) plus kode aslinya (ENETUNREACH, ENOTFOUND, …).
 
-### ☁️ Worker lagu (backend — nggak perlu update app)
+### Worker lagu (backend — nggak perlu update app)
 - Lagu sekarang 50% dari daftar lawas, 50% yang lagi trend di Indonesia
   (chart harian Spotify ID via kworb.net, disaring AI biar cuma lagu
   Indo/Melayu/daerah — pop galau, dangdut, viral, dll). Di-cache sehari.
@@ -158,7 +174,7 @@ lama di bawah tidak berlaku lagi.
 
 ## [1.6.4] — 2026-09-27
 
-### 🎙️ Lagu di saluran dikirim sebagai voice note
+### Lagu di saluran dikirim sebagai voice note
 - Lagu udah kekirim, tapi di saluran tampil "tidak didukung": saluran WA
   nggak nerima file audio MP3, cuma **voice note** (Ogg Opus).
 - Potongan MP3 sekarang diubah jadi voice note langsung di HP — decoder
@@ -169,7 +185,7 @@ lama di bawah tidak berlaku lagi.
 
 ## [1.6.3] — 2026-09-27
 
-### 🎵 Lagu akhirnya bisa kekirim
+### Lagu akhirnya bisa kekirim
 - Biang kerok FC v1.6.1 ketemu berkat jaring pengaman v1.6.2:
   `ENOENT … open '/tmp/audio…'`. Baileys nulis file sementara ke
   `os.tmpdir()`, dan di nodejs-mobile itu tetep `/tmp` (nggak ada di Android)
@@ -178,7 +194,7 @@ lama di bawah tidak berlaku lagi.
 
 ## [1.6.2] — 2026-09-27
 
-### 🩹 Force close pas kirim lagu (dan pas tes grup)
+### Force close pas kirim lagu (dan pas tes grup)
 - Penyebab: ada error dari dalam Baileys yang lepas di belakang layar
   (biasanya habis socket WA ditutup). Node 18 nganggep itu fatal → Node
   `exit()` → karena Node jalan di dalam proses app, mutex yang lagi dipakai
@@ -187,10 +203,10 @@ lama di bawah tidak berlaku lagi.
 - Sekarang engine punya jaring pengaman: `uncaughtException`,
   `unhandledRejection`, dan `process.exit()` ditangkep, dicatat, engine tetap
   jalan. Isinya juga disimpen ke file, jadi kalau tetep mati, alasannya
-  muncul di log begitu engine nyala lagi ("🩹 Catatan error sebelumnya").
+  muncul di log begitu engine nyala lagi (" Catatan error sebelumnya").
 - Habis ngirim audio lagu, socket dikasih jeda 3 dtk sebelum ditutup.
 
-### 🔗 Kartu "Tautkan WhatsApp"
+### Kartu "Tautkan WhatsApp"
 - Udah tertaut → isian nomor, "Tautkan pakai kode", dan "Pakai QR"
   disembunyiin; yang tersisa status + "Lepas WA".
 - QR & pairing code nggak bakal nongol barengan lagi: yang tampil cuma cara
@@ -199,7 +215,7 @@ lama di bawah tidak berlaku lagi.
 
 ## [1.6.1] — 2026-09-27
 
-### 🔁 Lagu mood: Cloudflare x HP (GitHub Actions dicabut)
+### Lagu mood: Cloudflare x HP (GitHub Actions dicabut)
 - Workflow `lagu-mood.yml` + `lagu/siapkan.py` dihapus. Nyedot lagu dari
   Actions di repo publik itu riskan buat akun GitHub, dan YouTube juga udah
   ngeblok IP server GitHub.
@@ -215,7 +231,7 @@ lama di bawah tidak berlaku lagi.
 Dibangun di atas kode v1.5.0 (= v1.3.0 yang stabil). Fitur 1.4.x yang bikin
 force close NGGAK dibalikin.
 
-### ✨ Baru
+### Baru
 - **Sambutan baru**: 4 halaman dengan ilustrasi 3D (dibikin AI, bukan emoji),
   elemen yang melayang + paralaks, transisi mantul, indikator kapsul, tombol
   yang "bernapas". Bisa digeser.
@@ -239,7 +255,7 @@ force close NGGAK dibalikin.
 
 ## [1.5.0] — 2026-09-27
 
-### 🔙 Balik ke kode v1.3.0
+### Balik ke kode v1.3.0
 
 v1.4.0–v1.4.3 bikin app force close terus di HP user
 (`FORTIFY: pthread_mutex_lock called on a destroyed mutex` → SIGABRT, beberapa
@@ -257,7 +273,7 @@ Yang **tetap**: lisensi pemakaian pribadi (LICENSE, THIRD_PARTY_LICENSES.md).
 
 ## [1.4.3] — 2026-09-27
 
-### 🐛 Diperbaiki
+### Diperbaiki
 
 - **Force close `FORTIFY: pthread_mutex_lock called on a destroyed mutex`
   (SIGABRT).** Itu tandanya ada yang manggil `exit()` di dalam proses app:
@@ -273,7 +289,7 @@ Yang **tetap**: lisensi pemakaian pribadi (LICENSE, THIRD_PARTY_LICENSES.md).
 
 ## [1.4.2] — 2026-09-27
 
-### 🔙 Dibalikin
+### Dibalikin
 
 - **Pilihan mode aktivitas dihapus** (Adaptif / Pintar / Realtime). Bot balik
   kayak sebelum v1.4.0: nyambung tiap interval cek grup, lalu tidur lagi.
@@ -284,7 +300,7 @@ Yang **tetap**: lisensi pemakaian pribadi (LICENSE, THIRD_PARTY_LICENSES.md).
 
 ## [1.4.1] — 2026-09-27
 
-### 🐛 Diperbaiki
+### Diperbaiki
 
 - **App force close + HP jadi lemot / app lain ketutup.** Engine Node jalan
   di dalam proses app. Baileys 6.7.24 punya beberapa handler async tanpa
@@ -307,7 +323,7 @@ Yang **tetap**: lisensi pemakaian pribadi (LICENSE, THIRD_PARTY_LICENSES.md).
 
 ## [1.4.0] — 2026-09-27
 
-### ⚖️ Lisensi berubah
+### Lisensi berubah
 
 - Mulai rilis ini **bukan MIT lagi**: lisensi **pemakaian pribadi**
   (source-available). Boleh pakai sendiri, baca, ubah buat diri sendiri; nggak
@@ -316,7 +332,7 @@ Yang **tetap**: lisensi pemakaian pribadi (LICENSE, THIRD_PARTY_LICENSES.md).
 - Baru: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) — termasuk catatan
   soal libsignal (GPL-3.0) yang ikut dibundel Baileys.
 
-### ✨ Baru
+### Baru
 
 - **Tampilan baru.** Dashboard (status, banner WA tertaut, ubin info, aksi
   cepat, log) + halaman **Setelan** terpisah (auto-simpan pas ditinggal) +
@@ -334,10 +350,10 @@ Yang **tetap**: lisensi pemakaian pribadi (LICENSE, THIRD_PARTY_LICENSES.md).
   nambah perintah sendiri. Dokumentasi: [docs/PLUGIN.md](docs/PLUGIN.md).
 - **Lihat respons** (dashboard): baca balasan follower buat Pertanyaan channel
   terakhir.
-- **Pesan tes grup** sekarang: *🛡️ Bot penjaga grup aktif* + fitur + aturan
+- **Pesan tes grup** sekarang: * Bot penjaga grup aktif* + fitur + aturan
   singkat + link aturan (default `https://rules.xyc.my.id/`, bisa diganti).
 
-### 🐛 Diperbaiki
+### Diperbaiki
 
 - **Pesan ke grup "terkirim" tapi nggak nongol.** Dua penyebab yang ketemu:
   (1) bot dulu langsung putus habis kirim, padahal HP anggota kadang minta
@@ -360,7 +376,7 @@ Yang **tetap**: lisensi pemakaian pribadi (LICENSE, THIRD_PARTY_LICENSES.md).
 Rilis ini juga ngebawa perbaikan tombol dari 1.2.2 (yang nggak sempat dirilis
 sendiri) — lihat bagian 1.2.2 di bawah.
 
-### ✨ Baru
+### Baru
 
 - **Pesan ke channel dikirim sebagai "Pertanyaan".** Fitur saluran WA yang
   follower-nya bisa **bales** pesan (balasannya cuma sampai ke admin, nggak
@@ -377,7 +393,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
   di-approve. Satu orang yang kecatat pakai nomor + ID samaran (LID) dibuka
   sekaligus.
 
-### 🐛 Diperbaiki
+### Diperbaiki
 
 - Kolom *Selalu tolak nomor ini*: nomor yang ditulis pakai spasi
   (`0812 3456 7890`) dulu pecah jadi potongan yang nggak valid → nggak pernah
@@ -385,7 +401,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
 
 ## [1.2.2] — 2026-09-27
 
-### 🐛 Diperbaiki
+### Diperbaiki
 
 - **Tombol nggak ngasih tau apa-apa waktu service dimatiin / bot dijeda.**
   Habis *Matikan service*, layar tetap bilang "JALAN" dan tombolnya tetap
@@ -403,7 +419,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
 
 ## [1.2.1] — 2026-09-27
 
-### 🐛 Diperbaiki
+### Diperbaiki
 
 - **Dialog QR sama pairing code nongol barengan.** Dua penyebab:
   1. `events.jsonl` (jalur event engine → app) nggak pernah dikosongin, dan app
@@ -432,13 +448,13 @@ sendiri) — lihat bagian 1.2.2 di bawah.
 
 ## [1.2.0] — 2026-09-27
 
-### 🐛 Diperbaiki
+### Diperbaiki
 
 - **Setup "gagal" dengan `code 515` padahal QR-nya udah kescan.** Tepat setelah
   QR discan (atau pairing code dimasukin), WhatsApp SELALU mutus koneksi dengan
   kode 515 (*restart required*) dan nyuruh nyambung ulang — itu bagian normal
   dari proses nautin. Engine dulu nganggap semua koneksi putus = gagal, jadi
-  setup selalu berakhir `💥 Setup gagal: Koneksi WA tutup (code 515)`.
+  setup selalu berakhir ` Setup gagal: Koneksi WA tutup (code 515)`.
   Sekarang 515 dijawab dengan nyambung ulang pakai sesi yang baru disimpan.
   Putus karena jaringan (408/428/503) juga dicoba ulang sampai 3x.
 - **Habis update APK, engine yang jalan tetap engine LAMA.** `bundle.cjs` cuma
@@ -448,7 +464,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
 - Sisa pairing yang nggak selesai (kode diminta, tapi nggak pernah dimasukin)
   dibuang otomatis sebelum nautin lagi — kalau nggak, WA nolak login berikutnya.
 
-### ✨ Baru
+### Baru
 
 - **Tautkan pakai pairing code.** Isi nomor WA → muncul kode 8 huruf → ketik di
   WhatsApp (*Perangkat tertaut → Tautkan dengan nomor telepon saja*). Nggak
@@ -475,14 +491,14 @@ sendiri) — lihat bagian 1.2.2 di bawah.
   yang pakai `QUICKBOOT_POWERON`. Opsi nyala-otomatis sekarang default **nyala**.
 - Begitu internet nyambung lagi, bot langsung cek (nggak nunggu jadwal).
 
-### 🎨 Tampilan
+### Tampilan
 
 - UI baru, gelap ala WhatsApp, **tanpa komponen Material bawaan**: tombol,
   kartu, input, saklar, dialog, dan notifikasi kecil digambar sendiri.
 - Logo **bulan sabit** yang lama balik lagi (sabitnya sekarang path beneran,
   bukan lingkaran yang ditimpa warna latar), plus versi themed icon.
 
-### 🔋 Hemat batre
+### Hemat batre
 
 - Ping WebSocket lokal tiap 15 dtk dihapus (koneksi ke 127.0.0.1 nggak butuh).
 - Polling file event: 300 ms cuma pas app kebuka, 3 dtk pas di belakang.
@@ -492,7 +508,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
 
 ## [1.1.4] — 2026-09-27
 
-### 🐛 Diperbaiki (yang ini fatal)
+### Diperbaiki (yang ini fatal)
 
 - **Mesin Node nggak pernah nyala di HP.** `NodeBridge` nggak pernah memanggil
   `System.loadLibrary()`. Punya `libnode.so` dan `libnodebridge.so` di dalam
@@ -518,7 +534,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
   milidetik). Urutannya penting — `libnodebridge.so` punya `DT_NEEDED` ke
   `libnode.so`.
 
-### 🛡️ Supaya nggak kejadian lagi
+### Supaya nggak kejadian lagi
 
 - CI build: `readelf --dyn-syms` memastikan `libnodebridge.so` benar-benar
   mengekspor `Java_com_xykals_warelease_NodeBridge_startNode` — untuk **tiap**
@@ -527,7 +543,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
   ada di `NodeBridge.kt`, **dan urutannya benar**.
 - Dua-duanya statis dan murah, dan dua-duanya bakal menangkap persis bug ini.
 
-### 🔧 Diubah
+### Diubah
 
 - Log startup sekarang mencatat **ABI yang benar-benar dipakai** Android
   (`primaryCpuAbi`), bukan cuma daftar ABI yang didukung HP. Kalau suatu saat
@@ -541,7 +557,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
 
 ## [1.1.3] — 2026-09-27
 
-### 🐛 Diperbaiki
+### Diperbaiki
 
 - **App terhenti waktu tombol ditekan (paling sering kelihatan di Setup).**
   `BotService` baca setting lewat `private val settings = SettingsStore(this)`
@@ -567,7 +583,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
   belum kelar, perintahnya hilang tanpa pesan). Sekarang ditunggu sampai
   instance-nya benar-benar ada, maksimal ~10 detik, lalu dikasih tahu kalau gagal.
 
-### ✨ Ditambahkan
+### Ditambahkan
 
 - **Perekam log**, tersimpan di `Android/media/<nama-paket>/log/`:
   `app.log` (aktivitas app), `mesin.log` (engine Node), `logcat.log` (log
@@ -589,17 +605,17 @@ sendiri) — lihat bagian 1.2.2 di bawah.
 - Perintah `cek-channel` (`bikin-channel` juga) di engine + pemakaian grup WA
   sebagai target posting.
 
-### 🔧 Diubah
+### Diubah
 
-- **Emoji di UI diganti ikon vektor.** Emoji (▶️ ⏸️ 💾 dst) dirender beda-beda
+- **Emoji di UI diganti ikon vektor.** Emoji (   dst) dirender beda-beda
   tiap HP, ukurannya nggak bisa diatur, dan ada yang muncul kotak kosong.
   Sekarang semua ikon gambar vektor yang warnanya ngikut tema (jadi ikut
   mode terang/gelap).
 - **Ikon app digambar ulang**: balon obrolan + panah naik. Yang lama (bulan
-  sabit kuning + bintang) kelihatan kayak emoji 🌙. Sekalian ditambah layer
+  sabit kuning + bintang) kelihatan kayak emoji . Sekalian ditambah layer
   `monochrome` biar ikut "themed icon" Android 13+.
 
-### ⚠️ Perubahan perilaku (penting)
+### Perubahan perilaku (penting)
 
 - **Username channel (`@nama_channel`) sekarang ditolak** dengan pesan yang
   jelas. Dulu "didukung", tapi kodenya manggil `onWhatsApp()`
@@ -610,7 +626,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
 
 ## [1.1.2] — 2026-09-27
 
-### ✨ Ditambahkan
+### Ditambahkan
 
 - **Tiga APK di setiap Release**, bukan satu:
   `arm64-v8a` (HP 64-bit), `armeabi-v7a` (HP 32-bit), dan `universal`
@@ -623,7 +639,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
 - Artifact `r8-mapping-*` berisi `mapping.txt`, buat menerjemahkan stack trace
   dari HP (yang namanya sudah di-obfuscate) balik ke nama class asli.
 
-### ⚡️ Ukuran APK
+### Ukuran APK
 
 - **R8 diaktifkan** untuk build release: `minifyEnabled` + `shrinkResources`.
   Kode dan resource yang nggak kepakai dibuang, sisanya di-rename jadi pendek.
@@ -634,7 +650,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
   satu, jadi mengirim keduanya sekaligus cuma bikin unduhan dua kali lebih
   besar dari yang perlu.
 
-### 🔒 Keamanan
+### Keamanan
 
 - Aturan keep R8 ditulis eksplisit di `app/proguard-rules.pro` (4 titik:
   JNI, WorkManager, komponen manifest, anotasi). Sengaja pendek — aplikasi ini
@@ -646,7 +662,7 @@ sendiri) — lihat bagian 1.2.2 di bawah.
 
 Versi ini soal **tanda tangan APK** dan **dukungan HP 32-bit**.
 
-### ✨ Ditambahkan
+### Ditambahkan
 
 - **Dukungan `armeabi-v7a`** (HP Android 32-bit). Sebelumnya cuma `arm64-v8a`.
 
@@ -666,7 +682,7 @@ Versi ini soal **tanda tangan APK** dan **dukungan HP 32-bit**.
 - `-Pabis=...` untuk build lokal, dan `ABIS=...` untuk script yang mengunduh
   `libnode.so`.
 
-### 🐛 Diperbaiki
+### Diperbaiki
 
 - **Komentar ABI di `app/build.gradle` salah** — ditulis "nodejs-mobile cuma
   menyediakan prebuilt arm64-v8a + x86_64". Faktanya `armeabi-v7a` juga ada,
@@ -678,7 +694,7 @@ Versi ini soal **tanda tangan APK** dan **dukungan HP 32-bit**.
   cuma satu yang kepackage, APK-nya tetap lolos dan HP yang satunya cuma dapat
   crash. Sekarang dicek per-ABI.
 
-### 🔒 Keamanan
+### Keamanan
 
 - **APK sekarang di-sign dengan kunci yang tetap.** Sebelumnya di-sign pakai
   debug key bawaan runner CI, dan runner itu bersih tiap kali — jadi kuncinya
@@ -693,7 +709,7 @@ Versi ini fokusnya **bikin proyeknya benar-benar bisa di-build dan aman**.
 Sebelum ini, APK-nya nggak akan pernah jadi: ada 6 bug kompilasi + 1 kerentanan
 kritikal di dependency.
 
-### 🔒 Keamanan
+### Keamanan
 
 - **Naikkan Baileys `6.17.16` → `6.7.24`** — menutup
   [CVE-2026-48063 / GHSA-qvv5-jq5g-4cgg](https://github.com/WhiskeySockets/Baileys/security/advisories/GHSA-qvv5-jq5g-4cgg)
@@ -707,7 +723,7 @@ kritikal di dependency.
 - Tambah `dependency-review` di PR: blokir dependency baru yang high/critical
   atau berlisensi copyleft kuat.
 
-### 🐛 Perbaikan (semuanya bikin build gagal — ini yang paling penting)
+### Perbaikan (semuanya bikin build gagal — ini yang paling penting)
 
 - **`app/build.gradle`: dependency `androidx.appcompat` hilang.**
   `MainActivity` extends `AppCompatActivity`, tapi `androidx.appcompat:appcompat`
@@ -750,7 +766,7 @@ kritikal di dependency.
   `ReferenceError: Cannot access 'bridge' before initialization`.
   Sekarang `bridge` di-`let` + dicek null.
 
-### ✨ Ditambahkan
+### Ditambahkan
 
 - **Polyfill WebCrypto (`bot-js/polyfills/webcrypto.cjs` + `cli/src/webcrypto.mjs`).**
   Baileys 6.7.x memakai `globalThis.crypto.subtle`, yang **baru ada di Node 19+**.
@@ -774,7 +790,7 @@ kritikal di dependency.
 - `.editorconfig`, `.gitleaks.toml`, `SECURITY.md`, `docs/ARCHITECTURE.md`,
   `docs/CI.md`, `docs/SECURITY-AUDIT.md`.
 
-### 🔧 Diubah
+### Diubah
 
 - **Repo digabung jadi satu.** Dulu ada dua folder terpisah
   (`wa-release-bot-app` dan `wa-release-bot`). Sekarang:
@@ -787,7 +803,7 @@ kritikal di dependency.
   lokal dan CI pakai toolchain yang sama.
 - Lint diatur supaya tetap menghasilkan laporan SARIF tapi **nggak** ngeblok build.
 
-### 📌 Catatan kompatibilitas
+### Catatan kompatibilitas
 
 - `engines: node >= 18` di `bot-js/package.json`, tapi Baileys 6.7.24 minta
   `>= 20`. Itu cuma deklarasi — bundle-nya sudah diverifikasi jalan di

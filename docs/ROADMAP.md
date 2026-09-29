@@ -3,6 +3,24 @@
 Status per 2026-09-29. Ukuran effort: S (< 1 hari kerja), M (1-3 hari), L (> 3 hari).
 Semua item di sini menunggu "gas" dari kall kecuali ditandai *sedang jalan*.
 
+## Launching publik — Jumat 2026-10-09 19.00 WIB (12.00 UTC)
+
+Keputusan kall (2026-09-29): versi rilis publik pertama adalah **1.0.0**; versi internal
+1.7.x/1.8.x tetap ada sebagai release **draft** (hanya kolaborator yang lihat, aset tidak bisa
+diunduh publik). Situs: <https://wabot.projectkal.my.id> — halaman unduh
+menampilkan hitung mundur sampai `LAUNCH_ISO` (`web/js/teks.js`), lalu otomatis membaca
+`releases/latest` (draft tidak ikut) dan mengisi kartu APK.
+
+Checklist PR launching (`chore/rilis-1.0.0`, dibuat H-1):
+
+| Langkah | Catatan |
+|---|---|
+| Bump `versionName` 1.0.0 di `app/build.gradle`, 3 `package.json` + lockfile, CHANGELOG `[1.0.0]` | isi changelog = gabungan 1.1–1.8 dalam bahasa pengguna |
+| `versionCode` di CI: `1_000_000 + major*10000 + minor*100 + patch` = **1010000** | tanpa offset, 1.0.0 = 10000 < 10800 (v1.8.0) dan HP penguji menolak update; offset hanya diubah di PR ini |
+| Hapus draft v1.7.0/v1.8.0 **dan** tag-nya sebelum push tag `v1.0.0` | `releases/latest` memilih berdasarkan tanggal dibuat; tag lama tidak boleh tersisa |
+| Tag `v1.0.0` tepat sebelum 19.00 WIB | job `release` butuh ~5 menit; halaman unduh cek tiap 60 detik |
+| Setelah tayang: uji `curl https://api.github.com/repos/xykal/wa-release-bot/releases/latest` tanpa token | harus 200 dengan 3 `.apk` + 3 `.sha256` |
+
 ## Sekarang (v1.6.x, sedang jalan)
 
 | Item | Status | Catatan |

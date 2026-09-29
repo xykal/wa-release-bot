@@ -467,7 +467,9 @@ jobs:
           name: ${{ steps.vars.outputs.apk-name }}
           path: dist/*
           if-no-files-found: error
-          retention-days: 30
+          # 2 hari: artifact repo publik bisa diunduh siapa pun yang login GitHub;
+          # sebelum launching APK tidak boleh beredar (release pun draft).
+          retention-days: 2
 
       # mapping.txt: peta nama lama → nama baru hasil R8. Disimpan buat
       # menerjemahkan stack trace dari HP (yang namanya udah di-obfuscate)

@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🦴 WA Release Bot
+# WA Release Bot
 
 **Bot WhatsApp yang nggak nyala 24 jam. Dia tidur.**
 
@@ -14,7 +14,7 @@ Nggak ada update? 0% CPU, 0% data.
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/xykal/wa-release-bot/badge)](https://securityscorecards.dev/viewer/?uri=github.com/xykal/wa-release-bot)
 
 [![Lisensi: pemakaian pribadi](https://img.shields.io/badge/Lisensi-pemakaian%20pribadi-orange.svg)](LICENSE)
-[![Android](https://img.shields.io/badge/Android-8.0%2B%20(arm64%20%7C%20v7a)-3DDC84?logo=android&logoColor=white)](#-pakai-setelah-install)
+[![Android](https://img.shields.io/badge/Android-8.0%2B%20(arm64%20%7C%20v7a)-3DDC84?logo=android&logoColor=white)](#pakai-setelah-install)
 [![Node](https://img.shields.io/badge/Node.js-18.20.4-339933?logo=nodedotjs&logoColor=white)](docs/ARCHITECTURE.md)
 
 </div>
@@ -38,10 +38,10 @@ Built by xykal — XyVerse Technology Global.
 
 Ada **dua cara** pakai bot ini:
 
-| | [📱 Aplikasi Android](#-aplikasi-android--host-di-hp-sendiri) | [💻 CLI (Termux / PC)](#-cli--termux--pc) |
+| | [Aplikasi Android](#aplikasi-android--host-di-hp-sendiri) | [CLI (Termux / PC)](#cli--termux--pc) |
 |---|---|---|
-| Butuh Termux / PC | ❌ nggak | ✅ iya |
-| Mulai otomatis setelah HP reboot | ✅ | ✅ (cron/termux-boot) |
+| Butuh Termux / PC | tidak | ya |
+| Mulai otomatis setelah HP reboot | ya | ya (cron/termux-boot) |
 | Cara instal | unduh APK dari [Releases](../../releases) | `git clone` + `npm install` (Node 20+) |
 | Paling cocok buat | HP nganggur yang bisa dicharge terus | yang udah nyaman di terminal |
 
@@ -50,7 +50,7 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`): CLI meng-import modul `bot-
 
 ---
 
-## 🔁 Flow
+## Flow
 
 ```
    Service nyala (foreground service / cron)
@@ -66,41 +66,42 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`): CLI meng-import modul `bot-
    NGGAK ADA       ADA!
       │              │
       ▼              ▼
-   TIDUR 😴     WA nyambung 2–5 detik
+   TIDUR      WA nyambung 2–5 detik
    (0% CPU,     → posting ke channel
     0% data)    → WA dilepas → TIDUR lagi
 ```
 
-> ⚠️ **HP harus tetap nyala.** HP yang di-*off* nggak bisa menjalankan aplikasi apa pun —
+> **HP harus tetap nyala.** HP yang di-*off* nggak bisa menjalankan aplikasi apa pun —
 > itu batasan fisik, bukan batasan app ini. Charge terus, layar boleh mati.
 
 ---
 
-## ✨ Fitur
+## Fitur
 
-- ✅ **Host di HP sendiri** — aplikasi Android native, tanpa Termux, tanpa VPS
-- ✅ **Tidur-bangun beneran** — WhatsApp baru terhubung pas mau posting
-- ✅ **Tautkan sekali seumur hidup** — pakai **pairing code** (8 huruf, tanpa HP kedua) atau QR
-- ✅ **Penjaga grup** — auto-approve permintaan join, tolak yang dulu udah keluar/dikeluarin
-- ✅ **Post ke channel WA** (tempel link channel-nya) — atau ke **grup WA** kalau lebih gampang
-- ✅ **Bikin channel dari app** — belum punya channel? bot yang bikinin, sekali klik
-- ✅ **Watchdog** — WorkManager + boot receiver: service ke-bunuh Android → nyala lagi
-- ✅ **UI status real-time** — log, tag terakhir, hitungan mundur, dialog QR
-- ✅ **Semua setting bisa diubah dari UI** — repo, interval, token, prerelease, dll.
-- ✅ **Banyak repo sekaligus** — isi kolom repo pakai koma (`a/x, b/y`); tiap repo punya baseline sendiri
-- ✅ **Notifikasi kalau gagal kirim** — percobaan ke-3 gagal → notifikasi Android + laporan ke chat diri sendiri
-- 🔒 **Zero secret di repo** — token cuma hidup di HP lo / GitHub Secrets
+- **Host di HP sendiri** — aplikasi Android native, tanpa Termux, tanpa VPS
+- **Tidur-bangun beneran** — WhatsApp baru terhubung pas mau posting
+- **Tautkan sekali seumur hidup** — pakai **pairing code** (8 huruf, tanpa HP kedua) atau QR
+- **Penjaga grup** — auto-approve permintaan join, tolak yang dulu udah keluar/dikeluarin
+- **Post ke channel WA** (tempel link channel-nya) — atau ke **grup WA** kalau lebih gampang
+- **Bikin channel dari app** — belum punya channel? bot yang bikinin, sekali klik
+- **Watchdog** — WorkManager + boot receiver: service ke-bunuh Android → nyala lagi
+- **UI status real-time** — log, tag terakhir, hitungan mundur, dialog QR
+- **Semua setting bisa diubah dari UI** — repo, interval, token, prerelease, dll.
+- **Banyak repo sekaligus** — isi kolom repo pakai koma (`a/x, b/y`); tiap repo punya baseline sendiri
+- **Notifikasi kalau gagal kirim** — percobaan ke-3 gagal → notifikasi Android + laporan ke chat diri sendiri
+- **Zero secret di repo** — token cuma hidup di HP lo / GitHub Secrets
 
 ---
 
-## 📱 Aplikasi Android — host di HP sendiri
+## Aplikasi Android — host di HP sendiri
 
 ### Instal
 
-**Cara cepat** — unduh APK dari halaman [**Releases**](../../releases), pasang di HP
-(aktifkan *Install unknown apps*), lanjut ke [Pakai Setelah Install](#-pakai-setelah-install).
+**Cara cepat** — unduh APK dari [**halaman unduh**](https://wabot.projectkal.my.id/unduh/)
+(atau [Releases](../../releases)), pasang di HP (aktifkan *Install unknown apps*), lanjut ke
+[Pakai Setelah Install](#pakai-setelah-install). Situs: <https://wabot.projectkal.my.id>.
 
-**Build sendiri** — lihat [🏗️ Build](#%EF%B8%8F-build-dari-source).
+**Build sendiri** — lihat [Build](#build-dari-source).
 
 ### Cara kerja (singkat)
 
@@ -225,7 +226,7 @@ JID grup (`120363...@g.us`) atau link undangan grup-nya
 
 ---
 
-## 🎵 Lagu mood
+## Lagu mood
 
 Sesekali bot ngirim **potongan ~60 detik** lagu lama (slow rock / jiwang 80-90an,
 pop lawas Indonesia) plus kata-kata ke channel. Jadwalnya diacak kayak orang lagi
@@ -274,10 +275,10 @@ Worker-nya: `python3 scripts-dev/deploy_worker_lagu.py` (butuh env `CF_API_TOKEN
 `CF_ACCOUNT_ID`, `CF_KV_LAGU`, opsional `GROQ_API_KEY`). Kode Worker:
 [`lagu/worker/worker.js`](lagu/worker/worker.js).
 
-> ⚠️ Lagunya punya orang. Yang dikirim cuma potongan, tapi channel publik
+> **Catatan.** Lagunya punya orang. Yang dikirim cuma potongan, tapi channel publik
 > tetap bisa kena laporan hak cipta — pakai secukupnya.
 
-## 🧩 Hosting bot custom
+## Hosting bot custom
 
 Punya project bot Node.js sendiri? Buka **Hosting bot** di app → upload ZIP.
 
@@ -293,7 +294,7 @@ Punya project bot Node.js sendiri? Buka **Hosting bot** di app → upload ZIP.
   `node_modules`) tetap dipertahankan.
 - Node-nya **Node 18** bawaan app. Versinya cuma bisa naik lewat update APK.
 
-## 💻 CLI — Termux / PC
+## CLI — Termux / PC
 
 ```bash
 # 1. Dependensi (Termux)
@@ -337,12 +338,12 @@ Baris cron — bangun tiap 15 menit, posting kalau ada release baru, langsung ma
 | `npm run once -- --ulang` | Sama seperti `once`, tapi hitungan "gagal kirim 3x" di-reset (coba lagi dari nol) |
 | `npm run versi` | Cetak versi + brand (`wa-release-bot <versi> — XyVerse Technology Global`) |
 
-> 💡 Tidak ada Node di HP? Bisa juga jalanin di **PC/VPS + cron**, atau pakai
+> **Tips.** Tidak ada Node di HP? Bisa juga jalanin di **PC/VPS + cron**, atau pakai
 > **systemd timer** di Linux.
 
 ---
 
-## 🏗️ Build dari source
+## Build dari source
 
 ### Opsi A — GitHub Actions (rekomendasi)
 
@@ -404,7 +405,7 @@ keytool -genkeypair -v -keystore my-release.jks -alias warelease \
 base64 -w0 my-release.jks    # tempel hasilnya ke KEYSTORE_BASE64
 ```
 
-> ⚠️ **Keystore itu identitas aplikasinya.** Kalau hilang, lo nggak bisa lagi
+> **Keystore itu identitas aplikasinya.** Kalau hilang, lo nggak bisa lagi
 > bikin update yang bisa nimpa versi lama — pemakai harus uninstall dulu.
 > Kalau bocor, orang bisa bikin APK palsu yang dianggap "aplikasi yang sama".
 > Simpan di tempat aman, **jangan pernah** masuk repo.
@@ -432,7 +433,7 @@ Butuh: **JDK 17**, **Android SDK 35**, **NDK 26.1.10909125**, **CMake 3.22.1**, 
 
 ---
 
-## 🩺 Debugging — log ada di mana
+## Debugging — log ada di mana
 
 App-nya nulis semua yang terjadi ke:
 
@@ -467,7 +468,7 @@ Masih perlu log mentah? `adb logcat -s WRBot` (output engine Node).
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 | Gejala | Solusi |
 |---|---|
@@ -498,7 +499,7 @@ Masih mentok? Buka [Issue](../../issues/new/choose) — sertakan output Log dari
 
 ---
 
-## 🔒 Keamanan
+## Keamanan
 
 - Session WA tersimpan di **storage privat app** (`/data/data/.../wa_release_bot/session`)
   — nggak bisa diakses app lain
@@ -518,34 +519,35 @@ Masih mentok? Buka [Issue](../../issues/new/choose) — sertakan output Log dari
 
 Laporan kerentanan: lihat [SECURITY.md](SECURITY.md).
 
-> ⚠️ WA automation pihak ketiga selalu punya risiko akun dibatasi Meta. Pakai akun/kanal
+> **Catatan.** WA automation pihak ketiga selalu punya risiko akun dibatasi Meta. Pakai akun/kanal
 > yang siap-siap untuk itu, dan **jangan** buat bot spam.
 
 ---
 
-## 📁 Struktur
+## Struktur
 
 ```
 .
-├── app/                      # 📱 aplikasi Android (Kotlin)
+├── app/                      # aplikasi Android (Kotlin)
 │   ├── src/main/cpp/         #    jembatan JNI → node::Start()
 │   ├── src/main/java/…/      #    App (log+capture crash), BotService, LogRecorder, bridge, UI
 │   ├── src/test/             #    unit test (JVM)
 │   └── build.gradle
-├── bot-js/                   # 🧠 engine bot (plain Node.js + Baileys)
+├── bot-js/                   # engine bot (plain Node.js + Baileys)
 │   ├── src/                  #    bot, bridge, github, wa, format
 │   ├── polyfills/            #    WebCrypto polyfill (wajib di Node 18)
 │   ├── test/                 #    unit test (node --test)
 │   └── build.mjs             #    esbuild → bundle.cjs (1 file)
-├── cli/                      # 💻 versi Termux/PC — import langsung modul bot-js/src (engine identik)
-├── scripts/                  # 🔧 build-local.sh, fetch-nodejs-mobile.sh
-├── docs/                     # 📚 ARCHITECTURE, CI, SECURITY-AUDIT, CHANGELOG
-└── .github/workflows/        # ⚙️ build-apk, code-quality, codeql, security
+├── cli/                      # versi Termux/PC — import langsung modul bot-js/src (engine identik)
+├── scripts/                  # build-local.sh, fetch-nodejs-mobile.sh
+├── web/                      # landing page + halaman unduh (statis, Cloudflare Workers)
+├── docs/                     # ARCHITECTURE, CI, SECURITY-AUDIT, CHANGELOG
+└── .github/workflows/        # build-apk, code-quality, codeql, security, deploy-web
 ```
 
 ---
 
-## 🧪 Analisis & CI
+## Analisis & CI
 
 Repo ini punya 4 workflow:
 
@@ -561,12 +563,12 @@ Detail: [docs/CI.md](docs/CI.md).
 
 ---
 
-## 📄 Lisensi
+## Lisensi
 
 **Lisensi pemakaian pribadi (source-available) — BUKAN open source.** Lengkapnya: [LICENSE](LICENSE).
 
-- ✅ Boleh: pakai buat diri sendiri, baca & pelajari kodenya, ubah buat dipakai sendiri, kirim PR
-- ❌ Nggak boleh tanpa izin: jual / sewain / jasa pasang, sebar ulang APK atau kode, rebrand, pakai buat bisnis
+- Boleh: pakai buat diri sendiri, baca & pelajari kodenya, ubah buat dipakai sendiri, kirim PR
+- Nggak boleh tanpa izin: jual / sewain / jasa pasang, sebar ulang APK atau kode, rebrand, pakai buat bisnis
 
 Rilis **v1.3.0 ke bawah** terlanjur rilis di bawah MIT dan tetap MIT; mulai
 **v1.4.0** ikut lisensi baru. Kode pihak ketiga (Baileys, nodejs-mobile, dll)

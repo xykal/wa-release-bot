@@ -206,3 +206,26 @@ bash scripts/build-local.sh
 ABIS=armeabi-v7a bash scripts/build-local.sh
 ABIS="arm64-v8a armeabi-v7a" bash scripts/build-local.sh
 ```
+
+## 6. `deploy-web.yml` — landing page
+
+Trigger: PR/push yang menyentuh `web/**`, `scripts-dev/deploy_web.py`, atau workflow-nya;
+plus `workflow_dispatch`.
+
+| Job | Isi | Bukti |
+|---|---|---|
+| `cek` | `node --check` semua JS + `worker.js`; HTML: referensi lokal ada, semua `data-i18n` punya teks id+en, brand tepat, tidak ada `style=`/handler inline (CSP `style-src 'self'`), tidak ada URL selain github.com / api.github.com / tiktok.com; `deploy_web.py --cek` (manifest hash) | gagal = merah |
+| `tangkapan` | `scripts-dev/tangkap_web.py`: Chromium headless render `/`, `/unduh/`, `/unduh/?t=<lewat>`, `/?bahasa=en` pada 14 ukuran layar (320 px sampai ultrawide 2560, portrait + landscape); gagal kalau `scrollWidth` > viewport atau ada elemen keluar layar | artifact `web-tangkapan` (PNG, 7 hari) |
+| `deploy` (bukan PR) | `python3 scripts-dev/deploy_web.py` kalau secret `CF_API_TOKEN` ada; kalau kosong: `::notice` lalu lewat | curl: header CSP ada + `/unduh/` punya `#tirai` |
+
+Deploy manual dari mesin sendiri (token Cloudflare hanya perlu izin *Workers Scripts: Edit*):
+
+```bash
+pip install blake3
+CF_API_TOKEN=... python3 scripts-dev/deploy_web.py
+```
+
+Kenapa tanpa wrangler: aturan repo "tanpa dependensi runtime tambahan"; skrip memanggil
+API yang sama (`assets-upload-session` → `assets/upload` → `PUT scripts/<nama>`), hash aset
+memakai rumus wrangler (BLAKE3 dari base64 isi + ekstensi) supaya file yang tidak berubah
+tidak diunggah ulang.

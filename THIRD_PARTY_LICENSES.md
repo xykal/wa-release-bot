@@ -25,6 +25,15 @@ npm, di `node_modules/<paket>/LICENSE` setelah `npm ci`.
 | [Material Components](https://github.com/material-components/material-components-android) | tema dasar | Apache-2.0 |
 | [Kotlin stdlib & coroutines](https://github.com/JetBrains/kotlin) | bahasa app | Apache-2.0 |
 
+## Situs (`web/`)
+
+| Komponen | Dipakai buat | Lisensi |
+|---|---|---|
+| [Archivo](https://github.com/Omnibus-Type/Archivo) (subset WOFF2, self-host) | font landing page | OFL-1.1 (`web/font/OFL.txt`) |
+
+Tidak ada CDN, analytics, atau skrip pihak ketiga; satu-satunya koneksi keluar dari halaman
+adalah `api.github.com` (baca release terbaru) — lihat CSP di `web/worker.js`.
+
 \* **Catatan penting soal GPL-3.0.** Baileys bergantung ke `libsignal`
 ([whiskeysockets/libsignal-node](https://github.com/WhiskeySockets/libsignal-node)) yang
 berlisensi **GPL-3.0**, dan libsignal ikut dibundel ke `bundle.cjs` di dalam APK.

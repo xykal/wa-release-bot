@@ -8,12 +8,12 @@
 
 ## Jenis perubahan
 
-- [ ] 🐛 Perbaikan bug
-- [ ] ✨ Fitur baru
-- [ ] ♻️ Refactor (nggak mengubah perilaku)
-- [ ] 📝 Dokumentasi
-- [ ] ⚙️ CI / build
-- [ ] 📦 Dependency
+- [ ]  Perbaikan bug
+- [ ]  Fitur baru
+- [ ]  Refactor (nggak mengubah perilaku)
+- [ ]  Dokumentasi
+- [ ]  CI / build
+- [ ]  Dependency
 
 ## Sudah dites?
 

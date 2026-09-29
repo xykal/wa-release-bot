@@ -60,9 +60,9 @@ Dua jalur, sengaja **dua**, karena jalur cepat nggak boleh jadi titik gagal tung
 
 | Jalur | Arah | Isi | Andalan? |
 |---|---|---|---|
-| `events.jsonl` | Node → App | `log`, `status`, `qr`, `pairing_code`, `posted`, `setup_*` (termasuk `setup_tahap`), `daftar_hitam`, `cmd_error` | ✅ selalu jalan |
-| `cmd.json` | App → Node | `ping`, `status`, `configure`, `start`, `stop`, `check`, `setup`, `test`, `tes-grup`, `lihat-hitam`, `hapus-hitam`, … | ✅ selalu jalan |
-| WebSocket `127.0.0.1:18790` | dua arah | perintah saja (bukan event) | ⚡ opsional |
+| `events.jsonl` | Node → App | `log`, `status`, `qr`, `pairing_code`, `posted`, `setup_*` (termasuk `setup_tahap`), `daftar_hitam`, `cmd_error` | ya selalu jalan |
+| `cmd.json` | App → Node | `ping`, `status`, `configure`, `start`, `stop`, `check`, `setup`, `test`, `tes-grup`, `lihat-hitam`, `hapus-hitam`, … | ya selalu jalan |
+| WebSocket `127.0.0.1:18790` | dua arah | perintah saja (bukan event) |  opsional |
 
 **File bridge** — Node `appendFileSync` satu baris JSON per event; app polling
 (300 ms kalau app kebuka, 3 dtk kalau di belakang) pakai `RandomAccessFile`
@@ -221,8 +221,8 @@ Node 18.20.4, menghasilkan `QR RECEIVED len=237` dari server WhatsApp asli.
 | `libnode.so` align 4 KB, bukan 16 KB | nodejs-mobile dibangun sebelum syarat 16 KB | perlu upstream build ulang — **nggak** |
 | Runtime mentok Node 18 | nodejs-mobile nggak ada rilis lebih baru | tunggu upstream |
 | Default cuma `arm64-v8a` | tiap ABI nambah ±20 MB; hampir semua HP sekarang 64-bit | **bisa** — input `abis` di workflow, atau `-Pabis=armeabi-v7a` lokal |
-| HP harus tetap nyala | batasan fisik | ❌ |
-| Risiko akun WA dibatasi Meta | automasi pihak ketiga | ❌ konsekuensi desain |
+| HP harus tetap nyala | batasan fisik | tidak |
+| Risiko akun WA dibatasi Meta | automasi pihak ketiga | tidak konsekuensi desain |
 
 ## Keputusan desain, singkat
 

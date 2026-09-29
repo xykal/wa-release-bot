@@ -6,3 +6,5 @@
 *.webp binary
 gradlew text eol=lf
 gradlew.bat text eol=crlf
+*.ics text eol=crlf
+*.woff2 binary

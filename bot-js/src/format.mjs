@@ -130,7 +130,7 @@ export function formatLaporGagal({ tag, repo, percobaan, maks, error, cli = fals
   return [
     '⚠️ *wa-release-bot: gagal kirim rilis*',
     '',
-    `Rilis *${tag}* (${repo}) gagal dikirim ke channel ${percobaan}x berturut-turut.`,
+    `Rilis *${tag}* (${repo}) gagal dikirim ke channel ${percobaan}x berturut-turut (batas ${maks}x).`,
     `Error terakhir: ${potongAman(String(error || 'tidak diketahui'), 300)}`,
     '',
     `Bot berhenti mencoba sampai lo ${caraUlang}.`,

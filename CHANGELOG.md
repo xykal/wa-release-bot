@@ -29,6 +29,10 @@ Semua perubahan penting proyek ini. Format mengikuti
   Workflow Screenshot app mengunci bahasa emulator (input `bahasa`: `id-ID` bawaan atau
   `en-US`); runner GitHub aslinya en-US sehingga tangkapan situs bisa berubah bahasa.
 
+- Uji engine kedua (`test/engine.test.mjs`): dua repo sekaligus (satu prerelease dengan
+  `includePrereleases`), ETag 304 pada cek kedua, release baru terdeteksi dan berhenti di
+  "Channel WA masih kosong" tanpa menyentuh WhatsApp; `lastTag` tidak berubah sampai terkirim.
+
 ### Diubah
 - App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,
   `DialogTautan`, `LembarHitam`, `AksiSistem`, `SplashUtama`, `Lembar` (komponen dialog).

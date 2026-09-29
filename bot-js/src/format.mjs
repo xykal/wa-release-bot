@@ -107,7 +107,7 @@ export function formatReleasePost(rel, repoStr, { ajakBalas = false } = {}) {
 
   const lines = [`🚀 *${namaRepo} ${rel.tag} udah rilis!*`, pilihPembuka(rel.tag), ''];
   if (rel.name && rel.name.trim() !== rel.tag) lines.push(`📌 *${rel.name.trim()}*`);
-  if (rel.isPrerelease) lines.push('🧪 _Prerelease: versi uji coba, wajar kalau masih ada bug._');
+  if (rel.isPrerelease) lines.push('🧪 _Versi prerelease (uji coba), wajar kalau masih ada bug._');
   if (rel.name || rel.isPrerelease) lines.push('');
   lines.push(
     '*Apa yang baru:*',

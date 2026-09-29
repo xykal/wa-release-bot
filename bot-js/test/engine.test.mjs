@@ -57,7 +57,8 @@ class Engine {
     this.dataDir = dataDir;
     this.eventsFile = path.join(dataDir, 'events.jsonl');
     this.cmdFile = path.join(dataDir, 'cmd.json');
-    this.dibaca = 0; // jumlah baris events.jsonl yang sudah dikonsumsi
+    this.dibaca = 0; // jumlah baris events.jsonl yang sudah dibaca dari disk
+    this.antrian = []; // event yang sudah dibaca tapi belum dipakai tunggu()
     this.keluaran = '';
     // -r polyfill: di Node 18 Baileys butuh globalThis.crypto (di APK bundle
     // membawa polyfill ini di banner; di sini source dijalankan langsung).
@@ -85,18 +86,25 @@ class Engine {
   }
 
   bacaBaru() {
-    if (!fs.existsSync(this.eventsFile)) return [];
+    if (!fs.existsSync(this.eventsFile)) return;
     const semua = fs.readFileSync(this.eventsFile, 'utf8').split('\n').filter(Boolean);
-    const baru = semua.slice(this.dibaca);
+    for (const baris of semua.slice(this.dibaca)) this.antrian.push(JSON.parse(baris));
     this.dibaca = semua.length;
-    return baru.map((b) => JSON.parse(b));
   }
 
-  /** Tunggu event pertama yang lolos `cocok`; event lain yang lewat dibuang. */
+  /**
+   * Tunggu event pertama yang lolos `cocok`. Event SEBELUM yang cocok dibuang
+   * (urutan harapan test memang berurutan); event SESUDAHNYA tetap di antrian
+   * supaya status yang menyusul di batch yang sama tidak hilang.
+   */
   async tunggu(cocok, keterangan, batasMs = 20000) {
     const mulai = Date.now();
     while (Date.now() - mulai < batasMs) {
-      for (const ev of this.bacaBaru()) if (cocok(ev)) return ev;
+      this.bacaBaru();
+      while (this.antrian.length) {
+        const ev = this.antrian.shift();
+        if (cocok(ev)) return ev;
+      }
       if (this.proc.exitCode !== null) break;
       await tidur(100);
     }

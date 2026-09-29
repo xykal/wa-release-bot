@@ -57,7 +57,7 @@ class RepoActivity : AppCompatActivity() {
                 LogRecorder.tulis("Tombol", "repo: $teks")
                 try { aksi() } catch (e: Throwable) {
                     LogRecorder.galat("Tombol", "repo \"$teks\" gagal", e)
-                    banner("Gagal: ${e.message}")
+                    banner(getString(R.string.k_gagal_2, e.message))
                 }
             }
         }
@@ -85,18 +85,18 @@ class RepoActivity : AppCompatActivity() {
             setColorFilter(warna(R.color.wr_teks))
             setPadding(dp(8), dp(8), dp(8), dp(8))
             isClickable = true
-            contentDescription = "Kembali"
+            contentDescription = getString(R.string.k_kembali)
             setOnClickListener { finish() }
         }
         header.addView(kembali, LinearLayout.LayoutParams(dp(40), dp(40)))
         val judulKol = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(8), 0, 0, 0) }
         judulKol.addView(TextView(this).apply {
-            text = "Repo GitHub"
+            text = getString(R.string.u_repo_github)
             setTextColor(warna(R.color.wr_teks)); textSize = 21f
             typeface = Typeface.DEFAULT_BOLD
         })
         judulKol.addView(TextView(this).apply {
-            text = "Repo yang dipantau dan channel tujuan tiap repo"
+            text = getString(R.string.k_repo_yang_dipantau_dan_channel)
             setTextColor(warna(R.color.wr_teks2)); textSize = 12f
         })
         header.addView(judulKol, LinearLayout.LayoutParams(0, -2, 1f))
@@ -104,16 +104,16 @@ class RepoActivity : AppCompatActivity() {
 
         // kartu tambah
         val kTambah = kartu()
-        kTambah.addView(label("Repo"))
+        kTambah.addView(label(getString(R.string.k_repo)))
         etRepo = EditText(this, null, 0, R.style.Isian).apply {
-            hint = "pemilik/nama-repo atau link GitHub"
+            hint = getString(R.string.k_pemilik_nama_repo_atau_link)
             importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
             imeOptions = EditorInfo.IME_ACTION_NEXT
         }
         kTambah.addView(etRepo, LinearLayout.LayoutParams(-1, -2))
-        kTambah.addView(label("Channel khusus (opsional)"))
+        kTambah.addView(label(getString(R.string.k_channel_khusus_opsional)))
         etChannel = EditText(this, null, 0, R.style.Isian).apply {
-            hint = "kosong = pakai Channel WA utama"
+            hint = getString(R.string.k_kosong_pakai_channel_wa_utama)
             importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
             imeOptions = EditorInfo.IME_ACTION_DONE
             setOnEditorActionListener { _, id, _ ->
@@ -122,12 +122,11 @@ class RepoActivity : AppCompatActivity() {
         }
         kTambah.addView(etChannel, LinearLayout.LayoutParams(-1, -2))
         kTambah.addView(
-            tombol("Tambah / perbarui", R.style.TombolUtama, R.drawable.ic_tambah) { tambah() },
+            tombol(getString(R.string.k_tambah_perbarui), R.style.TombolUtama, R.drawable.ic_tambah) { tambah() },
             LinearLayout.LayoutParams(-1, dp(52)).apply { topMargin = dp(14) },
         )
         kTambah.addView(TextView(this).apply {
-            text = "Repo yang sudah ada di daftar: menambah lagi berarti mengganti channel-nya. " +
-                "Channel bisa link channel, link grup, atau JID."
+            text = getString(R.string.k_repo_yang_sudah_ada_di)
             setTextColor(warna(R.color.wr_teks2)); textSize = 11.5f
             setPadding(0, dp(10), 0, 0)
         })
@@ -136,11 +135,11 @@ class RepoActivity : AppCompatActivity() {
         // kartu daftar
         val kDaftar = kartu()
         kDaftar.addView(TextView(this, null, 0, R.style.JudulKartu).apply {
-            text = "Daftar repo"
+            text = getString(R.string.k_daftar_repo)
             setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_daftar, 0, 0, 0)
         })
         tvKosong = TextView(this).apply {
-            text = "Belum ada repo. Isi form di atas, lalu tekan Tambah."
+            text = getString(R.string.k_belum_ada_repo_isi_form)
             setTextColor(warna(R.color.wr_teks2)); textSize = 13f
             setPadding(0, dp(8), 0, 0)
         }
@@ -150,8 +149,7 @@ class RepoActivity : AppCompatActivity() {
         kolom.addView(kDaftar, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
 
         kolom.addView(TextView(this).apply {
-            text = "Perubahan tersimpan otomatis dan dikirim ke bot saat kembali ke layar depan. " +
-                "Format simpanannya sama dengan CLI: owner/a|link-channel, owner/b."
+            text = getString(R.string.k_perubahan_tersimpan_otomatis_dan_dikirim)
             setTextColor(warna(R.color.wr_teks2)); textSize = 11.5f
             setPadding(dp(4), dp(12), dp(4), 0)
         })
@@ -186,19 +184,19 @@ class RepoActivity : AppCompatActivity() {
     private fun tambah() {
         val repo = RepoDaftar.rapikan(etRepo.text.toString())
         val channel = etChannel.text.toString().trim()
-        if (repo.isEmpty()) { banner("Isi dulu repo-nya, contoh: xykal/wa-release-bot"); return }
-        if (!RepoDaftar.valid(repo)) { banner("Format repo salah. Contoh yang benar: pemilik/nama-repo"); return }
+        if (repo.isEmpty()) { banner(getString(R.string.k_isi_dulu_repo_nya_contoh)); return }
+        if (!RepoDaftar.valid(repo)) { banner(getString(R.string.k_format_repo_salah_contoh_yang)); return }
         val lama = daftar()
         val ada = lama.any { it.repo == repo }
         val baru = if (ada) lama.map { if (it.repo == repo) RepoEntri(repo, channel) else it } else lama + RepoEntri(repo, channel)
         simpan(baru)
         etRepo.text.clear(); etChannel.text.clear(); etRepo.requestFocus()
-        banner(if (ada) "Channel $repo diperbarui." else "$repo ditambahkan.")
+        banner(if (ada) getString(R.string.k_channel_diperbarui, repo) else getString(R.string.k_ditambahkan, repo))
     }
 
     private fun hapus(repo: String) {
         simpan(daftar().filter { it.repo != repo })
-        banner("$repo dihapus.")
+        banner(getString(R.string.k_dihapus, repo))
     }
 
     private fun render() {
@@ -217,14 +215,14 @@ class RepoActivity : AppCompatActivity() {
                 maxLines = 1
             })
             teks.addView(TextView(this).apply {
-                text = if (e.channel.isBlank()) "Channel utama" else e.channel
+                text = if (e.channel.isBlank()) getString(R.string.k_channel_utama) else e.channel
                 setTextColor(warna(R.color.wr_teks2)); textSize = 12f
                 maxLines = 1
             })
             baris.addView(teks, LinearLayout.LayoutParams(0, -2, 1f))
             val btnHapus = tombol("", R.style.TombolBahaya, R.drawable.ic_hapus) { hapus(e.repo) }
             btnHapus.setPadding(dp(14), 0, dp(10), 0)
-            btnHapus.contentDescription = "Hapus ${e.repo}"
+            btnHapus.contentDescription = getString(R.string.k_hapus, e.repo)
             baris.addView(btnHapus, LinearLayout.LayoutParams(dp(52), dp(44)).apply { marginStart = dp(10) })
             kolomDaftar.addView(baris, LinearLayout.LayoutParams(-1, -2))
             kolomDaftar.addView(View(this).apply { setBackgroundColor(warna(R.color.wr_garis)) }, LinearLayout.LayoutParams(-1, dp(1)))

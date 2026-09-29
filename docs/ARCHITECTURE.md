@@ -126,14 +126,19 @@ Bagian-bagian itu menerima `Activity` dan lambda `banner` lewat konstruktor;
 tidak ada yang menyimpan status engine sendiri, semuanya membaca `BotUi` yang
 dikirim `BotBus`. Perubahan ini pemindahan mekanis (2026-09-29), perilaku sama.
 
-Teks layar utama tinggal di `res/values/strings.xml` (`u_*` dari layout, `k_*` dari
-Kotlin) dengan padanan Inggris di `res/values-en/`; Android memilih berdasarkan bahasa
-sistem. Pemindahannya dilakukan skrip supaya bisa diulang untuk layar lain:
+Teks UI tinggal di `res/values/strings.xml` (`u_*` dari layout, `k_*` dari Kotlin,
+termasuk Onboarding, Repo, Hosting dan notifikasi service) dengan padanan Inggris di
+`res/values-en/`; Android memilih berdasarkan bahasa sistem. Pemindahannya dilakukan
+skrip supaya bisa diulang kalau ada layar baru:
 `scripts-dev/i18n_layout.py` (peta `i18n_peta.json`) dan `scripts-dev/i18n_kotlin.py`
 (peta `i18n_peta_kotlin.json`; `i18n_peta_manual.json` untuk teks yang ditulis tangan,
 misalnya enum `Aksi` dan status hosting yang kuncinya nilai protokol engine). Kedua
 file `strings.xml` harus punya nama entri yang sama persis; nama log di
-`pasang(R.id.x, "nama")` sengaja tetap Indonesia.
+`pasang(R.id.x, "nama")`, pesan `LogRecorder` dan kunci protokol engine sengaja tetap
+Indonesia. Jebakan yang sudah ketemu: `getString()` tidak boleh dipanggil di
+inisialisasi properti Activity (sebelum `onCreate`), jadi daftar halaman Onboarding
+memegang id resource; string resource memangkas spasi tepi, jadi literal berawalan
+spasi disambung di Kotlin.
 
 ## Siklus hidup engine (mode "tidur")
 

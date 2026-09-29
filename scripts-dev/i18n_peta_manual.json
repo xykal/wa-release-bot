@@ -1,13 +1,82 @@
 {
-  "k_menyalakan": {"id": "Menyalakan…", "en": "Starting…"},
-  "k_menjeda": {"id": "Menjeda…", "en": "Pausing…"},
-  "k_mematikan": {"id": "Mematikan…", "en": "Stopping…"},
-  "k_hosting_jalan": {"id": "jalan ✓", "en": "running ✓"},
-  "k_hosting_install": {"id": "lagi pasang modul…", "en": "installing modules…"},
-  "k_hosting_error": {"id": "error, buka buat liat konsol", "en": "error, open to see the console"},
-  "k_hosting_mati": {"id": "mati", "en": "stopped"},
-  "k_hosting_siap": {"id": "siap dijalanin", "en": "ready to run"},
-  "k_ngobrol_di_grup": {"id": "Ngobrol di grup", "en": "Chatting in groups"},
-  "k_lagu_buat_channel": {"id": "Lagu buat channel", "en": "Songs for the channel"},
-  "k_semua_jalan_otomatis": {"id": "Semua jalan otomatis", "en": "Everything runs itself"}
+  "k_menyalakan": {
+    "id": "Menyalakan…",
+    "en": "Starting…"
+  },
+  "k_menjeda": {
+    "id": "Menjeda…",
+    "en": "Pausing…"
+  },
+  "k_mematikan": {
+    "id": "Mematikan…",
+    "en": "Stopping…"
+  },
+  "k_hosting_jalan": {
+    "id": "jalan ✓",
+    "en": "running ✓"
+  },
+  "k_hosting_install": {
+    "id": "lagi pasang modul…",
+    "en": "installing modules…"
+  },
+  "k_hosting_error": {
+    "id": "error, buka buat liat konsol",
+    "en": "error, open to see the console"
+  },
+  "k_hosting_mati": {
+    "id": "mati",
+    "en": "stopped"
+  },
+  "k_hosting_siap": {
+    "id": "siap dijalanin",
+    "en": "ready to run"
+  },
+  "k_ngobrol_di_grup": {
+    "id": "Ngobrol di grup",
+    "en": "Chatting in groups"
+  },
+  "k_lagu_buat_channel": {
+    "id": "Lagu buat channel",
+    "en": "Songs for the channel"
+  },
+  "k_semua_jalan_otomatis": {
+    "id": "Semua jalan otomatis",
+    "en": "Everything runs itself"
+  },
+  "k_ob_rilis_judul": {
+    "id": "Rilis baru, langsung ke channel",
+    "en": "New release, straight to the channel"
+  },
+  "k_ob_rilis_isi": {
+    "id": "Tiap ada rilis baru di GitHub, bot ngabarin channel WhatsApp lo otomatis. Lo tinggal fokus ngoding.",
+    "en": "Every new GitHub release is announced to your WhatsApp channel automatically. You just keep coding."
+  },
+  "k_ob_grup_judul": {
+    "id": "Grup aman tanpa ribet",
+    "en": "A safe group, no hassle"
+  },
+  "k_ob_grup_isi": {
+    "id": "Yang minta join di-approve otomatis. Yang dulu cabut atau dikick? Ditolak sama bot, lo nggak usah jagain.",
+    "en": "Join requests are approved automatically. Someone who left or got kicked before? The bot rejects them, no babysitting needed."
+  },
+  "k_ob_lagu_judul": {
+    "id": "Lagu lama, pas lagi mood",
+    "en": "Old songs, when the mood hits"
+  },
+  "k_ob_lagu_isi": {
+    "id": "Sesekali bot ngirim potongan lagu jadul plus kata-kata kece ke channel. Nggak spam — cuma pas lagi mood.",
+    "en": "Now and then the bot posts a snippet of an old song with a neat caption to the channel. No spam — only when the mood hits."
+  },
+  "k_ob_hosting_judul": {
+    "id": "HP lo jadi hosting bot",
+    "en": "Your phone as bot hosting"
+  },
+  "k_ob_hosting_isi": {
+    "id": "Punya project bot sendiri? Upload ZIP-nya, app ini yang jalanin. Log, input, restart — semua dari HP.",
+    "en": "Have your own bot project? Upload the ZIP and this app runs it. Logs, input, restart — all from the phone."
+  },
+  "k_hosting_nyala_durasi": {
+    "id": "nyala %1$s",
+    "en": "up %1$s"
+  }
 }

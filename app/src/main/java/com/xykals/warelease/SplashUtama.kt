@@ -19,7 +19,9 @@ internal class SplashUtama(
     private val uiSiap: () -> Boolean
 ) {
     private var mulaiPada = 0L
-    private val label = arrayOf("Bot penjaga siap", "Ngobrol di grup", "Lagu buat channel", "Semua jalan otomatis")
+    private val label = arrayOf(
+        R.string.u_bot_penjaga_siap, R.string.k_ngobrol_di_grup, R.string.k_lagu_buat_channel, R.string.k_semua_jalan_otomatis
+    )
 
     private val cek = object : Runnable {
         override fun run() {
@@ -46,7 +48,7 @@ internal class SplashUtama(
             gelembung.animate().scaleX(0.86f).scaleY(0.86f).alpha(0.4f).setDuration(110)
                 .setInterpolator(android.view.animation.AccelerateInterpolator())
                 .withEndAction {
-                    tvLabel.text = label[i % label.size]
+                    tvLabel.text = a.getString(label[i % label.size])
                     gelembung.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(260)
                         .setInterpolator(android.view.animation.OvershootInterpolator(2.2f)).start()
                 }.start()

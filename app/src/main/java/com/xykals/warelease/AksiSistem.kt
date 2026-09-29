@@ -29,7 +29,7 @@ internal class AksiSistem(
 
     fun mintaIzinBatre() {
         if (bebasBatre()) {
-            banner("Udah dikecualikan dari pengoptimalan batre.")
+            banner(a.getString(R.string.k_udah_dikecualikan_dari_pengoptimalan_batre))
             return
         }
         try {
@@ -41,7 +41,7 @@ internal class AksiSistem(
             LogRecorder.tulis("Batre", "dialog izin batre nggak ada: ${e.message}")
             try {
                 a.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
-                banner("Cari \"WA Release Bot\" → pilih \"Jangan optimalkan\" / \"Tanpa batasan\".")
+                banner(a.getString(R.string.k_cari_wa_release_bot_pilih))
             } catch (_: Throwable) {
                 bukaInfoApp()
             }
@@ -65,13 +65,13 @@ internal class AksiSistem(
             try {
                 a.startActivity(Intent().setComponent(c).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 LogRecorder.tulis("Autostart", "kebuka: ${c.packageName}")
-                banner("Cari \"WA Release Bot\" lalu nyalain.")
+                banner(a.getString(R.string.k_cari_wa_release_bot_lalu))
                 return
             } catch (_: Throwable) {
             }
         }
         bukaInfoApp()
-        banner("Menu Autostart khusus nggak ketemu. Di Info aplikasi, cek bagian Batre / Mulai otomatis.")
+        banner(a.getString(R.string.k_menu_autostart_khusus_nggak_ketemu))
     }
 
     fun bukaInfoApp() {
@@ -86,7 +86,7 @@ internal class AksiSistem(
     fun bukaFolderLog() {
         val d = LogRecorder.dir
         if (d == null) {
-            banner("Folder log nggak kebaca di HP ini.")
+            banner(a.getString(R.string.k_folder_log_nggak_kebaca_di))
             return
         }
         try {
@@ -102,24 +102,23 @@ internal class AksiSistem(
         }
         salin(d.absolutePath)
         a.lembar(
-            "Folder log",
-            "File manager di HP ini nggak bisa dibuka langsung. Path-nya udah disalin — " +
-                    "tempel di file manager:\n\n${d.absolutePath}\n\nAtau pakai tombol Kirim log.",
+            a.getString(R.string.k_folder_log),
+            a.getString(R.string.k_file_manager_di_hp_ini, d.absolutePath),
             null,
-            Tombol("Oke", Gaya.UTAMA)
+            Tombol(a.getString(R.string.k_oke), Gaya.UTAMA)
         )
     }
 
     fun kirimLog() {
         val d = LogRecorder.dir
         if (d == null) {
-            banner("Folder log nggak kebaca.")
+            banner(a.getString(R.string.k_folder_log_nggak_kebaca))
             return
         }
         val berkas = d.listFiles(java.io.FileFilter { f -> f.isFile && f.name.contains(".log") })
             ?.sortedBy { it.name } ?: emptyList()
         if (berkas.isEmpty()) {
-            banner("Belum ada file log.")
+            banner(a.getString(R.string.k_belum_ada_file_log))
             return
         }
         val uris = ArrayList<Uri>()
@@ -131,20 +130,20 @@ internal class AksiSistem(
             }
         }
         if (uris.isEmpty()) {
-            banner("Nggak bisa nyiapin file log buat dikirim.")
+            banner(a.getString(R.string.k_nggak_bisa_nyiapin_file_log))
             return
         }
         val kirim = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
             type = "text/plain"
             putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
-            putExtra(Intent.EXTRA_SUBJECT, "Log WA Release Bot")
+            putExtra(Intent.EXTRA_SUBJECT, a.getString(R.string.k_log_wa_release_bot))
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             val cd = ClipData.newUri(a.contentResolver, "log", uris[0])
             for (u in uris.drop(1)) cd.addItem(ClipData.Item(u))
             clipData = cd
         }
         LogRecorder.tulis("Log", "bagikan ${berkas.size} file log")
-        a.startActivity(Intent.createChooser(kirim, "Kirim log ke..."))
+        a.startActivity(Intent.createChooser(kirim, a.getString(R.string.k_kirim_log_ke)))
     }
 
     fun salin(teks: String) {
@@ -164,6 +163,6 @@ internal class AksiSistem(
             } catch (_: Throwable) {
             }
         }
-        banner("WhatsApp nggak ketemu di HP ini — ketik kodenya di HP yang ada WA-nya.")
+        banner(a.getString(R.string.k_whatsapp_nggak_ketemu_di_hp))
     }
 }

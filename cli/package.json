@@ -13,6 +13,7 @@
     "once": "node src/bot.mjs --once",
     "loop": "node src/bot.mjs --loop",
     "dry-run": "node src/bot.mjs --dry-run",
+    "rekam": "node src/bot.mjs --rekam",
     "versi": "node src/bot.mjs --version"
   },
   "dependencies": {

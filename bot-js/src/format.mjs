@@ -65,32 +65,60 @@ export function formatTanggal(kapan = new Date(), { jam = true } = {}) {
   return jam ? `${tanggal} ${dua(t.getHours())}.${dua(t.getMinutes())} ${namaZona}` : tanggal;
 }
 
+/** Kalimat pembuka dipilih dari tag (bukan acak) supaya retry ngirim teks yang sama persis. */
+const PEMBUKA = [
+  'Baru aja mendarat dari GitHub, masih anget.',
+  'Buat kamu yang udah nungguin: update-nya udah siap.',
+  'Versi baru siap dicoba. Ini yang berubah:',
+  'Ada yang baru di dapur kode. Cek rangkumannya:',
+];
+
+function pilihPembuka(tag) {
+  let h = 0;
+  for (const ch of String(tag || '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return PEMBUKA[h % PEMBUKA.length];
+}
+
+/** Ukuran file gaya Indonesia: koma buat desimal, "MB" buat yang biasa dipakai user awam. */
+export function formatUkuran(bytes) {
+  const n = Number(bytes) || 0;
+  if (n >= 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
+  if (n >= 1024) return `${Math.round(n / 1024)} KB`;
+  return `${n} B`;
+}
+
+const MAKS_LAMPIRAN = 3;
+
+function barisLampiran(assets) {
+  const daftar = Array.isArray(assets) ? assets.filter((a) => a && a.name) : [];
+  if (!daftar.length) return [];
+  const tampil = daftar.slice(0, MAKS_LAMPIRAN).map((a) => `• ${a.name} (${formatUkuran(a.size)})`);
+  const sisa = daftar.length - tampil.length;
+  return ['📎 *File:*', ...tampil, ...(sisa > 0 ? [`_(+${sisa} file lain di link)_`] : []), ''];
+}
+
 export function formatReleasePost(rel, repoStr, { ajakBalas = false } = {}) {
   const tanggal = formatTanggal(rel.publishedAt || new Date());
+  const namaRepo = String(repoStr || '').split('/').pop() || repoStr;
 
   const body = mdKeWa(rel.body);
   const bodyFinal =
     body.length > MAX_BODY ? potongAman(body, MAX_BODY) + '\n\n_(notes-nya panjang, lanjut di link)_' : body;
 
-  const lines = [
-    '🚀 *RELEASE BARU DETEKSI!*',
-    '',
-    `📦 Repo: \`${repoStr}\``,
-    `🏷️ Versi: *${rel.tag}*`,
-  ];
-  if (rel.name && rel.name.trim() !== rel.tag) lines.push(`📌 Title: ${rel.name}`);
-  if (rel.isPrerelease) lines.push('🧪 _(prerelease)_');
+  const lines = [`🚀 *${namaRepo} ${rel.tag} udah rilis!*`, pilihPembuka(rel.tag), ''];
+  if (rel.name && rel.name.trim() !== rel.tag) lines.push(`📌 *${rel.name.trim()}*`);
+  if (rel.isPrerelease) lines.push('🧪 _Prerelease: versi uji coba, wajar kalau masih ada bug._');
+  if (rel.name || rel.isPrerelease) lines.push('');
   lines.push(
-    `👤 Oleh: @${rel.author}`,
-    `🕐 ${tanggal}`,
+    '*Apa yang baru:*',
+    bodyFinal || '_(nggak ada catatan di rilis ini, langsung cek link-nya aja)_',
     '',
-    '📝 *Changelog:*',
-    bodyFinal || '_(tidak ada deskripsi di release ini)_',
-    '',
+    ...barisLampiran(rel.assets),
     `🔗 ${rel.url}`,
+    `📦 ${repoStr} · 👤 @${rel.author} · 🕐 ${tanggal}`,
     '',
     ...(ajakBalas ? [AJAKAN_BALAS, ''] : []),
-    `_⚙️ Auto-posting oleh ${NAMA_PAKET} (${BRAND}) — bot cuma bangun pas ada rilis baru_ 🦴`
+    `_🦴 Dikirim otomatis oleh ${NAMA_PAKET} (${BRAND}). Botnya tidur, bangun cuma pas ada rilis baru._`
   );
 
   return lines.join('\n');

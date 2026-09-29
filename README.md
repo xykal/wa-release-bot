@@ -205,7 +205,7 @@ JID grup (`120363...@g.us`) atau link undangan grup-nya
 | **Pakai QR** | Nautin WA pakai QR (scan dari HP lain) |
 | **Lepas WA** | Logout perangkat bot dari WA |
 | **Bikin channel** | Bikin channel WA baru dari akun lo + isi kolom Channel otomatis |
-| **Kirim sebagai Pertanyaan** | Pesan ke channel pakai fitur "Pertanyaan" WA — follower bisa bales (cuma lo yang baca). Matiin → teks biasa |
+| **Kirim sebagai Pertanyaan** | EKSPERIMENTAL, default mati. Fitur "Pertanyaan" channel WA (follower bisa bales, cuma lo yang baca) belum ada protokol terbukanya dan Baileys belum dukung — yang dikirim bot masih tebakan. Mati = teks biasa yang pasti tampil. Mau bantu ngetes? lihat `cli/README.md` bagian "Rekam pesan channel" |
 | **Tes kirim ke channel** | Kirim pesan tes ke channel (formatnya sama kayak pesan rilis) |
 | **Cek sekarang** (grup) | Jalanin penjaga grup sekarang |
 | **Tes kirim** (grup) | Kirim pesan tes ke grup target |
@@ -240,8 +240,11 @@ HP (pas "mood")  ──GET /lagu/berikut──▶  Cloudflare Worker (gratis)
                                            kata-kata dari AI (key Groq di Worker):
                                            gaya gaul berima (lagu/gaul.txt) /
                                            curhat / surat / puitis / lucu-miris /
-                                           nostalgia, ±35% ditemenin
-                                           ayat Al-Qur'an (lagu/ayat.json)
+                                           nostalgia / motivasi / ngatain /
+                                           nyindir / tanya / sok-bijak,
+                                           ±35% ditemenin ayat Al-Qur'an
+                                           (lagu/ayat.json, 42 ayat, teks
+                                           terjemahan Kemenag via equran.id)
 HP  ◀── { judul, artis, kata, url, mulai } ──┘
 HP: download CUMA potongan ~60 dtk (HTTP Range, ±1 MB) → rapiin frame MP3
     → ubah jadi VOICE NOTE (Ogg Opus, WASM, tanpa ffmpeg)

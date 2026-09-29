@@ -482,9 +482,9 @@ async function main() {
     return jid;
   }
 
-  // Format pesan ke channel: 'pertanyaan' (default — follower bisa bales,
-  // balasannya cuma sampai ke admin) atau 'teks' (pesan biasa).
-  const formatPertanyaan = () => cfg?.whatsapp?.format !== 'teks';
+  // Format pesan ke channel: default 'teks'. 'pertanyaan' opt-in dari setelan
+  // app — formatnya belum terbukti (lihat catatan di wa.mjs sendPertanyaan).
+  const formatPertanyaan = () => cfg?.whatsapp?.format === 'pertanyaan';
 
   async function kirimKeChannel(sock, jid, text) {
     await kirimWA(sock, jid, text, { format: formatPertanyaan() ? 'pertanyaan' : 'teks', log });
@@ -965,7 +965,7 @@ async function main() {
           whatsapp: {
             channel: cmd.channel || '',
             phone: cmd.phone || '',
-            format: cmd.formatChannel === 'teks' ? 'teks' : 'pertanyaan',
+            format: cmd.formatChannel === 'pertanyaan' ? 'pertanyaan' : 'teks',
           },
           bot: {
             checkIntervalMinutes: Number(cmd.intervalMinutes) || 15,

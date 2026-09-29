@@ -58,12 +58,20 @@ const GAYA = [
   // bobot dobel karena paling disukai.
   { id: 'gaul', dobel: true },
   { id: 'nostalgia', arah: 'nostalgia: kenangan kecil yang spesifik (bukan umum), bikin orang inget masa itu.', lawas: true },
+  { id: 'motivasi', arah: 'motivasi ala temen yang nampar halus, bukan motivator panggung: satu kalimat tegas yang bikin orang mau bangkit, tanpa "semangat"/"kamu pasti bisa"/"jangan menyerah".' },
+  { id: 'ngatain', arah: 'ngatain/roasting PEMBACA yang lagi galau (bukan artis, bukan lagunya): nyentil kebiasaan bucin, ngecek story mantan, chat "lagi apa" jam segini. Pedes tapi sayang, bikin ketawa kena. Tanpa kata kasar, tanpa body shaming.' },
+  { id: 'nyindir', arah: 'nyindir halus buat "seseorang" yang pernah nyakitin atau nggak peka: elegan, nggak nyebut nama, nggak kasar, tapi nusuk. Kayak status yang jelas ditujukan ke satu orang.' },
+  { id: 'tanya', arah: 'satu pertanyaan reflektif ke pembaca yang bikin mereka pengin jawab di kolom balasan. Pendek, jujur, spesifik (bukan "apa kabar hatimu").' },
+  { id: 'sok-bijak', arah: 'sok bijak ala tongkrongan: kelihatannya dalam, ujungnya kocak/nyeleneh. Punchline di kalimat terakhir.' },
 ];
 const CADANGAN = [
   'Ada lagu yang nggak pernah benar-benar selesai diputar — cuma pindah dari telinga ke ingatan.',
   'Lagu lama tuh kayak surat dari diri kita yang dulu. Dibaca pelan-pelan aja.',
   'Nggak semua yang lewat harus dilupain. Sebagian cukup diputer ulang.',
   'Buat yang lagi kangen tapi gengsi bilang: nih, biar lagunya aja yang ngomong.',
+  'Katanya udah move on. Terus kenapa lagu ini masih di-repeat?',
+  'Kalau belum bisa ngomong langsung, minimal jangan bohong sama diri sendiri.',
+  'Nggak apa-apa jalan pelan. Yang penting nggak balik ke orang yang sama.',
 ];
 
 const json = (o, status = 200) => new Response(JSON.stringify(o), {
@@ -278,14 +286,14 @@ Format: {"kandidat":["..."],"terbaik":nomor_mulai_1}`,
 // ------------------------------------------------------------ kata-kata
 async function bikinKata(env, lagu, paksaGaya = null) {
   const konteks = `Lagunya: "${lagu.judul}" – ${lagu.artis}` + (lagu.trend ? ' (lagi trend/viral di Indonesia sekarang).' : ' (lagu lawas).');
-  const aturanUmum = `- Bahasa Indonesia gaul yang natural (bukan baku, bukan kayak iklan).
+  const aturanUmum = `- Bahasa Indonesia gaul yang natural, kayak orang ngetik di HP: kalimat pendek-pendek, boleh 1 baris kosong buat jeda. Bukan baku, bukan iklan, bukan gaya AI (hindari "dalam hidup ini", "pada akhirnya", "perjalanan", tanda pisah panjang berlebihan).
 - JANGAN mengutip lirik lagunya, JANGAN sebut judul/artis (udah ditulis terpisah).
 - Kalau kamu beneran kenal lagunya, sesuaikan sama tema & suasananya. Kalau nggak yakin, jangan ngarang isi lagunya — main di perasaan umum aja.
 - Hindari kata-kata motivator klise ("semangat ya", "kamu pasti bisa", "tetap kuat").
 - JANGAN buka dengan kata "Kadang" atau "kamu, kadang" — bikin pembuka yang beda & nendang.
 - Tanpa hashtag, tanpa tanda kutip di awal/akhir, maksimal 1 emoji.
 - Jangan sebut waktu (malam/pagi/sore/senja) — jam kirimnya acak.`;
-  const system = 'Kamu admin channel WhatsApp musik yang captionnya selalu kena di hati: relate, jujur, nggak lebay, nggak menggurui.';
+  const system = 'Kamu admin channel WhatsApp musik yang caption-nya selalu gacor: relate, jujur, punya punchline, nggak lebay, nggak menggurui. Followermu anak muda Indonesia yang lagi galau, bucin, atau capek kerja.';
 
   // Kadang-kadang ditemenin ayat. AI cuma MILIH nomor, teksnya dari daftar.
   if (AYAT.length && (paksaGaya === 'ayat' || (!paksaGaya && Math.random() < PELUANG_AYAT))) {
@@ -322,12 +330,12 @@ Format: {"no": nomor_ayat, "kata": "caption"}`,
 Tulis caption pendek buat nemenin potongan lagu ini di channel.
 Gaya kali ini: ${g.arah}
 Aturan:
-- ${g.id === 'gaul' ? '1 sampai 2 baris pendek' : '2 sampai 3 kalimat'}, maksimal 280 karakter.
+- ${g.id === 'gaul' ? '1 sampai 2 baris pendek' : ['tanya', 'motivasi'].includes(g.id) ? '1 sampai 2 kalimat' : '2 sampai 3 kalimat'}, maksimal 280 karakter.
 ${aturanUmum}
 Balas cuma teks caption-nya.`,
   });
   const kata = rapikan(teks);
-  if (kata.length >= (g.id === 'gaul' ? 15 : 40) && kata.length <= 400) return { gaya: g.id, kata };
+  if (kata.length >= (['gaul', 'tanya', 'motivasi'].includes(g.id) ? 15 : 40) && kata.length <= 400) return { gaya: g.id, kata };
   return { gaya: 'cadangan', kata: acak(CADANGAN) };
 }
 

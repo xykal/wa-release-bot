@@ -52,10 +52,20 @@ export function jadwalBerikut(kini, { perHari = 2, jamMulai = 9, jamSelesai = 22
 }
 
 /** Pesan teks yang nemenin audio-nya. */
+/**
+ * Caption yang nempel di voice note: kata-kata dulu (ini yang bikin orang
+ * berhenti scroll), baru judul. Judul di-bold, artis biasa, plus keterangan
+ * kalau lagunya lagi trend biar follower tahu kenapa lagu itu yang dipilih.
+ */
 export function formatKataLagu(lagu) {
   const kata = String(lagu.kata || '').trim();
-  const judul = [lagu.judul, lagu.artis].filter(Boolean).join(' — ');
-  return [kata, judul ? `🎧 *${judul}*` : ''].filter(Boolean).join('\n\n');
+  const judul = String(lagu.judul || '').trim();
+  const artis = String(lagu.artis || '').trim();
+  const baris = judul ? `🎧 *${judul}*${artis ? ` — ${artis}` : ''}` : artis ? `🎧 ${artis}` : '';
+  // Worker ngasih `jenis: 'trend'|'lawas'`; `trend: true` buat kompatibilitas tes/format lama.
+  const lagiTrend = lagu.trend === true || lagu.jenis === 'trend';
+  const trend = lagiTrend && baris ? '_lagi rame diputer di Indonesia minggu ini_' : '';
+  return [kata, [baris, trend].filter(Boolean).join('\n')].filter(Boolean).join('\n\n');
 }
 
 /** "fetch failed" doang nggak ngasih tau apa-apa — ambil kode aslinya dari `cause`. */

@@ -27,9 +27,17 @@ Done:
 - kall: "boleh juga" + minta semua update lewat PR dulu. Branch `feat/lapor-gagal-jatah-lagu`:
   lapor ke chat diri sendiri saat percobaan ke-3 gagal (app + CLI), jatah lagu harian tampil di
   app, `/lagu/batas` tanpa token burst kecuali `?uji=1` (Worker di-deploy ulang, proving test lolos).
+- kall: "boleh semua" (notifikasi Android 3x gagal, M10 pecah modul, M9 i18n disetujui) + minta
+  kata-kata channel lebih bagus, fix post "Pertanyaan", caption lagu lebih gacor, lagu lebih banyak.
+  Dikerjakan di PR #10 (commit lanjutan): post rilis ditulis ulang + lampiran file, caption lagu,
+  5 gaya caption baru, ayat 20 → 42 (equran.id), lagu 48 → 148, perekam channel `npm run rekam`.
+  "Pertanyaan": format aslinya tidak diketahui (bukan bug kode yang bisa dibuktikan dari sini) →
+  default dibalik ke teks, pertanyaan opt-in eksperimental, butuh rekaman dari HP kall.
 
 Blocked:
 - Tag `v1.7.0`: setelah kall tes APK dari CI dan CLI di Termux, dan PR di-merge.
+- Format "Pertanyaan": butuh `rekaman-channel.json` dari kall (post Pertanyaan manual di HP).
 
 Next:
-- M9 (i18n Android) dan M10 (pecah `bot.mjs`/`MainActivity.kt`) ada di `docs/ROADMAP.md` v1.7.
+- Disetujui, belum dikerjakan: notifikasi Android saat 3x gagal (S), M10 pecah
+  `bot.mjs`/`cli.mjs`/`MainActivity.kt` (M), M9 i18n `values-en` (M). PR terpisah setelah #10.

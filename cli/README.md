@@ -141,7 +141,23 @@ Prosesnya nyala terus, tapi **WA tetap cuma nyambung pas mau posting**. Kalau ma
 ```bash
 npm run dry-run   # cek GitHub + tampilkan pesan yang bakal dikirim (nggak ngirim apa-apa)
 npm run once      # cek sekali doang (sama yang dipake cron)
+npm run rekam     # alat debug: rekam pesan channel ke rekaman-channel.json (lihat bawah)
 ```
+
+### Rekam pesan channel (bantu ngetes format "Pertanyaan")
+
+Format post "Pertanyaan" channel WA belum terbuka protokolnya dan Baileys belum
+mendukungnya, jadi `"format": "pertanyaan"` di config masih tebakan (default
+`"teks"`). Cara bantu supaya bisa ditiru persis:
+
+```bash
+npm run rekam -- --tunggu 120   # bot nyambung, nunggu 2 menit
+# selama nunggu: buka WA di HP → channel → bikin post "Pertanyaan" manual
+# selesai → file rekaman-channel.json (teks dipotong 200 huruf, tanpa media)
+```
+
+Kirim file itu ke dev. Tanpa `--tunggu` perekam cuma narik `--jumlah` (default
+10) pesan terakhir dari server.
 
 ## Biar HP-nya nggak "neror" (biar bot nggak dibunuh Android)
 

@@ -1,6 +1,6 @@
 {
   "name": "wa-release-bot-cli",
-  "version": "1.6.7",
+  "version": "1.7.0",
   "description": "CLI Termux/PC untuk wa-release-bot. Engine-nya import langsung dari ../bot-js; install dependensi dari ROOT repo (npm workspaces).",
   "type": "module",
   "main": "src/bot.mjs",

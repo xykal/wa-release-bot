@@ -1,7 +1,7 @@
 {
   "name": "wa-release-bot-js",
   "private": true,
-  "version": "1.6.7",
+  "version": "1.7.0",
   "description": "Engine bot (Node.js): dibundel esbuild jadi 1 file untuk APK (nodejs-mobile) dan dipakai langsung oleh cli/.",
   "type": "module",
   "engines": {

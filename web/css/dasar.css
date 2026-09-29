@@ -88,6 +88,8 @@ body.terkunci .unduh-utama, body.terkunci .nav, body.terkunci .kaki { filter: bl
   overflow: auto;
 }
 .tirai[hidden] { display: none; }
+/* atribut hidden harus menang dari display:flex/grid kelas mana pun (unduhMeta, hitung, modalTunggu) */
+[hidden] { display: none !important; }
 .modal {
   width: min(560px, 100%); background: linear-gradient(180deg, #16232b, #0f1a20); border: 1px solid var(--garis);
   border-radius: 26px; padding: 34px 30px 26px; text-align: center; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(37, 211, 102, 0.08) inset;

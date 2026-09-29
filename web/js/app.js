@@ -132,7 +132,7 @@
       if (rilis && isiKartu(rilis)) { bukaUnduhan(); return true; }
     } catch (_) {
       const gagal = $('#unduhGagal');
-      if (gagal && !tirai) gagal.hidden = false;
+      if (gagal && (!tirai || tirai.hidden)) gagal.hidden = false; // hanya kalau modal tidak menutupi
     }
     return false;
   }

@@ -7,6 +7,10 @@ Semua perubahan penting proyek ini. Format mengikuti
 ## [Unreleased]
 
 ### Ditambah
+- **Screenshot app otomatis**: workflow `screenshot-app.yml` membangun APK release x86_64,
+  menjalankannya di emulator Android 14 (GitHub Actions) dan menangkap tiap layar
+  (`scripts-dev/screenshot_emulator.sh`); hasilnya dibingkai `scripts-dev/bingkai_screenshot.py`
+  dan dipakai galeri situs (tangkapan asli, bukan ilustrasi; sisi WhatsApp tetap ilustrasi).
 - **Layar Repo** di app: daftar repo yang dipantau (tambah/hapus, ganti channel) dengan
   channel WA khusus per repo; kartu depan cuma menampilkan ringkasan + tombol **Kelola repo**.
   Format simpanan tetap satu string `owner/a|link-channel, owner/b` sehingga engine dan CLI

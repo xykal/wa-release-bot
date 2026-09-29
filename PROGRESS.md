@@ -66,3 +66,8 @@ Next:
   HP kecil dan 1024 px, modal terpotong di landscape, nav 320 px) -> diperbaiki + job CI `tangkapan`;
   emoji dihapus dari 11 dokumen + cek CI; `bingkai_screenshot.py` siap terima screenshot asli.
   Stars: API GitHub bilang 0 stargazer di wa-release-bot (XyDownloader dan AppPerms masing-masing 1).
+- kall: "selesaikan semua trus merge". PR #14 (web) di-merge. Dikerjakan hari yang sama: PR #16
+  layar Repo + channel per repo (engine, CLI, app, tes) di-merge; PR #17 README 580 -> 271 baris
+  (detail ke docs/PANDUAN-APP, BUILD, TROUBLESHOOTING) di-merge; PR #15 screenshot emulator di
+  Actions (3 kali gagal: grep+pipefail, layar sambutan, run-as di build release -> adb root) lalu
+  galeri situs memakai tangkapan asli. Belum: PR launching 1.0.0 (draft), M10, M9, Eps 2 logo.

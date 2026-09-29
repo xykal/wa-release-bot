@@ -115,7 +115,7 @@ jobs:
             echo "| File | Ukuran |"
             echo "|---|---|"
             for f in konten-tiktok/tiktok-v6-*.mp4; do
-              [ -f "$f" ] && echo "| \`$(basename $f)\` | $(du -h $f | cut -f1) |"
+              [ -f "$f" ] && echo "| \`$(basename "$f")\` | $(du -h "$f" | cut -f1) |"
             done
             echo ""
             echo "Download di **Artifacts → tiktok-v6-mp4**. Upload manual ke TikTok."

@@ -52,6 +52,9 @@ tetap menerima update.
   Deploy: `scripts-dev/deploy_web.py` (tanpa wrangler) + workflow `deploy-web.yml`.
 
 #### Diubah
+- App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,
+  `DialogTautan`, `LembarHitam`, `AksiSistem`, `SplashUtama`, `Lembar` (komponen dialog).
+  Pemindahan mekanis, perilaku dan tampilan sama.
 - Engine `bot-js/src/bot.mjs` (1162 baris) dipecah jadi `bot.mjs` (entry, scheduler) +
   `src/mesin/{rilis,lagu-mood,penjaga-grup,tautan,perintah}.mjs`; keadaan bersama lewat satu
   objek `ctx`. Perilaku tidak berubah. Uji ujung-ke-ujung baru `test/engine.test.mjs`

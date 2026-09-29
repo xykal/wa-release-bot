@@ -109,6 +109,23 @@ GitHub palsu (`WR_GITHUB_API`) dan memastikan rangkaian
 configure -> start -> cek -> stop tetap nyambung lintas modul; jalur yang butuh
 WhatsApp sungguhan tidak tercakup.
 
+## Susunan layar utama (`app/src/main/java/com/xykals/warelease/`)
+
+| File | Isi |
+|------|-----|
+| `MainActivity.kt` | merangkai: tombol, kirim perintah ke `BotService`, reaksi atas status (banner, buka/tutup dialog) |
+| `FormPengaturan.kt` | kolom dan saklar setelan <-> `SettingsStore` (`muat()`, `ambil()`) |
+| `PanelStatus.kt` | menggambar status engine (pil, ubin, jadwal, kartu Tautkan WA, log); enum `Aksi` |
+| `DialogTautan.kt` | lembar QR dan pairing code, termasuk aturan "ditutup user = jangan muncul lagi" |
+| `LembarHitam.kt` | lembar daftar hitam penjaga grup dengan tombol buka blokir |
+| `AksiSistem.kt` | izin batre, menu autostart vendor, folder log, bagikan log, clipboard, buka WhatsApp |
+| `SplashUtama.kt` | splash morph sampai UI dan status engine siap |
+| `Lembar.kt` | komponen dialog buatan sendiri (`lembar()`, `Tombol`, `Gaya`, `Context.dp`) |
+
+Bagian-bagian itu menerima `Activity` dan lambda `banner` lewat konstruktor;
+tidak ada yang menyimpan status engine sendiri, semuanya membaca `BotUi` yang
+dikirim `BotBus`. Perubahan ini pemindahan mekanis (2026-09-29), perilaku sama.
+
 ## Siklus hidup engine (mode "tidur")
 
 ```

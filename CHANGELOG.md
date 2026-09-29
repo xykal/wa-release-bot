@@ -6,6 +6,13 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+### Diubah
+- Situs: `<title>`, meta description dan `og:description` ikut bahasa yang dipilih
+  (`judul_*`/`deskripsi_*` di `teks.js`, halaman dikenali dari `<body data-halaman>`);
+  HTML statis tetap Indonesia untuk crawler tanpa JS.
+- Dokumen: bagian jembatan JNI dan polyfill WebCrypto dipindah dari `docs/ARCHITECTURE.md`
+  ke `docs/JNI.md` supaya tiap berkas tetap di bawah ~250 baris.
+
 ### Ditambah
 - **Screenshot app otomatis**: workflow `screenshot-app.yml` membangun APK release x86_64,
   menjalankannya di emulator Android 14 (GitHub Actions) dan menangkap tiap layar

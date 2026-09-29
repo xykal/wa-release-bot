@@ -33,6 +33,11 @@ BERKAS = {
     "LembarHitam.kt": "a.getString",
     "AksiSistem.kt": "a.getString",
     "SplashUtama.kt": "a.getString",
+    # Tahap 2: layar lain. Activity/Service = Context, jadi getString langsung.
+    "OnboardingActivity.kt": "getString",
+    "RepoActivity.kt": "getString",
+    "HostingActivity.kt": "getString",
+    "BotService.kt": "getString",
 }
 LIT = r'"(?:[^"\\\n]|\\.)*"'
 RANTAI = re.compile(rf'({LIT})(?:[ \t]*\+[ \t]*\n?[ \t]*({LIT}))')
@@ -55,6 +60,12 @@ def slug(teks: str) -> str:
     t = re.sub(r"[^a-z0-9]+", "_", t).strip("_")
     kata = [k for k in t.split("_") if k][:5]
     return "k_" + "_".join(kata) if kata else "k_teks"
+
+
+def escape_xml(t: str) -> str:
+    t = t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    t = t.replace("'", "\\'")
+    return "\\" + t if t[:1] in "@?" else t
 
 
 def ke_resource(teks: str, args: list[str]) -> str:
@@ -92,9 +103,13 @@ def main() -> int:
     sisa_saja = "--sisa" in sys.argv
     peta = json.loads(PETA.read_text(encoding="utf-8"))
     lama = entri_lama(VALUES)
+    lama_en = entri_lama(VALUES_EN)
     nama_dipakai = set(lama)
-    # Teks yang sama persis dengan entri layout (u_*) dipakai ulang, bukan dibikin k_* kembar.
+    # Teks yang sama persis dengan entri yang sudah ada dipakai ulang, bukan dibikin
+    # kembar: u_* (layout) cukup cocok teks Indonesianya; k_* harus cocok juga
+    # Inggrisnya supaya terjemahan yang beda konteks tidak ketimpa.
     nama_dari_isi = {v: n for n, v in lama.items() if n.startswith("u_")}
+    nama_dari_isi_k = {(v, lama_en.get(n)): n for n, v in lama.items() if n.startswith("k_")}
     nama_dari_teks: dict[str, str] = {}
     baru_id: dict[str, str] = {}
     baru_en: dict[str, str] = {}
@@ -127,6 +142,10 @@ def main() -> int:
             if nama is None and not args and ke_resource(teks, []) in nama_dari_isi:
                 nama = nama_dari_isi[ke_resource(teks, [])]
                 nama_dari_teks[teks] = nama
+            kunci_k = (ke_resource(teks, args), ke_resource(peta[teks], args))
+            if nama is None and kunci_k in nama_dari_isi_k:
+                nama = nama_dari_isi_k[kunci_k]
+                nama_dari_teks[teks] = nama
             if nama is None:
                 nama = slug(teks)
                 dasar, n = nama, 2
@@ -152,10 +171,11 @@ def main() -> int:
         return 0
     # Entri yang ditulis tangan di Kotlin (enum Aksi, status hosting, label splash):
     # literalnya sudah tidak ada di sumber, jadi teksnya disimpan di peta manual.
+    # Isinya sudah bentuk resource (boleh memuat %1$s), jadi cuma di-escape.
     manual = json.loads(PETA_MANUAL.read_text(encoding="utf-8"))
     for nama, isi in manual.items():
-        baru_id[nama] = ke_resource(isi["id"], [])
-        baru_en[nama] = ke_resource(isi["en"], [])
+        baru_id[nama] = escape_xml(isi["id"])
+        baru_en[nama] = escape_xml(isi["en"])
     if baru_id:
         tulis(VALUES, baru_id, "Bahasa bawaan (Indonesia). u_* dari layout (i18n_layout.py), k_* dari Kotlin (i18n_kotlin.py).")
         tulis(VALUES_EN, baru_en, "English. u_* from layout (i18n_layout.py), k_* from Kotlin (i18n_kotlin.py); do not edit by hand.")

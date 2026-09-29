@@ -3,7 +3,11 @@
 Pasang tangkapan layar HP asli ke bingkai HP yang sama dengan mockup web, keluaran
 WebP transparan siap taruh di web/img/hp-<nama>.webp.
 
-  python3 scripts-dev/bingkai_screenshot.py <dir_screenshot> [dir_keluar=web/img]
+  python3 scripts-dev/bingkai_screenshot.py <dir_screenshot> [dir_keluar=web/img] [--akhiran en]
+
+--akhiran en: keluaran hp-<nama>-en.webp (tangkapan UI Inggris dari workflow
+Screenshot app dengan input bahasa=en-US); ukuran di index.html tidak disentuh
+karena bingkainya sama.
 
 Nama file sumber = nama layar: beranda, rilis, grup, lagu, kerja, stack, caption, lapor
 (.png/.jpg). Resolusi bebas (1080x2400, 1080x2340, 720x1600, ...): diskalakan ke lebar
@@ -90,8 +94,14 @@ def perbarui_ukuran(html: Path, nama: str, w: int, h: int):
 def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
-    sumber = Path(sys.argv[1])
-    keluar = Path(sys.argv[2]) if len(sys.argv) > 2 else Path(__file__).resolve().parent.parent / "web" / "img"
+    arg = sys.argv[1:]
+    akhiran = ""
+    if "--akhiran" in arg:
+        i = arg.index("--akhiran")
+        akhiran = "-" + arg[i + 1]
+        del arg[i:i + 2]
+    sumber = Path(arg[0])
+    keluar = Path(arg[1]) if len(arg) > 1 else Path(__file__).resolve().parent.parent / "web" / "img"
     keluar.mkdir(parents=True, exist_ok=True)
     n = 0
     for nama in LAYAR:
@@ -99,10 +109,11 @@ def main():
         if not f:
             continue
         hp = pasang(f)
-        tujuan = keluar / f"hp-{nama}.webp"
+        tujuan = keluar / f"hp-{nama}{akhiran}.webp"
         hp.save(tujuan, "WEBP", quality=88, method=6)
         print(f"{tujuan}  {hp.width}x{hp.height}  {tujuan.stat().st_size // 1024} KB")
-        perbarui_ukuran(keluar.parent / "index.html", nama, hp.width, hp.height)
+        if not akhiran:
+            perbarui_ukuran(keluar.parent / "index.html", nama, hp.width, hp.height)
         n += 1
     if not n:
         sys.exit(f"tidak ada file {', '.join(LAYAR)} (.png/.jpg) di {sumber}")

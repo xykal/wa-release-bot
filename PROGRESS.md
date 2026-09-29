@@ -81,3 +81,6 @@ Next:
 - M9 i18n tahap 1: layar utama app dua bahasa (75 literal layout + 126 literal Kotlin ke
   `strings.xml` + `values-en`), dipindah oleh `scripts-dev/i18n_layout.py` dan `i18n_kotlin.py`
   supaya layar lain bisa menyusul. Belum: Onboarding/Repo/Hosting, PR launching (draft).
+- kall: "gas semua dah". M9 i18n tahap 2: Onboarding, Repo, Hosting, notifikasi service
+  (84 entri lagi, total 274) - seluruh UI app dua bahasa. Lalu gambar sandingan id/en di
+  README dan galeri situs versi English dari screenshot en-US (tukar `src` per bahasa).

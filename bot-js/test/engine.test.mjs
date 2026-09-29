@@ -192,3 +192,103 @@ test('engine: nyala, configure, start, cek release ke GitHub palsu, stop', async
   await engine.tungguLog('cmd tidak dikenal');
   assert.equal(engine.proc.exitCode, null, 'engine masih hidup');
 });
+
+// ---------------------------------------------------------------------------
+// Banyak repo + prerelease + ETag + deteksi release baru tanpa menyentuh WA.
+// GitHub palsu kedua: dua repo, isinya bisa diubah di tengah tes, 304 kalau
+// If-None-Match cocok. Channel utama dikosongkan supaya release baru berhenti
+// di "Channel WA masih kosong" (tidak ada koneksi WhatsApp dari CI).
+// ---------------------------------------------------------------------------
+function buatGithubPalsuBanyak() {
+  const rilis = {
+    'octo/alpha': { tag: 'v1.0.0', prerelease: false, etag: 'W/"alpha-1"' },
+    'octo/beta': { tag: 'v2.0.0-rc.1', prerelease: true, etag: 'W/"beta-1"' },
+  };
+  const hitung = { permintaan: {}, tigaEmpat: {} };
+  const server = http.createServer((req, res) => {
+    const url = new URL(req.url, 'http://x');
+    const m = url.pathname.match(/^\/repos\/([^/]+\/[^/]+)\/releases(?:\/latest)?$/);
+    const r = m && rilis[m[1]];
+    if (!r) {
+      res.writeHead(404, { 'content-type': 'application/json' });
+      res.end('{}');
+      return;
+    }
+    hitung.permintaan[m[1]] = (hitung.permintaan[m[1]] || 0) + 1;
+    if (req.headers['if-none-match'] === r.etag) {
+      hitung.tigaEmpat[m[1]] = (hitung.tigaEmpat[m[1]] || 0) + 1;
+      res.writeHead(304, { etag: r.etag });
+      res.end();
+      return;
+    }
+    const isi = {
+      tag_name: r.tag, name: r.tag, body: 'uji', prerelease: r.prerelease, draft: false, assets: [],
+      html_url: `https://github.com/${m[1]}/releases/tag/${r.tag}`,
+      published_at: '2026-09-29T00:00:00Z', author: { login: 'octo' },
+    };
+    res.writeHead(200, { 'content-type': 'application/json', etag: r.etag });
+    // includePrereleases -> /releases?per_page=1 (array); tanpa itu /releases/latest (objek)
+    res.end(JSON.stringify(url.pathname.endsWith('/latest') ? isi : [isi]));
+  });
+  return new Promise((resolve) => {
+    server.listen(0, '127.0.0.1', () => resolve({ server, port: server.address().port, rilis, hitung }));
+  });
+}
+
+test('engine: dua repo (satu prerelease), ETag 304, release baru terdeteksi tanpa WA', async (t) => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'wr-engine-multi-'));
+  const { server, port, rilis, hitung } = await buatGithubPalsuBanyak();
+  const engine = new Engine(dataDir, port);
+  t.after(() => {
+    engine.matikan();
+    server.close();
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  });
+  await engine.tungguLog('engine siap');
+
+  // beta punya channel khusus (format layar Repo: repo|channel); channel utama kosong.
+  await engine.kirim({
+    type: 'configure', repo: 'octo/alpha, octo/beta|https://whatsapp.com/channel/ContohKhusus',
+    channel: '', token: '', intervalMinutes: 15,
+    includePrereleases: true, postOnFirstRun: false, testMessageOnSetup: false,
+  });
+  // status.repo = daftar repo saja (untuk ubin UI); channel per repo tetap di config.
+  const cfgStatus = await engine.tungguStatus((ev) => /octo\/beta/.test(ev.repo || ''), 'status dua repo');
+  assert.equal(cfgStatus.repo, 'octo/alpha, octo/beta');
+  const cfg = JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8'));
+  assert.equal(cfg.github.repo, 'octo/alpha, octo/beta|https://whatsapp.com/channel/ContohKhusus');
+  assert.equal(cfg.github.includePrereleases, true);
+
+  await engine.kirim({ type: 'start' });
+  // Dua repo -> log diberi awalan nama repo; prerelease ikut karena includePrereleases.
+  await engine.tungguLog('octo/alpha: First run. Baseline dicatat: v1.0.0');
+  await engine.tungguLog('octo/beta: First run. Baseline dicatat: v2.0.0-rc.1');
+  await engine.tungguStatus((ev) => ev.busy === false && ev.lastCheckAt, 'cek pertama selesai');
+  let state = JSON.parse(fs.readFileSync(path.join(dataDir, 'state.json'), 'utf8'));
+  assert.equal(state.repos['octo/alpha'].lastTag, 'v1.0.0');
+  assert.equal(state.repos['octo/beta'].lastTag, 'v2.0.0-rc.1');
+  assert.equal(state.repos['octo/beta'].rilisEtag, 'W/"beta-1"');
+
+  // Cek kedua: ETag dikirim balik -> 304 untuk keduanya, tidak ada posting.
+  await engine.kirim({ type: 'check' });
+  await engine.tungguLog('octo/alpha: Nggak ada update');
+  await engine.tungguLog('octo/beta: Nggak ada update');
+  assert.equal(hitung.tigaEmpat['octo/alpha'], 1, 'alpha 304');
+  assert.equal(hitung.tigaEmpat['octo/beta'], 1, 'beta 304');
+
+  // Release baru di alpha (ETag baru). Terdeteksi, tapi alpha tidak punya channel
+  // dan channel utama kosong -> berhenti sebelum WA; lastTag belum berubah supaya
+  // dicoba lagi begitu channel diisi.
+  rilis['octo/alpha'] = { tag: 'v1.1.0', prerelease: false, etag: 'W/"alpha-2"' };
+  await engine.kirim({ type: 'check' });
+  await engine.tungguLog('octo/alpha: ADA RELEASE BARU!');
+  await engine.tungguLog('"Channel WA" masih kosong');
+  await engine.tungguLog('octo/beta: Nggak ada update');
+  const akhir = await engine.tungguStatus((ev) => ev.busy === false && ev.postCount === 0, 'status akhir');
+  assert.equal(akhir.postCount, 0);
+  state = JSON.parse(fs.readFileSync(path.join(dataDir, 'state.json'), 'utf8'));
+  assert.equal(state.repos['octo/alpha'].lastTag, 'v1.0.0');
+  assert.equal(state.repos['octo/alpha'].rilisEtag, 'W/"alpha-2"');
+  assert.ok(hitung.permintaan['octo/alpha'] >= 3);
+  assert.equal(engine.proc.exitCode, null, 'engine masih hidup');
+});

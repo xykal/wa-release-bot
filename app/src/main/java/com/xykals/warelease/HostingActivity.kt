@@ -105,7 +105,7 @@ class HostingActivity : AppCompatActivity() {
                 LogRecorder.tulis("Tombol", "hosting: $teks")
                 try { aksi() } catch (e: Throwable) {
                     LogRecorder.galat("Tombol", "hosting \"$teks\" gagal", e)
-                    banner("Gagal: ${e.message}")
+                    banner(getString(R.string.k_gagal_2, e.message))
                 }
             }
         }
@@ -155,12 +155,12 @@ class HostingActivity : AppCompatActivity() {
         header.addView(kembali, LinearLayout.LayoutParams(dp(40), dp(40)))
         val judulKol = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(8), 0, 0, 0) }
         judulKol.addView(TextView(this).apply {
-            text = "Hosting bot"
+            text = getString(R.string.k_hosting_bot)
             setTextColor(warna(R.color.wr_teks)); textSize = 21f
             typeface = Typeface.DEFAULT_BOLD
         })
         judulKol.addView(TextView(this).apply {
-            text = "Jalanin project bot Node.js lo sendiri di HP ini"
+            text = getString(R.string.k_jalanin_project_bot_node_js)
             setTextColor(warna(R.color.wr_teks2)); textSize = 12f
         })
         header.addView(judulKol, LinearLayout.LayoutParams(0, -2, 1f))
@@ -186,26 +186,26 @@ class HostingActivity : AppCompatActivity() {
         }
         kStatus.addView(tvPesan)
 
-        btnUpload = tombol("Upload ZIP project", R.style.TombolUtama, R.drawable.ic_folder) {
+        btnUpload = tombol(getString(R.string.k_upload_zip_project), R.style.TombolUtama, R.drawable.ic_folder) {
             if (lagiUpload) return@tombol
             pilihZip.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream"))
         }
         kStatus.addView(btnUpload, LinearLayout.LayoutParams(-1, dp(52)).apply { topMargin = dp(14) })
 
-        btnJalan = tombol("Jalankan", R.style.TombolGaris, R.drawable.ic_play) {
+        btnJalan = tombol(getString(R.string.k_jalankan), R.style.TombolGaris, R.drawable.ic_play) {
             val st = statusTerakhir?.status
             kirim(mapOf("type" to if (st == "jalan" || st == "install") "hosting-stop" else "hosting-mulai"))
         }
-        btnPasang = tombol("Pasang modul", R.style.TombolLembut, R.drawable.ic_tambah) {
+        btnPasang = tombol(getString(R.string.k_pasang_modul), R.style.TombolLembut, R.drawable.ic_tambah) {
             kirim(mapOf("type" to "hosting-pasang"))
-            banner("Pasang modul dari npm… progresnya di konsol.")
+            banner(getString(R.string.k_pasang_modul_dari_npm_progresnya))
         }
         kStatus.addView(baris(btnJalan, btnPasang), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(10) })
 
-        val btnRestart = tombol("Restart", R.style.TombolLembut, R.drawable.ic_power) {
+        val btnRestart = tombol(getString(R.string.k_restart), R.style.TombolLembut, R.drawable.ic_power) {
             kirim(mapOf("type" to "hosting-restart"))
         }
-        val btnHapus = tombol("Hapus project", R.style.TombolBahaya, R.drawable.ic_hapus) {
+        val btnHapus = tombol(getString(R.string.k_hapus_project), R.style.TombolBahaya, R.drawable.ic_hapus) {
             konfirmasiHapus()
         }
         kStatus.addView(baris(btnRestart, btnHapus), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(10) })
@@ -221,7 +221,7 @@ class HostingActivity : AppCompatActivity() {
             }
         }
         rowAuto.addView(TextView(this).apply {
-            text = "Restart otomatis kalau crash"
+            text = getString(R.string.k_restart_otomatis_kalau_crash)
             setTextColor(warna(R.color.wr_teks)); textSize = 14f
         }, LinearLayout.LayoutParams(0, -2, 1f))
         ivAuto = ImageView(this).apply { setImageResource(R.drawable.sel_saklar); isDuplicateParentStateEnabled = true }
@@ -232,7 +232,7 @@ class HostingActivity : AppCompatActivity() {
         // konsol
         val kKonsol = kartu().apply { setPadding(dp(12), dp(12), dp(12), dp(12)) }
         kKonsol.addView(TextView(this).apply {
-            text = "KONSOL"
+            text = getString(R.string.k_konsol)
             setTextColor(warna(R.color.wr_teks2)); textSize = 11f; letterSpacing = 0.1f
             typeface = Typeface.DEFAULT_BOLD
         })
@@ -245,14 +245,14 @@ class HostingActivity : AppCompatActivity() {
             textSize = 11.5f
             setTextColor(warna(R.color.wr_teks))
             setTextIsSelectable(true)
-            text = "Belum ada output."
+            text = getString(R.string.k_belum_ada_output)
         }
         svKonsol.addView(tvKonsol)
         kKonsol.addView(svKonsol, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(8) })
 
         val barisInput = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         etInput = EditText(this, null, 0, R.style.Isian).apply {
-            hint = "Ketik input buat bot (mis. nomor WA)…"
+            hint = getString(R.string.k_ketik_input_buat_bot_mis)
             imeOptions = EditorInfo.IME_ACTION_SEND
             setOnEditorActionListener { _, id, _ ->
                 if (id == EditorInfo.IME_ACTION_SEND) { kirimInput(); true } else false
@@ -266,10 +266,7 @@ class HostingActivity : AppCompatActivity() {
         kolom.addView(kKonsol, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(12) })
 
         kolom.addView(TextView(this).apply {
-            text = "ZIP berisi package.json + file utama (index.js / \"main\" / script start). " +
-                    "node_modules boleh ikut atau nggak — kalau nggak ada, app yang pasang dari npm " +
-                    "(paket native kayak sharp nggak jalan). File .env ikut dibaca. " +
-                    "Node bawaan app: Node 18 — versinya cuma bisa naik lewat update APK."
+            text = getString(R.string.k_zip_berisi_package_json_file)
             setTextColor(warna(R.color.wr_teks2)); textSize = 11.5f
             setPadding(dp(4), dp(10), dp(4), 0)
         })
@@ -300,17 +297,17 @@ class HostingActivity : AppCompatActivity() {
         statusTerakhir = h
 
         tvNama.text = when {
-            !h.ada -> "Belum ada project"
+            !h.ada -> getString(R.string.k_belum_ada_project_2)
             h.nama != null -> h.nama + (h.versi?.let { " v$it" } ?: "")
-            else -> h.file ?: "Project"
+            else -> h.file ?: getString(R.string.k_project)
         }
         val (label, w) = when (h.status) {
-            "jalan" -> "JALAN" to R.color.wr_hijau
-            "install" -> "PASANG" to R.color.wr_kuning
-            "error" -> "ERROR" to R.color.wr_merah
-            "mati" -> "MATI" to R.color.wr_merah
-            "siap" -> "SIAP" to R.color.wr_teks2
-            else -> "KOSONG" to R.color.wr_teks2
+            "jalan" -> getString(R.string.k_jalan) to R.color.wr_hijau
+            "install" -> getString(R.string.k_pasang) to R.color.wr_kuning
+            "error" -> getString(R.string.k_error) to R.color.wr_merah
+            "mati" -> getString(R.string.u_mati) to R.color.wr_merah
+            "siap" -> getString(R.string.k_siap) to R.color.wr_teks2
+            else -> getString(R.string.k_kosong) to R.color.wr_teks2
         }
         tvStatus.text = label
         tvStatus.setTextColor(warna(w))
@@ -318,14 +315,14 @@ class HostingActivity : AppCompatActivity() {
             cornerRadius = dp(50).toFloat()
             setColor(warna(w) and 0x00FFFFFF or 0x26000000)
         }
-        val uptime = h.mulaiPada?.let { " · nyala ${Durasi.human(System.currentTimeMillis() - it)}" } ?: ""
+        val uptime = h.mulaiPada?.let { " · " + getString(R.string.k_hosting_nyala_durasi, Durasi.human(System.currentTimeMillis() - it)) } ?: ""
         tvPesan.text = listOfNotNull(
             h.pesan.ifBlank { null },
-            h.node?.let { "Node $it$uptime" }
+            h.node?.let { getString(R.string.k_node, it, uptime) }
         ).joinToString("\n")
 
         val jalan = h.status == "jalan" || h.status == "install"
-        btnJalan.text = if (jalan) "Stop" else "Jalankan"
+        btnJalan.text = if (jalan) getString(R.string.k_stop) else getString(R.string.k_jalankan)
         btnJalan.setCompoundDrawablesRelativeWithIntrinsicBounds(if (jalan) R.drawable.ic_jeda else R.drawable.ic_play, 0, 0, 0)
         btnJalan.isEnabled = h.ada
         btnJalan.alpha = if (h.ada) 1f else 0.5f
@@ -333,9 +330,9 @@ class HostingActivity : AppCompatActivity() {
         btnPasang.alpha = if (btnPasang.isEnabled) 1f else 0.5f
         rowAuto.isSelected = h.autoRestart
         btnUpload.text = when {
-            lagiUpload -> "Membongkar ZIP…"
-            h.ada -> "Ganti project (upload ZIP)"
-            else -> "Upload ZIP project"
+            lagiUpload -> getString(R.string.k_membongkar_zip)
+            h.ada -> getString(R.string.k_ganti_project_upload_zip)
+            else -> getString(R.string.k_upload_zip_project)
         }
 
         // status berubah jadi "jalan" → denyut di pill biar kerasa hidup
@@ -348,7 +345,7 @@ class HostingActivity : AppCompatActivity() {
     }
 
     private fun tampilkanKonsol(baris: List<BarisKonsol>) {
-        if (baris.isEmpty()) { tvKonsol.text = "Belum ada output."; return }
+        if (baris.isEmpty()) { tvKonsol.text = getString(R.string.k_belum_ada_output); return }
         val bawah = !svKonsol.canScrollVertically(1)
         val sb = SpannableStringBuilder()
         for (b in baris.takeLast(300)) {
@@ -378,17 +375,17 @@ class HostingActivity : AppCompatActivity() {
     private fun konfirmasiHapus() {
         val d = android.app.Dialog(this, R.style.Lembar)
         val v = layoutInflater.inflate(R.layout.lembar, null)
-        v.findViewById<TextView>(R.id.lbJudul).text = "Hapus project?"
+        v.findViewById<TextView>(R.id.lbJudul).text = getString(R.string.k_hapus_project_2)
         v.findViewById<TextView>(R.id.lbPesan).text =
-            "Bot di-stop, semua file project (termasuk sesi WA bot itu & node_modules) dihapus dari HP."
+            getString(R.string.k_bot_di_stop_semua_file)
         v.findViewById<View>(R.id.lbIsi).visibility = View.GONE
         val wadah = v.findViewById<LinearLayout>(R.id.lbTombol)
         val ya = TextView(this, null, 0, R.style.TombolBahaya).apply {
-            text = "Hapus"
+            text = getString(R.string.k_hapus_2)
             setOnClickListener { kirim(mapOf("type" to "hosting-hapus")); d.dismiss() }
         }
         val batal = TextView(this, null, 0, R.style.TombolLembut).apply {
-            text = "Batal"
+            text = getString(R.string.k_batal)
             setOnClickListener { d.dismiss() }
         }
         wadah.addView(ya, LinearLayout.LayoutParams(-1, dp(50)))
@@ -407,7 +404,7 @@ class HostingActivity : AppCompatActivity() {
     private fun pasangZip(uri: Uri) {
         lagiUpload = true
         render(BotBus.ui)
-        banner("Membongkar ZIP…")
+        banner(getString(R.string.k_membongkar_zip))
         scope.launch {
             val hasil = try {
                 if (BotService.instance != null && statusTerakhir?.status == "jalan") {
@@ -417,7 +414,7 @@ class HostingActivity : AppCompatActivity() {
                 withContext(Dispatchers.IO) { bongkar(uri) }
             } catch (e: Throwable) {
                 LogRecorder.galat("Hosting", "bongkar ZIP gagal", e)
-                "Gagal: ${e.message}"
+                getString(R.string.k_gagal_2, e.message)
             }
             lagiUpload = false
             SettingsStore(this@HostingActivity).hostingDipakai = true
@@ -428,7 +425,7 @@ class HostingActivity : AppCompatActivity() {
     }
 
     private fun bongkar(uri: Uri): String {
-        val induk = dirProyek.parentFile ?: throw IllegalStateException("folder data nggak ada")
+        val induk = dirProyek.parentFile ?: throw IllegalStateException(getString(R.string.k_folder_data_nggak_ada))
         induk.mkdirs()
         val baru = File(induk, "proyek.baru").apply { deleteRecursively(); mkdirs() }
         val akarBaru = baru.canonicalPath + File.separator
@@ -436,7 +433,7 @@ class HostingActivity : AppCompatActivity() {
         var total = 0L
 
         contentResolver.openInputStream(uri).use { ins ->
-            if (ins == null) throw IllegalStateException("file ZIP nggak kebaca")
+            if (ins == null) throw IllegalStateException(getString(R.string.k_file_zip_nggak_kebaca))
             ZipInputStream(ins.buffered()).use { zip ->
                 while (true) {
                     val e = zip.nextEntry ?: break
@@ -454,14 +451,14 @@ class HostingActivity : AppCompatActivity() {
                             if (r < 0) break
                             out.write(buf, 0, r)
                             total += r
-                            if (total > 700L * 1024 * 1024) throw IllegalStateException("isi ZIP kegedean (>700 MB)")
+                            if (total > 700L * 1024 * 1024) throw IllegalStateException(getString(R.string.k_isi_zip_kegedean_700_mb))
                         }
                     }
                     jumlah++
                 }
             }
         }
-        if (jumlah == 0) throw IllegalStateException("ZIP-nya kosong")
+        if (jumlah == 0) throw IllegalStateException(getString(R.string.k_zip_nya_kosong))
 
         // ZIP yang isinya satu folder (mis. "botku-main/…") → naikin isinya
         var sumber = baru
@@ -469,7 +466,7 @@ class HostingActivity : AppCompatActivity() {
         if (!File(baru, "package.json").exists() && isi.size == 1 && isi[0].isDirectory) sumber = isi[0]
         if (!File(sumber, "package.json").exists()) {
             baru.deleteRecursively()
-            throw IllegalStateException("package.json nggak ketemu di ZIP")
+            throw IllegalStateException(getString(R.string.k_package_json_nggak_ketemu_di))
         }
 
         // bawa isi lama yang nggak ada di ZIP baru (sesi, .env, node_modules)
@@ -485,7 +482,7 @@ class HostingActivity : AppCompatActivity() {
             sumber.copyRecursively(dirProyek, overwrite = true)
         }
         baru.deleteRecursively()
-        return "✓ Project masuk: $jumlah file" + (if (dibawa > 0) ", $dibawa file/folder lama dipertahankan" else "") + "."
+        return getString(R.string.k_project_masuk_file, jumlah) + (if (dibawa > 0) getString(R.string.k_file_folder_lama_dipertahankan, dibawa) else "") + "."
     }
 
     private fun kirim(cmd: Map<String, Any>) {
@@ -497,7 +494,7 @@ class HostingActivity : AppCompatActivity() {
         val s = BotService.instance
         if (s != null) { aksi(); return }
         if (coba == 0) BotService.start(this)
-        if (coba > 30) { banner("Service belum nyala. Coba lagi."); return }
+        if (coba > 30) { banner(getString(R.string.k_service_belum_nyala_coba_lagi)); return }
         handler.postDelayed({ pastikanService(coba + 1, aksi) }, 250)
     }
 

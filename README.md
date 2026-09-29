@@ -32,9 +32,9 @@ exact same engine. Release checks use conditional requests (ETag), so an unchang
 repo costs 0 bytes and no API quota. Extras: group gatekeeper (auto-approve joins,
 reject members who left), optional "mood song" voice notes, and hosting for your own
 small Node.js bot. Source-available under a personal-use license; see LICENSE.
-The app's main screen follows the phone language (Indonesian by default, English when the
-system language is English); the Onboarding, Repo and Hosting screens and the bot's WhatsApp
-messages are still Indonesian only. Built by xykal — XyVerse Technology Global.
+The app UI follows the phone language (Indonesian by default, English when the system
+language is English); the bot's WhatsApp messages and the log are Indonesian only.
+Built by xykal — XyVerse Technology Global.
 
 </details>
 
@@ -122,6 +122,14 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`): CLI meng-import modul `bot-
 
 Panduan lengkap tiap kartu (cara kerja, penjaga grup, batre, cara dapat link channel,
 lagu mood, hosting bot custom): [docs/PANDUAN-APP.md](docs/PANDUAN-APP.md).
+
+### Bahasa
+
+UI app mengikuti bahasa HP: Indonesia (bawaan) atau Inggris. Tangkapan di bawah dari
+emulator CI (workflow Screenshot app, input `bahasa`); pesan bot di WhatsApp dan isi log
+tetap Indonesia.
+
+![Layar beranda dan pengaturan dalam Bahasa Indonesia dan Inggris](docs/img/i18n-app.webp)
 
 ---
 
@@ -233,7 +241,7 @@ Laporan kerentanan: lihat [SECURITY.md](SECURITY.md).
 ├── cli/                      # versi Termux/PC — import langsung modul bot-js/src (engine identik)
 ├── scripts/                  # build-local.sh, fetch-nodejs-mobile.sh
 ├── web/                      # landing page + halaman unduh (statis, Cloudflare Workers)
-├── docs/                     # PANDUAN-APP, BUILD, TROUBLESHOOTING, ARCHITECTURE, CI, ROADMAP
+├── docs/                     # PANDUAN-APP, BUILD, TROUBLESHOOTING, ARCHITECTURE, CI, ROADMAP, PRD, PITCH
 └── .github/workflows/        # build-apk, code-quality, codeql, security, deploy-web
 ```
 

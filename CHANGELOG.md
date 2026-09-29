@@ -52,14 +52,23 @@ tetap menerima update.
   (workers.dev diarahkan ke sana). Sebelum launching halaman unduh menampilkan
   hitung mundur; setelahnya kartu APK terisi otomatis dari `releases/latest`.
   Deploy: `scripts-dev/deploy_web.py` (tanpa wrangler) + workflow `deploy-web.yml`.
-- **Bahasa Inggris di layar utama app**: 75 literal layout `activity_main.xml` dan 126 literal
-  Kotlin layar utama (`PanelStatus`, `MainActivity`, dialog tautan, daftar hitam, aksi sistem,
-  splash) dipindah ke `res/values/strings.xml` (`u_*`, `k_*`) dengan padanan `values-en`;
-  Android memilih bahasa dari setelan sistem. Onboarding, Repo, Hosting dan notifikasi
-  service masih Indonesia. Alat pemindah: `scripts-dev/i18n_layout.py` + `i18n_peta.json`,
+- **App dua bahasa (Indonesia/Inggris)**: 75 literal layout `activity_main.xml` dan 210 literal
+  Kotlin (layar utama, dialog tautan, daftar hitam, aksi sistem, splash, Onboarding, Repo,
+  Hosting, notifikasi `BotService`) dipindah ke `res/values/strings.xml` (`u_*`, `k_*`) dengan
+  padanan `values-en`; Android memilih bahasa dari setelan sistem. Pesan bot di WhatsApp dan
+  isi log tetap Indonesia. Alat pemindah: `scripts-dev/i18n_layout.py` + `i18n_peta.json`,
   `scripts-dev/i18n_kotlin.py` + `i18n_peta_kotlin.json`/`i18n_peta_manual.json`.
   Workflow Screenshot app mengunci bahasa emulator (input `bahasa`: `id-ID` bawaan atau
   `en-US`); runner GitHub aslinya en-US sehingga tangkapan situs bisa berubah bahasa.
+  Galeri situs versi English memakai tangkapan en-US (`web/img/hp-*-en.webp`, ditukar
+  `app.js` lewat `data-src-en`; `bingkai_screenshot.py --akhiran en`); README memuat
+  sandingan id/en (`docs/img/i18n-app.webp`).
+
+- `docs/PITCH.md`: satu halaman pitch (masalah, solusi, untuk siapa, batasan yang jujur).
+
+- Uji engine kedua (`test/engine.test.mjs`): dua repo sekaligus (satu prerelease dengan
+  `includePrereleases`), ETag 304 pada cek kedua, release baru terdeteksi dan berhenti di
+  "Channel WA masih kosong" tanpa menyentuh WhatsApp; `lastTag` tidak berubah sampai terkirim.
 
 #### Diubah
 - App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,

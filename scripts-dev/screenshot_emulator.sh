@@ -117,10 +117,10 @@ echo "  sambutan.png"
 tangkap beranda
 # etChannel ada di layout lama maupun baru (etRepo diganti tombol Kelola repo);
 # offset lebih besar supaya judul kartu "Rilis GitHub -> Channel" ikut terlihat
-gulir_ke etChannel pengaturan 620
+gulir_ke etChannel pengaturan 860
 # offset = jarak anchor dari atas layar setelah digeser; dipilih supaya judul kartu
 # di atas anchor ikut masuk (run 36621355435: judul terpotong dengan offset 200)
-gulir_ke etGrup grup 330
+gulir_ke etGrup grup 600
 gulir_ke etLaguPerHari lagu 560
 gulir_ke btnHosting hosting 500
 gulir_ke tvLog log 400

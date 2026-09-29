@@ -89,8 +89,15 @@ jobs:
         with:
           cache-read-only: true
 
-      - name: Build APK debug x86_64
-        run: ./gradlew --no-daemon :app:assembleDebug -Pabis=x86_64 --stacktrace
+      - name: Build APK release x86_64 (tanda tangan debug)
+        # Varian release (R8 + shrinkResources, tanpa suffix -debug) supaya tampilannya
+        # sama dengan APK yang diunduh orang; tanpa keystore, gradle memakai tanda tangan
+        # debug (app/build.gradle) jadi tetap bisa dipasang di emulator. Versi = versi
+        # launching publik (docs/ROADMAP.md) agar header app di situs tidak menampilkan
+        # versi internal.
+        run: >-
+          ./gradlew --no-daemon :app:assembleRelease -Pabis=x86_64
+          -PversionName=1.0.0 -PversionCode=1010000 --stacktrace
 
       - name: Aktifkan KVM (emulator dengan akselerasi)
         run: |
@@ -107,7 +114,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
-          script: APK=app/build/outputs/apk/debug/app-debug.apk OUT=tangkapan-app bash scripts-dev/screenshot_emulator.sh
+          script: APK=app/build/outputs/apk/release/app-release.apk PKG=com.xykals.warelease OUT=tangkapan-app bash scripts-dev/screenshot_emulator.sh
 
       - name: Upload screenshot
         if: always()

@@ -12,7 +12,8 @@ set -euo pipefail
 
 APK="${APK:-app/build/outputs/apk/debug/app-debug.apk}"
 OUT="${OUT:-tangkapan-app}"
-PKG="com.xykals.warelease.debug"          # applicationIdSuffix .debug (app/build.gradle)
+# release: com.xykals.warelease; debug: applicationIdSuffix .debug (app/build.gradle)
+PKG="${PKG:-com.xykals.warelease.debug}"
 ACT="com.xykals.warelease.MainActivity"
 mkdir -p "$OUT"
 
@@ -95,9 +96,11 @@ tangkap beranda
 # etChannel ada di layout lama maupun baru (etRepo diganti tombol Kelola repo);
 # offset lebih besar supaya judul kartu "Rilis GitHub -> Channel" ikut terlihat
 gulir_ke etChannel pengaturan 620
-gulir_ke etGrup grup
-gulir_ke etLaguPerHari lagu
-gulir_ke btnHosting hosting
-gulir_ke tvLog log
-gulir_ke tvTentang tentang
+# offset = jarak anchor dari atas layar setelah digeser; dipilih supaya judul kartu
+# di atas anchor ikut masuk (run 36621355435: judul terpotong dengan offset 200)
+gulir_ke etGrup grup 330
+gulir_ke etLaguPerHari lagu 560
+gulir_ke btnHosting hosting 500
+gulir_ke tvLog log 400
+gulir_ke tvTentang tentang 320
 ls -la "$OUT"

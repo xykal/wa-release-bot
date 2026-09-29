@@ -9,7 +9,9 @@ import androidx.core.content.ContextCompat
 import com.xykals.warelease.util.Durasi
 
 /** Aksi Mulai / Jeda / Matikan yang lagi ditunggu hasilnya (tombolnya nunjukin teks ini). */
-internal enum class Aksi(val teks: String) { NYALA("Menyalakan…"), JEDA("Menjeda…"), MATI("Mematikan…") }
+internal enum class Aksi(val teksRes: Int) {
+    NYALA(R.string.k_menyalakan), JEDA(R.string.k_menjeda), MATI(R.string.k_mematikan)
+}
 
 /**
  * Bagian layar utama yang murni menggambar status engine: pil status, ubin,
@@ -58,11 +60,11 @@ internal class PanelStatus(
 
     fun render(ui: BotUi, tunggu: Aksi?) {
         val (teksPill, warnaPill) = when {
-            tunggu != null -> tunggu.teks.uppercase() to R.color.wr_kuning
-            ui.busy -> "CEK…" to R.color.wr_hijau
-            ui.engineRunning -> "JALAN" to R.color.wr_hijau
-            ui.serviceRunning -> "JEDA" to R.color.wr_kuning
-            else -> "MATI" to R.color.wr_merah
+            tunggu != null -> a.getString(tunggu.teksRes).uppercase() to R.color.wr_kuning
+            ui.busy -> a.getString(R.string.k_cek) to R.color.wr_hijau
+            ui.engineRunning -> a.getString(R.string.k_jalan) to R.color.wr_hijau
+            ui.serviceRunning -> a.getString(R.string.k_jeda) to R.color.wr_kuning
+            else -> a.getString(R.string.u_mati) to R.color.wr_merah
         }
         tvPill.text = teksPill
         tvPill.setTextColor(ContextCompat.getColor(a, warnaPill))
@@ -72,58 +74,59 @@ internal class PanelStatus(
         }
 
         tvUbinWa.text = when {
-            ui.waConnected -> "Tersambung"
-            ui.waLinked -> "Tertaut"
-            else -> "Belum ditautkan"
+            ui.waConnected -> a.getString(R.string.k_tersambung)
+            ui.waLinked -> a.getString(R.string.k_tertaut)
+            else -> a.getString(R.string.k_belum_ditautkan)
         }
         tvUbinEngine.text = when {
-            ui.busy -> "Lagi cek…"
-            ui.engineRunning -> "Jalan"
-            ui.serviceRunning -> "Jeda"
-            else -> "Mati"
+            ui.busy -> a.getString(R.string.k_lagi_cek)
+            ui.engineRunning -> a.getString(R.string.k_jalan_2)
+            ui.serviceRunning -> a.getString(R.string.k_jeda_2)
+            else -> a.getString(R.string.k_mati)
         }
         tvUbinRilis.text = when {
             ui.repo == null -> "—"
-            ui.lastTag == null -> "Belum ada"
-            else -> "${ui.lastTag} · ${ui.postCount} post"
+            ui.lastTag == null -> a.getString(R.string.k_belum_ada)
+            else -> a.getString(R.string.k_post, ui.lastTag, ui.postCount)
         }
-        tvUbinGrup.text = if (ui.grupAktif) (ui.grupNama ?: "Nyala") else "Mati"
+        tvUbinGrup.text = if (ui.grupAktif) (ui.grupNama ?: a.getString(R.string.k_nyala)) else a.getString(R.string.k_mati)
 
         val sekarang = System.currentTimeMillis()
         tvNext.text = listOfNotNull(
-            ui.nextCheckAt?.let { "cek rilis ${Durasi.human(it - sekarang)} lagi" },
-            ui.nextGrupAt?.let { "cek grup ${Durasi.human(it - sekarang)} lagi" },
-            ui.nextLaguAt?.let { "lagu ${Durasi.human(it - sekarang)} lagi" }
+            ui.nextCheckAt?.let { a.getString(R.string.k_cek_rilis_lagi, Durasi.human(it - sekarang)) },
+            ui.nextGrupAt?.let { a.getString(R.string.k_cek_grup_lagi, Durasi.human(it - sekarang)) },
+            ui.nextLaguAt?.let { a.getString(R.string.k_lagu_lagi, Durasi.human(it - sekarang)) }
         ).joinToString("  ·  ")
         tvNext.visibility = if (tvNext.text.isNullOrEmpty()) View.GONE else View.VISIBLE
 
         tvLaguStat.text = when {
-            !ui.laguAktif -> "Mati. Nyalain saklarnya, terus Simpan."
+            !ui.laguAktif -> a.getString(R.string.k_mati_nyalain_saklarnya_terus_simpan)
             else -> listOfNotNull(
-                ui.nextLaguAt?.let { "Lagu berikutnya kira-kira ${Durasi.human(it - sekarang)} lagi (jamnya diacak)" }
-                    ?: "Nunggu bot jalan…",
-                "${ui.laguCount} lagu udah dikirim",
-                ui.laguJudul?.let { "Terakhir: $it" },
-                ui.laguJatah?.let { "Jatah hari ini dari server: $it (reset tengah malam UTC)" }
+                ui.nextLaguAt?.let { a.getString(R.string.k_lagu_berikutnya_kira_kira_lagi, Durasi.human(it - sekarang)) }
+                    ?: a.getString(R.string.k_nunggu_bot_jalan),
+                a.getString(R.string.k_lagu_udah_dikirim, ui.laguCount),
+                ui.laguJudul?.let { a.getString(R.string.k_terakhir, it) },
+                ui.laguJatah?.let { a.getString(R.string.k_jatah_hari_ini_dari_server, it) }
             ).joinToString("\n")
         }
         val h = ui.hosting
-        tvHostingStat.text = when {
-            !h.ada -> "Belum ada project."
-            else -> (h.nama ?: h.file ?: "Project") + " — " + when (h.status) {
-                "jalan" -> "jalan ✓"
-                "install" -> "lagi pasang modul…"
-                "error" -> "error, buka buat liat konsol"
-                "mati" -> "mati"
-                else -> "siap dijalanin"
-            }
+        // h.status adalah nilai protokol dari engine (jangan diterjemahkan);
+        // yang tampil ke user diambil dari resource.
+        val statusProject = when (h.status) {
+            "jalan" -> a.getString(R.string.k_hosting_jalan)
+            "install" -> a.getString(R.string.k_hosting_install)
+            "error" -> a.getString(R.string.k_hosting_error)
+            "mati" -> a.getString(R.string.k_hosting_mati)
+            else -> a.getString(R.string.k_hosting_siap)
         }
+        val namaProject = h.nama ?: h.file ?: a.getString(R.string.k_project)
+        tvHostingStat.text = if (!h.ada) a.getString(R.string.k_belum_ada_project) else "$namaProject — $statusProject"
 
         btnMulai.text = when {
-            tunggu == Aksi.NYALA || tunggu == Aksi.JEDA -> tunggu?.teks ?: ""
-            !ui.serviceRunning -> "Nyalakan"
-            ui.engineRunning -> "Jeda"
-            else -> "Mulai"
+            tunggu == Aksi.NYALA || tunggu == Aksi.JEDA -> tunggu?.let { a.getString(it.teksRes) } ?: ""
+            !ui.serviceRunning -> a.getString(R.string.k_nyalakan)
+            ui.engineRunning -> a.getString(R.string.k_jeda_2)
+            else -> a.getString(R.string.u_mulai)
         }
         btnMulai.setCompoundDrawablesRelativeWithIntrinsicBounds(
             if (ui.engineRunning) R.drawable.ic_jeda else R.drawable.ic_play, 0, 0, 0
@@ -133,9 +136,9 @@ internal class PanelStatus(
         btnMulai.alpha = if (mulaiAktif) 1f else 0.55f
 
         btnKill.text = when {
-            tunggu == Aksi.MATI -> tunggu?.teks ?: ""
-            !ui.serviceRunning -> "Service udah mati"
-            else -> "Matikan service"
+            tunggu == Aksi.MATI -> tunggu?.let { a.getString(it.teksRes) } ?: ""
+            !ui.serviceRunning -> a.getString(R.string.k_service_udah_mati)
+            else -> a.getString(R.string.u_matikan_service)
         }
         val killAktif = ui.serviceRunning && tunggu == null
         btnKill.isEnabled = killAktif
@@ -152,29 +155,31 @@ internal class PanelStatus(
         a.findViewById<View>(R.id.btnQr).visibility = tampilTaut
         a.findViewById<View>(R.id.btnLepas).visibility = if (tertaut) View.VISIBLE else View.GONE
         a.findViewById<TextView>(R.id.tvKetTaut).text = if (tertaut) {
-            "Udah beres, nggak perlu diapa-apain lagi. Mau ganti nomor? Lepas dulu, baru tautin lagi."
+            a.getString(R.string.k_udah_beres_nggak_perlu_diapa)
         } else {
-            KET_TAUT_BELUM
+            a.getString(R.string.u_cukup_sekali_paling_gampang_pakai)
         }
         val nomorTampil = settings.phone.trim().ifBlank { null }
 
         tvWaStatus.text = when {
             ui.setupState == "starting" && ui.setupTahap != null -> ui.setupTahap!!
-            ui.waLinked -> "✓ WhatsApp tertaut" + (nomorTampil?.let { " ($it)" } ?: "") + " — bot siap kerja."
-            ui.setupState == "starting" -> "Lagi nautin…"
-            else -> "Belum tertaut."
+            ui.waLinked -> {
+                val nomorKet = nomorTampil?.let { " ($it)" } ?: ""
+                a.getString(R.string.k_whatsapp_tertaut_bot_siap_kerja_2, nomorKet)
+            }
+            ui.setupState == "starting" -> a.getString(R.string.k_lagi_nautin)
+            else -> a.getString(R.string.k_belum_tertaut)
         }
         tvWaStatus.setTextColor(
             ContextCompat.getColor(a, if (ui.waLinked) R.color.wr_hijau else R.color.wr_teks2)
         )
 
         tvGrupStat.text = if (!ui.grupAktif) {
-            "Penjaga grup mati."
+            a.getString(R.string.k_penjaga_grup_mati)
         } else {
-            val last = ui.grupLastCekAt?.let { "${Durasi.human(sekarang - it)} lalu" } ?: "belum pernah"
-            "Grup: ${ui.grupNama ?: "(belum dicek)"}\n" +
-                    "Di-approve ${ui.grupDisetujui} · ditolak ${ui.grupDitolak} · daftar hitam ${ui.grupHitam}\n" +
-                    "Cek terakhir: $last"
+            val last = ui.grupLastCekAt?.let { a.getString(R.string.k_lalu, Durasi.human(sekarang - it)) } ?: a.getString(R.string.k_belum_pernah)
+            val namaGrup = ui.grupNama ?: a.getString(R.string.k_belum_dicek)
+            a.getString(R.string.k_grup_di_approve_ditolak_daftar, namaGrup, ui.grupDisetujui, ui.grupDitolak, ui.grupHitam, last)
         }
 
         val err = ui.engineError
@@ -187,7 +192,4 @@ internal class PanelStatus(
         }
     }
 
-    private companion object {
-        const val KET_TAUT_BELUM = "Cukup sekali. Paling gampang pakai kode: isi nomor WA lo, nanti muncul 8 huruf yang diketik di WhatsApp — nggak perlu HP kedua buat scan QR."
-    }
 }

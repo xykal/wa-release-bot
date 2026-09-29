@@ -203,6 +203,8 @@ jobs:
           echo "--- laporan lengkap (informasional) ---"
           npm audit || true
 
+      # Pola re_ (Resend) diberi batas kata: nama resource seperti
+      # k_pengoptimalan_batre_dikecualikan_... pernah kena false positive.
       - name: Tidak boleh ada token/secret yang ke-commit
         run: |
           set -e
@@ -210,7 +212,7 @@ jobs:
               -e 'ghp_[A-Za-z0-9]{36}' \
               -e 'gho_[A-Za-z0-9]{36}' \
               -e 'github_pat_[A-Za-z0-9_]{20,}' \
-              -e 're_[A-Za-z0-9_-]{20,}' \
+              -e '(^|[^A-Za-z0-9_])re_[A-Za-z0-9_-]{20,}' \
               -e 'tskey-auth-[A-Za-z0-9-]{20,}' \
               -e 'os_v2_app_[A-Za-z0-9]{20,}' \
               -e 'gsk_[A-Za-z0-9]{40,}' \

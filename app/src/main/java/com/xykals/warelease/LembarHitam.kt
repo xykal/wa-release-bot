@@ -39,7 +39,7 @@ internal class LembarHitam(
         }
 
         if (ui.daftarHitam.isEmpty()) {
-            isi.addView(teks("Nggak ada yang diblokir otomatis.", R.color.wr_teks2, 14f))
+            isi.addView(teks(a.getString(R.string.k_nggak_ada_yang_diblokir_otomatis), R.color.wr_teks2, 14f))
         }
         ui.daftarHitam.forEachIndexed { i, o ->
             val baris = LinearLayout(a).apply {
@@ -52,22 +52,22 @@ internal class LembarHitam(
             kiri.addView(teks(o.label, R.color.wr_teks, 15f))
             kiri.addView(
                 teks(
-                    o.sejak?.let { "keluar / dikeluarin ${tgl.format(java.util.Date(it))}" } ?: "dicatat bot",
+                    o.sejak?.let { a.getString(R.string.k_keluar_dikeluarin, tgl.format(java.util.Date(it))) } ?: a.getString(R.string.k_dicatat_bot),
                     R.color.wr_teks2, 12f
                 )
             )
             baris.addView(kiri, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
             val tombol = TextView(a, null, 0, R.style.TombolGaris).apply {
-                text = "Buka blokir"
+                text = a.getString(R.string.k_buka_blokir)
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
                 setPadding(a.dp(12), 0, a.dp(12), 0)
                 setOnClickListener {
                     LogRecorder.tulis("Hitam", "buka blokir ${o.label}")
-                    text = "Membuka…"
+                    text = a.getString(R.string.k_membuka)
                     isEnabled = false
                     alpha = 0.55f
                     kirim(mapOf("type" to "hapus-hitam", "kunci" to o.kunci))
-                    banner("${o.label} bisa join lagi (di-approve pas cek berikutnya).")
+                    banner(a.getString(R.string.k_bisa_join_lagi_di_approve, o.label))
                 }
             }
             baris.addView(tombol, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, a.dp(40)))
@@ -76,9 +76,9 @@ internal class LembarHitam(
             isi.addView(baris, lp)
         }
         if (ui.daftarHitamManual.isNotEmpty()) {
+            val daftarManual = ui.daftarHitamManual.joinToString(", ")
             val t = teks(
-                "Diblokir manual (kolom \"Selalu tolak nomor ini\"): ${ui.daftarHitamManual.joinToString(", ")}\n" +
-                        "Buat buka blokir yang ini, hapus nomornya dari kolom itu terus Simpan.",
+                a.getString(R.string.k_diblokir_manual_kolom_selalu_tolak, daftarManual),
                 R.color.wr_teks2, 12f
             )
             val lp = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -87,11 +87,10 @@ internal class LembarHitam(
         }
 
         dialog = a.lembar(
-            "Daftar hitam (${ui.daftarHitam.size})",
-            "Orang yang pernah keluar / dikeluarin dari grup. Kalau minta join lagi, otomatis ditolak — " +
-                    "kecuali lo buka blokirnya di sini.",
+            a.getString(R.string.k_daftar_hitam, ui.daftarHitam.size),
+            a.getString(R.string.k_orang_yang_pernah_keluar_dikeluarin),
             isi,
-            Tombol("Tutup", Gaya.LEMBUT)
+            Tombol(a.getString(R.string.k_tutup), Gaya.LEMBUT)
         )
     }
 }

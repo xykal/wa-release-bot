@@ -18,6 +18,25 @@ ACT="com.xykals.warelease.MainActivity"
 mkdir -p "$OUT"
 
 adb wait-for-device
+
+# Bahasa emulator. Runner GitHub memakai en-US; sejak layar utama dua bahasa,
+# tangkapan buat situs harus Indonesia (bawaan), Inggris kalau diminta lewat
+# input workflow. Locale baru berlaku setelah runtime dimuat ulang (zygote),
+# jadi tunggu package manager hidup lagi dan buka kunci layar.
+BAHASA="${BAHASA:-id-ID}"
+if [ "$(adb shell getprop persist.sys.locale | tr -d '\r')" != "$BAHASA" ]; then
+  adb root >/dev/null 2>&1 || true
+  adb wait-for-device
+  adb shell "setprop persist.sys.locale $BAHASA; setprop ctl.restart zygote"
+  sleep 10
+  adb wait-for-device
+  until adb shell pm path android >/dev/null 2>&1; do sleep 3; done
+  sleep 15
+  adb shell wm dismiss-keyguard >/dev/null 2>&1 || true
+  adb shell input keyevent 82 >/dev/null 2>&1 || true
+  echo "locale: $(adb shell getprop persist.sys.locale | tr -d '\r')"
+fi
+
 adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
 adb shell settings put global animator_duration_scale 0

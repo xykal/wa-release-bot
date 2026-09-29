@@ -1,0 +1,13 @@
+{
+  "k_menyalakan": {"id": "Menyalakan…", "en": "Starting…"},
+  "k_menjeda": {"id": "Menjeda…", "en": "Pausing…"},
+  "k_mematikan": {"id": "Mematikan…", "en": "Stopping…"},
+  "k_hosting_jalan": {"id": "jalan ✓", "en": "running ✓"},
+  "k_hosting_install": {"id": "lagi pasang modul…", "en": "installing modules…"},
+  "k_hosting_error": {"id": "error, buka buat liat konsol", "en": "error, open to see the console"},
+  "k_hosting_mati": {"id": "mati", "en": "stopped"},
+  "k_hosting_siap": {"id": "siap dijalanin", "en": "ready to run"},
+  "k_ngobrol_di_grup": {"id": "Ngobrol di grup", "en": "Chatting in groups"},
+  "k_lagu_buat_channel": {"id": "Lagu buat channel", "en": "Songs for the channel"},
+  "k_semua_jalan_otomatis": {"id": "Semua jalan otomatis", "en": "Everything runs itself"}
+}

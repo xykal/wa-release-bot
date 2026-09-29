@@ -71,9 +71,9 @@ class MainActivity : AppCompatActivity() {
         LogRecorder.tulis("Tombol", "aksi $a nggak ada respon 15 dtk")
         banner(
             when (a) {
-                Aksi.NYALA -> "Bot belum mau jalan. Cek setting (repo/channel) & kartu Log."
-                Aksi.JEDA -> "Engine belum ngejawab perintah jeda. Coba lagi, atau Matikan service."
-                Aksi.MATI -> "Service belum berhenti. Coba lagi."
+                Aksi.NYALA -> getString(R.string.k_bot_belum_mau_jalan_cek)
+                Aksi.JEDA -> getString(R.string.k_engine_belum_ngejawab_perintah_jeda)
+                Aksi.MATI -> getString(R.string.k_service_belum_berhenti_coba_lagi)
             }
         )
         renderUi(BotBus.ui)
@@ -152,9 +152,9 @@ class MainActivity : AppCompatActivity() {
             form.renderRepoRingkas()
             if (settings.hasValidSettings()) {
                 withService { sendCmd(settings.toConfigureCmd()) }
-                banner("Daftar repo diperbarui.")
+                banner(getString(R.string.k_daftar_repo_diperbarui))
             } else {
-                banner("Daftar repo kosong — bot nggak mantau apa-apa sampai lo nambah repo.")
+                banner(getString(R.string.k_daftar_repo_kosong_bot_nggak))
             }
         }
         repoTerkirim = repoSekarang
@@ -183,7 +183,7 @@ class MainActivity : AppCompatActivity() {
                 kerja()
             } catch (e: Throwable) {
                 LogRecorder.galat("Tombol", "\"$nama\" gagal", e)
-                banner("\"$nama\" gagal: ${e.message}")
+                banner(getString(R.string.k_gagal, nama, e.message))
             }
         }
     }
@@ -201,18 +201,17 @@ class MainActivity : AppCompatActivity() {
         tvBanner = findViewById(R.id.tvBanner)
 
         findViewById<TextView>(R.id.tvVersi).text =
-            "v${BuildConfig.VERSION_NAME} · rilis GitHub → WhatsApp"
+            getString(R.string.k_v_rilis_github_whatsapp, BuildConfig.VERSION_NAME)
         tvFolderLog.text = LogRecorder.dir?.absolutePath ?: "(folder log nggak kebaca)"
+        val namaApp = getString(R.string.app_name)
         findViewById<TextView>(R.id.tvTentang).text =
-            "${getString(R.string.app_name)} v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n" +
-                    "Bot pribadi: rilis GitHub → saluran WA, penjaga grup, lagu mood, hosting bot.\n" +
-                    "Lisensi: pemakaian pribadi — nggak boleh dijual / disebar ulang tanpa izin."
+            getString(R.string.k_v_bot_pribadi_rilis_github, namaApp, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
         pasang(R.id.btnKelolaRepo, "Kelola repo") { startActivity(Intent(this, RepoActivity::class.java)) }
         pasang(R.id.btnRepo, "Buka repo") {
             try {
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/xykal/wa-release-bot")))
             } catch (_: Exception) {
-                banner("Nggak ada browser buat buka link-nya.")
+                banner(getString(R.string.k_nggak_ada_browser_buat_buka))
             }
         }
         tvBanner.setOnClickListener { handler.removeCallbacks(sembunyikanBanner); sembunyikanBanner.run() }
@@ -234,40 +233,38 @@ class MainActivity : AppCompatActivity() {
         pasang(R.id.btnQr, "Tautkan pakai QR") { mulaiTautkan("qr") }
         pasang(R.id.btnLepas, "Lepas WA") {
             lembar(
-                "Lepas WhatsApp?",
-                "Bot berhenti bisa posting / jaga grup sampai ditautkan lagi. " +
-                        "Perangkatnya juga hilang dari daftar Perangkat tertaut di HP lo.",
+                getString(R.string.k_lepas_whatsapp),
+                getString(R.string.k_bot_berhenti_bisa_posting_jaga),
                 null,
-                Tombol("Lepas", Gaya.BAHAYA) { withService { sendCmd(mapOf("type" to "lepas")) } },
-                Tombol("Batal", Gaya.LEMBUT)
+                Tombol(getString(R.string.k_lepas), Gaya.BAHAYA) { withService { sendCmd(mapOf("type" to "lepas")) } },
+                Tombol(getString(R.string.k_batal), Gaya.LEMBUT)
             )
         }
         pasang(R.id.btnTest, "Tes kirim channel") {
             if (!simpanDiamDiam()) return@pasang
             withService { sendCmd(mapOf("type" to "test")) }
-            banner("Ngirim pesan tes ke channel… hasilnya ada di kartu Log.")
+            banner(getString(R.string.k_ngirim_pesan_tes_ke_channel))
         }
         pasang(R.id.btnTesGrup, "Tes kirim grup") {
             form.ambil()
             if (settings.grupTarget.isBlank()) {
-                banner("Isi link undangan grup dulu.")
+                banner(getString(R.string.k_isi_link_undangan_grup_dulu))
                 form.etGrup.requestFocus()
                 return@pasang
             }
             if (!simpanDiamDiam()) return@pasang
             withService { sendCmd(mapOf("type" to "tes-grup")) }
-            banner("Ngirim pesan tes ke grup… hasilnya ada di kartu Log.")
+            banner(getString(R.string.k_ngirim_pesan_tes_ke_grup))
         }
         pasang(R.id.btnBikinChannel, "Bikin channel") {
             lembar(
-                "Bikin channel baru?",
-                "Bot bikinin channel WhatsApp atas nama akun lo, terus langsung dipakai " +
-                        "buat posting. Kalau lo udah punya channel, tempel aja link-nya di kolom Channel WA.",
+                getString(R.string.k_bikin_channel_baru),
+                getString(R.string.k_bot_bikinin_channel_whatsapp_atas),
                 null,
-                Tombol("Bikin", Gaya.UTAMA) {
+                Tombol(getString(R.string.k_bikin), Gaya.UTAMA) {
                     if (simpanDiamDiam()) withService { sendCmd(mapOf("type" to "bikin-channel")) }
                 },
-                Tombol("Batal", Gaya.LEMBUT)
+                Tombol(getString(R.string.k_batal), Gaya.LEMBUT)
             )
         }
         pasang(R.id.btnCekGrup, "Cek grup") {
@@ -277,28 +274,27 @@ class MainActivity : AppCompatActivity() {
         pasang(R.id.btnLihatHitam, "Daftar hitam") {
             mauLihatHitam = true
             withService { sendCmd(mapOf("type" to "lihat-hitam")) }
-            banner("Ngambil daftar hitam…")
+            banner(getString(R.string.k_ngambil_daftar_hitam))
         }
         pasang(R.id.btnResetHitam, "Kosongin daftar hitam") {
             lembar(
-                "Kosongin daftar hitam?",
-                "Semua orang yang dicatat bot karena pernah keluar bakal bisa di-approve lagi. " +
-                        "Nomor yang lo ketik manual nggak ikut dihapus.",
+                getString(R.string.k_kosongin_daftar_hitam),
+                getString(R.string.k_semua_orang_yang_dicatat_bot),
                 null,
-                Tombol("Kosongin", Gaya.BAHAYA) { withService { sendCmd(mapOf("type" to "reset-hitam")) } },
-                Tombol("Batal", Gaya.LEMBUT)
+                Tombol(getString(R.string.u_kosongin), Gaya.BAHAYA) { withService { sendCmd(mapOf("type" to "reset-hitam")) } },
+                Tombol(getString(R.string.k_batal), Gaya.LEMBUT)
             )
         }
         pasang(R.id.btnLaguSekarang, "Kirim lagu sekarang") {
             form.ambil()
             if (settings.channel.isBlank()) {
-                banner("Isi Channel WA dulu — lagunya dikirim ke sana.")
+                banner(getString(R.string.k_isi_channel_wa_dulu_lagunya))
                 form.etChannel.requestFocus()
                 return@pasang
             }
             if (!simpanDiamDiam()) return@pasang
             withService { sendCmd(mapOf("type" to "lagu-sekarang")) }
-            banner("Ngambil lagu dari antrian & ngirim ke channel… hasilnya di kartu Log.")
+            banner(getString(R.string.k_ngambil_lagu_dari_antrian_ngirim))
         }
         pasang(R.id.btnHosting, "Buka hosting") {
             startActivity(Intent(this, HostingActivity::class.java))
@@ -309,15 +305,14 @@ class MainActivity : AppCompatActivity() {
         pasang(R.id.btnKirimLog, "Kirim log") { aksi.kirimLog() }
         pasang(R.id.btnKill, "Matikan service") {
             lembar(
-                "Matikan service?",
-                "Proses Node & semua jadwal berhenti sampai lo tekan Mulai lagi " +
-                        "(atau HP restart, kalau nyala otomatis aktif).",
+                getString(R.string.k_matikan_service),
+                getString(R.string.k_proses_node_semua_jadwal_berhenti),
                 null,
-                Tombol("Matikan", Gaya.BAHAYA) {
+                Tombol(getString(R.string.k_matikan), Gaya.BAHAYA) {
                     tungguAksi(Aksi.MATI)
                     BotService.stop(this)
                 },
-                Tombol("Batal", Gaya.LEMBUT)
+                Tombol(getString(R.string.k_batal), Gaya.LEMBUT)
             )
         }
     }
@@ -328,11 +323,11 @@ class MainActivity : AppCompatActivity() {
     private fun onSave(diam: Boolean): Boolean {
         form.ambil()
         if (settings.grupAktif && settings.grupTarget.isBlank()) {
-            banner("Penjaga grup dinyalain, tapi link grup-nya masih kosong.")
+            banner(getString(R.string.k_penjaga_grup_dinyalain_tapi_link))
             return false
         }
         if (!settings.hasValidSettings()) {
-            banner("Isi repo GitHub, nyalain penjaga grup, atau nyalain lagu mood — minimal salah satu.")
+            banner(getString(R.string.k_isi_repo_github_nyalain_penjaga))
             return false
         }
         withService { sendCmd(settings.toConfigureCmd()) }
@@ -341,8 +336,8 @@ class MainActivity : AppCompatActivity() {
             banner(
                 when {
                     settings.repo.isNotBlank() && settings.channel.isBlank() ->
-                        "Disimpan. Channel masih kosong — tempel link channel atau tekan Bikin channel."
-                    else -> "Setting disimpan."
+                        getString(R.string.k_disimpan_channel_masih_kosong_tempel)
+                    else -> getString(R.string.k_setting_disimpan)
                 }
             )
         }
@@ -354,7 +349,7 @@ class MainActivity : AppCompatActivity() {
     private fun mulaiTautkan(cara: String) {
         form.ambil()
         if (cara == "pairing" && settings.phone.filter { it.isDigit() }.length < 8) {
-            banner("Isi nomor WA lo dulu (yang mau dipakai bot), contoh 0812 3456 7890.")
+            banner(getString(R.string.k_isi_nomor_wa_lo_dulu))
             form.etPhone.requestFocus()
             return
         }
@@ -366,7 +361,7 @@ class MainActivity : AppCompatActivity() {
         withService {
             sendCmd(mapOf("type" to "setup", "cara" to cara, "phone" to settings.phone))
         }
-        banner(if (cara == "pairing") "Minta kode ke WhatsApp…" else "Nyiapin QR…")
+        banner(if (cara == "pairing") getString(R.string.k_minta_kode_ke_whatsapp) else getString(R.string.k_nyiapin_qr))
     }
 
     /**
@@ -384,13 +379,13 @@ class MainActivity : AppCompatActivity() {
                 BotService.start(this)
             } catch (e: Throwable) {
                 LogRecorder.galat("Service", "gagal start service", e)
-                banner("Gagal nyalain service: ${e.message}")
+                banner(getString(R.string.k_gagal_nyalain_service, e.message))
                 return
             }
         }
         if (cobaKe >= 14) {
             LogRecorder.tulis("Service", "nyerah nunggu service siap (>10 detik)")
-            banner("Service-nya lama nggak siap. Coba lagi, atau cek log.")
+            banner(getString(R.string.k_service_nya_lama_nggak_siap))
             return
         }
         val jeda = if (cobaKe < 4) 400L else 1000L
@@ -401,7 +396,7 @@ class MainActivity : AppCompatActivity() {
         val svc = BotService.instance
         if (svc == null) {
             LogRecorder.tulis("Cmd", "dibuang, service belum siap: ${cmd["type"]}")
-            banner("Service belum siap — coba lagi sebentar.")
+            banner(getString(R.string.k_service_belum_siap_coba_lagi))
             return
         }
         // token GitHub jangan ikut ke-log
@@ -412,9 +407,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun renderBatre() {
         tvBatreStat.text = if (aksi.bebasBatre()) {
-            "Pengoptimalan batre: dikecualikan. Android nggak bakal nidurin bot ini."
+            getString(R.string.k_pengoptimalan_batre_dikecualikan_android_nggak)
         } else {
-            "Pengoptimalan batre: masih AKTIF. Bot bisa ditidurin / dimatiin sistem pas layar mati. Tekan tombol di atas."
+            getString(R.string.k_pengoptimalan_batre_masih_aktif_bot)
         }
     }
 
@@ -430,9 +425,9 @@ class MainActivity : AppCompatActivity() {
 
         // Aksi yang ditunggu udah kejadian? → kasih tau, balikin tombol normal.
         when (aksiTunggu) {
-            Aksi.NYALA -> if (ui.engineRunning) aksiBeres("✓ Bot jalan. Cek rilis sesuai jadwal.")
-            Aksi.JEDA -> if (!ui.engineRunning) aksiBeres("⏸ Bot dijeda — jadwal berhenti, service tetap nyala.")
-            Aksi.MATI -> if (!ui.serviceRunning) aksiBeres("⏻ Service mati. Bot berhenti total sampai lo tekan Nyalakan.")
+            Aksi.NYALA -> if (ui.engineRunning) aksiBeres(getString(R.string.k_bot_jalan_cek_rilis_sesuai))
+            Aksi.JEDA -> if (!ui.engineRunning) aksiBeres(getString(R.string.k_bot_dijeda_jadwal_berhenti_service))
+            Aksi.MATI -> if (!ui.serviceRunning) aksiBeres(getString(R.string.k_service_mati_bot_berhenti_total))
             null -> {}
         }
         panel.render(ui, aksiTunggu)
@@ -447,10 +442,10 @@ class MainActivity : AppCompatActivity() {
         if (ui.setupState != setupTerakhir) {
             when (ui.setupState) {
                 "done" -> {
-                    if (setupTerakhir != null) banner("WhatsApp tertaut! Bot siap kerja.")
+                    if (setupTerakhir != null) banner(getString(R.string.k_whatsapp_tertaut_bot_siap_kerja))
                     dialogTaut.tutupSemua()
                 }
-                "error" -> if (setupTerakhir != null) banner("Nautin WA gagal — alasannya ada di kartu Log.")
+                "error" -> if (setupTerakhir != null) banner(getString(R.string.k_nautin_wa_gagal_alasannya_ada))
             }
             setupTerakhir = ui.setupState
         }
@@ -484,9 +479,9 @@ class MainActivity : AppCompatActivity() {
         renderBatre()
         if (BotService.instance != null) {
             sendCmd(mapOf("type" to "status"))
-            banner("Status diperbarui.")
+            banner(getString(R.string.k_status_diperbarui))
         } else {
-            banner("Service lagi mati — tekan Mulai buat nyalain.")
+            banner(getString(R.string.k_service_lagi_mati_tekan_mulai))
         }
         renderUi(BotBus.ui)
         handler.postDelayed(selesaiSegar, 1200)

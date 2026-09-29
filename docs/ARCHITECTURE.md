@@ -83,6 +83,32 @@ dibatalin (socket-nya ditutup) lalu diganti. Habis nautin baru, koneksi
 gagal bind/gagal connect, `WsClient.send()` balikin `false` dan pemanggilnya
 fallback ke file bridge secara otomatis. Jadi WebSocket boleh mati kapan saja.
 
+## Susunan kode engine (`bot-js/src/`)
+
+| File | Isi |
+|------|-----|
+| `bot.mjs` | entry: jaring pengaman nodejs-mobile, baca config/state, bridge, scheduler, `startEngine`/`stopEngine`, lalu merakit modul di bawah |
+| `mesin/rilis.mjs` | cek GitHub per repo dan posting ke channel (`runCheck`, `postRelease`, `cariTarget`) |
+| `mesin/lagu-mood.mjs` | jadwal dan kirim lagu mood |
+| `mesin/penjaga-grup.mjs` | approve/tolak permintaan join, daftar hitam |
+| `mesin/tautan.mjs` | setup WA (pairing/QR), lepas, cek/bikin channel, pesan tes |
+| `mesin/perintah.mjs` | router perintah dari app; satu-satunya penulis `config.json` |
+| `github.mjs`, `rilis.mjs`, `repo.mjs`, `grup.mjs`, `lagu.mjs`, `format.mjs`, `channel.mjs`, `nomor.mjs` | fungsi murni, dipakai bot dan CLI, diuji unit |
+| `wa.mjs`, `opus.mjs`, `hosting.mjs`, `bridge.mjs` | pembungkus Baileys, encoder voice note, bot custom, jembatan file/WS |
+
+Semua keadaan bersama (config, state, `running`, `busy`, jadwal berikutnya) hidup
+di satu objek `ctx` yang dibuat `bot.mjs` dan diberikan ke tiap modul lewat
+`buatX(ctx, deps)`. Kenapa bukan closure seperti sebelumnya: modul terpisah
+tidak bisa menulis `let` milik file lain, padahal `cfg`/`nextCheckAt` memang
+harus bisa diubah dari perintah `configure` maupun dari scheduler. Ketergantungan
+antar modul eksplisit di argumen kedua (`lagu` butuh `rilis.cariTarget`,
+`tautan` butuh `rilis` + `grup`, `perintah` butuh semuanya).
+
+`bot-js/test/engine.test.mjs` menjalankan `bot.mjs` sebagai proses anak dengan
+GitHub palsu (`WR_GITHUB_API`) dan memastikan rangkaian
+configure -> start -> cek -> stop tetap nyambung lintas modul; jalur yang butuh
+WhatsApp sungguhan tidak tercakup.
+
 ## Siklus hidup engine (mode "tidur")
 
 ```

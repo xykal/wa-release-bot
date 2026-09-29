@@ -71,3 +71,7 @@ Next:
   (detail ke docs/PANDUAN-APP, BUILD, TROUBLESHOOTING) di-merge; PR #15 screenshot emulator di
   Actions (3 kali gagal: grep+pipefail, layar sambutan, run-as di build release -> adb root) lalu
   galeri situs memakai tangkapan asli. Belum: PR launching 1.0.0 (draft), M10, M9, Eps 2 logo.
+- kall: "gas" rencana H-1; video Eps 2 versi lengkap (sampai 10 menit) ditunda setelah launching;
+  tanya kenapa M10/M9 tidak sebelum launching -> jawab: bisa, penundaan cuma soal risiko. M10 bagian
+  engine dikerjakan: `bot.mjs` -> `src/mesin/*` + uji ujung-ke-ujung engine (GitHub palsu).
+  Belum: pecah `MainActivity.kt`, M9 i18n, PR launching (draft).

@@ -21,6 +21,12 @@
       if (t[k] != null) el.textContent = t[k];
     });
     $$('[data-brand]').forEach((el) => { el.textContent = BRAND; });
+    // Tangkapan layar app asli ada dua versi (UI app ikut bahasa HP); ilustrasi sisi WA cuma satu.
+    $$('img[data-src-en]').forEach((img) => {
+      if (!img.dataset.srcId) img.dataset.srcId = img.getAttribute('src');
+      const mau = bahasa === 'en' ? img.dataset.srcEn : img.dataset.srcId;
+      if (img.getAttribute('src') !== mau) img.setAttribute('src', mau);
+    });
     const tombol = $('#tombolBahasa');
     if (tombol) {
       tombol.textContent = bahasa === 'id' ? 'EN' : 'ID';

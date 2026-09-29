@@ -26,6 +26,8 @@ Semua perubahan penting proyek ini. Format mengikuti
   Android memilih bahasa dari setelan sistem. Onboarding, Repo, Hosting dan notifikasi
   service masih Indonesia. Alat pemindah: `scripts-dev/i18n_layout.py` + `i18n_peta.json`,
   `scripts-dev/i18n_kotlin.py` + `i18n_peta_kotlin.json`/`i18n_peta_manual.json`.
+  Workflow Screenshot app mengunci bahasa emulator (input `bahasa`: `id-ID` bawaan atau
+  `en-US`); runner GitHub aslinya en-US sehingga tangkapan situs bisa berubah bahasa.
 
 ### Diubah
 - App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,

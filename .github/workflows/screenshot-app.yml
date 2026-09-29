@@ -6,6 +6,12 @@ name: Screenshot app
 
 on:
   workflow_dispatch:
+    inputs:
+      bahasa:
+        description: 'Bahasa UI di emulator (layar utama app dua bahasa)'
+        type: choice
+        options: [id-ID, en-US]
+        default: id-ID
   pull_request:
     paths: ['.github/workflows/screenshot-app.yml', 'scripts-dev/screenshot_emulator.sh']
 
@@ -114,7 +120,7 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-snapshot
-          script: APK=app/build/outputs/apk/release/app-release.apk PKG=com.xykals.warelease OUT=tangkapan-app bash scripts-dev/screenshot_emulator.sh
+          script: BAHASA=${{ inputs.bahasa || 'id-ID' }} APK=app/build/outputs/apk/release/app-release.apk PKG=com.xykals.warelease OUT=tangkapan-app bash scripts-dev/screenshot_emulator.sh
 
       - name: Upload screenshot
         if: always()

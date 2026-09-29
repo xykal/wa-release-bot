@@ -10,6 +10,11 @@ Semua perubahan penting proyek ini. Format mengikuti
 - `scripts-dev/deploy_web.py`: kalau custom domain sudah terpasang, berhenti di GET
   `workers/domains` sehingga token deploy cukup izin *Workers Scripts: Edit*; resep token
   scoped untuk secret `CF_API_TOKEN` ada di `docs/CI.md`.
+- Situs: `<title>`, meta description dan `og:description` ikut bahasa yang dipilih
+  (`judul_*`/`deskripsi_*` di `teks.js`, halaman dikenali dari `<body data-halaman>`);
+  HTML statis tetap Indonesia untuk crawler tanpa JS.
+- Dokumen: bagian jembatan JNI dan polyfill WebCrypto dipindah dari `docs/ARCHITECTURE.md`
+  ke `docs/JNI.md` supaya tiap berkas tetap di bawah ~250 baris.
 
 ### Ditambah
 - **Screenshot app otomatis**: workflow `screenshot-app.yml` membangun APK release x86_64,

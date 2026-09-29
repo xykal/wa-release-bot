@@ -7,7 +7,10 @@ WebP transparan siap taruh di web/img/hp-<nama>.webp.
 
 Nama file sumber = nama layar: beranda, rilis, grup, lagu, kerja, stack, caption, lapor
 (.png/.jpg). Resolusi bebas (1080x2400, 1080x2340, 720x1600, ...): diskalakan ke lebar
-layar 400 px, tinggi mengikuti rasio HP (maks 900 px, sisanya dipotong rata atas-bawah).
+layar 400 px lalu dipotong ke tinggi 760 px supaya semua bingkai di web sama besar
+(560x928, sama dengan ilustrasi lama). Potongan menyisakan bagian atas (status bar +
+judul kartu); khusus layar sambutan bagian bawah yang disisakan karena teks dan
+tombolnya di bawah.
 Bingkai: rim tipis, bezel gelap, sudut 44/34 px, kamera punch-hole, bayangan lembut
 (angka sama dengan render/render.py di repo konten supaya gaya di web tetap satu).
 
@@ -22,7 +25,10 @@ from PIL import Image, ImageDraw, ImageFilter
 SW = 400            # lebar isi layar
 TEPI, ATAS, PAD = 10, 14, 70
 RIM, BEZEL = (70, 78, 86, 255), (12, 16, 20, 255)
-LAYAR = ["beranda", "rilis", "grup", "lagu", "kerja", "stack", "caption", "lapor"]
+SH = 760            # tinggi isi layar (rasio 400:760 = bingkai 560x928)
+LAYAR = ["sambutan", "beranda", "pengaturan", "grup", "lagu", "log", "hosting", "tentang",
+         "rilis", "kerja", "stack", "caption", "lapor"]
+POTONG_BAWAH = {"sambutan"}  # sisakan bagian bawah, bukan atas
 
 
 def bingkai(sh: int) -> Image.Image:
@@ -47,11 +53,15 @@ def bingkai(sh: int) -> Image.Image:
 
 def pasang(sumber: Path) -> Image.Image:
     im = Image.open(sumber).convert("RGB")
-    sh = min(900, round(im.height * SW / im.width))
+    sh = SH
     im = im.resize((SW, round(im.height * SW / im.width)), Image.LANCZOS)
-    if im.height > sh:  # terlalu panjang: potong rata atas-bawah
-        atas = (im.height - sh) // 2
+    if im.height > sh:
+        atas = im.height - sh if sumber.stem in POTONG_BAWAH else 0
         im = im.crop((0, atas, SW, atas + sh))
+    elif im.height < sh:  # HP lebih lebar dari 9:17: tempel di tengah latar gelap
+        latar = Image.new("RGB", (SW, sh), (11, 20, 26))
+        latar.paste(im, (0, (sh - im.height) // 2))
+        im = latar
     S = 4
     mask = Image.new("L", (SW * S, sh * S), 0)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, SW * S - 1, sh * S - 1), radius=34 * S, fill=255)

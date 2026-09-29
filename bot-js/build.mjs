@@ -9,6 +9,7 @@
 // ============================================================================
 import { readFileSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import esbuild from 'esbuild';
 
@@ -37,7 +38,9 @@ const result = await esbuild.build({
     setup(b) {
       b.onResolve({ filter: /^virtual:opus-wasm$/ }, () => ({ path: 'opus-wasm', namespace: 'opus-wasm' }));
       b.onLoad({ filter: /.*/, namespace: 'opus-wasm' }, () => ({
-        contents: readFileSync(path.join(here, 'node_modules/opusscript/build/opusscript_native_wasm.wasm')),
+        // Lewat resolver Node, bukan path tetap: dengan npm workspaces paket
+        // ter-hoist ke node_modules ROOT repo, bukan bot-js/node_modules.
+        contents: readFileSync(createRequire(import.meta.url).resolve('opusscript/build/opusscript_native_wasm.wasm')),
         loader: 'binary',
       }));
     },

@@ -21,16 +21,32 @@ Nggak ada update? 0% CPU, 0% data.
 
 ---
 
+<details>
+<summary><strong>English summary</strong></summary>
+
+WA Release Bot watches a GitHub repository and posts every new release to a WhatsApp
+channel (or group) from your own phone, no server needed. It runs a real Node.js 18
+engine inside an Android app (nodejs-mobile) and only connects to WhatsApp for the few
+seconds it takes to post; between checks it sleeps. A CLI for Termux/PC shares the
+exact same engine. Release checks use conditional requests (ETag), so an unchanged
+repo costs 0 bytes and no API quota. Extras: group gatekeeper (auto-approve joins,
+reject members who left), optional "mood song" voice notes, and hosting for your own
+small Node.js bot. Source-available under a personal-use license; see LICENSE.
+Built by xykal — XyVerse Technology Global.
+
+</details>
+
 Ada **dua cara** pakai bot ini:
 
 | | [📱 Aplikasi Android](#-aplikasi-android--host-di-hp-sendiri) | [💻 CLI (Termux / PC)](#-cli--termux--pc) |
 |---|---|---|
 | Butuh Termux / PC | ❌ nggak | ✅ iya |
 | Mulai otomatis setelah HP reboot | ✅ | ✅ (cron/termux-boot) |
-| Cara instal | unduh APK dari [Releases](../../releases) | `git clone` + `npm install` |
+| Cara instal | unduh APK dari [Releases](../../releases) | `git clone` + `npm install` (Node 20+) |
 | Paling cocok buat | HP nganggur yang bisa dicharge terus | yang udah nyaman di terminal |
 
-Keduanya pakai **engine bot yang sama** (`bot-js/`), jadi perilakunya identik.
+Keduanya pakai **engine bot yang sama** (`bot-js/`): CLI meng-import modul `bot-js/src` langsung
+(npm workspaces), jadi fix di engine otomatis berlaku di CLI juga.
 
 ---
 
@@ -279,10 +295,13 @@ Punya project bot Node.js sendiri? Buka **Hosting bot** di app → upload ZIP.
 pkg update -y && pkg install -y nodejs git
 # atau jalankan: bash cli/setup-termux.sh
 
-# 2. Ambil kode + install
+# 2. Ambil kode + install (npm install di ROOT repo, bukan di cli/ —
+#    CLI memakai engine yang sama dengan APK dari bot-js/, dependensinya
+#    dipasang sekali lewat npm workspaces; butuh Node 20+)
 git clone https://github.com/xykal/wa-release-bot.git
-cd wa-release-bot/cli
-npm install
+cd wa-release-bot
+npm install --ignore-scripts
+cd cli
 
 # 3. Konfigurasi
 cp config.example.json config.json
@@ -310,6 +329,8 @@ Baris cron — bangun tiap 15 menit, posting kalau ada release baru, langsung ma
 | `npm run once` | **Cek sekali lalu mati** — ini yang dipakai cron |
 | `npm run loop` | Cek berulang tiap N menit (proses tetap nyala) |
 | `npm run dry-run` | Cek GitHub + tampilkan pesan yang bakal dikirim, **tanpa** kirim |
+| `npm run once -- --ulang` | Sama seperti `once`, tapi hitungan "gagal kirim 3x" di-reset (coba lagi dari nol) |
+| `npm run versi` | Cetak versi + brand (`wa-release-bot <versi> — XyVerse Technology Global`) |
 
 > 💡 Tidak ada Node di HP? Bisa juga jalanin di **PC/VPS + cron**, atau pakai
 > **systemd timer** di Linux.
@@ -397,7 +418,7 @@ bash scripts/build-local.sh assembleDebug # debug
 
 Script itu melakukan 4 langkah yang sama persis dengan CI:
 
-1. `cd bot-js && npm ci && npm run build` → `bot-js/dist/bundle.cjs`
+1. `npm ci --ignore-scripts && npm run build -w bot-js` (root, npm workspaces) → `bot-js/dist/bundle.cjs`
 2. copy bundle ke `app/src/main/assets/node/`
 3. `bash scripts/fetch-nodejs-mobile.sh` → `libnode.so` + header
 4. `./gradlew assembleRelease`
@@ -476,6 +497,13 @@ Masih mentok? Buka [Issue](../../issues/new/choose) — sertakan output Log dari
 
 - Session WA tersimpan di **storage privat app** (`/data/data/.../wa_release_bot/session`)
   — nggak bisa diakses app lain
+- Cleartext (HTTP polos) di sisi app **cuma diizinkan ke 127.0.0.1** lewat
+  `network_security_config.xml` — itu jalur WebSocket app ↔ engine. Ke host lain wajib TLS
+- Cek release pakai **ETag** (`If-None-Match`): repo yang nggak berubah dijawab `304` tanpa
+  body dan nggak makan rate limit GitHub. Tiap request punya timeout 20 detik
+- Posting punya catatan **pending** yang ditulis sebelum kirim: kalau gagal, dicoba lagi
+  maksimal 3 siklus, lalu berhenti sampai lo tekan **Cek sekarang**. Error yang ambigu
+  (timeout) nggak langsung dikirim ulang lewat jalur lain — biar nggak dobel
 - `allowBackup=false` → session nggak ikut backup/restore
 - Bot posting pakai **nomor WA lo sendiri** (sebagai linked device) — pastikan lo pemilik/admin channel-nya
 - **Folder log bisa dibaca siapa aja yang pegang HP-nya.** Isinya tag release, isi pesan, dan error — **bukan** token atau kredensial session. Kalau mau bersih, hapus foldernya
@@ -504,7 +532,7 @@ Laporan kerentanan: lihat [SECURITY.md](SECURITY.md).
 │   ├── polyfills/            #    WebCrypto polyfill (wajib di Node 18)
 │   ├── test/                 #    unit test (node --test)
 │   └── build.mjs             #    esbuild → bundle.cjs (1 file)
-├── cli/                      # 💻 versi Termux/PC (pakai engine yang sama)
+├── cli/                      # 💻 versi Termux/PC — import langsung modul bot-js/src (engine identik)
 ├── scripts/                  # 🔧 build-local.sh, fetch-nodejs-mobile.sh
 ├── docs/                     # 📚 ARCHITECTURE, CI, SECURITY-AUDIT, CHANGELOG
 └── .github/workflows/        # ⚙️ build-apk, code-quality, codeql, security
@@ -540,5 +568,6 @@ Rilis **v1.3.0 ke bawah** terlanjur rilis di bawah MIT dan tetap MIT; mulai
 tetap ikut lisensi aslinya — lihat [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
 <div align="center">
-<sub>Built in <strong>XyVerse</strong> · dibuat buat yang males bot-nya nyala 24 jam</sub>
+<sub>Built by xykal — <strong>XyVerse Technology Global</strong> · dibuat buat yang males bot-nya nyala 24 jam</sub><br>
+<sub>Built by xykal — XyVerse Technology Global · for anyone who does not want a bot running 24/7</sub>
 </div>

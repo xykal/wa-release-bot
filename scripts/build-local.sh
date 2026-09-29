@@ -20,10 +20,11 @@ cd "$ROOT"
 hr() { printf '\n\033[1;34m== %s ==\033[0m\n' "$1"; }
 
 hr "1/4  Bundle engine bot (bot-js)"
-if [ ! -d bot-js/node_modules ]; then
-  (cd bot-js && npm ci --no-audit --no-fund)
+# npm workspaces: dependensi bot-js + cli dipasang sekali di root.
+if [ ! -d node_modules ]; then
+  npm ci --ignore-scripts --no-audit --no-fund
 fi
-(cd bot-js && npm run build)
+npm run build -w bot-js
 
 hr "2/4  Copy bundle.cjs → app/src/main/assets/node/"
 mkdir -p app/src/main/assets/node

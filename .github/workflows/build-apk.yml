@@ -116,40 +116,36 @@ jobs:
       cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node ${{ env.NODE_VERSION }} (sama dengan nodejs-mobile)
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: bot-js/package-lock.json
 
-      - name: Install dependencies (npm ci)
-        working-directory: bot-js
+      - name: Install dependencies (npm workspaces, root)
+        # --ignore-scripts: preinstall Baileys 6.7.24 hard-fail kalau Node < 20,
+        # padahal runtime APK adalah Node 18.20.4 (nodejs-mobile) dan bundle-nya
+        # dibuktikan jalan di "Smoke test" di bawah. esbuild ambil binary lewat
+        # optionalDependencies, bukan postinstall, jadi aman.
+        # Lockfile root dibuat oleh job "Lockfile root" di Code quality; kalau
+        # commit ini belum punya, pakai npm install supaya build tidak berhenti.
         run: |
-          # --ignore-scripts karena Baileys 6.7.24 punya
-          #   "preinstall": "node ./engine-requirements.js"
-          # yang SENGAJA hard-fail kalau Node < 20. Padahal runtime di dalam APK
-          # adalah Node 18.20.4 (nodejs-mobile nggak punya rilis lebih baru), dan
-          # bundle-nya sudah terbukti jalan di versi itu — lihat langkah
-          # "Smoke test bundle" di bawah.
-          # Script lifecycle nggak dibutuhkan: esbuild ambil binary-nya lewat
-          # optionalDependencies (@esbuild/linux-x64), bukan postinstall.
-          npm ci --ignore-scripts --no-audit --no-fund
+          if [ -f package-lock.json ]; then
+            npm ci --ignore-scripts --no-audit --no-fund
+          else
+            npm install --ignore-scripts --no-audit --no-fund
+          fi
           npx esbuild --version
 
-      # Lint TIDAK di sini — eslint baru butuh Node >= 20 sedangkan job ini
-      # sengaja dipaku di 18.20.4. Lint-nya ada di workflow "Code quality"
-      # (job js, matrix Node 22). Job ini fokus: bikin bundle yang JALAN.
+      # Lint tidak di sini: eslint baru butuh Node >= 20, job ini dipaku 18.20.4.
+      # Lint ada di workflow Code quality (Node 22).
 
       - name: Unit test
-        working-directory: bot-js
-        run: npm test
+        run: npm test -w bot-js
 
-      - name: Bundle engine (esbuild → dist/bundle.cjs)
-        working-directory: bot-js
-        run: npm run build
+      - name: Bundle engine (esbuild -> dist/bundle.cjs)
+        run: npm run build -w bot-js
 
       - name: Smoke test bundle di Node ${{ env.NODE_VERSION }}
         working-directory: bot-js
@@ -162,7 +158,7 @@ jobs:
           "
 
       - name: Upload bundle
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: engine-bundle
           path: bot-js/dist/bundle.cjs
@@ -195,7 +191,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Tentukan varian & nama APK
         id: vars
@@ -239,13 +235,13 @@ jobs:
           echo "ABI   : $ABIS → $ABI_TAG"
 
       - name: Setup JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Setup Android SDK + NDK + CMake
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
         with:
           packages: >-
             platform-tools
@@ -256,7 +252,7 @@ jobs:
           log-accepted-android-sdk-licenses: false
 
       - name: Ambil bundle engine dari artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: engine-bundle
           path: app/src/main/assets/node
@@ -266,7 +262,7 @@ jobs:
 
       - name: Cache nodejs-mobile (libnode.so + header, ±57MB)
         id: njsm-cache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             app/src/main/jniLibs
@@ -306,7 +302,7 @@ jobs:
           fi
 
       - name: Setup Gradle (dengan cache)
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
@@ -319,7 +315,7 @@ jobs:
 
       - name: Upload hasil lint
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: android-lint-results
           path: app/build/reports/lint-results-*.{html,xml,sarif}
@@ -451,7 +447,7 @@ jobs:
           exit $FAIL
 
       - name: Upload APK
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.vars.outputs.apk-name }}
           path: dist/*
@@ -463,7 +459,7 @@ jobs:
       # balik jadi nama class asli. Cuma berguna kalau versinya sama.
       - name: Upload mapping R8 (buat baca crash log)
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: r8-mapping-${{ steps.vars.outputs.abi-slug }}
           path: app/build/outputs/mapping/*/mapping.txt
@@ -499,7 +495,7 @@ jobs:
     # SENGAJA tanpa concurrency: release nggak boleh dibatalkan di tengah jalan.
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -507,7 +503,7 @@ jobs:
       # 'wa-release-bot-' dan isinya unik per ABI, jadi aman digabung.
       # merge-multiple: true menaruh semua file di satu folder 'dist/'.
       - name: Ambil semua APK hasil matrix
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           pattern: wa-release-bot-*.apk
           merge-multiple: true
@@ -527,7 +523,7 @@ jobs:
           exit $FAIL
 
       - name: Buat Release + attach APK
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           name: ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}

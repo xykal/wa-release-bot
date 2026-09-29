@@ -6,11 +6,10 @@
 git clone https://github.com/xykal/wa-release-bot.git
 cd wa-release-bot
 
-# engine bot
-cd bot-js && npm ci && npm run build && npm test && cd ..
-
-# CLI
-cd cli && npm ci && cd ..
+# engine bot + CLI (npm workspaces, satu package-lock.json di root)
+npm ci --ignore-scripts
+npm run lint && npm test && npm run build
+node cli/src/bot.mjs --version
 
 # Android — butuh JDK 17, Android SDK 35, NDK 26.1.10909125, CMake 3.22.1
 bash scripts/build-local.sh assembleDebug

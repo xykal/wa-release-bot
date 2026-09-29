@@ -1,27 +1,24 @@
 {
   "name": "wa-release-bot-cli",
   "version": "1.6.7",
-  "description": "Bot WA yang tidur. Bangun tiap beberapa menit, cek GitHub release, kalau ada yang baru otomatis posting ke channel WA. Nggak ada update = mati, bukan 24 jam.",
+  "description": "CLI Termux/PC untuk wa-release-bot. Engine-nya import langsung dari ../bot-js; install dependensi dari ROOT repo (npm workspaces).",
   "type": "module",
   "main": "src/bot.mjs",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "scripts": {
     "setup": "node src/bot.mjs --setup",
     "test": "node src/bot.mjs --test",
     "once": "node src/bot.mjs --once",
     "loop": "node src/bot.mjs --loop",
-    "dry-run": "node src/bot.mjs --dry-run"
+    "dry-run": "node src/bot.mjs --dry-run",
+    "versi": "node src/bot.mjs --version"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "6.7.24",
-    "pino": "^9.6.0",
-    "qrcode-terminal": "^0.12.0"
+    "qrcode-terminal": "^0.12.0",
+    "wa-release-bot-js": "*"
   },
-  "overrides": {
-    "file-type": "^21.3.1",
-    "uuid": "^11.1.1"
-  },
-  "license": "SEE LICENSE IN ../LICENSE"
+  "license": "SEE LICENSE IN ../LICENSE",
+  "author": "xykal (XyVerse Technology Global)"
 }

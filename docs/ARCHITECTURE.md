@@ -233,3 +233,17 @@ Node 18.20.4, menghasilkan `QR RECEIVED len=237` dari server WhatsApp asli.
   dengan versi release tanpa saling menimpa.
 - **`bundle.cjs` di-extract ke `filesDir`, bukan dibaca langsung dari assets** —
   Node butuh path file nyata, dan `assets/` cuma bisa dibaca lewat `AssetManager`.
+- **Satu engine untuk APK dan CLI (npm workspaces)** — `cli/src/cli.mjs`
+  meng-import `bot-js/src/{github,format,wa,rilis,channel}.mjs` langsung; tidak
+  ada salinan kode. `npm install` wajib di root repo supaya `node_modules`
+  ter-hoist dan modul engine bisa me-resolve Baileys dari `cli/`.
+- **Keputusan rilis dipisah ke `rilis.mjs` (murni, tanpa I/O)** — `putuskanRilis`
+  membandingkan tag pakai semver (rollback tidak diumumkan), `pendingBerikut`
+  menghitung percobaan kirim. Karena murni, unit test-nya tidak butuh WA/GitHub.
+- **Catatan `pending` ditulis SEBELUM kirim ke WA** — kalau proses mati di tengah,
+  cek berikutnya tahu ada kiriman yang belum pasti. Setelah 3 percobaan berhenti
+  sampai pengguna menekan "Cek sekarang" (`--ulang` di CLI). Error ambigu
+  (timeout setelah `relayMessage`) tidak dikirim ulang lewat jalur cadangan.
+- **Cek release pakai ETag** — `If-None-Match` membuat GitHub menjawab `304`
+  tanpa body dan tanpa memotong rate limit; bot yang bangun tiap 15 menit jadi
+  hampir gratis dari sisi kuota API.

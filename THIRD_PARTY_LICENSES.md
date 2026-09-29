@@ -14,6 +14,7 @@ npm, di `node_modules/<paket>/LICENSE` setelah `npm ci`.
 | [Node.js](https://github.com/nodejs/node) 18.20.4 | runtime engine bot | MIT (+ OpenSSL Apache-2.0, dll — lihat `LICENSE` Node.js) |
 | [pino](https://github.com/pinojs/pino) | logger engine | MIT |
 | [ws](https://github.com/websockets/ws) | WebSocket app ↔ engine | MIT |
+| [semver](https://github.com/npm/node-semver) 7.x | banding versi tag release (deteksi rollback) | ISC |
 | dependensi transitif Baileys (libsignal, protobufjs, dll) | enkripsi & protokol WA | MIT / BSD / Apache-2.0 / GPL-3.0* |
 | [mpg123-decoder](https://github.com/eshaz/wasm-audio-decoders) 1.0.3 (WASM dari [libmpg123](https://www.mpg123.de/)) | decode potongan MP3 lagu | MIT (wrapper) + LGPL-2.1 (libmpg123)** |
 | [opusscript](https://github.com/abalabahaha/opusscript) 0.1.1 (WASM dari [libopus](https://opus-codec.org/)) | encode voice note Ogg Opus | MIT (wrapper) + BSD-3-Clause (libopus) |

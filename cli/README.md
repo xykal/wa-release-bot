@@ -48,7 +48,8 @@ termux-setup-storage
 cp ~/storage/downloads/wa-release-bot.zip ~/
 cd ~ && unzip wa-release-bot.zip
 cd wa-release-bot
-npm install
+npm install --ignore-scripts   # di ROOT repo (bukan di cli/): dependensi dipasang sekali lewat npm workspaces
+cd cli
 ```
 
 > Cara lain: push project ini ke repo GitHub lo sendiri, terus `git clone <url>` di HP.
@@ -181,14 +182,23 @@ npm run once      # cek sekali doang (sama yang dipake cron)
 ## Struktur
 
 ```
-wa-release-bot/
-├── package.json
-├── config.example.json   # salin → config.json
-├── src/
-│   ├── bot.mjs           # otak: mode setup/test/once/loop/dry-run
-│   ├── github.mjs        # cek release terbaru
-│   ├── wa.mjs            # connect WA (Baileys), post, disconnect
-│   └── format.mjs        # format pesan WA
-├── state.json            # (otomatis) tag terakhir + JID channel
-└── wa-session/           # (otomatis) credentials WA — JANGAN di-share
+wa-release-bot/                 # ROOT repo: npm install di sini (npm workspaces)
+├── package.json                # workspaces: bot-js + cli
+├── bot-js/src/                 # ENGINE — dipakai APK dan CLI
+│   ├── github.mjs              # cek release terbaru (ETag, timeout)
+│   ├── rilis.mjs               # keputusan baru/rollback/tidur (semver)
+│   ├── wa.mjs                  # connect WA (Baileys), kirim, disconnect
+│   ├── format.mjs              # format pesan WA
+│   └── config/brand.mjs        # satu sumber string brand
+└── cli/
+    ├── package.json
+    ├── config.example.json     # salin → config.json
+    ├── src/bot.mjs             # entry: --version, cek dependensi, lalu muat cli.mjs
+    ├── src/cli.mjs             # mode setup/test/once/loop/dry-run
+    ├── state.json              # (otomatis) tag terakhir + JID channel + pending
+    └── wa-session/             # (otomatis) credentials WA — JANGAN di-share
 ```
+
+Tidak ada salinan kode engine di `cli/src` lagi: perbaikan di `bot-js/src` otomatis
+berlaku di CLI. Kalau muncul `Dependensi "@whiskeysockets/baileys" belum terpasang`,
+artinya `npm install` dijalankan di `cli/`, bukan di root repo.

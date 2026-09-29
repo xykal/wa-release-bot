@@ -91,8 +91,12 @@ async function ambilDgnTimeout(url, ms, headers = {}) {
 }
 
 /** Minta lagu berikutnya ke Worker: { artis, judul, kata, url, mulai, detik, kbps, ... } */
-export async function ambilBerikut(sumber = SUMBER_BAWAAN) {
-  const res = await ambilDgnTimeout(String(sumber).replace(/\/+$/, '') + '/lagu/berikut', 45_000);
+export async function ambilBerikut(sumber = SUMBER_BAWAAN, { pemasang = '' } = {}) {
+  // X-Pemasang: id acak per instalasi (bukan identitas HP), dipakai Worker
+  // buat jatah harian per perangkat supaya satu pihak nggak bisa ngabisin
+  // kuota semua orang.
+  const headers = pemasang ? { 'X-Pemasang': String(pemasang).slice(0, 64) } : {};
+  const res = await ambilDgnTimeout(String(sumber).replace(/\/+$/, '') + '/lagu/berikut', 45_000, headers);
   const j = await res.json();
   if (!j?.url) throw new Error(j?.error || 'Worker nggak ngasih link lagu');
   return j;

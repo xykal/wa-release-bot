@@ -97,29 +97,36 @@ python3 scripts-dev/apk_signer.py apk-lama.apk apk-baru.apk
 
 Cepat (< 5 menit) supaya bisa jadi gerbang review tiap PR.
 
-**Job `js`** — matrix **Node × direktori**:
+**Job `lockfile`** — jalan pertama. Repo memakai **npm workspaces** (root
+`package.json` → `bot-js` + `cli`), jadi cuma ada satu `package-lock.json` di
+root. Kalau lockfile belum ada / tidak sinkron, job ini membuatnya dengan
+`npm install --package-lock-only` dan meng-commit ke `main` (identitas `xykal`
+lewat `GITHUB_TOKEN`). Di PR dari fork hanya melaporkan.
 
-| | bot-js | cli |
-|---|---|---|
-| Node 18.20.4 | ✅ (runtime asli di APK) | — |
-| Node 20 | ✅ | ✅ |
-| Node 22 | ✅ | ✅ |
+**Job `js`** — matrix Node **18.20.4** (runtime asli di APK), **20**, **22**.
+Langkahnya: `npm ci --ignore-scripts` di root → ESLint (`-w bot-js`) →
+`node --check` semua `.mjs` di `bot-js/src` **dan** `cli/src` → `node --test`
+→ `esbuild` → jalankan bundle hasilnya (`--selftest`) → `node cli/src/bot.mjs
+--version` (mengecek CLI bisa me-resolve modul engine dan brand-nya benar).
+Node 18 ada di matrix **khususnya** karena itu runtime yang dipakai di HP.
 
-Per direktori: `npm ci` → ESLint → `node --check` tiap file di `src/` →
-`node --test` → `esbuild` → jalankan bundle hasilnya di Node versi itu.
+**Job `android-statis`** — tanpa Gradle: urutan `System.loadLibrary` di
+`NodeBridge.kt`, validasi XML semua resource + manifest, wajib ada
+`res/values/brand.xml` dan `bot-js/src/config/brand.mjs`, dan **menolak**
+literal brand di layout (`android:text="BUILT IN|Powered by|XyVerse Tech"`).
+Ini yang menjaga aturan "satu sumber string brand".
 
-Node 18 ada di matrix **khususnya** karena itu runtime yang dipakai di HP —
-kalau ada yang pakai API Node 20+, ini yang nangkep lebih dulu.
+**Job `audit`** — `npm audit --omit=dev --audit-level=high` di root (mencakup
+kedua workspace). Cuma dependency produksi yang bisa menggagalkan. Plus grep
+pola token (`ghp_`, `github_pat_`, `re_`, `tskey-auth-`, `os_v2_app_`, `gsk_`,
+`vcp_`, `sk-`) di seluruh isi repo.
 
-**Job `audit`** — `npm audit --omit=dev --audit-level=high` untuk `bot-js` dan
-`cli`. Cuma dependency produksi yang bisa menggagalkan; devDependency
-dilaporkan saja (nggak ikut masuk APK). Plus grep pola token
-(`ghp_`, `github_pat_`, `re_`, `tskey-auth-`, `os_v2_app_`, `gsk_`, `vcp_`, `sk-`)
-di seluruh isi repo.
+**Job `scripts`** — ShellCheck untuk semua `*.sh`, `actionlint` (diunduh dengan
+**checksum SHA-256** yang dipin, bukan skrip `curl | bash`) untuk file workflow,
+validasi YAML, dan cek bit `+x` di `gradlew`, `scripts/*.sh`, `cli/setup-termux.sh`.
 
-**Job `scripts`** — ShellCheck untuk semua `*.sh`, `actionlint` untuk file
-workflow, validasi YAML, dan cek bit `+x` di `gradlew`, `scripts/*.sh`,
-`cli/setup-termux.sh`.
+Semua `uses:` di keempat workflow dipin ke **SHA penuh** dengan komentar versi;
+Dependabot (`github-actions`) yang menaikkannya.
 
 ---
 
@@ -167,8 +174,7 @@ di-group biar cuma beberapa PR:
 | Ekosistem | Direktori | Catatan |
 |---|---|---|
 | `github-actions` | `/` | semua action di-*group* jadi 1 PR |
-| `npm` | `/bot-js` | `@whiskeysockets/baileys` dikunci dari major otomatis |
-| `npm` | `/cli` | semua di-group |
+| `npm` | `/` | satu lockfile root (workspaces `bot-js` + `cli`); `@whiskeysockets/baileys` dikunci dari major otomatis |
 | `gradle` | `/` | semua update major dikunci otomatis (AGP, Kotlin, Gradle wrapper, okhttp saling terikat) |
 
 **Alasan penguncian:** engine di APK harus tetap Node 18-compatible, dan
@@ -182,7 +188,7 @@ bukan lewat PR otomatis yang hijau di Node 22 tapi mati di HP.
 
 ```bash
 # yang sama dengan job `engine`
-cd bot-js && npm ci && npm run lint && npm test && npm run build
+npm ci --ignore-scripts && npm run lint && npm test && npm run build   # root (npm workspaces)
 node dist/bundle.cjs --selftest     # jalankan di Node 18 kalau ada
 
 # yang sama dengan job `scripts`

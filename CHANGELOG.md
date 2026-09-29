@@ -6,6 +6,41 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+Belum di-tag: kall tes dulu di HP. Semua perubahan di bawah sudah lewat CI.
+
+### Ditambah
+- `bot-js/src/rilis.mjs`: keputusan rilis pakai **semver** (`putuskanRilis`).
+  Tag lebih rendah dari baseline dianggap rollback, tidak diumumkan ulang.
+- `bot-js/src/config/brand.mjs` + `app/src/main/res/values/brand.xml`: satu
+  sumber string brand. CI menolak literal brand di layout.
+- CLI `--version` → `wa-release-bot 1.6.7 — XyVerse Technology Global`;
+  `npm run once -- --ulang` untuk reset hitungan gagal kirim.
+- `docs/PRD.md`, `docs/ROADMAP.md`, `docs/KONTEN-TIKTOK.md`, `CODE_OF_CONDUCT.md`,
+  `.github/CODEOWNERS`, `.github/FUNDING.yml`, `PROGRESS.md`, `IDEAS.md`.
+- Worker lagu: batas harian **per perangkat** (header `X-Pemasang`) dan
+  **per IP**, bukan cuma satu angka global (belum di-deploy, lihat ROADMAP).
+
+### Diubah
+- **npm workspaces**: satu `npm install` di root untuk `bot-js` + `cli`. CLI
+  sekarang meng-import modul `bot-js/src` langsung — tidak ada lagi salinan
+  `wa.mjs`/`github.mjs`/`format.mjs` yang ketinggalan di `cli/src`.
+- `github.mjs`: timeout 20 detik, header `X-GitHub-Api-Version`, `If-None-Match`
+  (304 = tidak ada perubahan, tidak makan rate limit).
+- Posting release: catatan `pending` ditulis sebelum kirim, maksimal 3
+  percobaan, error ambigu tidak dikirim ulang lewat jalur cadangan (anti dobel).
+- Semua GitHub Actions dipin ke SHA penuh; actionlint diunduh dengan checksum;
+  `code-quality.yml` punya job lockfile, `npm audit`, dan pemeriksaan brand.
+- Android: `usesCleartextTraffic` diganti `network_security_config.xml`
+  (cleartext hanya ke 127.0.0.1).
+- Ganti `configure` repo / prerelease di app: `lastTag`, ETag, dan pending di-reset.
+- Footer app: "BUILT IN" → "POWERED BY" + logo dengan contentDescription brand.
+
+### Dihapus
+- `konten-tiktok/` (39 MB aset pihak ketiga tanpa lisensi tercatat) dan tiga
+  workflow render video. Panduannya dipindah ke `docs/KONTEN-TIKTOK.md`.
+
+## [Unreleased]
+
 ## [1.6.7] — 2026-09-28
 
 ### ✨ Splash dipoles

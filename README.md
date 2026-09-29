@@ -233,7 +233,7 @@ Laporan kerentanan: lihat [SECURITY.md](SECURITY.md).
 ├── cli/                      # versi Termux/PC — import langsung modul bot-js/src (engine identik)
 ├── scripts/                  # build-local.sh, fetch-nodejs-mobile.sh
 ├── web/                      # landing page + halaman unduh (statis, Cloudflare Workers)
-├── docs/                     # PANDUAN-APP, BUILD, TROUBLESHOOTING, ARCHITECTURE, CI, ROADMAP
+├── docs/                     # PANDUAN-APP, BUILD, TROUBLESHOOTING, ARCHITECTURE, CI, ROADMAP, PRD, PITCH
 └── .github/workflows/        # build-apk, code-quality, codeql, security, deploy-web
 ```
 

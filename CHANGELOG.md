@@ -29,6 +29,8 @@ Semua perubahan penting proyek ini. Format mengikuti
   Workflow Screenshot app mengunci bahasa emulator (input `bahasa`: `id-ID` bawaan atau
   `en-US`); runner GitHub aslinya en-US sehingga tangkapan situs bisa berubah bahasa.
 
+- `docs/PITCH.md`: satu halaman pitch (masalah, solusi, untuk siapa, batasan yang jujur).
+
 ### Diubah
 - App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,
   `DialogTautan`, `LembarHitam`, `AksiSistem`, `SplashUtama`, `Lembar` (komponen dialog).

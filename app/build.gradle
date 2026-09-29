@@ -8,8 +8,9 @@ plugins {
 def releaseKeystoreFile = System.getenv("RELEASE_KEYSTORE_FILE")
 
 // Versi bisa di-override dari CI:  ./gradlew assembleRelease -PversionName=1.2.0 -PversionCode=5
-def appVersionName = (project.findProperty('versionName') ?: '1.7.0').toString()
-def appVersionCode = (project.findProperty('versionCode') ?: '24').toString().toInteger()
+def appVersionName = (project.findProperty('versionName') ?: '1.8.0').toString()
+// Default ikut rumus CI (major*10000 + minor*100 + patch) supaya build lokal tidak lebih rendah dari APK rilis.
+def appVersionCode = (project.findProperty('versionCode') ?: '10800').toString().toInteger()
 
 android {
     namespace 'com.xykals.warelease'

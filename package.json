@@ -1,7 +1,7 @@
 {
   "name": "wa-release-bot",
   "private": true,
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Bot WhatsApp yang tidur: bangun tiap N menit, cek release GitHub, posting ke channel WA. Root npm workspaces: bot-js (engine, dibundel ke APK) + cli (Termux/PC).",
   "author": "xykal (XyVerse Technology Global)",
   "license": "SEE LICENSE IN LICENSE",

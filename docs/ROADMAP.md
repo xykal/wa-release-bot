@@ -11,7 +11,8 @@ diunduh publik). Situs: <https://wabot.projectkal.my.id> — halaman unduh
 menampilkan hitung mundur sampai `LAUNCH_ISO` (`web/js/teks.js`), lalu otomatis membaca
 `releases/latest` (draft tidak ikut) dan mengisi kartu APK.
 
-Checklist PR launching (`chore/rilis-1.0.0`, dibuat H-1):
+Checklist PR launching (`chore/rilis-1.0.0`, dibuka sebagai **draft** 2026-09-29; di-merge H-1,
+bukan lebih awal, supaya `main` tetap 1.8.0 sampai hari launching):
 
 | Langkah | Catatan |
 |---|---|

@@ -107,6 +107,16 @@ export async function ambilBerikut(sumber = SUMBER_BAWAAN, { pemasang = '' } = {
   return j;
 }
 
+/**
+ * Sisa jatah hari ini dari Worker: { hari, pemasang: "n/12", ip: "n/20", global: "n/180" }.
+ * Cuma baca KV di Worker, tidak memakai kuota lagu maupun token burst.
+ */
+export async function ambilBatas(sumber = SUMBER_BAWAAN, { pemasang = '' } = {}) {
+  const headers = pemasang ? { 'X-Pemasang': String(pemasang).slice(0, 64) } : {};
+  const res = await ambilDgnTimeout(String(sumber).replace(/\/+$/, '') + '/lagu/batas', 15_000, headers);
+  return res.json();
+}
+
 // ------------------------------------------------------------ MP3
 // Tabel bitrate (kbps) & sample rate buat MPEG-1/2/2.5 Layer III.
 const BR_V1 = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0];

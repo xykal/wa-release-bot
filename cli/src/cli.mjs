@@ -19,8 +19,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import qrcode from 'qrcode-terminal';
 import { fetchLatestRelease } from '../../bot-js/src/github.mjs';
-import { formatReleasePost, formatTestMessage } from '../../bot-js/src/format.mjs';
-import { connectToWhatsApp, resolveChannel, kirimKeChannel, pakaiPertanyaan } from '../../bot-js/src/wa.mjs';
+import { formatReleasePost, formatTestMessage, formatLaporGagal } from '../../bot-js/src/format.mjs';
+import { connectToWhatsApp, resolveChannel, kirimKeChannel, pakaiPertanyaan, laporKeDiri } from '../../bot-js/src/wa.mjs';
 import { putuskanRilis, pendingBerikut, MAKS_PERCOBAAN } from '../../bot-js/src/rilis.mjs';
 
 // Folder config.json / state.json / wa-session. Default: folder cli/ ini.
@@ -110,9 +110,17 @@ async function postRelease(cfg, state, rel, { dryRun = false, manual = false }) 
   // WA baru nyambung DI SINI. Nggak ada release = nggak pernah nyambung.
   const { sock, close } = await sambung(cfg);
   try {
-    const jid = await targetJid(sock, cfg, state);
-    const { format, ajak } = opsiKirim(cfg, jid);
-    await kirimKeChannel(sock, jid, formatReleasePost(rel, cfg.github.repo, ajak), { format, log });
+    try {
+      const jid = await targetJid(sock, cfg, state);
+      const { format, ajak } = opsiKirim(cfg, jid);
+      await kirimKeChannel(sock, jid, formatReleasePost(rel, cfg.github.repo, ajak), { format, log });
+    } catch (e) {
+      // Percobaan terakhir: lapor ke chat diri sendiri selagi socket masih ada.
+      if (state.pending.percobaan >= MAKS_PERCOBAAN) {
+        await laporKeDiri(sock, formatLaporGagal({ tag: rel.tag, repo: cfg.github.repo, percobaan: state.pending.percobaan, maks: MAKS_PERCOBAAN, error: e.message, cli: true }), log);
+      }
+      throw e;
+    }
     state.lastTag = rel.tag;
     state.pending = null;
     state.lastPostedAt = new Date().toISOString();

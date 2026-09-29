@@ -24,8 +24,12 @@ Done:
   binding; proving test `scripts-dev/cek-batas-worker.sh` lolos. Tes integrasi CLI (5 skenario).
   History `konten-tiktok` dihapus (filter-branch, force-push; tag v1.6.7 ke bawah tidak berubah).
 
+- kall: "boleh juga" + minta semua update lewat PR dulu. Branch `feat/lapor-gagal-jatah-lagu`:
+  lapor ke chat diri sendiri saat percobaan ke-3 gagal (app + CLI), jatah lagu harian tampil di
+  app, `/lagu/batas` tanpa token burst kecuali `?uji=1` (Worker di-deploy ulang, proving test lolos).
+
 Blocked:
-- Tag `v1.7.0`: setelah kall tes APK dari CI dan CLI di Termux.
+- Tag `v1.7.0`: setelah kall tes APK dari CI dan CLI di Termux, dan PR di-merge.
 
 Next:
 - M9 (i18n Android) dan M10 (pecah `bot.mjs`/`MainActivity.kt`) ada di `docs/ROADMAP.md` v1.7.

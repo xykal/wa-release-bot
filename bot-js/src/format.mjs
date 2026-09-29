@@ -120,3 +120,21 @@ export function formatTesGrup(namaGrup) {
     `🦴 _${TANDA_TANGAN}_ ` + formatTanggal(),
   ].join('\n');
 }
+
+/**
+ * Pesan ke chat diri sendiri setelah percobaan TERAKHIR kirim rilis gagal.
+ * Dikirim sekali (percobaan == maks), bukan tiap gagal.
+ */
+export function formatLaporGagal({ tag, repo, percobaan, maks, error, cli = false }) {
+  const caraUlang = cli ? 'jalankan `npm run once -- --ulang`' : 'tekan *Cek sekarang* di app';
+  return [
+    '⚠️ *wa-release-bot: gagal kirim rilis*',
+    '',
+    `Rilis *${tag}* (${repo}) gagal dikirim ke channel ${percobaan}x berturut-turut.`,
+    `Error terakhir: ${potongAman(String(error || 'tidak diketahui'), 300)}`,
+    '',
+    `Bot berhenti mencoba sampai lo ${caraUlang}.`,
+    '',
+    `🦴 _${TANDA_TANGAN}_ ` + formatTanggal(),
+  ].join('\n');
+}

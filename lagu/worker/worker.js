@@ -369,14 +369,18 @@ async function cekBatas(env, { ip, pemasang }) {
  * Dipakai scripts-dev/cek-batas-worker.sh supaya proving test tidak membakar
  * kuota Groq/SoundCloud, dan bisa dipakai app buat menampilkan sisa jatah.
  */
-async function lihatBatas(env, { ip, pemasang, colo }) {
+async function lihatBatas(env, { ip, pemasang, colo }, { uji = false } = {}) {
   const hari = new Date().toISOString().slice(0, 10);
   const baca = async (k) => Number(await env.LAGU.get(k)) || 0;
-  const burst = env.PEMBATAS_PERANGKAT && pemasang ? (await env.PEMBATAS_PERANGKAT.limit({ key: pemasang })).success : null;
+  // limit() tidak punya mode intip: sekali panggil = satu token. App memanggil
+  // endpoint ini tiap habis kirim lagu, jadi token cuma dipakai kalau ?uji=1
+  // (proving test scripts-dev/cek-batas-worker.sh).
+  let burst = env.PEMBATAS_PERANGKAT ? 'aktif' : 'tidak ada pembatas';
+  if (uji && env.PEMBATAS_PERANGKAT && pemasang) burst = (await env.PEMBATAS_PERANGKAT.limit({ key: pemasang })).success ? 'ok' : 'kena';
   return json({
     hari,
     colo: colo || null, // lapis burst dihitung per lokasi Cloudflare
-    burst: burst === null ? 'tidak ada pembatas' : burst ? 'ok' : 'kena',
+    burst,
     pemasang: pemasang ? `${await baca(`pemasang:${hari}:${await kunciAman(pemasang)}`)}/${BATAS_PER_PEMASANG}` : null,
     ip: ip ? `${await baca(`ip:${hari}:${await kunciAman(ip)}`)}/${BATAS_PER_IP}` : null,
     global: `${await baca('hit:' + hari)}/${BATAS_HARIAN}`,
@@ -444,7 +448,7 @@ export default {
     }
     if (url.pathname === '/lagu/batas') {
       const siapa = { ip: req.headers.get('cf-connecting-ip') || '', pemasang: (req.headers.get('x-pemasang') || '').slice(0, 64), colo: req.cf?.colo };
-      try { return await lihatBatas(env, siapa); } catch (e) { return json({ error: e.message }, 500); }
+      try { return await lihatBatas(env, siapa, { uji: url.searchParams.get('uji') === '1' }); } catch (e) { return json({ error: e.message }, 500); }
     }
     return new Response(`wa-release-bot · lagu mood · ${DAFTAR.length} lagu lawas + trend Indonesia harian · ${AYAT.length} ayat\n`,
       { headers: { 'content-type': 'text/plain; charset=utf-8' } });

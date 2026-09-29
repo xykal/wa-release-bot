@@ -21,7 +21,7 @@ import { createBridge } from './bridge.mjs';
 import { mp3KeVoiceNote, pcmKeOgg } from './opus.mjs';
 import { MPEGDecoder } from 'mpg123-decoder';
 import { fetchLatestRelease } from './github.mjs';
-import { connectToWhatsApp, resolveChannel, sendText, kirimKeChannel as kirimWA, pakaiPertanyaan, statusSesi, hapusSesi } from './wa.mjs';
+import { connectToWhatsApp, resolveChannel, sendText, kirimKeChannel as kirimWA, pakaiPertanyaan, statusSesi, hapusSesi, laporKeDiri } from './wa.mjs';
 import { putuskanRilis, pendingBerikut, MAKS_PERCOBAAN } from './rilis.mjs';
 import { bikinChannel, linkChannel, bacaTarget, JENIS } from './channel.mjs';
 import { normalisasiNomor } from './nomor.mjs';
@@ -35,8 +35,8 @@ import {
   kelompokHitam,
   bukaBlokir,
 } from './grup.mjs';
-import { formatReleasePost, formatTestMessage, formatTesGrup } from './format.mjs';
-import { SUMBER_BAWAAN, jadwalBerikut, formatKataLagu, ambilBerikut, downloadPotongan } from './lagu.mjs';
+import { formatReleasePost, formatTestMessage, formatTesGrup, formatLaporGagal } from './format.mjs';
+import { SUMBER_BAWAAN, jadwalBerikut, formatKataLagu, ambilBerikut, ambilBatas, downloadPotongan } from './lagu.mjs';
 import { buatHosting } from './hosting.mjs';
 
 // ----------------------------- selftest ------------------------------------
@@ -233,6 +233,7 @@ async function main() {
       laguCount: state.lagu?.count || 0,
       laguLastAt: state.lagu?.lastAt || null,
       laguJudul: state.lagu?.lastJudul || null,
+      laguJatah: state.lagu?.jatah?.pemasang || null, // "n/12" hari ini, dari Worker
       nextLaguAt,
     });
   }
@@ -367,6 +368,12 @@ async function main() {
       if (file) {
         try { fs.rmSync(file, { force: true }); log('🧹 File lagu dihapus dari HP.'); } catch { /* ignore */ }
       }
+      // Sisa jatah hari ini buat ditampilkan di app; gagal pun tidak apa-apa.
+      try {
+        const b = await ambilBatas(sumber, { pemasang: state.pemasangId });
+        state.lagu = { ...(state.lagu || { count: 0 }), jatah: { hari: b.hari, pemasang: b.pemasang, global: b.global } };
+        saveState();
+      } catch { /* opsional */ }
       laguSibuk = false;
       if (source !== 'manual' || running) jadwalLagu();
       emitStatus();
@@ -498,8 +505,17 @@ async function main() {
     await pakaiWA('posting', async () => {
       const { sock, close } = await sambung();
       try {
-        const jid = await cariTarget(sock);
-        await kirimKeChannel(sock, jid, formatReleasePost(rel, cfg.github.repo, ajak(jid)));
+        try {
+          const jid = await cariTarget(sock);
+          await kirimKeChannel(sock, jid, formatReleasePost(rel, cfg.github.repo, ajak(jid)));
+        } catch (e) {
+          // Percobaan terakhir gagal: channel tidak dapat pesan, tapi pemilik
+          // bot dikasih tahu lewat chat ke diri sendiri (socket masih ada).
+          if (ke >= MAKS_PERCOBAAN) {
+            await laporKeDiri(sock, formatLaporGagal({ tag: rel.tag, repo: cfg.github.repo, percobaan: ke, maks: MAKS_PERCOBAAN, error: e.message }), log);
+          }
+          throw e;
+        }
         state.lastTag = rel.tag;
         state.pending = null;
         state.lastPostedAt = new Date().toISOString();

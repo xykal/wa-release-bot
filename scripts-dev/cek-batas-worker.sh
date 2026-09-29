@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Proving test pembatas burst Worker lagu (lagu/worker/worker.js, binding
 # PEMBATAS_PERANGKAT: 2 panggilan / 60 detik per X-Pemasang, per lokasi CF).
-# Menembak GET /lagu/batas (murah: baca KV saja, tanpa Groq/SoundCloud) dengan
+# Menembak GET /lagu/batas?uji=1 (murah: baca KV saja, tanpa Groq/SoundCloud) dengan
 # X-Pemasang yang sama berturut-turut; salah satu dari MAKS request pertama
 # HARUS dijawab "burst":"kena".
 #
@@ -19,7 +19,7 @@ URL="${1:-https://wa-release-bot-lagu.dikanjut.workers.dev}"
 MAKS="${2:-10}"
 ID="cek-batas-$(date -u +%s)-$RANDOM"
 for i in $(seq 1 "$MAKS"); do
-  BODY="$(curl -s --max-time 30 -H "X-Pemasang: $ID" "$URL/lagu/batas" || echo '{"error":"curl gagal"}')"
+  BODY="$(curl -s --max-time 30 -H "X-Pemasang: $ID" "$URL/lagu/batas?uji=1" || echo '{"error":"curl gagal"}')"
   printf '%2d/%d  %s\n' "$i" "$MAKS" "$(printf '%s' "$BODY" | cut -c1-100)"
   case "$BODY" in
     *'"burst":"kena"'*) echo "LOLOS: burst per perangkat kena di request ke-$i"; exit 0 ;;

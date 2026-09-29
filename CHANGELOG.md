@@ -24,6 +24,12 @@ Belum di-tag: kall tes dulu di HP. Semua perubahan di bawah sudah lewat CI.
   test `scripts-dev/cek-batas-worker.sh` lolos.
 - CLI: `WA_RELEASE_BOT_DIR` (lokasi config/state/sesi) dan tes integrasi
   `cli/test/cli.test.mjs` (proses CLI sungguhan, GitHub palsu, tanpa WA).
+- Laporan ke **chat diri sendiri** kalau percobaan terakhir (ke-3) kirim rilis
+  gagal: tag, repo, error terakhir, cara mengulang. App dan CLI (`laporKeDiri`,
+  `formatLaporGagal`).
+- Kartu lagu di app menampilkan **jatah hari ini dari server** (`laguJatah`,
+  dari `GET /lagu/batas`, diperbarui tiap habis kirim lagu). `/lagu/batas` tidak
+  memakai token burst kecuali `?uji=1` (proving test).
 
 ### Diperbaiki
 - **Fitur lagu mati sejak v1.6.0**: URL Worker default menunjuk subdomain yang

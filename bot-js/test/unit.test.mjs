@@ -14,9 +14,9 @@ import path from 'node:path';
 
 import { parseRepo, fetchLatestRelease } from '../src/github.mjs';
 import { bacaTarget, JENIS, pesanCaraIsiChannel, linkChannel } from '../src/channel.mjs';
-import { formatReleasePost, formatTestMessage, formatTesGrup, AJAKAN_BALAS, mdKeWa, potongAman, formatTanggal } from '../src/format.mjs';
+import { formatReleasePost, formatTestMessage, formatTesGrup, AJAKAN_BALAS, mdKeWa, potongAman, formatTanggal, formatLaporGagal } from '../src/format.mjs';
 import { putuskanRilis, pendingBerikut, errorAmbigu, tagKeSemver, MAKS_PERCOBAAN } from '../src/rilis.mjs';
-import { kirimKeChannel } from '../src/wa.mjs';
+import { kirimKeChannel, jidSendiri, laporKeDiri } from '../src/wa.mjs';
 import { BRAND, TANDA_TANGAN } from '../src/config/brand.mjs';
 import { kelompokHitam, bukaBlokir, labelOrang } from '../src/grup.mjs';
 import { createBridge } from '../src/bridge.mjs';
@@ -658,4 +658,37 @@ test('formatTanggal: Indonesia tanpa ICU, zona ikut proses', () => {
   assert.equal(formatTanggal(t, { jam: false }), 'Selasa, 29 September 2026');
   assert.equal(formatTanggal('bukan tanggal'), '');
   assert.match(formatReleasePost({ tag: 'v1', name: 'x', body: '', url: 'u', publishedAt: t.toISOString() }, 'a/b'), /Selasa, 29 September 2026/);
+});
+
+test('jidSendiri: buang suffix device, tolak yang bukan nomor', () => {
+  assert.equal(jidSendiri({ user: { id: '6281234567890:12@s.whatsapp.net' } }), '6281234567890@s.whatsapp.net');
+  assert.equal(jidSendiri({ user: { id: '6281234567890@s.whatsapp.net' } }), '6281234567890@s.whatsapp.net');
+  assert.equal(jidSendiri({ user: { id: '' } }), null);
+  assert.equal(jidSendiri({}), null);
+});
+
+test('laporKeDiri: kirim ke JID sendiri, tidak pernah melempar', async () => {
+  const terkirim = [];
+  const sock = { user: { id: '628111:3@s.whatsapp.net' }, sendMessage: async (jid, isi) => { terkirim.push([jid, isi.text]); } };
+  assert.equal(await laporKeDiri(sock, 'halo', () => {}), true);
+  assert.deepEqual(terkirim, [['628111@s.whatsapp.net', 'halo']]);
+
+  const catatan = [];
+  const rusak = { user: { id: '628111@s.whatsapp.net' }, sendMessage: async () => { throw new Error('putus'); } };
+  assert.equal(await laporKeDiri(rusak, 'halo', (m) => catatan.push(m)), false);
+  assert.match(catatan.join('\n'), /putus/);
+  assert.equal(await laporKeDiri({}, 'halo', (m) => catatan.push(m)), false);
+});
+
+test('formatLaporGagal: sebut tag, repo, jumlah percobaan, error, cara ulang', () => {
+  const app = formatLaporGagal({ tag: 'v2.0.0', repo: 'octo/demo', percobaan: 3, maks: 3, error: 'Timeout kirim' });
+  assert.match(app, /v2\.0\.0/);
+  assert.match(app, /octo\/demo/);
+  assert.match(app, /3x berturut-turut/);
+  assert.match(app, /Timeout kirim/);
+  assert.match(app, /Cek sekarang/);
+  assert.match(app, /wa-release-bot — XyVerse Technology Global/);
+  const cli = formatLaporGagal({ tag: 'v2.0.0', repo: 'octo/demo', percobaan: 3, maks: 3, error: 'x'.repeat(1000), cli: true });
+  assert.match(cli, /npm run once -- --ulang/);
+  assert.ok(cli.length < 700, 'error panjang dipotong');
 });

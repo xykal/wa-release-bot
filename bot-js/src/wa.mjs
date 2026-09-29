@@ -301,3 +301,28 @@ export async function kirimKeChannel(sock, jid, text, { format = 'pertanyaan', l
 
 export const pakaiPertanyaan = (jid, format = 'pertanyaan') =>
   format !== 'teks' && String(jid).endsWith('@newsletter');
+
+/** JID akun sendiri tanpa suffix device: "628xx:12@s.whatsapp.net" -> "628xx@s.whatsapp.net". */
+export function jidSendiri(sock) {
+  const angka = String(sock?.user?.id || '').split(':')[0].replace(/@.*$/, '');
+  return /^\d+$/.test(angka) ? `${angka}@s.whatsapp.net` : null;
+}
+
+/**
+ * Kirim teks ke chat diri sendiri ("Anda"). Dipakai buat lapor kegagalan
+ * terakhir kirim rilis: channel tidak dapat pesan, tapi pemilik bot tahu.
+ * Tidak pernah melempar -- kalau ini pun gagal, cukup dicatat.
+ * @returns {Promise<boolean>} true kalau terkirim
+ */
+export async function laporKeDiri(sock, teks, log = () => {}) {
+  const jid = jidSendiri(sock);
+  if (!jid) { log('Lapor ke diri sendiri dilewati: JID akun tidak diketahui.'); return false; }
+  try {
+    await sock.sendMessage(jid, { text: teks });
+    log('Laporan kegagalan dikirim ke chat diri sendiri.');
+    return true;
+  } catch (e) {
+    log(`Lapor ke diri sendiri gagal: ${e.message}`);
+    return false;
+  }
+}

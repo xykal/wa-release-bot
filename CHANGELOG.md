@@ -6,6 +6,25 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+### Ditambah
+- **Multi repo**: kolom "Repo GitHub" (app) dan `github.repo` (CLI) menerima
+  lebih dari satu repo dipisah koma/baris baru (URL `https://github.com/...`
+  juga dirapikan). Tiap repo dicek berurutan dengan ETag, baseline, dan
+  hitungan gagal kirim sendiri (`state.repos[repo]`, modul `bot-js/src/repo.mjs`).
+  State lama dipindah otomatis ke repo pertama; repo yang dihapus dari
+  setelan dibuang dari state. Proving test: unit (`repo.mjs`) + integrasi CLI
+  (dua repo, migrasi state lama, repo tidak valid).
+- App: **notifikasi Android** (channel "Gagal kirim release", prioritas
+  tinggi, tap membuka app) saat percobaan ke-3 kirim release gagal — termasuk
+  kalau WA-nya sendiri gagal nyambung. Hilang otomatis begitu ada post sukses.
+- CI: `versionName` + `versionCode` APK rilis diambil dari tag
+  (`v1.8.0` → `1.8.0` / `10800`, rumus major*10000+minor*100+patch); build
+  branch/PR memakai default gradle, tidak lagi memakai nama branch sebagai versi.
+
+### Diubah
+- Status app `lastTag` untuk banyak repo diringkas `nama v1 · nama2 v2`;
+  log cek diberi awalan nama repo kalau repo lebih dari satu.
+
 ## [1.7.0] — 2026-09-29
 
 Semua perubahan lewat CI (Build APK, Code quality, CodeQL, Security).

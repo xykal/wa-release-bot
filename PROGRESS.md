@@ -47,3 +47,7 @@ Next:
 - Konten: repo `wa-release-bot-konten` Eps 2 (render di Actions) v1 → v4: aset asli app, stiker +
   SFX meme (unduh saat render, sha256, tidak di-commit), hook spam jam 02.00 (judol disamarkan),
   2 scene teknis (stack + siklus 15 menit), subtitle gaya CapCut. Durasi 2:30, menunggu review kall.
+- kall: "gas aja semua" + minta multi repo; tanya "Pertanyaan" sudah fix? (belum — masih butuh
+  `rekaman-channel.json`). PR `feat/multi-repo`: `repo.mjs` (daftar repo + state per repo + migrasi),
+  bot.mjs/cli.mjs cek semua repo berurutan, notifikasi Android 3x gagal (BotService), versionCode
+  dari tag di CI, tes unit + integrasi CLI baru. Belum: M10 pecah modul, M9 i18n, Eps 2 versi pendek.

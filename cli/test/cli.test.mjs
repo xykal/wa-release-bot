@@ -17,18 +17,20 @@ globalThis.fetch = async (url, init = {}) => {
   const etagKlien = init.headers?.['If-None-Match'];
   if (etagKlien === '"etag-v9"') return new Response(null, { status: 304, headers: { etag: '"etag-v9"' } });
   if (!String(url).includes('/releases/latest')) return new Response('not found', { status: 404 });
+  const dua = String(url).includes('/repos/octo/kedua/');
   return new Response(JSON.stringify({
-    tag_name: 'v9.9.9', name: 'Rilis sembilan', body: '## Baru\\n- fitur **X**', draft: false, prerelease: false,
+    tag_name: dua ? 'v2.0.0' : 'v9.9.9', name: dua ? 'Rilis kedua' : 'Rilis sembilan',
+    body: '## Baru\\n- fitur **X**', draft: false, prerelease: false,
     html_url: 'https://github.com/octo/demo/releases/tag/v9.9.9', published_at: '2026-09-29T00:00:00Z',
     assets: [],
-  }), { status: 200, headers: { 'content-type': 'application/json', etag: '"etag-v9"' } });
+  }), { status: 200, headers: { 'content-type': 'application/json', etag: dua ? '"etag-v2"' : '"etag-v9"' } });
 };
 `;
 
-function siapkanDir({ state } = {}) {
+function siapkanDir({ state, repo = 'octo/demo' } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), 'wrb-cli-'));
   writeFileSync(path.join(dir, 'config.json'), JSON.stringify({
-    github: { repo: 'octo/demo', token: '', includePrereleases: false },
+    github: { repo, token: '', includePrereleases: false },
     whatsapp: { channel: '120363000000000000@g.us', sessionDir: './sesi', format: 'pertanyaan' },
     bot: { checkIntervalMinutes: 15, postOnFirstRun: false, testMessageOnSetup: false },
   }));
@@ -77,7 +79,9 @@ test('cli --once dengan baseline sama: tidur, simpan etag, tidak sentuh WA', () 
   assert.equal(pertama.code, 0, pertama.out);
   assert.match(pertama.out, /Nggak ada update/);
   const state = JSON.parse(readFileSync(path.join(dir, 'state.json'), 'utf8'));
-  assert.equal(state.rilisEtag, '"etag-v9"');
+  assert.equal(state.repos['octo/demo'].lastTag, 'v9.9.9', 'baseline lama pindah ke per-repo');
+  assert.equal(state.repos['octo/demo'].rilisEtag, '"etag-v9"');
+  assert.equal(state.lastTag, null, 'field era satu repo dikosongkan');
   assert.equal(existsSync(path.join(dir, 'sesi')), false, 'WA tidak boleh dibuka');
 
   const kedua = jalan(['--once'], dir); // sekarang fetch palsu menjawab 304
@@ -91,6 +95,29 @@ test('cli --once first run tanpa postOnFirstRun: catat baseline saja', () => {
   assert.equal(code, 0, out);
   assert.match(out, /Baseline dicatat: v9\.9\.9/);
   const state = JSON.parse(readFileSync(path.join(dir, 'state.json'), 'utf8'));
-  assert.equal(state.lastTag, 'v9.9.9');
+  assert.equal(state.repos['octo/demo'].lastTag, 'v9.9.9');
   assert.equal(existsSync(path.join(dir, 'sesi')), false);
+});
+
+test('cli multi repo: dua repo dicek berurutan, baseline terpisah, repo lama dibuang', () => {
+  const dir = siapkanDir({
+    repo: 'https://github.com/octo/demo.git, octo/kedua',
+    state: { repos: { 'octo/lama': { lastTag: 'v0.1.0', rilisEtag: null, pending: null } } },
+  });
+  const { code, out } = jalan(['--once'], dir);
+  assert.equal(code, 0, out);
+  assert.match(out, /Cek GitHub octo\/demo/);
+  assert.match(out, /octo\/kedua: First run\. Baseline dicatat: v2\.0\.0/);
+  const state = JSON.parse(readFileSync(path.join(dir, 'state.json'), 'utf8'));
+  assert.equal(state.repos['octo/demo'].lastTag, 'v9.9.9', 'URL github.com dirapikan jadi owner/nama');
+  assert.equal(state.repos['octo/kedua'].lastTag, 'v2.0.0');
+  assert.equal(state.repos['octo/lama'], undefined, 'repo yang dihapus dari config ikut dibuang');
+  assert.equal(existsSync(path.join(dir, 'sesi')), false);
+});
+
+test('cli repo tidak valid: keluar 1 dengan pesan yang menyebut entri salahnya', () => {
+  const dir = siapkanDir({ repo: 'octo/demo, bukan-repo' });
+  const { code, out } = jalan(['--once'], dir);
+  assert.equal(code, 1);
+  assert.match(out, /nggak valid: bukan-repo/);
 });

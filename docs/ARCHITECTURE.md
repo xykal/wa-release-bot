@@ -95,15 +95,15 @@ Engine start
 scheduleNext(3 detik)  ← cek pertama
    │
    ▼
-runCheck()
-   │  fetchLatestRelease()  ← 1 request ke api.github.com
+runCheck()  ← untuk TIAP repo di setelan (berurutan; satu gagal, lainnya jalan)
+   │  fetchLatestRelease()  ← 1 request ke api.github.com per repo
    │
-   ├─ tag sama dengan state.lastTag → log "nggak ada update" → TIDUR
+   ├─ tag sama dengan state.repos[repo].lastTag → log "nggak ada update" → TIDUR
    └─ tag beda → postRelease():
          connectToWhatsApp()   ← WA baru nyambung DI SINI (2–5 detik)
          resolveChannelJid()   ← cache JID-nya di state.json
          sendText()
-         state.lastTag = tag, simpan
+         state.repos[repo].lastTag = tag, simpan
          close()               ← WA langsung dilepas
    │
    ▼
@@ -114,9 +114,12 @@ Poin penting: **koneksi WA itu mahal** (handshake, enkripsi, sync).
 Makanya bot nggak nyambung kalau nggak ada yang mau dikirim. Selama nggak ada
 release baru, yang jalan cuma 1 HTTP request ke GitHub per interval.
 
-`state.json` menyimpan `{ lastTag, channelJid, postCount, lastPostedAt }` supaya
-baseline nggak reset tiap app restart — dan JID channel nggak perlu di-resolve
-ulang (itu juga butuh koneksi WA).
+`state.json` menyimpan `{ repos: { "owner/nama": { lastTag, rilisEtag, pending } },
+channelJid, postCount, lastPostedAt }` supaya baseline nggak reset tiap app restart
+— dan JID channel nggak perlu di-resolve ulang (itu juga butuh koneksi WA).
+Baseline per repo (`bot-js/src/repo.mjs`): state era satu repo (`lastTag` di akar)
+dipindah otomatis ke repo pertama saat pertama kali jalan; repo yang dihapus dari
+setelan ikut dibuang dari state.
 
 ## Isi APK
 

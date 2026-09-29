@@ -219,12 +219,12 @@
                 style="@style/JudulKartu"
                 android:drawableStart="@drawable/ic_kirim"
                 android:text="Rilis GitHub → Channel" />
-            <TextView style="@style/KetKartu" android:text="Tiap ada rilis baru di repo, bot posting ke channel / grup WA. Kosongin repo kalau cuma mau pakai penjaga grup." />
-            <TextView style="@style/Label" android:text="Repo GitHub" />
+            <TextView style="@style/KetKartu" android:text="Tiap ada rilis baru di repo, bot posting ke channel / grup WA. Boleh lebih dari satu repo, pisahkan pakai koma. Kosongin repo kalau cuma mau pakai penjaga grup." />
+            <TextView style="@style/Label" android:text="Repo GitHub (boleh banyak, pisah koma)" />
             <EditText
                 android:id="@+id/etRepo"
                 style="@style/Isian"
-                android:hint="pemilik/nama-repo"
+                android:hint="pemilik/nama-repo, pemilik/repo-lain"
                 android:importantForAutofill="no" />
             <TextView style="@style/Label" android:text="Channel WA" />
             <EditText

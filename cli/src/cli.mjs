@@ -22,6 +22,7 @@ import { fetchLatestRelease } from '../../bot-js/src/github.mjs';
 import { formatReleasePost, formatTestMessage, formatLaporGagal } from '../../bot-js/src/format.mjs';
 import { connectToWhatsApp, resolveChannel, kirimKeChannel, pakaiPertanyaan, laporKeDiri } from '../../bot-js/src/wa.mjs';
 import { putuskanRilis, pendingBerikut, MAKS_PERCOBAAN } from '../../bot-js/src/rilis.mjs';
+import { daftarRepo, repoTidakValid, teksRepo, stateRepo, sinkronState } from '../../bot-js/src/repo.mjs';
 import { rekamChannel } from '../../bot-js/src/rekam.mjs';
 
 // Folder config.json / state.json / wa-session. Default: folder cli/ ini.
@@ -44,7 +45,14 @@ function loadConfig() {
     process.exit(1);
   }
   const cfg = JSON.parse(readFileSync(p, 'utf8'));
-  if (!cfg.github?.repo || cfg.github.repo === 'owner/nama-repo') {
+  // Boleh lebih dari satu: "vercel/next.js, xykal/wa-release-bot" (atau array).
+  const salah = repoTidakValid(cfg.github?.repo);
+  if (salah.length) {
+    console.error(`config.json: "github.repo" nggak valid: ${salah.join(', ')}. Formatnya pemilik/nama-repo, pisahkan koma kalau lebih dari satu.`);
+    process.exit(1);
+  }
+  cfg.github.repos = daftarRepo(cfg.github?.repo);
+  if (!cfg.github.repos.length || cfg.github.repos[0] === 'owner/nama-repo') {
     console.error('config.json: "github.repo" belum diisi. Contoh: "vercel/next.js"');
     process.exit(1);
   }
@@ -64,7 +72,7 @@ function loadState() {
       log('state.json rusak, dianggap kosong.');
     }
   }
-  return { lastTag: null, channelJid: null, postCount: 0, lastPostedAt: null, rilisEtag: null, pending: null };
+  return { channelJid: null, postCount: 0, lastPostedAt: null, repos: {} };
 }
 
 function saveState(state) {
@@ -98,15 +106,15 @@ const opsiKirim = (cfg, jid) => ({
   ajak: { ajakBalas: pakaiPertanyaan(jid, cfg.whatsapp.format) },
 });
 
-async function postRelease(cfg, state, rel, { dryRun = false, manual = false }) {
+async function postRelease(cfg, state, repo, st, rel, { dryRun = false, manual = false }) {
   if (dryRun) {
     log('DRY RUN — ini pesan yang bakal dikirim (nggak dikirim beneran):');
-    console.log('\n' + '─'.repeat(50) + '\n' + formatReleasePost(rel, cfg.github.repo) + '\n' + '─'.repeat(50) + '\n');
+    console.log('\n' + '─'.repeat(50) + '\n' + formatReleasePost(rel, repo) + '\n' + '─'.repeat(50) + '\n');
     return;
   }
-  state.pending = pendingBerikut(state.pending, rel.tag, { manual });
+  st.pending = pendingBerikut(st.pending, rel.tag, { manual });
   saveState(state);
-  if (state.pending.percobaan > 1) log(`Kirim ${rel.tag} percobaan ke-${state.pending.percobaan} dari ${MAKS_PERCOBAAN}.`);
+  if (st.pending.percobaan > 1) log(`Kirim ${repo} ${rel.tag} percobaan ke-${st.pending.percobaan} dari ${MAKS_PERCOBAAN}.`);
 
   // WA baru nyambung DI SINI. Nggak ada release = nggak pernah nyambung.
   const { sock, close } = await sambung(cfg);
@@ -114,16 +122,16 @@ async function postRelease(cfg, state, rel, { dryRun = false, manual = false }) 
     try {
       const jid = await targetJid(sock, cfg, state);
       const { format, ajak } = opsiKirim(cfg, jid);
-      await kirimKeChannel(sock, jid, formatReleasePost(rel, cfg.github.repo, ajak), { format, log });
+      await kirimKeChannel(sock, jid, formatReleasePost(rel, repo, ajak), { format, log });
     } catch (e) {
       // Percobaan terakhir: lapor ke chat diri sendiri selagi socket masih ada.
-      if (state.pending.percobaan >= MAKS_PERCOBAAN) {
-        await laporKeDiri(sock, formatLaporGagal({ tag: rel.tag, repo: cfg.github.repo, percobaan: state.pending.percobaan, maks: MAKS_PERCOBAAN, error: e.message, cli: true }), log);
+      if (st.pending.percobaan >= MAKS_PERCOBAAN) {
+        await laporKeDiri(sock, formatLaporGagal({ tag: rel.tag, repo, percobaan: st.pending.percobaan, maks: MAKS_PERCOBAAN, error: e.message, cli: true }), log);
       }
       throw e;
     }
-    state.lastTag = rel.tag;
-    state.pending = null;
+    st.lastTag = rel.tag;
+    st.pending = null;
     state.lastPostedAt = new Date().toISOString();
     state.postCount = (state.postCount || 0) + 1;
     saveState(state);
@@ -133,41 +141,57 @@ async function postRelease(cfg, state, rel, { dryRun = false, manual = false }) 
   }
 }
 
-/** Inti bot: cek 1x, post kalau ada yang baru. */
+/** Inti bot: cek 1x semua repo, post kalau ada yang baru. */
 async function checkOnce(cfg, state, { dryRun = false, manual = false } = {}) {
-  log(`Cek GitHub ${cfg.github.repo} ...`);
-  const rel = await fetchLatestRelease(cfg.github.repo, {
+  if (!dryRun && sinkronState(state, cfg.github.repos)) saveState(state); // state era satu repo
+  let gagal = 0;
+  for (const repo of cfg.github.repos) {
+    try {
+      await cekSatuRepo(cfg, state, repo, { dryRun, manual });
+    } catch (e) {
+      gagal += 1;
+      log(`Gagal cek ${repo}: ${e.message}`);
+    }
+  }
+  if (gagal && gagal === cfg.github.repos.length) throw new Error('semua repo gagal dicek');
+}
+
+async function cekSatuRepo(cfg, state, repo, { dryRun, manual }) {
+  const st = stateRepo(state, repo);
+  const nama = cfg.github.repos.length > 1 ? `${repo}: ` : '';
+  log(`Cek GitHub ${repo} ...`);
+  const rel = await fetchLatestRelease(repo, {
     token: cfg.github.token,
     includePrereleases: cfg.github.includePrereleases,
-    etag: dryRun ? '' : state.rilisEtag || '',
+    etag: dryRun ? '' : st.rilisEtag || '',
   });
-  if (!rel.notModified && rel.etag && rel.etag !== state.rilisEtag && !dryRun) {
-    state.rilisEtag = rel.etag;
+  if (!rel.notModified && rel.etag && rel.etag !== st.rilisEtag && !dryRun) {
+    st.rilisEtag = rel.etag;
     saveState(state);
   }
 
-  const { aksi, alasan } = putuskanRilis({ state, rel, postOnFirstRun: Boolean(cfg.bot?.postOnFirstRun), manual });
+  const { aksi, alasan } = putuskanRilis({ state: st, rel, postOnFirstRun: Boolean(cfg.bot?.postOnFirstRun), manual });
   switch (aksi) {
     case 'tidur':
-      log(`Nggak ada update (${alasan}). Bot tidur lagi.`);
+      log(`${nama}Nggak ada update (${alasan}). Bot tidur lagi.`);
       return;
     case 'baseline':
-      state.lastTag = rel.tag;
+      st.lastTag = rel.tag;
       saveState(state);
-      log(`First run. Baseline dicatat: ${rel.tag}. Baru bakal posting kalau muncul yang lebih baru.`);
+      log(`${nama}First run. Baseline dicatat: ${rel.tag}. Baru bakal posting kalau muncul yang lebih baru.`);
       return;
     case 'rollback':
-      state.lastTag = rel.tag;
-      state.pending = null;
+      st.lastTag = rel.tag;
+      st.pending = null;
       saveState(state);
-      log(`Release terbaru sekarang ${rel.tag} (${alasan}) — dianggap rollback, nggak diumumkan.`);
+      log(`${nama}Release terbaru sekarang ${rel.tag} (${alasan}) — dianggap rollback, nggak diumumkan.`);
       return;
     case 'lewati-gagal':
-      log(`${alasan}. Dilewati; jalankan  npm run once -- --ulang  buat coba dari nol.`);
+      log(`${nama}${alasan}. Dilewati; jalankan  npm run once -- --ulang  buat coba dari nol.`);
       return;
     default:
-      log(state.lastTag ? `ADA RELEASE BARU! ${alasan}` : `${alasan} -> posting release yang sedang ada.`);
-      await postRelease(cfg, state, rel, { dryRun, manual });
+      log(st.lastTag ? `${nama}ADA RELEASE BARU! ${alasan}` : `${nama}${alasan} -> posting release yang sedang ada.`);
+      await postRelease(cfg, state, repo, st, rel, { dryRun, manual });
   }
 }
 
@@ -195,17 +219,21 @@ async function runSetup(cfg, state) {
     const jid = await targetJid(sock, cfg, state);
     if (cfg.bot?.testMessageOnSetup !== false) {
       const { format, ajak } = opsiKirim(cfg, jid);
-      await kirimKeChannel(sock, jid, formatTestMessage(cfg.github.repo, ajak), { format, log });
+      await kirimKeChannel(sock, jid, formatTestMessage(teksRepo(cfg.github.repos), ajak), { format, log });
       log('Test message dikirim. Cek channel-nya — kalau muncul, semua beres.');
     }
-    const rel = await fetchLatestRelease(cfg.github.repo, {
-      token: cfg.github.token,
-      includePrereleases: cfg.github.includePrereleases,
-    });
-    state.lastTag = rel.tag;
-    state.rilisEtag = rel.etag || null;
-    saveState(state);
-    log(`Baseline release dicatat: ${rel.tag}`);
+    sinkronState(state, cfg.github.repos);
+    for (const repo of cfg.github.repos) {
+      const rel = await fetchLatestRelease(repo, {
+        token: cfg.github.token,
+        includePrereleases: cfg.github.includePrereleases,
+      });
+      const st = stateRepo(state, repo);
+      st.lastTag = rel.tag;
+      st.rilisEtag = rel.etag || null;
+      saveState(state);
+      log(`Baseline release dicatat: ${repo} ${rel.tag}`);
+    }
     log('SETUP SELESAI. Sekarang bot tinggal dijadwalkan (lihat README).');
   } finally {
     close();
@@ -217,7 +245,7 @@ async function runTest(cfg, state) {
   try {
     const jid = await targetJid(sock, cfg, state);
     const { format, ajak } = opsiKirim(cfg, jid);
-    await kirimKeChannel(sock, jid, formatTestMessage(cfg.github.repo, ajak), { format, log });
+    await kirimKeChannel(sock, jid, formatTestMessage(teksRepo(cfg.github.repos), ajak), { format, log });
     log(`Test message terkirim ke ${jid}`);
   } finally {
     close();
@@ -226,14 +254,20 @@ async function runTest(cfg, state) {
 
 async function runDryRun(cfg, state) {
   log('MODE DRY RUN — cek GitHub doang, WA nggak disentuh, state nggak diubah.');
-  const rel = await fetchLatestRelease(cfg.github.repo, {
-    token: cfg.github.token,
-    includePrereleases: cfg.github.includePrereleases,
-  });
-  log(`Release terbaru: ${rel.tag} | baseline bot: ${state.lastTag || '(belum ada — first run)'}\n`);
-  console.log('─'.repeat(50) + '\n' + formatReleasePost(rel, cfg.github.repo) + '\n' + '─'.repeat(50));
-  const { aksi } = putuskanRilis({ state, rel, postOnFirstRun: Boolean(cfg.bot?.postOnFirstRun) });
-  log(`Beres. Keputusan kalau ini cek beneran: ${aksi}`);
+  const salinan = JSON.parse(JSON.stringify(state)); // state asli tidak boleh berubah
+  sinkronState(salinan, cfg.github.repos);
+  for (const repo of cfg.github.repos) {
+    const st = stateRepo(salinan, repo);
+    const rel = await fetchLatestRelease(repo, {
+      token: cfg.github.token,
+      includePrereleases: cfg.github.includePrereleases,
+    });
+    log(`${repo}: release terbaru ${rel.tag} | baseline bot: ${st.lastTag || '(belum ada — first run)'}\n`);
+    console.log('─'.repeat(50) + '\n' + formatReleasePost(rel, repo) + '\n' + '─'.repeat(50));
+    const { aksi } = putuskanRilis({ state: st, rel, postOnFirstRun: Boolean(cfg.bot?.postOnFirstRun) });
+    log(`Keputusan kalau ini cek beneran: ${aksi}`);
+  }
+  log('Beres.');
 }
 
 async function runLoop(cfg, state, intervalMin) {

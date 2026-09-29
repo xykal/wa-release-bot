@@ -107,7 +107,7 @@ lewat `GITHUB_TOKEN`). Di PR dari fork hanya melaporkan.
 Langkahnya: `npm ci --ignore-scripts` di root → ESLint (`-w bot-js`) →
 `node --check` semua `.mjs` di `bot-js/src` **dan** `cli/src` → `node --test`
 → `esbuild` → jalankan bundle hasilnya (`--selftest`) → `node cli/src/bot.mjs
---version` → `node --test cli/test/` (proses CLI sungguhan dengan GitHub palsu
+--version` → `node --test cli/test/cli.test.mjs` (proses CLI sungguhan dengan GitHub palsu
 lewat `--import`: `--dry-run`, `--once` baseline/tidur/304, config hilang; WA
 tidak pernah disentuh).
 Node 18 ada di matrix **khususnya** karena itu runtime yang dipakai di HP.

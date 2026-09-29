@@ -109,7 +109,7 @@ jobs:
       # Proses CLI sungguhan dengan GitHub palsu (--import), tanpa WA/jaringan:
       # --dry-run, --once (baseline, tidur, 304), config hilang.
       - name: Tes integrasi CLI
-        run: node --test cli/test/
+        run: node --test cli/test/cli.test.mjs
 
   # ---------------------------------------------------------------- Android statis
   android-statis:

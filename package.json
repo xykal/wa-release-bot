@@ -19,7 +19,7 @@
   ],
   "scripts": {
     "build": "npm run build -w bot-js",
-    "test": "npm test -w bot-js && node --test cli/test/",
+    "test": "npm test -w bot-js && node --test cli/test/cli.test.mjs",
     "lint": "npm run lint -w bot-js",
     "selftest": "npm run selftest -w bot-js"
   },

@@ -118,8 +118,17 @@ def main():
 
 
 def pasang_domain(acc, host):
-    """Custom domain Worker (idempoten): cari zone dari nama host, lalu PUT workers/domains."""
+    """Custom domain Worker (idempoten): cari zone dari nama host, lalu PUT workers/domains.
+
+    Kalau domain sudah terpasang ke Worker ini, berhenti di GET (izin account
+    Workers Scripts saja). Pencarian zone + PUT hanya untuk pemasangan pertama dan
+    butuh izin zone (Zone:Read, Workers Routes:Edit) - lihat docs/CI.md.
+    """
     if not host:
+        return
+    ada = api("GET", f"{acc}/workers/domains?hostname={host}&service={NAMA}")["result"]
+    if any(d.get("hostname") == host and d.get("service") == NAMA for d in ada):
+        print(f"domain: sudah terpasang -> https://{host}")
         return
     label = host.split(".")
     zone = None

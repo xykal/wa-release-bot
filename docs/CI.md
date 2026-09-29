@@ -218,12 +218,21 @@ plus `workflow_dispatch`.
 | `tangkapan` | `scripts-dev/tangkap_web.py`: Chromium headless render `/`, `/unduh/`, `/unduh/?t=<lewat>`, `/?bahasa=en` pada 14 ukuran layar (320 px sampai ultrawide 2560, portrait + landscape); gagal kalau `scrollWidth` > viewport atau ada elemen keluar layar | artifact `web-tangkapan` (PNG, 7 hari) |
 | `deploy` (bukan PR) | `python3 scripts-dev/deploy_web.py` kalau secret `CF_API_TOKEN` ada; kalau kosong: `::notice` lalu lewat | curl: header CSP ada + `/unduh/` punya `#tirai` |
 
-Deploy manual dari mesin sendiri (token Cloudflare hanya perlu izin *Workers Scripts: Edit*):
+Deploy manual dari mesin sendiri:
 
 ```bash
 pip install blake3
 CF_API_TOKEN=... python3 scripts-dev/deploy_web.py
 ```
+
+Token Cloudflare yang dipakai (manual maupun secret `CF_API_TOKEN` di GitHub) cukup
+*custom token* dengan izin **Account → Workers Scripts: Edit** untuk akun yang memegang
+Worker; domain `wabot.projectkal.my.id` sudah terpasang, jadi skrip berhenti di GET
+`workers/domains`. Hanya pemasangan domain pertama kali (akun/zone baru) yang butuh
+tambahan **Zone → Zone: Read** dan **Workers Routes: Edit** pada zone-nya. Token akun
+yang izinnya luas jangan dijadikan secret; bikin token terpisah di dashboard
+(My Profile → API Tokens → Create Token → Custom), lalu simpan sebagai secret repo
+`CF_API_TOKEN`. Job `deploy` otomatis aktif begitu secret ada.
 
 Kenapa tanpa wrangler: aturan repo "tanpa dependensi runtime tambahan"; skrip memanggil
 API yang sama (`assets-upload-session` → `assets/upload` → `PUT scripts/<nama>`), hash aset

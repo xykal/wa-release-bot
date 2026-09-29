@@ -6,6 +6,11 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+### Diubah
+- `scripts-dev/deploy_web.py`: kalau custom domain sudah terpasang, berhenti di GET
+  `workers/domains` sehingga token deploy cukup izin *Workers Scripts: Edit*; resep token
+  scoped untuk secret `CF_API_TOKEN` ada di `docs/CI.md`.
+
 ### Ditambah
 - **Screenshot app otomatis**: workflow `screenshot-app.yml` membangun APK release x86_64,
   menjalankannya di emulator Android 14 (GitHub Actions) dan menangkap tiap layar

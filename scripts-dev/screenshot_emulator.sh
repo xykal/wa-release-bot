@@ -22,11 +22,20 @@ adb shell settings put global transition_animation_scale 0
 adb shell settings put global animator_duration_scale 0
 adb install -r -g "$APK"
 
+# Pertama kali dibuka app menampilkan layar sambutan (pref sambutanV2 belum ada):
+# tangkap itu dulu, baru tulis pref supaya pembukaan berikutnya langsung ke beranda.
+adb shell am start -W -n "$PKG/$ACT" >/dev/null
+sleep 5
+mkdir -p "$OUT"
+adb exec-out screencap -p > "$OUT/sambutan.png"
+adb shell am force-stop "$PKG"
+
 # Prefs contoh: kunci + tipe persis SettingsStore.kt (salah tipe = ClassCastException saat app baca).
 adb shell run-as "$PKG" mkdir -p shared_prefs
 adb shell run-as "$PKG" sh -c "'cat > shared_prefs/wa_release_bot.xml'" <<'XML'
 <?xml version='1.0' encoding='utf-8' standalone='yes' ?>
 <map>
+    <boolean name="sambutanV2" value="true" />
     <string name="repo">xykal/wa-release-bot</string>
     <string name="channel">https://whatsapp.com/channel/0029VaContohChannelKamu</string>
     <int name="interval" value="15" />
@@ -81,6 +90,7 @@ gulir_ke() {
 }
 
 echo "menangkap:"
+echo "  sambutan.png"
 tangkap beranda
 # etChannel ada di layout lama maupun baru (etRepo diganti tombol Kelola repo);
 # offset lebih besar supaya judul kartu "Rilis GitHub -> Channel" ikut terlihat

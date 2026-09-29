@@ -32,6 +32,8 @@ Semua perubahan penting proyek ini. Format mengikuti
   `app.js` lewat `data-src-en`; `bingkai_screenshot.py --akhiran en`); README memuat
   sandingan id/en (`docs/img/i18n-app.webp`).
 
+- `docs/PITCH.md`: satu halaman pitch (masalah, solusi, untuk siapa, batasan yang jujur).
+
 ### Diubah
 - App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,
   `DialogTautan`, `LembarHitam`, `AksiSistem`, `SplashUtama`, `Lembar` (komponen dialog).

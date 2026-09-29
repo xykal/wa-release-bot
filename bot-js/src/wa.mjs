@@ -13,6 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { resolveTarget } from './channel.mjs';
 import { normalisasiNomor } from './nomor.mjs';
+import { errorAmbigu } from './rilis.mjs';
 import {
   makeWASocket,
   useMultiFileAuthState,
@@ -86,7 +87,9 @@ export async function connectToWhatsApp({
   const sesi = statusSesi(sessionDir);
 
   if (mode === 'none' && sesi !== 'siap') {
-    throw new Error('WA belum ditautkan. Tekan "Tautkan WA" di app (pakai pairing code atau QR).');
+    const err = new Error('WA belum ditautkan. Tekan "Tautkan WA" di app (pakai pairing code atau QR).');
+    err.code = 'BELUM_TAUT'; // CLI menampilkan petunjuknya sendiri (npm run setup)
+    throw err;
   }
   if (mode !== 'none' && sesi === 'setengah') {
     // Sisa pairing yang nggak selesai bikin login berikutnya ditolak WA.
@@ -270,3 +273,31 @@ export async function sendPertanyaan(sock, jid, text) {
   });
   await sock.relayMessage(jid, pesan, {});
 }
+
+/**
+ * Kirim ke channel/grup dengan format yang dipilih. 'pertanyaan' (default)
+ * cuma berlaku untuk channel; grup selalu teks biasa.
+ *
+ * Kalau kirim "pertanyaan" gagal dengan error yang JELAS (fitur ditolak
+ * server, payload salah), jatuh ke teks biasa. Kalau errornya ambigu
+ * (timeout/408) pesannya mungkin sudah masuk — jangan kirim ulang di sini,
+ * biarkan pemanggil memutuskan lewat mekanisme pending (rilis.mjs).
+ *
+ * @returns {Promise<'pertanyaan'|'teks'>} format yang benar-benar terkirim
+ */
+export async function kirimKeChannel(sock, jid, text, { format = 'pertanyaan', log = () => {} } = {}) {
+  if (pakaiPertanyaan(jid, format)) {
+    try {
+      await sendPertanyaan(sock, jid, text);
+      return 'pertanyaan';
+    } catch (e) {
+      if (errorAmbigu(e)) throw e;
+      log(`⚠️ Kirim sebagai "Pertanyaan" gagal (${e.message}) — dikirim sebagai teks biasa.`);
+    }
+  }
+  await sendText(sock, jid, text);
+  return 'teks';
+}
+
+export const pakaiPertanyaan = (jid, format = 'pertanyaan') =>
+  format !== 'teks' && String(jid).endsWith('@newsletter');

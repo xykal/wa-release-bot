@@ -27,6 +27,7 @@ captures/
 !gradle/wrapper/gradle-wrapper.jar
 
 # Hasil build bot-js
+node_modules/
 bot-js/node_modules/
 bot-js/dist/
 app/src/main/assets/node/
@@ -42,16 +43,6 @@ cli/state.json
 cli/wa-session/
 cli/*.log
 
-# ------------------------------- TikTok render --------------------------------
-# Aset (wav2t/sfxw/stiker/fonts) DI-COMMIT biar Actions bisa render.
-# Output JANGAN di-commit (ambil dari Artifacts).
-konten-tiktok/tmp/
-konten-tiktok/cek_*.png
-konten-tiktok/cek4_*.png
-konten-tiktok/cek5_*.png
-konten-tiktok/cek6_*.png
-konten-tiktok/tiktok-*.mp4
-konten-tiktok/assets/
 
 # Python cache
 __pycache__/

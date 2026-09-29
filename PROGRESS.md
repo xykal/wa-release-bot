@@ -12,8 +12,17 @@ Done:
 - Root cause CI `Code quality` merah: SC2086 di step "Ringkasan" `render-v4/v5/v6.yml`. Fix dikutip.
 - `PROGRESS.md` dan `IDEAS.md` dibuat.
 
+- kall: "gas semua". Dikerjakan hari yang sama, satu commit besar (lihat CHANGELOG `[Unreleased]`):
+  H2 npm workspaces + CLI port; H3 hapus `konten-tiktok/` dan 3 workflow render;
+  M1-M2 pin SHA + checksum actionlint; M3 ETag/timeout; M4-M5 `rilis.mjs` + pending anti dobel;
+  M6 Worker batas per perangkat/IP (kode saja); M7 network_security_config; M8 brand tunggal;
+  L1/L2/L4 dokumen, `formatTanggal` tanpa ICU, file standar (PRD, ROADMAP, CoC, CODEOWNERS, FUNDING).
+- Unit test bertambah ~21 (github mock fetch, rilis, kirimKeChannel, mdKeWa, potongAman, brand, tanggal).
+
 Blocked:
-- H2 (CLI fork dari engine), H3 (aset pihak ketiga + media 39 MB), M1-M10: menunggu keputusan kall.
+- Purge history `konten-tiktok` (filter-repo, force-push): menunggu kall.
+- Deploy Worker lagu: butuh token Cloudflare kall, tidak dilakukan dari sesi ini.
+- Tag `v1.7.0`: setelah kall tes APK dari CI dan CLI di Termux.
 
 Next:
-- Setelah "gas": H2 (cli impor dari bot-js), M3+M4 (ETag, timeout, semver guard) + unit test, M7.
+- M9 (i18n Android) dan M10 (pecah `bot.mjs`/`MainActivity.kt`) ada di `docs/ROADMAP.md` v1.7.

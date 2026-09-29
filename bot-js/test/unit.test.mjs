@@ -8,9 +8,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { parseRepo } from '../src/github.mjs';
+import { parseRepo, fetchLatestRelease } from '../src/github.mjs';
 import { bacaTarget, JENIS, pesanCaraIsiChannel, linkChannel } from '../src/channel.mjs';
-import { formatReleasePost, formatTestMessage, formatTesGrup, AJAKAN_BALAS } from '../src/format.mjs';
+import { formatReleasePost, formatTestMessage, formatTesGrup, AJAKAN_BALAS, mdKeWa, potongAman, formatTanggal } from '../src/format.mjs';
+import { putuskanRilis, pendingBerikut, errorAmbigu, tagKeSemver, MAKS_PERCOBAAN } from '../src/rilis.mjs';
+import { kirimKeChannel } from '../src/wa.mjs';
+import { BRAND, TANDA_TANGAN } from '../src/config/brand.mjs';
 import { kelompokHitam, bukaBlokir, labelOrang } from '../src/grup.mjs';
 import { createBridge } from '../src/bridge.mjs';
 import { normalisasiNomor } from '../src/nomor.mjs';
@@ -488,4 +491,167 @@ test('jelaskanGalat: "fetch failed" dibuka sampai kode aslinya', () => {
   const t = jelaskanGalat(e);
   assert.match(t, /fetch failed/);
   assert.match(t, /ENETUNREACH/);
+});
+
+// ------------------------------------------------------- github: ETag + timeout
+function fakeFetch({ status = 200, body = null, etag = '', tangkap = null, tolak = null } = {}) {
+  return async (url, init) => {
+    if (tangkap) tangkap({ url, init });
+    if (tolak) throw tolak;
+    return {
+      status,
+      ok: status >= 200 && status < 300,
+      headers: { get: (k) => (k.toLowerCase() === 'etag' ? etag : null) },
+      json: async () => body,
+    };
+  };
+}
+const relJson = { tag_name: 'v1.2.3', name: 'Rilis', body: 'isi', html_url: 'https://x/y', author: { login: 'kall' }, published_at: '2026-09-29T00:00:00Z' };
+
+test('github: header conditional + versi API ikut dikirim, ETag balik ke pemanggil', async () => {
+  let dilihat;
+  const rel = await fetchLatestRelease('a/b', { etag: 'W/"lama"', token: 'tok', fetchImpl: fakeFetch({ body: relJson, etag: 'W/"baru"', tangkap: (x) => { dilihat = x; } }) });
+  assert.equal(dilihat.init.headers['If-None-Match'], 'W/"lama"');
+  assert.equal(dilihat.init.headers['X-GitHub-Api-Version'], '2022-11-28');
+  assert.equal(dilihat.init.headers.Authorization, 'Bearer tok');
+  assert.ok(dilihat.init.signal, 'harus ada AbortSignal (timeout)');
+  assert.equal(rel.tag, 'v1.2.3');
+  assert.equal(rel.etag, 'W/"baru"');
+  assert.equal(rel.notModified, false);
+});
+
+test('github: 304 -> notModified tanpa baca body', async () => {
+  const rel = await fetchLatestRelease('a/b', { etag: 'W/"x"', fetchImpl: fakeFetch({ status: 304, body: null }) });
+  assert.deepEqual(rel, { notModified: true, etag: 'W/"x"' });
+});
+
+test('github: timeout dilaporkan sebagai pesan yang jelas', async () => {
+  const err = Object.assign(new Error('The operation was aborted due to timeout'), { name: 'TimeoutError' });
+  await assert.rejects(
+    fetchLatestRelease('a/b', { timeoutMs: 1234, fetchImpl: fakeFetch({ tolak: err }) }),
+    /nggak jawab dalam 1 dtk/,
+  );
+});
+
+test('github: prerelease mode pakai daftar releases, ambil yang pertama', async () => {
+  let dilihat;
+  const rel = await fetchLatestRelease('a/b', { includePrereleases: true, fetchImpl: fakeFetch({ body: [{ ...relJson, prerelease: true }], tangkap: (x) => { dilihat = x; } }) });
+  assert.match(dilihat.url, /\/releases\?per_page=1$/);
+  assert.equal(rel.isPrerelease, true);
+});
+
+// ------------------------------------------------------------- rilis: keputusan
+test('rilis: tagKeSemver menerima v-prefix, menolak tag bebas', () => {
+  assert.equal(tagKeSemver('v1.6.7'), '1.6.7');
+  assert.equal(tagKeSemver('2024.09.1'), '2024.9.1');
+  assert.equal(tagKeSemver('nightly-2024'), null);
+});
+
+test('rilis: 304 -> tidur, first run -> baseline / post sesuai setting', () => {
+  assert.equal(putuskanRilis({ state: {}, rel: { notModified: true } }).aksi, 'tidur');
+  assert.equal(putuskanRilis({ state: {}, rel: { tag: 'v1.0.0' } }).aksi, 'baseline');
+  assert.equal(putuskanRilis({ state: {}, rel: { tag: 'v1.0.0' }, postOnFirstRun: true }).aksi, 'post');
+});
+
+test('rilis: tag sama -> tidur, lebih baru -> post, lebih lama -> rollback', () => {
+  const state = { lastTag: 'v1.5.0' };
+  assert.equal(putuskanRilis({ state, rel: { tag: 'v1.5.0' } }).aksi, 'tidur');
+  assert.equal(putuskanRilis({ state, rel: { tag: 'v1.5.1' } }).aksi, 'post');
+  assert.equal(putuskanRilis({ state, rel: { tag: 'v2.0.0-rc.1' } }).aksi, 'post');
+  assert.equal(putuskanRilis({ state, rel: { tag: 'v1.4.9' } }).aksi, 'rollback');
+});
+
+test('rilis: tag non-semver tetap diposting kalau beda', () => {
+  assert.equal(putuskanRilis({ state: { lastTag: 'build-41' }, rel: { tag: 'build-42' } }).aksi, 'post');
+  assert.equal(putuskanRilis({ state: { lastTag: 'v1.0.0' }, rel: { tag: 'latest' } }).aksi, 'post');
+});
+
+test('rilis: gagal MAKS_PERCOBAAN kali -> dilewati, kecuali dipicu manual', () => {
+  const state = { lastTag: 'v1.0.0', pending: { tag: 'v1.1.0', percobaan: MAKS_PERCOBAAN } };
+  assert.equal(putuskanRilis({ state, rel: { tag: 'v1.1.0' } }).aksi, 'lewati-gagal');
+  assert.equal(putuskanRilis({ state, rel: { tag: 'v1.1.0' }, manual: true }).aksi, 'post');
+  assert.equal(putuskanRilis({ state, rel: { tag: 'v1.2.0' } }).aksi, 'post', 'tag lain mulai dari nol');
+});
+
+test('rilis: pendingBerikut menghitung percobaan per tag, manual mulai ulang', () => {
+  const p1 = pendingBerikut(null, 'v1.1.0');
+  assert.equal(p1.percobaan, 1);
+  const p2 = pendingBerikut(p1, 'v1.1.0');
+  assert.equal(p2.percobaan, 2);
+  assert.equal(p2.mulai, p1.mulai);
+  assert.equal(pendingBerikut(p2, 'v1.2.0').percobaan, 1);
+  assert.equal(pendingBerikut(p2, 'v1.1.0', { manual: true }).percobaan, 1);
+});
+
+test('rilis: errorAmbigu kenal timeout/408, bukan error biasa', () => {
+  assert.equal(errorAmbigu(new Error('Timed Out')), true);
+  assert.equal(errorAmbigu({ output: { statusCode: 408 }, message: 'x' }), true);
+  assert.equal(errorAmbigu(new Error('not-authorized')), false);
+});
+
+// ------------------------------------------------------- wa: kirim tanpa dobel
+function sockPalsu({ relayError = null } = {}) {
+  const dikirim = [];
+  return {
+    dikirim,
+    relayMessage: async (jid) => { if (relayError) throw relayError; dikirim.push(['pertanyaan', jid]); },
+    sendMessage: async (jid) => { dikirim.push(['teks', jid]); },
+  };
+}
+
+test('kirimKeChannel: channel -> pertanyaan; grup -> teks', async () => {
+  const s1 = sockPalsu();
+  assert.equal(await kirimKeChannel(s1, '1@newsletter', 'hai'), 'pertanyaan');
+  const s2 = sockPalsu();
+  assert.equal(await kirimKeChannel(s2, '1@g.us', 'hai'), 'teks');
+  assert.equal(await kirimKeChannel(sockPalsu(), '1@newsletter', 'hai', { format: 'teks' }), 'teks');
+});
+
+test('kirimKeChannel: error jelas -> jatuh ke teks; error ambigu -> TIDAK kirim ulang', async () => {
+  const s1 = sockPalsu({ relayError: new Error('not-acceptable') });
+  assert.equal(await kirimKeChannel(s1, '1@newsletter', 'hai'), 'teks');
+  assert.deepEqual(s1.dikirim, [['teks', '1@newsletter']]);
+  const s2 = sockPalsu({ relayError: new Error('Timed Out') });
+  await assert.rejects(kirimKeChannel(s2, '1@newsletter', 'hai'), /Timed Out/);
+  assert.deepEqual(s2.dikirim, [], 'pesan mungkin sudah masuk, jangan dobel');
+});
+
+// ------------------------------------------------------------ format: markdown
+test('mdKeWa: heading, bold, link, list, coret, komentar HTML', () => {
+  const md = '## Apa yang baru\n\n- **Fix** login [#12](https://x/12)\n* ~~lama~~\n<!-- ignore -->\n[https://a.b](https://a.b)';
+  const wa = mdKeWa(md);
+  assert.match(wa, /^\*Apa yang baru\*/);
+  assert.match(wa, /• \*Fix\* login #12 \(https:\/\/x\/12\)/);
+  assert.match(wa, /• ~lama~/);
+  assert.doesNotMatch(wa, /ignore/);
+  assert.match(wa, /^https:\/\/a\.b$/m);
+});
+
+test('mdKeWa: blok kode dibiarkan utuh', () => {
+  const md = 'x\n```\n## bukan heading\n**bukan bold**\n```';
+  assert.equal(mdKeWa(md), md);
+});
+
+test('potongAman: tidak membelah emoji dan lebih suka batas baris', () => {
+  const s = 'baris satu\nbaris dua 😀😀';
+  const p = potongAman(s, s.length - 1);
+  assert.doesNotMatch(p, /[\uD800-\uDBFF]$/);
+  assert.equal(potongAman('a'.repeat(10) + '\n' + 'b'.repeat(10), 15), 'a'.repeat(10));
+  assert.equal(potongAman('pendek', 100), 'pendek');
+});
+
+test('brand: string resmi dipakai di tanda tangan pesan', () => {
+  assert.equal(BRAND, 'XyVerse Technology Global');
+  assert.match(formatReleasePost(sampleRel, 'a/b'), /wa-release-bot \(XyVerse Technology Global\)/);
+  assert.match(formatTestMessage('a/b'), /XyVerse Technology Global/);
+  assert.match(TANDA_TANGAN, /XyVerse Technology Global$/);
+});
+
+test('formatTanggal: Indonesia tanpa ICU, zona ikut proses', () => {
+  const t = new Date(2026, 8, 29, 10, 5); // 29 Sep 2026 = Selasa
+  const s = formatTanggal(t);
+  assert.match(s, /^Selasa, 29 September 2026 10\.05 (WIB|WITA|WIT|UTC[+-]\d\d(:\d\d)?)$/);
+  assert.equal(formatTanggal(t, { jam: false }), 'Selasa, 29 September 2026');
+  assert.equal(formatTanggal('bukan tanggal'), '');
+  assert.match(formatReleasePost({ tag: 'v1', name: 'x', body: '', url: 'u', publishedAt: t.toISOString() }, 'a/b'), /Selasa, 29 September 2026/);
 });

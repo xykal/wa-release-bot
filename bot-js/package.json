@@ -2,7 +2,7 @@
   "name": "wa-release-bot-js",
   "private": true,
   "version": "1.6.7",
-  "description": "Engine bot (Node.js) yang berjalan di dalam aplikasi Android via nodejs-mobile. Dijadikan 1 file bundle oleh esbuild.",
+  "description": "Engine bot (Node.js): dibundel esbuild jadi 1 file untuk APK (nodejs-mobile) dan dipakai langsung oleh cli/.",
   "type": "module",
   "engines": {
     "node": ">=18"
@@ -27,9 +27,6 @@
     "eslint": "^10.11.0",
     "globals": "^17.12.0"
   },
-  "overrides": {
-    "file-type": "^21.3.1",
-    "uuid": "^11.1.1"
-  },
-  "license": "SEE LICENSE IN ../LICENSE"
+  "license": "SEE LICENSE IN ../LICENSE",
+  "author": "xykal (XyVerse Technology Global)"
 }

@@ -1,0 +1,30 @@
+{
+  "name": "wa-release-bot",
+  "private": true,
+  "version": "1.6.7",
+  "description": "Bot WhatsApp yang tidur: bangun tiap N menit, cek release GitHub, posting ke channel WA. Root npm workspaces: bot-js (engine, dibundel ke APK) + cli (Termux/PC).",
+  "author": "xykal (XyVerse Technology Global)",
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "https://github.com/xykal/wa-release-bot#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xykal/wa-release-bot.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "workspaces": [
+    "bot-js",
+    "cli"
+  ],
+  "scripts": {
+    "build": "npm run build -w bot-js",
+    "test": "npm test -w bot-js",
+    "lint": "npm run lint -w bot-js",
+    "selftest": "npm run selftest -w bot-js"
+  },
+  "overrides": {
+    "file-type": "^21.3.1",
+    "uuid": "^11.1.1"
+  }
+}

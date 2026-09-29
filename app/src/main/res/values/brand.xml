@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Satu-satunya sumber string brand di sisi Android. Nilainya harus sama
+     dengan bot-js/src/config/brand.mjs; CI (code-quality, job android-statis)
+     menolak literal brand di layout. Brand tidak diterjemahkan; yang boleh
+     dilokalkan cuma "Powered by". -->
+<resources>
+    <string name="brand_name" translatable="false">XyVerse Technology Global</string>
+    <string name="brand_powered_by_prefix">POWERED BY</string>
+    <string name="brand_powered_by">Powered by XyVerse Technology Global</string>
+    <string name="brand_author" translatable="false">xykal — XyVerse Technology Global</string>
+</resources>

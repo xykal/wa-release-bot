@@ -1,13 +1,11 @@
 # IDEAS — backlog
 
+Dipangkas 2026-09-29: yang sudah dikerjakan dihapus (ETag, markdown->WA, semver, pending,
+cleartext, pin SHA); lihat CHANGELOG `[Unreleased]`.
+
 Format: apa — kenapa penting buat pengguna nyata — dampak/usaha (S/M/L). Dipangkas berkala.
 
 ## Inti produk (rilis -> channel)
-- Conditional request ETag ke GitHub — cek jadi 0 byte dan tidak makan kuota rate limit; menepati
-  janji "0% data" secara harfiah — dampak tinggi / S.
-- Konversi markdown GitHub -> format WA (`##` jadi *bold*, `[teks](url)` jadi `teks: url`, blok kode
-  jadi ```) — release notes tampil rapi di channel, bukan markdown mentah — tinggi / S.
-- Semver guard: release dihapus/rollback tidak diumumkan sebagai "baru" — sedang / S.
 - Multi-repo dalam satu bot (daftar repo, satu channel atau per repo) — pengguna yang punya lebih
   dari satu proyek tidak perlu dua HP — tinggi / M.
 - Template pesan bisa diedit dari app (placeholder `{tag}`, `{repo}`, `{notes}`) — tiap proyek
@@ -17,14 +15,11 @@ Format: apa — kenapa penting buat pengguna nyata — dampak/usaha (S/M/L). Dip
   perlu buka GitHub — tinggi / M (batas ukuran WA dan hemat data harus dipikirkan).
 
 ## Keandalan
-- Write-ahead `state.pending` sebelum kirim + tombol "kirim ulang" — hilangkan posting dobel — S.
-- Selftest di HP yang melaporkan `process.versions.icu` dan hasil `toLocaleString('id-ID')` — S.
 - Health ping opsional (healthchecks.io) tiap siklus — pengguna tahu botnya mati tanpa buka app — S.
 
 ## Keamanan dan platform
-- `network_security_config` cleartext hanya 127.0.0.1 — S.
-- Rate limit per IP + kuota per install di Worker lagu, proving test k6 di CI — M.
-- Pin semua action ke SHA penuh, satu PR — S.
+- Proving test buat batas Worker lagu (kode per perangkat/IP sudah ada): skrip yang menembak
+  endpoint 13x dengan `X-Pemasang` sama dan memastikan yang ke-13 dijawab 429 — S (butuh deploy dulu).
 - Pantau nodejs-mobile untuk build 16 KB; kalau ada, jalur Play Store terbuka — L (upstream).
 
 ## Pertumbuhan

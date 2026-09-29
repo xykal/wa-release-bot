@@ -17,9 +17,10 @@ updates:
       actions:
         patterns: ['*']
 
-  # ---------------------------------------------------- engine bot (bot-js)
+  # ---------------------------------------------------- npm workspaces (root)
+  # Satu lockfile di root untuk bot-js + cli.
   - package-ecosystem: npm
-    directory: /bot-js
+    directory: /
     schedule:
       interval: weekly
       day: monday
@@ -27,45 +28,22 @@ updates:
       timezone: Asia/Jakarta
     open-pull-requests-limit: 5
     commit-message:
-      prefix: 'deps(bot-js)'
+      prefix: 'deps(js)'
       include: scope
     versioning-strategy: increase
     ignore:
-      # Engine ini HARUS tetap Node 18-compatible karena nodejs-mobile mentok
-      # di Node 18.20.4. Naikkan versi Baileys secara manual + jalankan
-      # `npm run build && node dist/bundle.cjs --selftest` di Node 18 dulu.
+      # Engine HARUS tetap Node 18-compatible: nodejs-mobile mentok di 18.20.4.
+      # Baileys major dinaikkan manual + selftest di Node 18 dulu.
       - dependency-name: '@whiskeysockets/baileys'
         update-types: ['version-update:semver-major']
-      # pino 10 menarik thread-stream 4 yang butuh Node >= 20. Engine ini
-      # dibundle untuk Node 18.20.4 (plafon nodejs-mobile), jadi pino major
-      # cuma boleh naik BARENGAN upgrade nodejs-mobile — bukan lewat PR.
+      # pino 10 menarik thread-stream 4 (Node >= 20); cuma boleh naik barengan
+      # upgrade nodejs-mobile, bukan lewat PR.
       - dependency-name: 'pino'
         update-types: ['version-update:semver-major']
     groups:
-      bot-js:
+      js:
         patterns: ['*']
         exclude-patterns: ['@whiskeysockets/baileys']
-
-  # ---------------------------------------------------- CLI (Termux)
-  - package-ecosystem: npm
-    directory: /cli
-    schedule:
-      interval: weekly
-      day: monday
-      time: '03:20'
-      timezone: Asia/Jakarta
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: 'deps(cli)'
-      include: scope
-    ignore:
-      # Sama seperti bot-js: pino 10 butuh Node >= 20 sedangkan CLI ini
-      # dinyatakan jalan di Node >= 18 (Termux).
-      - dependency-name: 'pino'
-        update-types: ['version-update:semver-major']
-    groups:
-      cli:
-        patterns: ['*']
 
   # ---------------------------------------------------- Gradle / Android
   - package-ecosystem: gradle

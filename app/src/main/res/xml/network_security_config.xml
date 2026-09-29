@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cleartext HANYA ke loopback: WebSocket app <-> engine Node di 127.0.0.1
+     (jalur cepat perintah). Semua host lain wajib TLS. Ini pengganti
+     usesCleartextTraffic="true" yang dulu membuka HTTP polos ke mana saja. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

@@ -27,7 +27,16 @@ const AYAT = __AYAT__;
 const PELUANG_TREND = 0.5;
 const PELUANG_AYAT = 0.35;
 const PANJANG = 60;
-const BATAS_HARIAN = 80;
+// Tiga lapis batas harian. Dulu cuma satu angka global (80) yang dibagi semua
+// pemasang APK: 80 request dari satu skrip = fitur mati buat semua orang.
+//   per pemasang : app kirim header X-Pemasang (id acak per instalasi); app
+//                  sendiri maksimal 8 lagu/hari, jadi 12 sudah longgar.
+//   per IP       : pagar buat yang nggak kirim id / ganti-ganti id.
+//   global       : pagar terakhir kuota AI + KV (free tier 1000 write/hari,
+//                  tiap request yang lolos ~5 write).
+const BATAS_PER_PEMASANG = 12;
+const BATAS_PER_IP = 20;
+const BATAS_HARIAN = 180;
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36';
 
 // Gaya caption dirotasi biar nggak monoton "motivasi" terus.
@@ -314,12 +323,33 @@ Balas cuma teks caption-nya.`,
 }
 
 // ------------------------------------------------------------ utama
-async function laguBerikut(env, paksaGaya = null) {
-  // batas harian biar endpoint publik ini nggak disalahgunain buat ngabisin kuota AI
+/** Hash pendek buat kunci KV (IP tidak disimpan mentah). */
+async function kunciAman(teks) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(teks)));
+  return [...new Uint8Array(d)].slice(0, 8).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Cek semua batas dulu TANPA menulis; baru kalau lolos semua, naikkan
+ * counter-nya. Request yang ditolak tidak boleh menghabiskan kuota write KV.
+ * @returns {Response|null} 429 kalau kena batas, null kalau boleh lanjut
+ */
+async function cekBatas(env, { ip, pemasang }) {
   const hari = new Date().toISOString().slice(0, 10);
-  const nHari = Number(await env.LAGU.get('hit:' + hari)) || 0;
-  if (nHari >= BATAS_HARIAN) return json({ error: 'batas harian habis, besok lagi' }, 429);
-  await env.LAGU.put('hit:' + hari, String(nHari + 1), { expirationTtl: 3 * 86400 });
+  const kunci = [['hit:' + hari, BATAS_HARIAN, 'batas harian habis, besok lagi']];
+  if (pemasang) kunci.push([`pemasang:${hari}:${await kunciAman(pemasang)}`, BATAS_PER_PEMASANG, 'jatah lagu hari ini buat perangkat ini habis']);
+  if (ip) kunci.push([`ip:${hari}:${await kunciAman(ip)}`, BATAS_PER_IP, 'terlalu sering dari jaringan ini, besok lagi']);
+  const nilai = await Promise.all(kunci.map(([k]) => env.LAGU.get(k).then((v) => Number(v) || 0)));
+  for (let i = 0; i < kunci.length; i++) {
+    if (nilai[i] >= kunci[i][1]) return json({ error: kunci[i][2] }, 429);
+  }
+  await Promise.all(kunci.map(([k], i) => env.LAGU.put(k, String(nilai[i] + 1), { expirationTtl: 3 * 86400 })));
+  return null;
+}
+
+async function laguBerikut(env, paksaGaya = null, siapa = {}) {
+  const ditolak = await cekBatas(env, siapa);
+  if (ditolak) return ditolak;
 
   let riwayat = JSON.parse((await env.LAGU.get('riwayat')) || '[]');
   if (!Array.isArray(riwayat)) riwayat = [];
@@ -370,7 +400,11 @@ export default {
     const url = new URL(req.url);
     if (req.method !== 'GET') return new Response('method', { status: 405 });
     if (url.pathname === '/lagu/berikut') {
-      try { return await laguBerikut(env, url.searchParams.get('gaya')); } catch (e) { return json({ error: e.message }, 500); }
+      const siapa = {
+        ip: req.headers.get('cf-connecting-ip') || '',
+        pemasang: (req.headers.get('x-pemasang') || '').slice(0, 64),
+      };
+      try { return await laguBerikut(env, url.searchParams.get('gaya'), siapa); } catch (e) { return json({ error: e.message }, 500); }
     }
     return new Response(`wa-release-bot · lagu mood · ${DAFTAR.length} lagu lawas + trend Indonesia harian · ${AYAT.length} ayat\n`,
       { headers: { 'content-type': 'text/plain; charset=utf-8' } });

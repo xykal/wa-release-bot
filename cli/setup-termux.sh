@@ -6,7 +6,8 @@ pkg update -y
 pkg install -y nodejs git unzip cronie termux-api
 echo ""
 echo "✅ Selesai. Langkah berikutnya:"
-echo "   cd <folder-project>"
-echo "   npm install"
+echo "   cd <folder-project>            # ROOT repo, bukan cli/"
+echo "   npm install --ignore-scripts   # dependensi engine + CLI (npm workspaces)"
+echo "   cd cli"
 echo "   cp config.example.json config.json && nano config.json"
 echo "   npm run setup"

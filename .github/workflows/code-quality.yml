@@ -1,7 +1,10 @@
 name: Code quality
 
-# Analisis statis + unit test, tanpa perlu build APK.
-# Cepat (< 5 menit) supaya bisa jadi gerbang review tiap PR.
+# Analisis statis + unit test, tanpa build APK. Target < 5 menit supaya jadi
+# gerbang review tiap PR.
+#
+# Dependensi JS dikelola npm workspaces di root (bot-js + cli), jadi engine dan
+# CLI memakai modul yang sama persis dan cuma ada SATU package-lock.json.
 on:
   push:
     branches: [main, master]
@@ -17,142 +20,170 @@ permissions:
   contents: read
 
 jobs:
+  # ------------------------------------------------------------------ lockfile
+  # Lockfile root dibuat di CI, bukan di mesin lokal, lalu di-commit atas nama
+  # xykal. Push pakai GITHUB_TOKEN tidak memicu workflow lain (anti-loop).
+  # Run berikutnya memakai `npm ci` yang deterministik.
+  lockfile:
+    name: Lockfile root
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '20'
+      - name: Buat package-lock.json kalau belum ada
+        id: buat
+        run: |
+          if [ -f package-lock.json ]; then
+            echo "lockfile sudah ada"
+            echo "baru=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          echo "baru=true" >> "$GITHUB_OUTPUT"
+      - name: Commit lockfile (hanya push ke main)
+        if: steps.buat.outputs.baru == 'true' && github.event_name == 'push'
+        run: |
+          git config --local user.name "xykal"
+          git config --local user.email "xykal@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore(deps): bootstrap package-lock.json root (npm workspaces)" || echo "nothing to commit"
+          git push
+
   # ---------------------------------------------------------------- JavaScript
   js:
-    name: Lint & test JS
+    name: Lint & test JS (Node ${{ matrix.node }})
+    needs: lockfile
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        # 18.20.4 = versi asli di dalam APK, 20/22 = kalau engine dijalankan di PC/CI
+        # 18.20.4 = Node di dalam APK (nodejs-mobile). 20/22 = CLI di Termux/PC.
         node: ['18.20.4', '20', '22']
-        dir: [bot-js, cli]
-        exclude:
-          # CLI nggak dibundle ke APK → cukup diuji di Node modern
-          - node: '18.20.4'
-            dir: cli
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node }}
-          cache: npm
-          cache-dependency-path: ${{ matrix.dir }}/package-lock.json
 
-      - name: Install
-        working-directory: ${{ matrix.dir }}
+      - name: Install (workspaces)
+        # --ignore-scripts: preinstall Baileys menolak Node < 20, padahal
+        # runtime APK memang 18.20.4 dan sudah dibuktikan jalan lewat selftest.
         run: |
-          # bot-js: --ignore-scripts karena Baileys nge-block Node < 20 lewat
-          #   "preinstall": "node ./engine-requirements.js"
-          #   (runtime di APK memang Node 18.20.4 — lihat build-apk.yml).
-          # cli/dependabot: install biasa.
-          npm ci --ignore-scripts --no-audit --no-fund
-          npx --no-install esbuild --version 2>/dev/null || true
+          if [ -f package-lock.json ]; then
+            npm ci --ignore-scripts --no-audit --no-fund
+          else
+            echo "package-lock.json belum ada di commit ini (run pertama) - pakai npm install"
+            npm install --ignore-scripts --no-audit --no-fund
+          fi
 
-      # Lint cuma di Node 22, sengaja.
-      # eslint versi baru (>= 9.3x) manggil util.styleText yang baru ada di
-      # Node >= 20, jadi lint di Node 18.20.4 bisa meledak bukan karena kode
-      # kita salah — dan itu bikin job merah padahal engine-nya sehat.
-      # Yang WAJIB jalan di 18.20.4 tetap diuji di sana: unit test, bundle,
-      # dan smoke test (langkah di bawah) — itu yang menentukan APK jalan.
+      # eslint >= 9.3x memanggil util.styleText (Node >= 20); lint di 18 meledak
+      # bukan karena kode salah. Yang wajib jalan di 18.20.4 tetap diuji di
+      # bawah: unit test, bundle, selftest.
       - name: Lint
-        if: matrix.dir == 'bot-js' && matrix.node == '22'
-        working-directory: ${{ matrix.dir }}
-        run: npm run lint
+        if: matrix.node == '22'
+        run: npm run lint -w bot-js
 
-      # Statis, tanpa build: jembatan JNI cuma jalan kalau NodeBridge benar-benar
-      # manggil System.loadLibrary(). Punya .so di dalam APK nggak ada gunanya
-      # kalau nggak ada yang memuatnya — dan itulah yang dulu kejadian:
-      # mesin Node nggak pernah nyala, QR nggak pernah muncul, dan nggak ada
-      # satu pun tanda bahaya di build. Gagalnya baru kelihatan di HP.
-      - name: Jembatan JNI harus dimuat eksplisit
-        if: matrix.dir == 'bot-js'
+      - name: Syntax check semua source
+        run: find bot-js/src cli/src -name '*.mjs' -print0 | xargs -0 -n1 node --check
+
+      - name: Unit test
+        run: npm test -w bot-js
+
+      - name: Build bundle
+        run: npm run build -w bot-js
+
+      - name: Bundle jalan di Node ${{ matrix.node }}
+        run: node bot-js/dist/bundle.cjs --selftest
+
+      - name: CLI bisa dimuat (--version)
+        run: node cli/src/bot.mjs --version
+
+  # ---------------------------------------------------------------- Android statis
+  android-statis:
+    name: Cek statis Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # libnodebridge.so punya DT_NEEDED ke libnode.so; kalau System.loadLibrary
+      # tidak dipanggil dengan urutan itu, mesin Node tidak pernah nyala dan
+      # gagalnya baru kelihatan di HP, bukan di build.
+      - name: Jembatan JNI harus dimuat eksplisit, urutan node lalu nodebridge
         run: |
           BRIDGE="app/src/main/java/com/xykals/warelease/NodeBridge.kt"
           FAIL=0
-
           for LIB in node nodebridge; do
-            if grep -q "System.loadLibrary(\"$LIB\")" "$BRIDGE"; then
-              echo "✅ System.loadLibrary(\"$LIB\") ada"
-            else
-              echo "❌ System.loadLibrary(\"$LIB\") HILANG dari $BRIDGE"
-              echo "   → semua panggilan native bakal UnsatisfiedLinkError,"
-              echo "     mesin Node nggak akan pernah jalan, QR nggak akan muncul."
-              FAIL=1
+            if ! grep -q "System.loadLibrary(\"$LIB\")" "$BRIDGE"; then
+              echo "System.loadLibrary(\"$LIB\") hilang dari $BRIDGE"; FAIL=1
             fi
           done
-
-          # Urutannya penting: libnodebridge.so punya DT_NEEDED ke libnode.so.
-          # Diambil cuma dari baris PEMANGGILAN (bukan komentar yang nyebut
-          # System.loadLibrary), makanya polanya nyari tanda kutip + argumennya.
           URUT="$(grep -o 'System.loadLibrary("[a-z]*")' "$BRIDGE" | sed 's/.*loadLibrary("//;s/")//' | tr '\n' ' ')"
           if [ "$URUT" != "node nodebridge " ]; then
-            echo "❌ urutan loadLibrary salah: '$URUT' (harusnya 'node nodebridge ')"
-            echo "   libnodebridge.so butuh libnode.so — lihat readelf -d."
-            FAIL=1
-          else
-            echo "✅ urutannya benar: node dulu, baru nodebridge"
+            echo "urutan loadLibrary salah: '$URUT' (harusnya 'node nodebridge ')"; FAIL=1
           fi
-
           exit $FAIL
 
-      - name: Syntax check semua source
-        working-directory: ${{ matrix.dir }}
+      - name: Brand string tunggal dipakai, bukan literal
         run: |
-          find src -name '*.mjs' -print0 | xargs -0 -n1 node --check
+          set -e
+          test -f app/src/main/res/values/brand.xml
+          test -f bot-js/src/config/brand.mjs
+          if grep -rnE 'android:text="(BUILT IN|Powered by|XyVerse Tech)' app/src/main/res/layout; then
+            echo "brand literal di layout - pakai @string/brand_*"; exit 1
+          fi
 
-      - name: Unit test
-        if: matrix.dir == 'bot-js'
-        working-directory: ${{ matrix.dir }}
-        run: npm test
+      - name: Semua XML resource + manifest valid
+        run: |
+          python3 - <<'PY'
+          import glob, sys, xml.dom.minidom as m
+          files = glob.glob('app/src/main/res/**/*.xml', recursive=True) + ['app/src/main/AndroidManifest.xml']
+          rusak = 0
+          for f in files:
+              try:
+                  m.parse(f)
+              except Exception as e:  # noqa: BLE001 - laporkan semua, jangan berhenti di yang pertama
+                  print(f'{f}: {e}'); rusak += 1
+          print(f'{len(files)} file XML dicek, {rusak} rusak')
+          sys.exit(1 if rusak else 0)
+          PY
 
-      - name: Build bundle (khusus bot-js)
-        if: matrix.dir == 'bot-js'
-        working-directory: ${{ matrix.dir }}
-        run: npm run build
-
-      - name: Bundle jalan di Node ${{ matrix.node }}?
-        if: matrix.dir == 'bot-js'
-        working-directory: ${{ matrix.dir }}
-        run: node dist/bundle.cjs --selftest
-
-  # -------------------------------------------------------------------- audit
+  # ---------------------------------------------------------------- audit
   audit:
     name: Audit dependensi
+    needs: lockfile
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '20'
 
-      - name: npm audit (bot-js)
-        working-directory: bot-js
+      - name: npm audit (root workspaces)
+        # Yang memblokir cuma high/critical di dependency produksi; dev-only
+        # (esbuild, eslint) dilaporkan tapi tidak ikut APK.
         run: |
-          # --ignore-scripts: sama seperti job lain — preinstall Baileys
-          # nge-gate Node < 20 (lihat build-apk.yml), nggak ada hubungannya
-          # sama audit dan nggak kita perlukan di sini.
-          npm ci --ignore-scripts --no-audit --no-fund
-          # Yang bikin gagal cuma kerentanan level high/critical di dependency
-          # PRODUKSI. Dev-only (esbuild dev server dll) dilaporkan tapi nggak
-          # memblokir, karena nggak ikut masuk APK.
+          if [ -f package-lock.json ]; then
+            npm ci --ignore-scripts --no-audit --no-fund
+          else
+            npm install --ignore-scripts --no-audit --no-fund
+          fi
           npm audit --omit=dev --audit-level=high
           echo "--- laporan lengkap (informasional) ---"
           npm audit || true
 
-      - name: npm audit (cli)
-        working-directory: cli
-        run: |
-          npm ci --ignore-scripts --no-audit --no-fund
-          npm audit --omit=dev --audit-level=high
-
       - name: Tidak boleh ada token/secret yang ke-commit
         run: |
           set -e
-          echo "Cek pola token yang umum ke-commit..."
           if git grep -nEI \
               -e 'ghp_[A-Za-z0-9]{36}' \
               -e 'gho_[A-Za-z0-9]{36}' \
@@ -163,31 +194,42 @@ jobs:
               -e 'gsk_[A-Za-z0-9]{40,}' \
               -e 'vcp_[A-Za-z0-9]{20,}' \
               -e 'sk-[A-Za-z0-9]{32,}' \
+              -e 'cfut_[A-Za-z0-9]{30,}' \
+              -e 'GOCSPX-[A-Za-z0-9_-]{20,}' \
               -- . ; then
-            echo "❌ Ada yang kelihatan seperti token di dalam repo!"
+            echo "Ada yang kelihatan seperti token di dalam repo"
             exit 1
           fi
-          echo "✅ Bersih"
+          echo "bersih"
 
   # ------------------------------------------------------------------ shell/YAML
   scripts:
     name: Lint script & workflow
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      ACTIONLINT_VERSION: '1.7.12'
+      ACTIONLINT_SHA256: '8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: ShellCheck
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq shellcheck
-          find . -name '*.sh' -not -path '*/node_modules/*' -print0 \
+          find scripts cli -maxdepth 1 -name '*.sh' -print0 \
             | xargs -0 shellcheck --severity=warning --shell=bash
 
+      # Versi + sha256 dipin: skrip "download-actionlint.bash" dari branch main
+      # bisa berubah kapan saja dan itu kode yang dieksekusi di runner.
       - name: actionlint (lint file workflow)
         run: |
-          bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
-          ./actionlint -color -verbose
+          set -e
+          URL="https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl -sSfL "$URL" -o /tmp/actionlint.tar.gz
+          echo "${ACTIONLINT_SHA256}  /tmp/actionlint.tar.gz" | sha256sum -c -
+          tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint
+          /tmp/actionlint -color
 
       - name: Validasi YAML lainnya
         run: |
@@ -196,26 +238,19 @@ jobs:
           try:
               import yaml
           except ImportError:
-              print("pyyaml tidak ada — dilewati")
+              print("pyyaml tidak ada - dilewati")
               sys.exit(0)
           bad = 0
-          for p in pathlib.Path('.').rglob('*.yml'):
-              if 'node_modules' in p.parts:
-                  continue
-              try:
-                  yaml.safe_load(p.read_text())
-              except Exception as e:
-                  print(f"❌ {p}: {e}")
-                  bad += 1
-          for p in pathlib.Path('.').rglob('*.yaml'):
-              if 'node_modules' in p.parts:
-                  continue
-              try:
-                  yaml.safe_load(p.read_text())
-              except Exception as e:
-                  print(f"❌ {p}: {e}")
-                  bad += 1
-          print("✅ semua YAML valid" if not bad else f"❌ {bad} file bermasalah")
+          for pola in ('*.yml', '*.yaml'):
+              for p in pathlib.Path('.').rglob(pola):
+                  if 'node_modules' in p.parts:
+                      continue
+                  try:
+                      yaml.safe_load(p.read_text())
+                  except Exception as e:
+                      print(f"{p}: {e}")
+                      bad += 1
+          print("semua YAML valid" if not bad else f"{bad} file bermasalah")
           sys.exit(1 if bad else 0)
           PY
 
@@ -224,7 +259,7 @@ jobs:
           fail=0
           for f in gradlew scripts/*.sh cli/setup-termux.sh; do
             if [ -f "$f" ] && [ ! -x "$f" ]; then
-              echo "❌ $f tidak executable"; fail=1
+              echo "$f tidak executable"; fail=1
             fi
           done
           exit $fail

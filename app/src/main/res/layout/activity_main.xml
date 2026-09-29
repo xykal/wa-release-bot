@@ -716,7 +716,7 @@
                 android:layout_marginTop="12dp" />
             </LinearLayout>
 
-            <!-- footer paling bawah: BUILT IN XyVerse -->
+            <!-- footer paling bawah: Powered by XyVerse Technology Global (string dari values/brand.xml) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -727,7 +727,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:letterSpacing="0.22"
-                    android:text="BUILT IN"
+                    android:text="@string/brand_powered_by_prefix"
                     android:textColor="@color/wr_teks2"
                     android:textSize="10.5sp" />
                 <ImageView
@@ -735,7 +735,7 @@
                     android:layout_height="26dp"
                     android:layout_marginTop="8dp"
                     android:adjustViewBounds="true"
-                    android:contentDescription="XyVerse Tech"
+                    android:contentDescription="@string/brand_name"
                     android:src="@drawable/xyverse_logo" />
             </LinearLayout>
 
@@ -843,7 +843,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:letterSpacing="0.22"
-                android:text="BUILT IN"
+                android:text="@string/brand_powered_by_prefix"
                 android:textColor="@color/wr_teks2"
                 android:textSize="10.5sp" />
             <ImageView
@@ -851,7 +851,7 @@
                 android:layout_height="30dp"
                 android:layout_marginTop="8dp"
                 android:adjustViewBounds="true"
-                android:contentDescription="XyVerse Tech"
+                android:contentDescription="@string/brand_name"
                 android:src="@drawable/xyverse_logo" />
         </LinearLayout>
     </FrameLayout>

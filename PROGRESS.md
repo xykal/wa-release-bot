@@ -35,7 +35,7 @@ Done:
   default dibalik ke teks, pertanyaan opt-in eksperimental, butuh rekaman dari HP kall.
 
 Blocked:
-- Tag `v1.7.0`: setelah kall tes APK dari CI dan CLI di Termux, dan PR di-merge.
+- Tes di HP asli (APK v1.7.0) dan CLI di Termux: belum ada; kall memutuskan rilis dulu ("merge").
 - Format "Pertanyaan": butuh `rekaman-channel.json` dari kall (post Pertanyaan manual di HP).
 
 Next:

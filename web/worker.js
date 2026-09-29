@@ -14,7 +14,7 @@ export default {
     const res = await env.ASSETS.fetch(request);
     const h = new Headers(res.headers);
     for (const [k, v] of Object.entries(HEADER)) h.set(k, v);
-    if (res.status === 200 && /\.(woff2|webp|png)$/.test(new URL(request.url).pathname)) {
+    if (res.status === 200 && /\.(woff2|webp|png|svg)$/.test(new URL(request.url).pathname)) {
       h.set('Cache-Control', 'public, max-age=604800, immutable');
     }
     return new Response(res.body, { status: res.status, statusText: res.statusText, headers: h });

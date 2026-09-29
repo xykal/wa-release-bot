@@ -53,13 +53,15 @@ tangkap() { adb exec-out screencap -p > "$OUT/$1.png"; echo "  $1.png"; }
 # posisi_atas <id> -> cetak koordinat atas elemen kalau terlihat, kosong kalau tidak
 posisi_atas() {
   adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || return 0
+  # grep tanpa hasil = exit 1; dengan pipefail itu akan mematikan skrip (set -e),
+  # padahal "belum kelihatan" adalah kondisi normal saat menggulir -> || true
   adb shell cat /sdcard/ui.xml | tr '>' '\n' | grep -F "resource-id=\"$PKG:id/$1\"" | head -n 1 \
-    | sed -n 's/.*bounds="\[[0-9]*,\([0-9]*\)\]\[[0-9]*,[0-9]*\]".*/\1/p'
+    | sed -n 's/.*bounds="\[[0-9]*,\([0-9]*\)\]\[[0-9]*,[0-9]*\]".*/\1/p' || true
 }
 
 # gulir_ke <id> <nama>: gulir sampai elemen ada, geser supaya ~200px dari atas, lalu tangkap
 gulir_ke() {
-  local id="$1" nama="$2" atas="" i
+  local id="$1" nama="$2" target="${3:-200}" atas="" i
   for i in $(seq 1 14); do
     atas="$(posisi_atas "$id")"
     if [ -n "$atas" ]; then break; fi
@@ -67,7 +69,10 @@ gulir_ke() {
     sleep 0.8
   done
   if [ -z "$atas" ]; then echo "  $nama: elemen $id tidak ketemu, dilewati"; return 0; fi
-  local geser=$((atas - 200))
+  # geser elemen ke ~target px dari atas; dibatasi setengah layar supaya titik
+  # akhir swipe tidak keluar layar
+  local geser=$((atas - target))
+  if [ "$geser" -gt $((H / 2)) ]; then geser=$((H / 2)); fi
   if [ "$geser" -gt 60 ]; then
     adb shell input swipe "$X" $((H * 60 / 100)) "$X" $((H * 60 / 100 - geser)) 500
     sleep 0.8
@@ -77,7 +82,9 @@ gulir_ke() {
 
 echo "menangkap:"
 tangkap beranda
-gulir_ke etRepo pengaturan
+# etChannel ada di layout lama maupun baru (etRepo diganti tombol Kelola repo);
+# offset lebih besar supaya judul kartu "Rilis GitHub -> Channel" ikut terlihat
+gulir_ke etChannel pengaturan 620
 gulir_ke etGrup grup
 gulir_ke etLaguPerHari lagu
 gulir_ke btnHosting hosting

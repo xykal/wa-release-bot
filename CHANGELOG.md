@@ -7,6 +7,15 @@ Semua perubahan penting proyek ini. Format mengikuti
 ## [Unreleased]
 
 ### Diperbaiki
+- CI: draft release internal sempat **menumpuk**. `GET /releases/tags/<tag>` memang sudah tidak
+  dipakai lagi, tapi ternyata `tag_name` sebuah draft juga bukan pegangan stabil: begitu ada draft
+  lain yang memakai tag itu, GitHub membalasnya sebagai `untagged-<hash>`, jadi pencarian meleset
+  dan tiap build `main` bikin draft baru (ketahuan 2026-09-30: dua draft `Build internal 1.8.0`,
+  yang lama masih menyimpan APK basi). Sekarang draft dicocokkan lewat **nama**
+  (`Build internal <versi>`) juga, dan pembersihan duplikat memakai `id`, bukan tag. Bukti:
+  dry-run `scripts-dev/rilis_internal.py --kering` di repo ini menyebut "pakai draft
+  internal-1.8.0 yang ada (4 aset lama dibuang)" — bukan "bikin draft baru"; lalu build `main`
+  berikutnya mengganti aset di draft yang sama dan jumlah draft internal tetap satu.
 - App: kotak isian di layar Repo dan konsol Hosting tidak bisa disentuh. EditText yang dibuat
   dari kode lewat konstruktor `defStyleAttr = 0` kehilangan `focusableInTouchMode` bawaan
   `Widget.EditText`; sekarang lewat `isianBaru()` yang mengisi ulang atribut fokus. Bukti:

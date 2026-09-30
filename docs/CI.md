@@ -278,19 +278,32 @@ arm64-v8a + armeabi-v7a di **draft release** bertag `internal-<versi>`:
 - isinya diganti tiap build (`scripts-dev/rilis_internal.py`), dan draft `internal-*`
   versi lain dihapus otomatis, jadi jejaknya tetap satu.
 
+Dua jebakan GitHub yang sudah kena dan sudah ditambal di skrip itu:
+
+1. `GET /releases/tags/<tag>` menjawab **404 untuk release draft**, jadi pencarian
+   lewat endpoint itu bikin skrip mengira draft belum ada.
+2. `tag_name` sebuah draft **bukan pegangan yang stabil**: begitu ada draft lain
+   yang memakai tag itu, GitHub membalasnya sebagai `untagged-<hash>`. Pencarian
+   berbasis tag jadi meleset dan tiap build bikin draft baru (kejadian 2026-09-30:
+   dua draft `Build internal 1.8.0`, yang lama masih menyimpan APK basi).
+
+Karena itu draft dicocokkan lewat **nama** (`Build internal <versi>`) juga, dan
+`bersihkan_internal_lain()` mengenali draft dari tag **atau** nama — yang dipakai
+sekarang dilewatkan berdasarkan `id`, bukan tag.
+
 Cara ambil APK-nya: buka `https://github.com/xykal/wa-release-bot/releases` (selagi
 login), pilih **Build internal <versi>**, unduh APK yang sesuai. Bisa juga lewat API:
 
 ```bash
-# catatan: endpoint /releases/tags/<tag> menjawab 404 untuk release DRAFT
-# (dokumentasi GitHub diam soal ini), jadi daftar release yang dibaca.
+# catatan dua hal: (1) /releases/tags/<tag> menjawab 404 untuk release DRAFT,
+# (2) tag_name draft bisa jadi "untagged-<hash>" — jadi draft dikenali dari nama.
 curl -sL -H "Authorization: Bearer $TOK" \
   "https://api.github.com/repos/xykal/wa-release-bot/releases?per_page=10" | \
   python3 -c "
 import json,sys
 for r in json.load(sys.stdin):
-    if r['tag_name'].startswith('internal-'):
-        print(r['name'])
+    if r.get('draft') and str(r.get('name','')).startswith('Build internal'):
+        print(r['name'], '| tag_name:', r['tag_name'], '| id:', r['id'])
         for a in r['assets']: print('  ', a['name'], a['size'], a['browser_download_url'])
 "
 ```

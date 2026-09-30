@@ -106,13 +106,18 @@ object Denyut {
     /** Kartu-kartu muncul satu-satu dari bawah (dipanggil sekali pas layar dibuka). */
     fun munculBerurutan(wadah: ViewGroup, jeda: Long = 55L) {
         val geser = 28f * wadah.resources.displayMetrics.density
+        var urut = 0
         for (i in 0 until wadah.childCount) {
             val c = wadah.getChildAt(i)
+            // Anak yang disembunyiin (tab lain di layout utama) nggak usah
+            // dianimasikan - kalau ikut, dia "muncul" di tab yang salah.
+            if (c.visibility != View.VISIBLE) continue
             c.alpha = 0f
             c.translationY = geser
             c.animate().alpha(1f).translationY(0f)
-                .setStartDelay(80L + i * jeda).setDuration(420)
+                .setStartDelay(80L + urut * jeda).setDuration(420)
                 .setInterpolator(DecelerateInterpolator(2f)).start()
+            urut++
         }
     }
 }

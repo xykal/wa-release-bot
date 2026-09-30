@@ -189,8 +189,15 @@ internal class PanelStatus(
         if (ui.log.isNotEmpty()) {
             val diBawah = !svLog.canScrollVertically(1)
             tvLog.text = ui.log.takeLast(60).joinToString("\n")
-            svLog.ikutKeBawah(diBawah)
+            // Log punya tab sendiri (NavBawah.kt). Kalau tab-nya lagi nggak
+            // kelihatan, jangan digulir: nggak ada yang lihat, dan posisinya
+            // jadi nggak karuan pas dibuka.
+            if (svLog.isShown) svLog.ikutKeBawah(diBawah)
         }
     }
 
+    /** Dipanggil pas tab Log dibuka (NavBawah.kt): taruh di baris paling baru. */
+    fun lompatKeBawah() {
+        svLog.ikutKeBawah(true)
+    }
 }

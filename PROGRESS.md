@@ -103,3 +103,14 @@ Next:
   setelah pasang, ada toggle), fitur bot WA umum (stiker dari foto, moderasi anti-phishing/promo
   kecuali admin, posting story HD + tag grup), peringatan spek HP. Launching diundur ke Minggu
   2026-10-11 19.00 WIB supaya semua masuk 1.0.0 (PR #31).
+
+- M11 (permintaan kall: "mending pakai bottom navbar, bagi jadi beberapa screen"): layar utama
+  dipecah lima tab lewat bar navigasi bawah - Beranda, Repo, Fitur, Log, Pengaturan. Baru:
+  `NavBawah.kt`, gaya `NavItem`/`NavIkon`/`NavTeks`, drawable `bg_nav_item`/`bg_nav_aktif` dan
+  `ic_beranda`/`ic_fitur`, color-state `nav_warna`, 5 string `u_nav_*` (id + en). Isi kartu
+  tidak disentuh, cuma dipindah ke wadah tab (8 kartu, sama seperti sebelumnya). Ikutan:
+  di tab Log bar Simpan disembunyiin, log cuma digulir otomatis kalau tab-nya kelihatan
+  (`PanelStatus.lompatKeBawah`), tab terakhir disimpan di `savedInstanceState`, tombol yang
+  butuh kolom di tab lain pindah tab dulu. Bukti CI: langkah "uji navbar" di
+  `scripts-dev/screenshot_emulator.sh` - item navLog wajib `selected="true"` dan bar Simpan
+  wajib hilang di tab Log, plus jepretan per tab lewat bar navigasi.

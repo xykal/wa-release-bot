@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Warna ikon + label bar navigasi bawah: hijau kalau tab-nya lagi aktif. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/wr_hijau" android:state_selected="true" />
+    <item android:color="@color/wr_teks2" />
+</selector>

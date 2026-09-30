@@ -107,21 +107,24 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`): CLI meng-import modul `bot-
 
 ### Pakai setelah install
 
-1. Buka app → kartu **Tautkan WhatsApp** → isi **nomor WA** lo → **Tautkan pakai kode**
+1. Buka app → tab **Beranda** → kartu **Tautkan WhatsApp** → isi **nomor WA** lo →
+   **Tautkan pakai kode**
 2. Muncul kode 8 huruf. Di WhatsApp: **⋮ → Perangkat tertaut → Tautkan perangkat →
    Tautkan dengan nomor telepon saja** → ketik kodenya. (Biasanya WA juga ngirim
    notifikasi "masukkan kode" — tinggal tap.)
    Punya HP kedua? Boleh juga pakai **Pakai QR**.
-3. Kartu **Rilis GitHub → Channel**: tekan **Kelola repo**, tambah repo (`owner/nama-repo` atau
-   link GitHub; boleh banyak, tiap repo boleh punya channel khusus) → kembali, isi link channel
-   utama (belum punya? tekan **Bikin channel**) → **Simpan setting**
-4. Tekan **Mulai**
-5. Kartu **Batre & nyala otomatis**: tekan dua tombolnya (izin batre + Autostart).
+3. Tab **Repo** → kartu **Rilis GitHub → Channel**: tekan **Kelola repo**, tambah repo
+   (`owner/nama-repo` atau link GitHub; boleh banyak, tiap repo boleh punya channel khusus) →
+   kembali, isi link channel utama (belum punya? tekan **Bikin channel**) → **Simpan setting**
+4. Tab **Beranda** → tekan **Mulai**
+5. Tab **Pengaturan** → kartu **Batre & nyala otomatis**: tekan dua tombolnya (izin batre +
+   Autostart).
    Di Xiaomi ini **wajib**, kalau nggak bot dibunuh pas layar mati dan nggak
    nyala habis restart.
 
-Panduan lengkap tiap kartu (cara kerja, penjaga grup, batre, cara dapat link channel,
-lagu mood, hosting bot custom): [docs/PANDUAN-APP.md](docs/PANDUAN-APP.md).
+Layar utama dipecah lima tab lewat bar navigasi bawah (**Beranda, Repo, Fitur, Log,
+Pengaturan**). Panduan lengkap tiap tab dan kartu (cara kerja, penjaga grup, batre, cara dapat
+link channel, lagu mood, hosting bot custom): [docs/PANDUAN-APP.md](docs/PANDUAN-APP.md).
 
 ### Bahasa
 

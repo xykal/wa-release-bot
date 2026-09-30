@@ -32,7 +32,6 @@
             android:paddingStart="16dp"
             android:paddingTop="20dp"
             android:paddingEnd="16dp">
-
             <!-- ================= HEADER ================= -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -88,6 +87,10 @@
                     android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- tab beranda -->
+            <LinearLayout
+                android:id="@+id/tabBeranda"
+                style="@style/WadahTab">
             <!-- ================= STATUS ================= -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -212,7 +215,13 @@
                     android:text="@string/u_lepas_wa" />
             </LinearLayout>
             </LinearLayout>
+            </LinearLayout>
 
+            <!-- tab repo -->
+            <LinearLayout
+                android:id="@+id/tabRepo"
+                style="@style/WadahTab"
+                android:visibility="gone">
             <!-- ================= RILIS → CHANNEL ================= -->
             <LinearLayout style="@style/Kartu">
             <TextView
@@ -361,7 +370,13 @@
                     android:text="@string/u_tes_kirim_ke_channel" />
             </LinearLayout>
             </LinearLayout>
+            </LinearLayout>
 
+            <!-- tab fitur -->
+            <LinearLayout
+                android:id="@+id/tabFitur"
+                style="@style/WadahTab"
+                android:visibility="gone">
             <!-- ================= PENJAGA GRUP ================= -->
             <LinearLayout style="@style/Kartu">
             <TextView
@@ -576,7 +591,78 @@
                 android:drawableStart="@drawable/ic_server"
                 android:text="@string/u_buka_hosting" />
             </LinearLayout>
+            </LinearLayout>
 
+            <!-- tab log -->
+            <LinearLayout
+                android:id="@+id/tabLog"
+                style="@style/WadahTab"
+                android:visibility="gone">
+            <!-- ================= LOG ================= -->
+            <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_log"
+                android:text="@string/u_log" />
+            <TextView style="@style/KetKartu" android:text="@string/u_catatan_kerja_bot_kalau_ada" />
+            <ScrollView
+                android:id="@+id/svLog"
+                android:layout_width="match_parent"
+                android:layout_height="260dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_log"
+                android:padding="12dp">
+                <TextView
+                    android:id="@+id/tvLog"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:text="@string/u_belum_ada_log"
+                    android:textColor="#B8C4CA"
+                    android:textIsSelectable="true"
+                    android:textSize="11.5sp" />
+            </ScrollView>
+            <TextView
+                android:id="@+id/tvFolderLog"
+                style="@style/KetKartu"
+                android:layout_marginTop="8dp"
+                android:fontFamily="monospace"
+                android:textSize="11sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/btnBukaLog"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_folder"
+                    android:text="@string/u_buka_folder" />
+                <TextView
+                    android:id="@+id/btnKirimLog"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_bagi"
+                    android:text="@string/u_kirim_log" />
+            </LinearLayout>
+            <TextView
+                android:id="@+id/btnKill"
+                style="@style/TombolBahaya"
+                android:drawableStart="@drawable/ic_power"
+                android:text="@string/u_matikan_service"
+                android:layout_marginTop="12dp" />
+            </LinearLayout>
+            </LinearLayout>
+
+            <!-- tab pengaturan -->
+            <LinearLayout
+                android:id="@+id/tabPengaturan"
+                style="@style/WadahTab"
+                android:visibility="gone">
             <!-- ================= BATRE & NYALA OTOMATIS ================= -->
             <LinearLayout style="@style/Kartu">
             <TextView
@@ -646,65 +732,6 @@
                 android:layout_marginTop="10dp" />
             </LinearLayout>
 
-            <!-- ================= LOG ================= -->
-            <LinearLayout style="@style/Kartu">
-            <TextView
-                style="@style/JudulKartu"
-                android:drawableStart="@drawable/ic_log"
-                android:text="@string/u_log" />
-            <TextView style="@style/KetKartu" android:text="@string/u_catatan_kerja_bot_kalau_ada" />
-            <ScrollView
-                android:id="@+id/svLog"
-                android:layout_width="match_parent"
-                android:layout_height="260dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_log"
-                android:padding="12dp">
-                <TextView
-                    android:id="@+id/tvLog"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
-                    android:text="@string/u_belum_ada_log"
-                    android:textColor="#B8C4CA"
-                    android:textIsSelectable="true"
-                    android:textSize="11.5sp" />
-            </ScrollView>
-            <TextView
-                android:id="@+id/tvFolderLog"
-                style="@style/KetKartu"
-                android:layout_marginTop="8dp"
-                android:fontFamily="monospace"
-                android:textSize="11sp" />
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:orientation="horizontal">
-                <TextView
-                    android:id="@+id/btnBukaLog"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    style="@style/TombolLembut"
-                    android:drawableStart="@drawable/ic_folder"
-                    android:text="@string/u_buka_folder" />
-                <TextView
-                    android:id="@+id/btnKirimLog"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="10dp"
-                    style="@style/TombolLembut"
-                    android:drawableStart="@drawable/ic_bagi"
-                    android:text="@string/u_kirim_log" />
-            </LinearLayout>
-            <TextView
-                android:id="@+id/btnKill"
-                style="@style/TombolBahaya"
-                android:drawableStart="@drawable/ic_power"
-                android:text="@string/u_matikan_service"
-                android:layout_marginTop="12dp" />
-            </LinearLayout>
-
             <!-- ================= TENTANG ================= -->
             <LinearLayout style="@style/Kartu">
             <TextView
@@ -720,7 +747,6 @@
                 android:text="@string/u_buka_repo_github"
                 android:layout_marginTop="12dp" />
             </LinearLayout>
-
             <!-- footer paling bawah: Powered by XyVerse Technology Global (string dari values/brand.xml) -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -743,11 +769,12 @@
                     android:contentDescription="@string/brand_name"
                     android:src="@drawable/xyverse_logo" />
             </LinearLayout>
+            </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="24dp" />
-        </LinearLayout>
+</LinearLayout>
     </ScrollView>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
@@ -759,7 +786,7 @@
         android:layout_gravity="bottom"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="88dp"
+        android:layout_marginBottom="168dp"
         android:background="@drawable/bg_banner"
         android:elevation="8dp"
         android:padding="14dp"
@@ -767,22 +794,98 @@
         android:textSize="14sp"
         android:visibility="gone" />
 
-    <!-- ================= BAR SIMPAN ================= -->
-    <FrameLayout
+    <!-- ================= BAWAH: SIMPAN + NAVIGASI ================= -->
+    <!-- Bar simpan disembunyiin di tab Log (di situ nggak ada yang disimpan);
+         NavBawah.kt yang ngatur. -->
+    <LinearLayout
+        android:id="@+id/wadahBawah"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="#F20B141A"
-        android:paddingStart="16dp"
-        android:paddingTop="12dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="16dp">
-        <TextView
-            android:id="@+id/btnSave"
-            style="@style/TombolUtama"
-            android:drawableStart="@drawable/ic_simpan"
-            android:text="@string/u_simpan_setting" />
-    </FrameLayout>
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:id="@+id/barSimpan"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="4dp">
+            <TextView
+                android:id="@+id/btnSave"
+                style="@style/TombolUtama"
+                android:drawableStart="@drawable/ic_simpan"
+                android:text="@string/u_simpan_setting" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/barBawah"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="6dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="6dp"
+            android:paddingBottom="6dp">
+            <LinearLayout
+                android:id="@+id/navBeranda"
+                style="@style/NavItem"
+                android:contentDescription="@string/u_nav_beranda">
+                <ImageView
+                    style="@style/NavIkon"
+                    android:src="@drawable/ic_beranda" />
+                <TextView
+                    style="@style/NavTeks"
+                    android:text="@string/u_nav_beranda" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/navRepo"
+                style="@style/NavItem"
+                android:contentDescription="@string/u_nav_repo">
+                <ImageView
+                    style="@style/NavIkon"
+                    android:src="@drawable/ic_daftar" />
+                <TextView
+                    style="@style/NavTeks"
+                    android:text="@string/u_nav_repo" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/navFitur"
+                style="@style/NavItem"
+                android:contentDescription="@string/u_nav_fitur">
+                <ImageView
+                    style="@style/NavIkon"
+                    android:src="@drawable/ic_fitur" />
+                <TextView
+                    style="@style/NavTeks"
+                    android:text="@string/u_nav_fitur" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/navLog"
+                style="@style/NavItem"
+                android:contentDescription="@string/u_nav_log">
+                <ImageView
+                    style="@style/NavIkon"
+                    android:src="@drawable/ic_log" />
+                <TextView
+                    style="@style/NavTeks"
+                    android:text="@string/u_nav_log" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/navPengaturan"
+                style="@style/NavItem"
+                android:contentDescription="@string/u_nav_pengaturan">
+                <ImageView
+                    style="@style/NavIkon"
+                    android:src="@drawable/ic_setelan" />
+                <TextView
+                    style="@style/NavTeks"
+                    android:text="@string/u_nav_pengaturan" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
 
     <!-- ================= SPLASH (animasi morph, ditutup begitu app siap) ================= -->
     <FrameLayout

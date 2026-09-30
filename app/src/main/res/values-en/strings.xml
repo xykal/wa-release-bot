@@ -275,4 +275,11 @@
     <string name="k_ob_hosting_judul">Your phone as bot hosting</string>
     <string name="k_ob_hosting_isi">Have your own bot project? Upload the ZIP and this app runs it. Logs, input, restart — all from the phone.</string>
     <string name="k_hosting_nyala_durasi">up %1$s</string>
+
+    <!-- bar navigasi bawah (NavBawah.kt) -->
+    <string name="u_nav_beranda">Home</string>
+    <string name="u_nav_repo">Repo</string>
+    <string name="u_nav_fitur">Features</string>
+    <string name="u_nav_log">Log</string>
+    <string name="u_nav_pengaturan">Settings</string>
 </resources>

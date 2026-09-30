@@ -282,9 +282,17 @@ Cara ambil APK-nya: buka `https://github.com/xykal/wa-release-bot/releases` (sel
 login), pilih **Build internal <versi>**, unduh APK yang sesuai. Bisa juga lewat API:
 
 ```bash
+# catatan: endpoint /releases/tags/<tag> menjawab 404 untuk release DRAFT
+# (dokumentasi GitHub diam soal ini), jadi daftar release yang dibaca.
 curl -sL -H "Authorization: Bearer $TOK" \
-  "https://api.github.com/repos/xykal/wa-release-bot/releases/tags/internal-1.8.0" | \
-  python3 -c "import json,sys; [print(a['name'], a['size']) for a in json.load(sys.stdin)['assets']]"
+  "https://api.github.com/repos/xykal/wa-release-bot/releases?per_page=10" | \
+  python3 -c "
+import json,sys
+for r in json.load(sys.stdin):
+    if r['tag_name'].startswith('internal-'):
+        print(r['name'])
+        for a in r['assets']: print('  ', a['name'], a['size'], a['browser_download_url'])
+"
 ```
 
 Hari launching, draft `internal-*` (beserta tag `internal-*`) dihapus bareng draft

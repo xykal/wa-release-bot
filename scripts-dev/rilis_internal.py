@@ -75,7 +75,7 @@ def versi_app() -> str:
     return versi
 
 
-def panggil(metode: str, url: str, data: dict | None = None) -> dict:
+def panggil(metode: str, url: str, data: dict | None = None, abaikan_galat: bool = False) -> dict:
     isi = json.dumps(data).encode() if data is not None else None
     req = urllib.request.Request(
         url,
@@ -94,6 +94,9 @@ def panggil(metode: str, url: str, data: dict | None = None) -> dict:
             return json.loads(badan) if badan else {}
     except urllib.error.HTTPError as e:
         if e.code == 404:
+            return {}
+        if abaikan_galat:
+            print(f"  (diabaikan) {metode} {url}: {e.code} {e.read().decode()[:160]}")
             return {}
         raise SystemExit(f"gagal {metode} {url}: {e.code} {e.read().decode()[:300]}")
 
@@ -116,6 +119,27 @@ def unggah_berkas(upload_url: str, berkas: Path) -> dict:
     )
     with urllib.request.urlopen(req, timeout=900) as r:
         return json.loads(r.read())
+
+
+def cari_rilis(tag: str) -> dict:
+    """Cari release berdasar tag LEWAT DAFTAR, bukan `/releases/tags/{tag}`.
+
+    2026-09-30: endpoint `releases/tags/{tag}` menjawab 404 untuk release
+    **draft** (dokumentasi GitHub diam soal ini), jadi job `release-internal`
+    yang pertama selesai... lalu gagal di run berikutnya: dikira belum ada, dia
+    coba bikin lagi, dan GitHub menolak karena tag-nya sudah dipakai. Daftar
+    `GET /releases` memuat draft, jadi itulah yang dipakai.
+    """
+    for halaman in range(1, 6):
+        daftar = panggil("GET", f"{API}/repos/{REPO}/releases?per_page=100&page={halaman}")
+        if not daftar:
+            break
+        for r in daftar:
+            if r.get("tag_name") == tag:
+                return r
+        if len(daftar) < 100:
+            break
+    return {}
 
 
 def pastikan_tag(tag: str) -> None:
@@ -176,7 +200,7 @@ def main() -> int:
 
     pastikan_tag(tag)
 
-    rilis = panggil("GET", f"{API}/repos/{REPO}/releases/tags/{tag}")
+    rilis = cari_rilis(tag)
     isi_badan = (
         f"Build internal dari `main` ({SHA[:8]}), **bukan rilis publik**.\n\n"
         f"- Versi: {versi}\n"
@@ -197,7 +221,15 @@ def main() -> int:
                 "body": isi_badan,
                 "draft": True,
                 "prerelease": False,
-            })
+            }, abaikan_galat=True)
+            if not rilis:
+                # tag-nya sudah dipakai release lain (mis. dibuat manual di UI)
+                rilis = cari_rilis(tag)
+                if not rilis:
+                    raise SystemExit(f"release {tag} tidak bisa dibuat maupun ditemukan")
+                rilis = panggil("PATCH", f"{API}/repos/{REPO}/releases/{rilis['id']}", {
+                    "name": judul, "body": isi_badan, "draft": True,
+                })
     else:
         if KERING:
             print(f"  [kering] pakai draft {tag} yang ada ({len(rilis.get('assets', []))} aset lama dibuang)")

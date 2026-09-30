@@ -66,7 +66,7 @@
 
   // -------------------------- hitung mundur launching ----------------------
   const launch = new Date(LAUNCH_ISO).getTime();
-  // ?t=2026-10-09T12:00:01Z -> simulasi waktu (buat QA tampilan setelah launching)
+  // ?t=2026-10-04T12:00:01Z -> simulasi waktu (buat QA tampilan setelah launching)
   const geser = param.get('t') ? new Date(param.get('t')).getTime() - Date.now() : 0;
   const kini = () => Date.now() + geser;
   const tirai = $('#tirai');

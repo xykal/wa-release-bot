@@ -7,6 +7,8 @@ Semua perubahan penting proyek ini. Format mengikuti
 ## [Unreleased]
 
 ### Diubah
+- Situs: jadwal launching dimajukan ke Minggu 4 Oktober 2026 19.00 WIB (`LAUNCH_ISO`, teks
+  popup id/en, `launching.ics` dengan `SEQUENCE:1` supaya kalender yang sudah impor ikut geser).
 - CI Build APK: push ke `main` kini membangun arm64-v8a dan armeabi-v7a (artifact terpisah);
   PR tetap arm64 saja. HP uji 32-bit sebelumnya cuma bisa pakai build manual atau tag.
 - `scripts-dev/deploy_web.py`: kalau custom domain sudah terpasang, berhenti di GET

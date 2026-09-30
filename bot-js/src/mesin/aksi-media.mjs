@@ -86,7 +86,7 @@ export function buatAksiMedia(ctx, alat) {
     const keluar = cmd.file ? path.join(ctx.dataDir, String(cmd.file)) : '';
     try {
       if (cmd.gagal) {
-        log(`⚠️ Konversi stiker gagal di app (${cmd.gagal}).`);
+        log(`⚠️ Konversi stiker ${id} gagal di app (${cmd.gagal}).`);
         return;
       }
       if (!sock) throw new Error('WA lagi nggak nyambung');
@@ -96,7 +96,7 @@ export function buatAksiMedia(ctx, alat) {
       log(`✅ Stiker terkirim (${Math.round(buf.length / 1024)} KB).`);
       emitStatus();
     } catch (e) {
-      log(`⚠️ Stiker gagal dikirim: ${e.message}`);
+      log(`⚠️ Stiker gagal dikirim (${id}): ${e.message}`);
     } finally {
       for (const b of [masuk, keluar]) {
         try { if (b) fs.unlinkSync(b); } catch { /* sudah kehapus */ }

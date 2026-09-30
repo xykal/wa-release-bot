@@ -202,9 +202,18 @@ test('engine: nyala, configure, start, cek release ke GitHub palsu, stop', async
   fs.writeFileSync(path.join(dirStiker, 'masuk-uji.img'), Buffer.from('foto-palsu'));
   fs.writeFileSync(path.join(dirStiker, 'keluar-uji.webp'), Buffer.from('webp-palsu'));
   await engine.kirim({ type: 'stiker-jadi', id: 'uji', file: 'stiker/keluar-uji.webp', kb: 1 });
-  await engine.tungguLog('Stiker gagal dikirim');
-  assert.equal(fs.existsSync(path.join(dirStiker, 'masuk-uji.img')), false, 'berkas foto masuk dibersihkan');
-  assert.equal(fs.existsSync(path.join(dirStiker, 'keluar-uji.webp')), false, 'berkas stiker keluar dibersihkan');
+  // Log-nya nyebut id: perintah stiker-jadi sebelumnya juga nge-log pesan serupa,
+  // jadi nunggu pesan tanpa id bisa kejawab log lama (tes lolos padahal belum).
+  await engine.tungguLog('Stiker gagal dikirim (uji)');
+  const hilang = async (f) => {
+    for (let i = 0; i < 25; i += 1) {
+      if (!fs.existsSync(f)) return true;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    return false;
+  };
+  assert.equal(await hilang(path.join(dirStiker, 'masuk-uji.img')), true, 'berkas foto masuk dibersihkan');
+  assert.equal(await hilang(path.join(dirStiker, 'keluar-uji.webp')), true, 'berkas stiker keluar dibersihkan');
   await engine.kirim({ type: 'bersih-moderasi' });
   await engine.tungguLog('Hitungan moderasi dikosongkan');
   const stMod = await engine.tungguStatus(() => true, 'status setelah moderasi');

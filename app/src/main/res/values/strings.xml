@@ -282,4 +282,9 @@
     <string name="u_nav_fitur">Fitur</string>
     <string name="u_nav_log">Log</string>
     <string name="u_nav_pengaturan">Pengaturan</string>
+    <!-- kartu Tampilan & suara (splash) -->
+    <string name="u_tampilan_suara">Tampilan &amp; suara</string>
+    <string name="u_ket_tampilan_suara">Suara pembuka XyVerse Technology Global: sekali setelah pasang, hormat mode senyap.</string>
+    <string name="u_suara_pembuka">Suara pembuka</string>
+    <string name="u_ket_suara_pembuka">Bunyi sekali pas pertama buka setelah pasang, lalu mati sendiri. Nyalain kalau mau dengar lagi.</string>
 </resources>

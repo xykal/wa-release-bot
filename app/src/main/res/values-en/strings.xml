@@ -282,4 +282,9 @@
     <string name="u_nav_fitur">Features</string>
     <string name="u_nav_log">Log</string>
     <string name="u_nav_pengaturan">Settings</string>
+    <!-- kartu Tampilan & suara (splash) -->
+    <string name="u_tampilan_suara">Look &amp; sound</string>
+    <string name="u_ket_tampilan_suara">XyVerse Technology Global splash voice over: once after install, respects silent mode.</string>
+    <string name="u_suara_pembuka">Splash voice over</string>
+    <string name="u_ket_suara_pembuka">Plays once on the first open after install, then stays off. Switch on to hear it again.</string>
 </resources>

@@ -7,6 +7,7 @@ Instal dan langkah awal ada di README; halaman ini buat yang mau tahu lebih dala
 
 - [Cara kerja (singkat)](#cara-kerja-singkat)
 - [Navigasi bawah (tab)](#navigasi-bawah-tab)
+- [Splash & suara pembuka](#splash--suara-pembuka)
 - [Penjaga grup (auto-approve)](#penjaga-grup-auto-approve)
 - [Batre](#batre)
 - [Channel WA: dapetnya dari mana?](#channel-wa-dapetnya-dari-mana)
@@ -42,6 +43,21 @@ Layar utama dipecah jadi lima tab; pindahnya lewat bar navigasi bawah:
 - Tab yang terakhir dibuka diingat waktu layar diputar (putar HP), tidak balik ke Beranda.
 - Tab Log dimulai dari baris paling baru tiap dibuka, tapi baris baru yang masuk tidak
   menarik layar selama kamu sedang mengerjakan hal lain.
+
+## Splash & suara pembuka
+
+Waktu app dibuka, splash menampilkan logo yang berganti bentuk di atas latar bergerak
+(cahaya, cincin, bintang, bintang jatuh) selama 1,6-4,5 detik, lalu layar utama muncul.
+
+Voice over **"XyVerse Technology Global"** (`res/raw/vo_xyverse.ogg`) bunyi:
+
+- **sekali** pas pertama membuka app setelah pasang, lalu diam sendiri;
+- kalau HP-nya sedang mode senyap, suaranya dilewati dan tetap kebagian pas HP sudah
+  tidak senyap (bendera "sudah pernah bunyi" baru dipasang kalau suaranya benar-benar jalan);
+- mau dengar lagi? Tab **Pengaturan** → kartu **Tampilan & suara** → nyalakan **Suara
+  pembuka**; matikan kalau tidak mau ada suara lagi.
+
+Suaranya tidak dipotong waktu splash ditutup (durasi 2,6 detik), jadi kalimatnya utuh.
 
 ## Penjaga grup (auto-approve)
 

@@ -98,7 +98,7 @@ echo "layar ${W}x${H}"
 X=$((W / 2))
 
 adb shell am start -W -n "$PKG/$ACT" >/dev/null
-sleep 6
+sleep 1
 
 tangkap() { adb exec-out screencap -p > "$OUT/$1.png"; echo "  $1.png"; }
 
@@ -159,6 +159,19 @@ gulir_ke() {
 
 echo "menangkap:"
 echo "  sambutan.png"
+
+# Splash epik (M12): tampil minimal 1,6 dtk, jadi masih kelihatan di detik pertama.
+# Buktinya bukan cuma gambar: overlay splash + blok brand harus ada di dump UI
+# (PartikelView.kt sengaja nggak penting buat aksesibilitas, jadi nggak muncul di dump).
+dump="$(dump_ui)"
+if [[ "$dump" == *"id/splash"* && "$dump" == *"id/tvBrandSplash"* ]]; then
+  echo "uji splash: overlay + brand kelihatan (animasi M12)"
+else
+  echo "uji splash: overlay splash tidak ketemu di detik pertama"; tangkap splash-gagal; exit 1
+fi
+tangkap splash
+sleep 5
+
 tangkap beranda
 
 # Sejak M11 layar dipecah jadi tab; tiap tab diketik lewat bar navigasi bawah.

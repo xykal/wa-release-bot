@@ -68,6 +68,15 @@ Semua perubahan penting proyek ini. Format mengikuti
 - Bukti otomatis di workflow Screenshot app: tiap tab dibuka lewat bar navigasi, lalu
   dipastikan item `navLog` `selected="true"` dan bar Simpan hilang di tab Log
   (`scripts-dev/screenshot_emulator.sh`).
+- **Splash baru (M12)**: latar bergerak `PartikelView.kt` (cahaya hijau berdenyut, cincin
+  melebar, bintang berkedip, bintang jatuh), logo masuk dengan mantul halus, dan brand di
+  bawah dengan huruf yang merenggang pelan. Semua digambar di Canvas, tanpa library baru.
+- **Voice over "XyVerse Technology Global"** (`res/raw/vo_xyverse.ogg`, `SuaraSplash.kt`):
+  bunyi sekali pas pertama buka setelah pasang, lalu diam sendiri; mode senyap dihormati
+  (kalau HP silent, suaranya dilewati dan masih kebagian lain kali). Saklarnya ada di tab
+  Pengaturan, kartu **Tampilan & suara**.
+- Bukti splash di workflow Screenshot app: jepretan detik pertama (`splash.png`) plus assert
+  overlay `splash` + blok brand ada di dump UI.
 
 ### Diubah
 - App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,

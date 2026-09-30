@@ -44,6 +44,7 @@ SHA = os.environ.get("GITHUB_SHA") or ""
 KERING = "--kering" in sys.argv
 
 AWALAN = "internal-"
+JUDUL_AWALAN = "Build internal "
 
 
 def ambil_dist() -> Path:
@@ -121,25 +122,39 @@ def unggah_berkas(upload_url: str, berkas: Path) -> dict:
         return json.loads(r.read())
 
 
-def cari_rilis(tag: str) -> dict:
-    """Cari release berdasar tag LEWAT DAFTAR, bukan `/releases/tags/{tag}`.
+def cari_rilis(tag: str, judul: str) -> dict:
+    """Cari draft internal lewat DAFTAR, cocokkan lewat tag ATAU nama.
 
-    2026-09-30: endpoint `releases/tags/{tag}` menjawab 404 untuk release
-    **draft** (dokumentasi GitHub diam soal ini), jadi job `release-internal`
-    yang pertama selesai... lalu gagal di run berikutnya: dikira belum ada, dia
-    coba bikin lagi, dan GitHub menolak karena tag-nya sudah dipakai. Daftar
-    `GET /releases` memuat draft, jadi itulah yang dipakai.
+    Dua temuan yang bikin fungsi ini ditulis begini:
+
+    1. `GET /releases/tags/{tag}` menjawab 404 untuk release **draft**
+       (dokumentasi GitHub diam soal ini) — itu bug 2026-09-30 pagi.
+    2. `tag_name` draft BUKAN pegangan yang bisa dipercaya: begitu ada draft
+       lain yang memakai tag itu, GitHub membalas `tag_name: "untagged-<hash>"`.
+       Akibatnya pencarian berbasis tag meleset, tiap build bikin draft baru,
+       dan draft lama nyangkut — ketahuan 2026-09-30 siang (ada dua draft
+       `Build internal 1.8.0`, yang lama masih menyimpan APK basi).
+       Jadi draft juga dicocokkan lewat NAMA (`Build internal <versi>`), yang
+       memang diberikan sendiri oleh skrip ini.
+
+    Kalau ada lebih dari satu yang cocok, yang dipakai draft PALING BARU;
+    sisanya dibuang `bersihkan_internal_lain()`.
     """
+    kandidat = []
     for halaman in range(1, 6):
         daftar = panggil("GET", f"{API}/repos/{REPO}/releases?per_page=100&page={halaman}")
         if not daftar:
             break
         for r in daftar:
-            if r.get("tag_name") == tag:
-                return r
+            cocok_tag = r.get("tag_name") == tag
+            cocok_nama = bool(r.get("draft")) and r.get("name") == judul
+            if cocok_tag or cocok_nama:
+                kandidat.append(r)
         if len(daftar) < 100:
             break
-    return {}
+    if not kandidat:
+        return {}
+    return sorted(kandidat, key=lambda r: r.get("created_at") or "")[-1]
 
 
 def pastikan_tag(tag: str) -> None:
@@ -157,8 +172,15 @@ def pastikan_tag(tag: str) -> None:
                 {"ref": f"refs/tags/{tag}", "sha": SHA})
 
 
-def bersihkan_internal_lain(tag_dipakai: str) -> int:
-    """Hapus draft internal-* versi lain + tag-nya (biar jejaknya cuma satu)."""
+def bersihkan_internal_lain(tag_dipakai: str, id_dipakai: int) -> int:
+    """Hapus draft internal lain (versi lain ATAU duplikat) + tag-nya.
+
+    Draft dikenali dari tag (`internal-*`) atau dari namanya (`Build internal …`),
+    karena draft yang tag-nya sudah diambil draft lain punya `tag_name`
+    `untagged-<hash>`. Yang dipakai sekarang (`id_dipakai`) selalu dilewatkan —
+    dulu pembandingnya tag, jadi duplikat yang masih memegang `internal-1.8.0`
+    justru lolos dari pembersihan.
+    """
     dihapus = 0
     hal = 0
     while True:
@@ -168,14 +190,19 @@ def bersihkan_internal_lain(tag_dipakai: str) -> int:
             break
         for r in daftar:
             tag = r.get("tag_name") or ""
-            if not tag.startswith(AWALAN) or tag == tag_dipakai:
+            nama = r.get("name") or ""
+            if not (tag.startswith(AWALAN) or nama.startswith(JUDUL_AWALAN)):
                 continue
-            print(f"  buang draft lama {tag}")
+            if r.get("id") == id_dipakai:
+                continue
+            print(f"  buang draft lama {nama or tag} (tag: {tag})")
             if KERING:
                 dihapus += 1
                 continue
             panggil("DELETE", f"{API}/repos/{REPO}/releases/{r['id']}")
-            panggil("DELETE", f"{API}/repos/{REPO}/git/refs/tags/{tag}")
+            # ref tag hanya dibuang kalau bukan tag yang lagi dipakai
+            if tag.startswith(AWALAN) and tag != tag_dipakai:
+                panggil("DELETE", f"{API}/repos/{REPO}/git/refs/tags/{tag}")
             dihapus += 1
         if len(daftar) < 100:
             break
@@ -200,7 +227,7 @@ def main() -> int:
 
     pastikan_tag(tag)
 
-    rilis = cari_rilis(tag)
+    rilis = cari_rilis(tag, judul)
     isi_badan = (
         f"Build internal dari `main` ({SHA[:8]}), **bukan rilis publik**.\n\n"
         f"- Versi: {versi}\n"
@@ -224,7 +251,7 @@ def main() -> int:
             }, abaikan_galat=True)
             if not rilis:
                 # tag-nya sudah dipakai release lain (mis. dibuat manual di UI)
-                rilis = cari_rilis(tag)
+                rilis = cari_rilis(tag, judul)
                 if not rilis:
                     raise SystemExit(f"release {tag} tidak bisa dibuat maupun ditemukan")
                 rilis = panggil("PATCH", f"{API}/repos/{REPO}/releases/{rilis['id']}", {
@@ -254,7 +281,7 @@ def main() -> int:
         hasil = unggah_berkas(upload_url, b)
         print(f"  unggah {b.name} ({b.stat().st_size // 1024} KB) -> {hasil.get('state')}")
 
-    dibuang = bersihkan_internal_lain(tag)
+    dibuang = bersihkan_internal_lain(tag, int(rilis.get("id") or 0))
 
     tautan = f"https://github.com/{REPO}/releases/tag/{tag}"
     print(f"draft: {tautan}")

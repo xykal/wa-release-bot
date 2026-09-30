@@ -35,6 +35,7 @@ internal class PanelStatus(
     private lateinit var tvGrupStat: TextView
     private lateinit var tvLaguStat: TextView
     private lateinit var tvHostingStat: TextView
+    private lateinit var tvModerasiStat: TextView
     private lateinit var tvLog: TextView
     private lateinit var svLog: ScrollView
     private lateinit var btnMulai: TextView
@@ -52,6 +53,7 @@ internal class PanelStatus(
         tvGrupStat = a.findViewById(R.id.tvGrupStat)
         tvLaguStat = a.findViewById(R.id.tvLaguStat)
         tvHostingStat = a.findViewById(R.id.tvHostingStat)
+        tvModerasiStat = a.findViewById(R.id.tvModerasiStat)
         tvLog = a.findViewById(R.id.tvLog)
         svLog = a.findViewById(R.id.svLog)
         btnMulai = a.findViewById(R.id.btnMulai)
@@ -180,6 +182,28 @@ internal class PanelStatus(
             val last = ui.grupLastCekAt?.let { a.getString(R.string.k_lalu, Durasi.human(sekarang - it)) } ?: a.getString(R.string.k_belum_pernah)
             val namaGrup = ui.grupNama ?: a.getString(R.string.k_belum_dicek)
             a.getString(R.string.k_grup_di_approve_ditolak_daftar, namaGrup, ui.grupDisetujui, ui.grupDitolak, ui.grupHitam, last)
+        }
+
+        tvModerasiStat.text = buildString {
+            append(
+                if (ui.moderasiAktif) a.getString(R.string.k_moderasi_nyala)
+                else a.getString(R.string.k_moderasi_mati)
+            )
+            append(" | ")
+            append(
+                a.getString(
+                    R.string.k_perintah_pribadi_2,
+                    a.getString(if (ui.jagaAktif) R.string.k_nyala else R.string.k_mati)
+                )
+            )
+            append("\n")
+            append(a.getString(R.string.k_dihapus_diperingatkan_dikeluarkan_2, ui.moderasiHapus, ui.moderasiPeringatan, ui.moderasiKick))
+            append("\n")
+            append(a.getString(R.string.k_stiker_story_perintah_2, ui.stikerDibuat, ui.storyDikirim, ui.perintahJalan))
+            ui.perangkat?.let {
+                append("\n")
+                append(a.getString(R.string.k_perangkat_2, it))
+            }
         }
 
         val err = ui.engineError

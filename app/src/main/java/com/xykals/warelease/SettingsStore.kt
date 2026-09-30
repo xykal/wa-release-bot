@@ -96,6 +96,42 @@ class SettingsStore(ctx: Context) {
         get() = p.getBoolean("sambutanV2", false)
         set(v) = p.edit().putBoolean("sambutanV2", v).apply()
 
+    // ---- bot WA umum: moderasi grup + perintah pribadi ----
+    /** Moderasi grup: hapus link/phishing/promo, peringatan, strike kedua keluar. */
+    var moderasiAktif: Boolean
+        get() = p.getBoolean("moderasiAktif", false)
+        set(v) = p.edit().putBoolean("moderasiAktif", v).apply()
+
+    /** Perintah pribadi (.menu, .stiker, .story) HANYA di chat sendiri. */
+    var perintahPribadi: Boolean
+        get() = p.getBoolean("perintahPribadi", true)
+        set(v) = p.edit().putBoolean("perintahPribadi", v).apply()
+
+    /** Berapa kali boleh melanggar sebelum dikeluarkan. */
+    var moderasiStrike: Int
+        get() = p.getInt("moderasiStrike", 2)
+        set(v) = p.edit().putInt("moderasiStrike", v.coerceIn(1, 5)).apply()
+
+    /** Kata kunci tambahan yang ikut dianggap spam (dipisah koma/baris). */
+    var moderasiKata: String
+        get() = p.getString("moderasiKata", "") ?: ""
+        set(v) = p.edit().putString("moderasiKata", v).apply()
+
+    /** Domain yang langsung dianggap phishing (dipisah koma/baris). */
+    var moderasiDomain: String
+        get() = p.getString("moderasiDomain", "") ?: ""
+        set(v) = p.edit().putString("moderasiDomain", v).apply()
+
+    /** Izinkan link biasa (selain domain izin) — default: nggak. */
+    var moderasiIzinkanLink: Boolean
+        get() = p.getBoolean("moderasiIzinkanLink", false)
+        set(v) = p.edit().putBoolean("moderasiIzinkanLink", v).apply()
+
+    /** Nomor penonton story (dipisah koma/baris), selain anggota grup. */
+    var storyKe: String
+        get() = p.getString("storyKe", "") ?: ""
+        set(v) = p.edit().putString("storyKe", v).apply()
+
     // ---- splash & suara ----
     /** Saklar "Suara pembuka" di tab Pengaturan. */
     var suaraSplash: Boolean
@@ -129,7 +165,8 @@ class SettingsStore(ctx: Context) {
      * dengan pesan yang jelas — bukan gagal diam-diam.
      */
     fun hasValidSettings(): Boolean =
-        repo.isNotBlank() || (grupAktif && grupTarget.isNotBlank()) || laguAktif
+        repo.isNotBlank() || (grupAktif && grupTarget.isNotBlank()) || laguAktif ||
+            moderasiAktif || perintahPribadi
 
     /** Offset zona waktu HP (menit) — engine Node di Android nggak tau zona waktu lokal. */
     private fun tzMenit(): Int =
@@ -151,6 +188,13 @@ class SettingsStore(ctx: Context) {
         "grupTarget" to grupTarget,
         "grupInterval" to grupInterval,
         "grupHitam" to grupHitam,
+        "moderasiAktif" to moderasiAktif,
+        "perintahPribadi" to perintahPribadi,
+        "moderasiStrike" to moderasiStrike,
+        "moderasiKata" to moderasiKata,
+        "moderasiDomain" to moderasiDomain,
+        "moderasiIzinkanLink" to moderasiIzinkanLink,
+        "storyKe" to storyKe,
         "laguAktif" to laguAktif,
         "laguPerHari" to laguPerHari,
         "laguJamMulai" to laguJamMulai,
@@ -180,6 +224,17 @@ class SettingsStore(ctx: Context) {
                 .put("target", grupTarget)
                 .put("intervalMinutes", grupInterval)
                 .put("daftarHitam", grupHitam)
+        )
+        .put(
+            "jaga",
+            JSONObject()
+                .put("moderasi", moderasiAktif)
+                .put("perintah", perintahPribadi)
+                .put("batasStrike", moderasiStrike)
+                .put("kataTerlarang", moderasiKata.split(",", "\n").map { it.trim() }.filter { it.isNotEmpty() })
+                .put("linkTerlarang", moderasiDomain.split(",", "\n").map { it.trim() }.filter { it.isNotEmpty() })
+                .put("izinkanLink", moderasiIzinkanLink)
+                .put("storyKe", storyKe)
         )
         .put(
             "lagu",

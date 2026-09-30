@@ -41,6 +41,13 @@ internal class FormPengaturan(
     private lateinit var rowLogcat: View
     private lateinit var rowLaguAktif: View
     private lateinit var rowSuaraSplash: View
+    private lateinit var rowModerasi: View
+    private lateinit var rowPerintahPribadi: View
+    private lateinit var rowModerasiIzinkanLink: View
+    private lateinit var etModerasiStrike: EditText
+    private lateinit var etModerasiKata: EditText
+    private lateinit var etModerasiDomain: EditText
+    private lateinit var etStoryKe: EditText
 
     private fun saklar(id: Int): View {
         val v = a.findViewById<View>(id)
@@ -80,6 +87,14 @@ internal class FormPengaturan(
         etLaguPerHari = a.findViewById(R.id.etLaguPerHari)
         etLaguJamMulai = a.findViewById(R.id.etLaguJamMulai)
         etLaguJamSelesai = a.findViewById(R.id.etLaguJamSelesai)
+
+        rowModerasi = saklar(R.id.rowModerasi)
+        rowPerintahPribadi = saklar(R.id.rowPerintahPribadi)
+        rowModerasiIzinkanLink = saklar(R.id.rowModerasiIzinkanLink)
+        etModerasiStrike = a.findViewById(R.id.etModerasiStrike)
+        etModerasiKata = a.findViewById(R.id.etModerasiKata)
+        etModerasiDomain = a.findViewById(R.id.etModerasiDomain)
+        etStoryKe = a.findViewById(R.id.etStoryKe)
     }
 
     fun renderRepoRingkas() {
@@ -105,6 +120,13 @@ internal class FormPengaturan(
         rowLogcat.isSelected = settings.rekamLogcat
         rowLaguAktif.isSelected = settings.laguAktif
         rowSuaraSplash.isSelected = settings.suaraSplash
+        rowModerasi.isSelected = settings.moderasiAktif
+        rowPerintahPribadi.isSelected = settings.perintahPribadi
+        rowModerasiIzinkanLink.isSelected = settings.moderasiIzinkanLink
+        etModerasiStrike.setText(settings.moderasiStrike.toString())
+        etModerasiKata.setText(settings.moderasiKata)
+        etModerasiDomain.setText(settings.moderasiDomain)
+        etStoryKe.setText(settings.storyKe)
         etLaguPerHari.setText(settings.laguPerHari.toString())
         etLaguJamMulai.setText(settings.laguJamMulai.toString())
         etLaguJamSelesai.setText(settings.laguJamSelesai.toString())
@@ -130,6 +152,13 @@ internal class FormPengaturan(
         settings.laguJamMulai = etLaguJamMulai.text.toString().toIntOrNull() ?: 9
         settings.laguJamSelesai = etLaguJamSelesai.text.toString().toIntOrNull() ?: 22
         settings.suaraSplash = rowSuaraSplash.isSelected
+        settings.moderasiAktif = rowModerasi.isSelected
+        settings.perintahPribadi = rowPerintahPribadi.isSelected
+        settings.moderasiIzinkanLink = rowModerasiIzinkanLink.isSelected
+        settings.moderasiStrike = etModerasiStrike.text.toString().toIntOrNull() ?: 2
+        settings.moderasiKata = etModerasiKata.text.toString()
+        settings.moderasiDomain = etModerasiDomain.text.toString()
+        settings.storyKe = etStoryKe.text.toString()
 
         val logcatLama = settings.rekamLogcat
         settings.rekamLogcat = rowLogcat.isSelected

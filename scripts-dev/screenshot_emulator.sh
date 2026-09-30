@@ -195,6 +195,85 @@ ketuk_nav navFitur fitur
 # offset = jarak anchor dari atas layar setelah digeser; dipilih supaya judul kartu
 # di atas anchor ikut masuk (run 36621355435: judul terpotong dengan offset 200)
 gulir_ke etGrup grup 600
+
+# Bot WA umum (M14/M15): bukti tiga hal.
+#   1. kartunya benar-benar ada dan bisa dijangkau di tab Fitur,
+#   2. saklar moderasi bisa dinyalain dan NEMPEL setelah Simpan + app dimatikan
+#      (M14 nambah 6 kunci baru di SettingsStore; kalau salah tipe atau nggak
+#      ikut disimpan, cuma kelihatan setelah app dibuka ulang),
+#   3. tombol "Kirim menu ke chat" ngasih umpan balik walau WA belum tersambung.
+# Catatan: kartunya tinggi (3 saklar + 3 kolom + 2 tombol), jadi tiap bagian
+# digulir ke sendiri-sendiri — satu jepretan nggak bisa nampung semuanya.
+gulir_ke rowModerasi bot-umum 320
+dump="$(dump_ui)"
+if [[ "$dump" == *"id/rowModerasi"* && "$dump" == *"id/rowPerintahPribadi"* && "$dump" == *"Bot WA umum"* ]]; then
+  echo "uji bot-umum: kartu + saklar moderasi + saklar perintah kelihatan OK"
+else
+  echo "uji bot-umum: kartu Bot WA umum tidak lengkap di dump UI"; tangkap bot-umum-gagal; exit 1
+fi
+
+kotak="$(kotak_id rowModerasi)"
+if [ -n "$kotak" ]; then
+  set -- $kotak
+  adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
+  sleep 0.6
+  baris="$(dump_ui | grep -F "id/rowModerasi" | head -n 1 || true)"
+  if [[ "$baris" == *'selected="true"'* ]]; then
+    echo "uji bot-umum: saklar moderasi nyala OK"
+  else
+    echo "uji bot-umum: saklar moderasi tidak berubah jadi nyala"; tangkap bot-umum-gagal; exit 1
+  fi
+else
+  echo "uji bot-umum: baris saklar moderasi tidak ketemu"; tangkap bot-umum-gagal; exit 1
+fi
+
+# Digulir ke kolom domain (bukan story): dua kolom ini jaraknya cuma ~1 layar,
+# jadi satu posisi cukup buat ngebuktiin dua-duanya ada di kartu.
+gulir_ke etModerasiDomain bot-umum-kolom 400
+dump="$(dump_ui)"
+if [[ "$dump" == *"id/etModerasiDomain"* && "$dump" == *"id/etStoryKe"* ]]; then
+  echo "uji bot-umum: kolom domain phishing + nomor penonton story kelihatan OK"
+else
+  echo "uji bot-umum: kolom baru Bot WA umum tidak ketemu di dump UI"; tangkap bot-umum-gagal; exit 1
+fi
+
+# Simpan, matikan app, buka lagi: nilai saklar harus balik nyala dari prefs.
+kotak="$(kotak_id btnSave)"
+if [ -z "$kotak" ]; then
+  echo "uji bot-umum: tombol Simpan tidak ketemu"; tangkap bot-umum-gagal; exit 1
+fi
+set -- $kotak
+adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
+sleep 1.4
+adb shell am force-stop "$PKG"
+sleep 1
+adb shell am start -W -n "$PKG/$ACT" >/dev/null
+sleep 3
+ketuk_nav navFitur fitur-lagi
+gulir_ke rowModerasi bot-umum-persist 320
+baris="$(dump_ui | grep -F "id/rowModerasi" | head -n 1 || true)"
+if [[ "$baris" == *'selected="true"'* ]]; then
+  echo "uji bot-umum: moderasi tersimpan di prefs (app dibuka ulang) OK"
+else
+  echo "uji bot-umum: moderasi hilang setelah app dibuka ulang"; tangkap bot-umum-persist-gagal; exit 1
+fi
+
+# Umpan balik tombol kirim menu (WA belum nyambung -> tetap ada pesan).
+gulir_ke btnKirimMenu bot-umum-tombol 720
+kotak="$(kotak_id btnKirimMenu)"
+if [ -z "$kotak" ]; then
+  echo "uji bot-umum: tombol kirim menu tidak ketemu"; tangkap bot-umum-gagal; exit 1
+fi
+set -- $kotak
+adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
+sleep 0.8
+dump="$(dump_ui)"
+if [[ "$dump" == *"chat sendiri"* ]]; then
+  echo "uji bot-umum: tombol kirim menu ngasih umpan balik OK"
+else
+  echo "uji bot-umum: tombol kirim menu diam saja"; tangkap bot-umum-gagal; exit 1
+fi
+
 gulir_ke etLaguPerHari lagu 560
 gulir_ke btnHosting hosting 500
 

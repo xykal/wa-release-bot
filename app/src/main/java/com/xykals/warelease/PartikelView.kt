@@ -50,6 +50,11 @@ class PartikelView @JvmOverloads constructor(
     private val bintang = ArrayList<Bintang>(56)
     private val jatuh = ArrayList<Jatuh>(3)
 
+    // 1 = penuh, lebih kecil = lebih hemat (HP RAM pas-pasan; lihat Perangkat.kt)
+    private var kepadatan = 1f
+    private var cincinAktif = true
+    private var jatuhAktif = true
+
     private val catBintang = Paint(Paint.ANTI_ALIAS_FLAG)
     private val catGlow = Paint(Paint.ANTI_ALIAS_FLAG)
     private val catCincin = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
@@ -90,6 +95,19 @@ class PartikelView @JvmOverloads constructor(
         t = 0f
     }
 
+    /**
+     * Atur seberapa ramai latarnya. 1 = penuh (56 bintang + 3 bintang jatuh),
+     * 0,45 = buat HP pas-pasan: bintang dikurangi, bintang jatuh dimatikan,
+     * cincin cuma satu.
+     */
+    fun aturKepadatan(f: Float) {
+        kepadatan = f.coerceIn(0.2f, 1f)
+        cincinAktif = kepadatan > 0.6f
+        jatuhAktif = kepadatan > 0.6f
+        if (width > 0) onSizeChanged(width, height, width, height)
+        invalidate()
+    }
+
     /** 0 = bebas partikel, 1 = penuh. Dipakai pas splash muncul. */
     fun aturIntensitas(p: Float) {
         intensitas = p.coerceIn(0f, 1f)
@@ -114,7 +132,7 @@ class PartikelView @JvmOverloads constructor(
 
         // bintang: posisi acak tapi tetap (seed tetap) supaya nggak "melompat"
         bintang.clear()
-        repeat(56) {
+        repeat((56 * kepadatan).toInt().coerceAtLeast(12)) {
             bintang.add(
                 Bintang(
                     x = acak.nextFloat() * w,
@@ -127,7 +145,7 @@ class PartikelView @JvmOverloads constructor(
             )
         }
         jatuh.clear()
-        repeat(3) { i ->
+        repeat(if (jatuhAktif) 3 else 0) { i ->
             jatuh.add(
                 Jatuh(
                     fase = i * 0.37f + acak.nextFloat() * 0.1f,
@@ -153,7 +171,7 @@ class PartikelView @JvmOverloads constructor(
         val pusatX = w / 2f
         val pusatY = h * 0.42f
         val rMaks = min(w, h) * 0.62f
-        for (i in 0..1) {
+        for (i in if (cincinAktif) 0..1 else 0..0) {
             val p = ((t * 1.35f) + i * 0.5f) % 1f
             catCincin.color = Color.WHITE
             catCincin.alpha = ((1f - p) * 46 * intensitas).toInt().coerceIn(0, 255)

@@ -135,3 +135,11 @@ Next:
   dipindah dari artifact ke draft release `internal-<versi>` lewat `scripts-dev/rilis_internal.py`
   + job `release-internal` (aset diganti tiap build, draft internal lain dibuang). Dokumen:
   docs/CI.md bagian 7 dan 8.
+
+- M13 (permintaan kall: "tambah fitur lebih banyak ... tapi tetep ada peringatan sesuai hp spek dll").
+  Kartu Cek perangkat di tab Pengaturan (`Perangkat.kt`): RAM total/sisa, arsitektur, versi Android,
+  penyimpanan bebas, optimasi batre, izin notifikasi, jumlah ABI; peringatan (bukan blokir) kalau
+  RAM < 2 GB / Android < 8 / sisa < 300 MB / batre belum dikecualikan / notifikasi belum diizinkan /
+  bukan ARM. Tombol "Ke log" nulis hasilnya ke log, dan HP pas-pasan (RAM < 2 GB) otomatis pakai
+  partikel splash lebih hemat (PartikelView.aturKepadatan) + kirim ringkasan ke engine (cmd
+  `perangkat`) buat nyetel strategi fitur berat.

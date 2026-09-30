@@ -35,7 +35,9 @@ internal class SplashUtama(
      * (`am start --ez tahan_splash true`) supaya jepretan + cek dump UI keburu
      * kejadian sebelum splash-nya nutup; di pemakaian normal selalu false.
      */
-    private val tahan: Boolean = false
+    private val tahan: Boolean = false,
+    // HP pas-pasan (RAM di bawah minimum): partikel lebih sedikit, no bintang jatuh.
+    private val hemat: Boolean = false
 ) {
     private var mulaiPada = 0L
     private val label = arrayOf(
@@ -62,8 +64,11 @@ internal class SplashUtama(
         LogRecorder.tulis("Activity", "splash tampil")
         val d = a.resources.displayMetrics.density
 
-        // 1. latar partikel
-        a.findViewById<PartikelView>(R.id.partikel).mulai()
+        // 1. latar partikel (dikurangi kalau perangkatnya pas-pasan)
+        a.findViewById<PartikelView>(R.id.partikel).apply {
+            aturKepadatan(if (hemat) 0.45f else 1f)
+            mulai()
+        }
 
         // 2. logo: masuk dari kecil + mantul, bukan nongol gitu aja
         val morph = a.findViewById<MorphView>(R.id.morph)

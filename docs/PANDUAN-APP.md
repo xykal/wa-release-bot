@@ -8,6 +8,7 @@ Instal dan langkah awal ada di README; halaman ini buat yang mau tahu lebih dala
 - [Cara kerja (singkat)](#cara-kerja-singkat)
 - [Navigasi bawah (tab)](#navigasi-bawah-tab)
 - [Splash & suara pembuka](#splash--suara-pembuka)
+- [Cek perangkat](#cek-perangkat)
 - [Penjaga grup (auto-approve)](#penjaga-grup-auto-approve)
 - [Batre](#batre)
 - [Channel WA: dapetnya dari mana?](#channel-wa-dapetnya-dari-mana)
@@ -43,6 +44,19 @@ Layar utama dipecah jadi lima tab; pindahnya lewat bar navigasi bawah:
 - Tab yang terakhir dibuka diingat waktu layar diputar (putar HP), tidak balik ke Beranda.
 - Tab Log dimulai dari baris paling baru tiap dibuka, tapi baris baru yang masuk tidak
   menarik layar selama kamu sedang mengerjakan hal lain.
+
+## Cek perangkat
+
+Tab **Pengaturan** → kartu **Cek perangkat** menampilkan RAM total dan sisa, arsitektur
+(arm64-v8a / armeabi-v7a), versi Android, penyimpanan bebas, status optimasi batre, dan izin
+notifikasi. Kalau ada yang di bawah spek ideal, muncul daftar peringatan — bukan larangan:
+bot tetap bisa dijalankan.
+
+- RAM di bawah 2 GB: Android lebih gampang menghentikan bot saat layar mati; splash otomatis
+  memakai partikel yang lebih hemat.
+- Android di bawah 8 (API 26): APK resmi memang tidak mendukung, tapi peringatannya tetap
+  dikasih supaya jelas.
+- Tombol **Ke log** menulis semua baris cek ke `log/` — pakai itu kalau lapor masalah.
 
 ## Splash & suara pembuka
 

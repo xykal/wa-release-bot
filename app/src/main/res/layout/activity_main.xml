@@ -663,6 +663,49 @@
                 android:id="@+id/tabPengaturan"
                 style="@style/WadahTab"
                 android:visibility="gone">
+            <!-- ================= CEK PERANGKAT ================= -->
+            <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_kontrol"
+                android:text="@string/u_cek_perangkat" />
+            <TextView style="@style/KetKartu" android:text="@string/u_ket_cek_perangkat" />
+            <TextView
+                android:id="@+id/tvPerangkat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_ubin"
+                android:fontFamily="monospace"
+                android:lineSpacingExtra="3dp"
+                android:padding="12dp"
+                android:text="@string/u_perangkat_belum_dicek"
+                android:textColor="@color/wr_teks"
+                android:textSize="12sp"
+                android:textIsSelectable="true" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/btnCekPerangkat"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/TombolGaris"
+                    android:drawableStart="@drawable/ic_cek"
+                    android:text="@string/u_cek_perangkat_sekarang" />
+                <TextView
+                    android:id="@+id/btnPerangkatKeLog"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_log"
+                    android:text="@string/u_ke_log" />
+            </LinearLayout>
+            </LinearLayout>
+
             <!-- ================= TAMPILAN & SUARA ================= -->
             <LinearLayout style="@style/Kartu">
             <TextView

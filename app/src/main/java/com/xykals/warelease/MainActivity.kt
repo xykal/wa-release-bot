@@ -49,6 +49,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvBatreStat: TextView
     private lateinit var tvFolderLog: TextView
     private lateinit var tvBanner: TextView
+    private lateinit var tvPerangkat: TextView
+    private var perangkat: Perangkat.Hasil? = null
 
     private var engineJalan = false
     private var setupTerakhir: String? = null
@@ -123,7 +125,9 @@ class MainActivity : AppCompatActivity() {
         splash = SplashUtama(
             this, handler, settings, { uiPernahTampil }, { nav.animasiMasuk() },
             // cuma dipakai workflow Screenshot app (am start --ez tahan_splash true)
-            tahan = intent?.getBooleanExtra("tahan_splash", false) == true
+            tahan = intent?.getBooleanExtra("tahan_splash", false) == true,
+            // HP pas-pasan: partikel & denyut diturunin (Perangkat.kt)
+            hemat = perangkat?.hemat == true
         )
         wireViews()
         nav.ikat()
@@ -208,6 +212,9 @@ class MainActivity : AppCompatActivity() {
             setOnRefreshListener { segarkanStatus() }
         }
         tvBatreStat = findViewById(R.id.tvBatreStat)
+        tvPerangkat = findViewById(R.id.tvPerangkat)
+        perangkat = Perangkat.periksa(this)
+        tvPerangkat.text = Perangkat.teks(perangkat!!)
         tvFolderLog = findViewById(R.id.tvFolderLog)
         tvBanner = findViewById(R.id.tvBanner)
 
@@ -311,6 +318,25 @@ class MainActivity : AppCompatActivity() {
         }
         pasang(R.id.btnHosting, "Buka hosting") {
             startActivity(Intent(this, HostingActivity::class.java))
+        }
+        pasang(R.id.btnCekPerangkat, "Cek perangkat") {
+            perangkat = Perangkat.periksa(this)
+            tvPerangkat.text = Perangkat.teks(perangkat!!)
+            val p = perangkat!!
+            banner(
+                if (p.aman) getString(R.string.k_perangkat_oke)
+                else getString(R.string.k_perangkat_ada_peringatan, p.peringatan.size)
+            )
+            // Perangkat pas-pasan: engine dikasih tahu juga (moderasi & stiker
+            // lebih pelan, animasi diturunin) — lihat Perangkat.kt.
+            withService { sendCmd(mapOf("type" to "perangkat", "ringkas" to Perangkat.ringkas(p), "hemat" to p.hemat)) }
+        }
+        pasang(R.id.btnPerangkatKeLog, "Perangkat ke log") {
+            val p = perangkat ?: Perangkat.periksa(this).also { perangkat = it }
+            LogRecorder.tulis("Perangkat", Perangkat.ringkas(p))
+            p.baris.forEach { LogRecorder.tulis("Perangkat", it) }
+            p.peringatan.forEach { LogRecorder.tulis("Perangkat", "peringatan: $it") }
+            banner(getString(R.string.k_hasil_cek_perangkat_masuk_log))
         }
         pasang(R.id.btnBatre, "Izin batre") { aksi.mintaIzinBatre() }
         pasang(R.id.btnAutostart, "Autostart") { aksi.bukaAutostart() }

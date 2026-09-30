@@ -287,4 +287,13 @@
     <string name="u_ket_tampilan_suara">Suara pembuka XyVerse Technology Global: sekali setelah pasang, hormat mode senyap.</string>
     <string name="u_suara_pembuka">Suara pembuka</string>
     <string name="u_ket_suara_pembuka">Bunyi sekali pas pertama buka setelah pasang, lalu mati sendiri. Nyalain kalau mau dengar lagi.</string>
+    <!-- kartu Cek perangkat (Perangkat.kt) -->
+    <string name="u_cek_perangkat">Cek perangkat</string>
+    <string name="u_ket_cek_perangkat">RAM, arsitektur, versi Android, penyimpanan, izin. Di bawah spek minimum bot tetap jalan, cuma dikasih peringatan.</string>
+    <string name="u_perangkat_belum_dicek">Belum dicek.</string>
+    <string name="u_cek_perangkat_sekarang">Cek sekarang</string>
+    <string name="u_ke_log">Ke log</string>
+    <string name="k_perangkat_oke">Perangkat lolos semua cek.</string>
+    <string name="k_perangkat_ada_peringatan">Perangkat di bawah spek ideal: %1$s peringatan. Detailnya di kartu Cek perangkat.</string>
+    <string name="k_hasil_cek_perangkat_masuk_log">Hasil cek perangkat masuk log.</string>
 </resources>

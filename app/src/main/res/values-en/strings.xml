@@ -287,4 +287,13 @@
     <string name="u_ket_tampilan_suara">XyVerse Technology Global splash voice over: once after install, respects silent mode.</string>
     <string name="u_suara_pembuka">Splash voice over</string>
     <string name="u_ket_suara_pembuka">Plays once on the first open after install, then stays off. Switch on to hear it again.</string>
+    <!-- kartu Cek perangkat (Perangkat.kt) -->
+    <string name="u_cek_perangkat">Device check</string>
+    <string name="u_ket_cek_perangkat">RAM, architecture, Android version, storage, permissions. Below minimum the bot still runs, just with warnings.</string>
+    <string name="u_perangkat_belum_dicek">Not checked yet.</string>
+    <string name="u_cek_perangkat_sekarang">Check now</string>
+    <string name="u_ke_log">To log</string>
+    <string name="k_perangkat_oke">Device passed every check.</string>
+    <string name="k_perangkat_ada_peringatan">Device below ideal spec: %1$s warning(s). Details in the Device check card.</string>
+    <string name="k_hasil_cek_perangkat_masuk_log">Device check written to the log.</string>
 </resources>

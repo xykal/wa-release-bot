@@ -77,6 +77,11 @@ Semua perubahan penting proyek ini. Format mengikuti
   Pengaturan, kartu **Tampilan & suara**.
 - Bukti splash di workflow Screenshot app: jepretan detik pertama (`splash.png`) plus assert
   overlay `splash` + blok brand ada di dump UI.
+- **Cek perangkat (M13)**: kartu di tab Pengaturan membaca RAM, arsitektur, versi Android,
+  sisa penyimpanan, optimasi batre, dan izin notifikasi (`Perangkat.kt`), lalu menampilkan
+  peringatan kalau di bawah spek ideal (RAM 2 GB, Android 8, penyimpanan 300 MB) — tanpa
+  memblokir. Tombol **Ke log** menulis hasilnya ke log supaya gampang dilaporkan, dan
+  perangkat pas-pasan otomatis memakai partikel splash yang lebih hemat.
 - **Draft release internal** (job `release-internal` di `build-apk.yml` +
   `scripts-dev/rilis_internal.py`): tiap build `main` otomatis ditaruh di draft release
   bertag `internal-<versi>` (aset lama diganti, draft internal versi lain dihapus). Draft

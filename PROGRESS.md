@@ -135,3 +135,34 @@ Next:
   dipindah dari artifact ke draft release `internal-<versi>` lewat `scripts-dev/rilis_internal.py`
   + job `release-internal` (aset diganti tiap build, draft internal lain dibuang). Dokumen:
   docs/CI.md bagian 7 dan 8.
+
+- M13 (permintaan kall: "tambah fitur lebih banyak ... tapi tetep ada peringatan sesuai hp spek dll").
+  Kartu Cek perangkat di tab Pengaturan (`Perangkat.kt`): RAM total/sisa, arsitektur, versi Android,
+  penyimpanan bebas, optimasi batre, izin notifikasi, jumlah ABI; peringatan (bukan blokir) kalau
+  RAM < 2 GB / Android < 8 / sisa < 300 MB / batre belum dikecualikan / notifikasi belum diizinkan /
+  bukan ARM. Tombol "Ke log" nulis hasilnya ke log, dan HP pas-pasan (RAM < 2 GB) otomatis pakai
+  partikel splash lebih hemat (PartikelView.aturKepadatan) + kirim ringkasan ke engine (cmd
+  `perangkat`) buat nyetel strategi fitur berat.
+
+- M14 + M15 (permintaan kall: "langsung lanjutin semua bre tumpuk di PR ntar tinggal sekalian
+  merge semua beres"). Semua fitur bot WA umum dikerjakan di satu branch yang sama:
+  - Logika keputusan moderasi dipisah ke `bot-js/src/pesan.mjs` (murni, tanpa jaringan): link
+    Telegram, domain di luar daftar izin, kata judi/pinjol/promo, admin & bot sendiri dilewatkan,
+    plus `hukumanModerasi()` (peringatan dulu, strike terakhir dikeluarkan). Diuji 11 kasus di
+    `bot-js/test/pesan.test.mjs`.
+  - `bot-js/src/mesin/jaga-pesan.mjs`: koneksi WA dibiarkan terbuka selama fitur nyala (beda
+    dengan penjaga grup yang nyambung tiap beberapa menit), perintah chat pribadi dilayani di
+    chat sendiri saja, moderasi grup cuma di grup yang dipantau dan cuma kalau bot admin
+    (hapus pesan gagal dilaporkan sekali, bukan diam-diam). Kalau WA belum ditautkan, loop
+    berhenti sendiri dengan pesan jelas — bukan nyoba terus.
+  - Stiker: `app/src/main/java/com/xykals/warelease/Stiker.kt` (Bitmap -> WebP_LOSSY, sisi
+    terpanjang 512 px, mutu diturunkan bertahap sampai < 700 KB). Engine kirim event
+    `minta_stiker`, BotService balas cmd `stiker-jadi`.
+  - App: kartu Bot WA umum (saklar moderasi, saklar perintah pribadi, izin link biasa, batas
+    strike, kata tambahan, domain phishing, nomor penonton story, tombol kirim menu + kosongin
+    hitungan) + baris statistik moderasi di kartu status; 24 string baru dua bahasa (307 total,
+    jumlah sama di `values` dan `values-en`).
+  - Bukti CI: langkah `uji bot-umum` di `screenshot_emulator.sh` (kartu + kolom story ada di dump
+    UI, saklar berubah jadi nyala, tombol kirim menu ngasih umpan balik, dan nilainya masih
+    tersimpan setelah app dimatikan + dibuka ulang), plus cek `configure`/`perangkat`/
+    `bersih-moderasi` di `bot-js/test/engine.test.mjs`.

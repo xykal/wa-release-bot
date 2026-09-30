@@ -7,9 +7,9 @@ import { SUMBER_BAWAAN } from '../lagu.mjs';
 
 /**
  * @param {object} ctx konteks engine (lihat bot.mjs)
- * @param {{ rilis: object, lagu: object, grup: object, tautan: object }} deps modul-modul fitur
+ * @param {{ rilis: object, lagu: object, grup: object, tautan: object, jaga: object }} deps modul-modul fitur
  */
-export function buatPerintah(ctx, { rilis, lagu, grup, tautan }) {
+export function buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga }) {
   const {
     log, saveState, emitStatus, bridge, cfgFile, hosting,
     scheduleNext, intervalMs, repoAda, grupAktif, laguAktif, jadwalGrup, startEngine, stopEngine,
@@ -55,6 +55,20 @@ export function buatPerintah(ctx, { rilis, lagu, grup, tautan }) {
             intervalMinutes: Number(cmd.grupInterval) || 5,
             daftarHitam: String(cmd.grupHitam || ''),
           },
+          jaga: {
+            // Moderasi grup + perintah pribadi (chat sendiri). Saklarnya
+            // terpisah karena keduanya bikin WA harus nyambung terus.
+            moderasi: Boolean(cmd.moderasiAktif),
+            // Opt-in: CLI yang nggak pernah nyetel ini nggak kena efek samping
+            // WA nyambung terus. App selalu ngirim nilainya.
+            perintah: cmd.perintahPribadi === true,
+            batasStrike: Math.min(Math.max(Number(cmd.moderasiStrike) || 2, 1), 5),
+            izinkanLink: Boolean(cmd.moderasiIzinkanLink),
+            kataTerlarang: String(cmd.moderasiKata || '').split(/[,\n]/).map((s) => s.trim()).filter(Boolean),
+            linkTerlarang: String(cmd.moderasiDomain || '').split(/[,\n]/).map((s) => s.trim()).filter(Boolean),
+            storyKe: String(cmd.storyKe || '').split(/[,\n]/).map((s) => s.trim()).filter(Boolean)
+              .map((n) => (n.includes('@') ? n : `${n.replace(/[^0-9]/g, '')}@s.whatsapp.net`)),
+          },
           lagu: {
             aktif: Boolean(cmd.laguAktif),
             perHari: Math.min(Math.max(Number(cmd.laguPerHari) || 2, 1), 8),
@@ -64,8 +78,8 @@ export function buatPerintah(ctx, { rilis, lagu, grup, tautan }) {
             sumber: String(cmd.laguSumber || '').trim() || SUMBER_BAWAAN,
           },
         };
-        if (!next.github.repo && !next.grup.aktif && !next.lagu.aktif) {
-          bridge.send({ type: 'cmd_error', msg: 'Isi repo GitHub, nyalain penjaga grup, atau nyalain lagu mood — minimal salah satu.' });
+        if (!next.github.repo && !next.grup.aktif && !next.lagu.aktif && !next.jaga.moderasi && !next.jaga.perintah) {
+          bridge.send({ type: 'cmd_error', msg: 'Isi repo GitHub, nyalain penjaga grup, lagu mood, moderasi grup, atau perintah pribadi — minimal salah satu.' });
           return;
         }
         if (next.grup.aktif && !next.grup.target) {
@@ -84,6 +98,14 @@ export function buatPerintah(ctx, { rilis, lagu, grup, tautan }) {
         saveState();
         log(`⚙️ Setting diperbarui: repo=${next.github.repo || '-'}, channel=${next.whatsapp.channel || '-'}, ` +
           `interval=${next.bot.checkIntervalMinutes}m, grup=${next.grup.aktif ? 'nyala' : 'mati'}`);
+        // Mode jaga pesan nyala/mati mengikuti setting yang baru disimpan.
+        if (ctx.running) {
+          if (next.jaga.moderasi || next.jaga.perintah) {
+            if (!jaga.sedangJalan()) void jaga.mulai();
+          } else {
+            jaga.hentikan();
+          }
+        }
         if (ctx.running) {
           scheduleNext(repoAda() ? intervalMs() : 0);
           jadwalGrup(5000);
@@ -163,6 +185,28 @@ export function buatPerintah(ctx, { rilis, lagu, grup, tautan }) {
         if (ctx.state.grup) { ctx.state.grup.hitam = []; ctx.state.grup.hitamInfo = []; saveState(); }
         log('🧽 Daftar hitam otomatis dikosongin (yang manual di setting nggak disentuh).');
         grup.lihatHitam(true);
+        emitStatus();
+        break;
+
+      case 'menu-sekarang':
+        void jaga.kirimMenuSekarang();
+        break;
+
+      case 'bersih-moderasi':
+        jaga.bersihkanHitungan();
+        log('🧽 Hitungan moderasi dikosongkan.');
+        break;
+
+      case 'stiker-jadi':
+        // Balasan dari app: gambar sudah dikonversi jadi WebP.
+        void jaga.kirimStikerJadi(cmd);
+        break;
+
+      case 'perangkat':
+        // Ringkasan spek HP dari app (lihat Perangkat.kt): dipakai buat nyetel
+        // fitur berat. Bukan wajib; kalau nggak ada, semua fitur tetap jalan.
+        ctx.perangkat = { ringkas: String(cmd.ringkas || ''), hemat: Boolean(cmd.hemat), padaAt: Date.now() };
+        log(`📱 Perangkat: ${ctx.perangkat.ringkas || 'info nggak dikirim'}${ctx.perangkat.hemat ? ' (mode hemat: animasi fitur berat diturunin)' : ''}`);
         emitStatus();
         break;
 

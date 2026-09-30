@@ -486,6 +486,152 @@
             </LinearLayout>
             </LinearLayout>
 
+            <!-- ================= BOT WA UMUM (M14/M15) ================= -->
+            <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_fitur"
+                android:text="@string/u_bot_wa_umum" />
+            <TextView style="@style/KetKartu" android:text="@string/u_ket_bot_wa_umum" />
+
+            <LinearLayout android:id="@+id/rowModerasi" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/u_moderasi_grup"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/u_ket_moderasi_grup"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/rowPerintahPribadi" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/u_perintah_pribadi"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/u_ket_perintah_pribadi"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/rowModerasiIzinkanLink" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/u_izinkan_link_biasa"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/u_ket_izinkan_link_biasa"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+
+            <TextView style="@style/Label" android:text="@string/u_batas_strike" />
+            <EditText
+                android:id="@+id/etModerasiStrike"
+                style="@style/Isian"
+                android:hint="2"
+                android:inputType="number" />
+
+            <TextView style="@style/Label" android:text="@string/u_kata_tambahan_spam" />
+            <EditText
+                android:id="@+id/etModerasiKata"
+                style="@style/Isian"
+                android:hint="@string/u_contoh_kata_pisah_koma"
+                android:importantForAutofill="no"
+                android:gravity="top"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:singleLine="false" />
+
+            <TextView style="@style/Label" android:text="@string/u_domain_phishing" />
+            <EditText
+                android:id="@+id/etModerasiDomain"
+                style="@style/Isian"
+                android:hint="@string/u_contoh_domain_phishing"
+                android:importantForAutofill="no"
+                android:gravity="top"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:singleLine="false" />
+
+            <TextView style="@style/Label" android:text="@string/u_penonton_story" />
+            <EditText
+                android:id="@+id/etStoryKe"
+                style="@style/Isian"
+                android:hint="@string/u_contoh_62812"
+                android:importantForAutofill="no"
+                android:inputType="phone" />
+
+            <TextView
+                android:id="@+id/tvModerasiStat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_ubin"
+                android:padding="12dp"
+                android:textColor="@color/wr_teks"
+                android:textSize="13sp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/btnKirimMenu"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/TombolGaris"
+                    android:drawableStart="@drawable/ic_kirim"
+                    android:text="@string/u_kirim_menu_ke_chat" />
+                <TextView
+                    android:id="@+id/btnBersihModerasi"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_hapus"
+                    android:text="@string/u_kosongin_hitungan" />
+            </LinearLayout>
+            </LinearLayout>
+
             <!-- ================= LAGU MOOD ================= -->
             <LinearLayout style="@style/Kartu">
             <TextView
@@ -663,6 +809,49 @@
                 android:id="@+id/tabPengaturan"
                 style="@style/WadahTab"
                 android:visibility="gone">
+            <!-- ================= CEK PERANGKAT ================= -->
+            <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_kontrol"
+                android:text="@string/u_cek_perangkat" />
+            <TextView style="@style/KetKartu" android:text="@string/u_ket_cek_perangkat" />
+            <TextView
+                android:id="@+id/tvPerangkat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_ubin"
+                android:fontFamily="monospace"
+                android:lineSpacingExtra="3dp"
+                android:padding="12dp"
+                android:text="@string/u_perangkat_belum_dicek"
+                android:textColor="@color/wr_teks"
+                android:textSize="12sp"
+                android:textIsSelectable="true" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/btnCekPerangkat"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/TombolGaris"
+                    android:drawableStart="@drawable/ic_cek"
+                    android:text="@string/u_cek_perangkat_sekarang" />
+                <TextView
+                    android:id="@+id/btnPerangkatKeLog"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_log"
+                    android:text="@string/u_ke_log" />
+            </LinearLayout>
+            </LinearLayout>
+
             <!-- ================= TAMPILAN & SUARA ================= -->
             <LinearLayout style="@style/Kartu">
             <TextView

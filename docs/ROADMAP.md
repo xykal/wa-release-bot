@@ -38,9 +38,9 @@ Jadwal hari H (butuh aba-aba kall di chat; tidak ada penjadwal otomatis):
 |---|---|---|
 | M11 bottom navbar + layar dipecah lima tab | 2026-09-30 | selesai 2026-09-30 (branch `feat/nav-bawah-pecah-layar`) |
 | M12 splash baru: animasi lebih halus + partikel (`PartikelView.kt`), voice over "XyVerse Technology Global" sekali setelah pasang (saklar di tab Pengaturan, mode senyap dihormati) | 2026-09-30 | selesai 2026-09-30 (branch `feat/splash-epik-vo`) |
-| M13 Cek perangkat: RAM, ABI, versi Android, optimasi batre; badge peringatan di bawah spek minimum (tanpa blokir) | 2026-10-03 | belum |
-| M14 fitur bot WA umum: foto jadi stiker HD, moderasi anti-phishing/promo kecuali admin (hapus, peringatan, kick strike kedua), menu perintah | 2026-10-04 s/d 10-06 | belum |
-| M15 posting story HD + tag grup (dari app dan perintah owner) | 2026-10-07/08 | belum |
+| M13 Cek perangkat: RAM, ABI, versi Android, optimasi batre; badge peringatan di bawah spek minimum (tanpa blokir) | 2026-10-03 | selesai 2026-09-30 (branch `feat/m13-m15-fitur-bot`) |
+| M14 fitur bot WA umum: foto jadi stiker HD, moderasi anti-phishing/promo kecuali admin (hapus, peringatan, kick strike kedua), menu perintah | 2026-10-04 s/d 10-06 | selesai 2026-09-30 (stiker lewat app `Stiker.kt`, moderasi `pesan.mjs` + `mesin/jaga-pesan.mjs`) |
+| M15 posting story HD + tag grup (dari app dan perintah owner) | 2026-10-07/08 | selesai 2026-09-30 (perintah `.story` / `.storygrup`) |
 | Jeda: tangkapan layar ulang, situs bagian fitur, dokumen | 2026-10-09 | belum |
 | Merge PR launching #18 + hapus draft/tag lama, tag `v1.0.0` | 2026-10-10 s/d 10-11 | belum |
 

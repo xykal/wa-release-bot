@@ -8,7 +8,9 @@ Instal dan langkah awal ada di README; halaman ini buat yang mau tahu lebih dala
 - [Cara kerja (singkat)](#cara-kerja-singkat)
 - [Navigasi bawah (tab)](#navigasi-bawah-tab)
 - [Splash & suara pembuka](#splash--suara-pembuka)
+- [Cek perangkat](#cek-perangkat)
 - [Penjaga grup (auto-approve)](#penjaga-grup-auto-approve)
+- [Bot WA umum (moderasi + perintah di chat sendiri)](#bot-wa-umum-moderasi--perintah-di-chat-sendiri)
 - [Batre](#batre)
 - [Channel WA: dapetnya dari mana?](#channel-wa-dapetnya-dari-mana)
 - [Lagu mood](#lagu-mood)
@@ -43,6 +45,19 @@ Layar utama dipecah jadi lima tab; pindahnya lewat bar navigasi bawah:
 - Tab yang terakhir dibuka diingat waktu layar diputar (putar HP), tidak balik ke Beranda.
 - Tab Log dimulai dari baris paling baru tiap dibuka, tapi baris baru yang masuk tidak
   menarik layar selama kamu sedang mengerjakan hal lain.
+
+## Cek perangkat
+
+Tab **Pengaturan** → kartu **Cek perangkat** menampilkan RAM total dan sisa, arsitektur
+(arm64-v8a / armeabi-v7a), versi Android, penyimpanan bebas, status optimasi batre, dan izin
+notifikasi. Kalau ada yang di bawah spek ideal, muncul daftar peringatan — bukan larangan:
+bot tetap bisa dijalankan.
+
+- RAM di bawah 2 GB: Android lebih gampang menghentikan bot saat layar mati; splash otomatis
+  memakai partikel yang lebih hemat.
+- Android di bawah 8 (API 26): APK resmi memang tidak mendukung, tapi peringatannya tetap
+  dikasih supaya jelas.
+- Tombol **Ke log** menulis semua baris cek ke `log/` — pakai itu kalau lapor masalah.
 
 ## Splash & suara pembuka
 
@@ -81,6 +96,51 @@ anggota yang berubah antar-cek, jadi:
   **Buka blokir** biar bisa join lagi. **Kosongin** buat reset semuanya
 - **Tes kirim** (di kartu Penjaga grup) kirim pesan singkat ke grup buat ngecek
 
+## Bot WA umum (moderasi + perintah di chat sendiri)
+
+Kartu **Bot WA umum** di tab Fitur punya dua saklar. Dua-duanya bikin WhatsApp
+**tetap tersambung** selama engine jalan — beda dari fitur lain yang cuma
+nyambung sebentar tiap jadwal. Karena itu saklarnya terpisah dan bawaannya
+mati-kecuali: moderasi **mati**, perintah pribadi **nyala**.
+
+**Perintah pribadi** (cuma jalan di **chat diri sendiri** — bukan di grup):
+kirim `.menu` buat lihat daftarnya. Yang ada sekarang:
+
+| Perintah | Gunanya |
+|---|---|
+| `.menu` / `.bantu` | daftar perintah |
+| `.ping` | cek bot hidup |
+| `.status` | repo, rilis terakhir, penjaga grup, hitungan moderasi |
+| `.stiker` | kirim/rebalas **foto** dengan keterangan `.stiker` → jadi stiker WA |
+| `.story` | kirim/rebalas **foto/video** dengan keterangan `.story` → status/story HD |
+| `.storygrup` | sama, tapi penontonnya ditambah anggota grup yang dipantau |
+| `.grup` | info grup yang dipantau: nama, jumlah anggota, daftar hitam |
+| `.bersih` | kosongkan hitungan moderasi hari ini |
+
+Stiker diproses di HP: WhatsApp cuma nerima stiker **WebP**, sementara mesin Node
+di dalam app nggak punya encoder WebP. Jadi fotonya dititipkan lewat berkas di
+folder data app, dikecilkan ke 512 px dan dikompres di `Stiker.kt`, baru balik
+jadi stiker. Foto besar/format aneh otomatis diturunkan mutunya; kalau tetap
+nggak kebaca, bot balas pesan gagal (nggak diem-dieman). Karena butuh Android,
+`.stiker` di CLI dijawab: pakai app buat fitur ini. Foto sebagai **dokumen**
+(di atas 6 MB) juga ditolak dengan pesan — kirim sebagai foto biasa saja.
+
+**Moderasi grup** (nyalain saklarnya, grup harus sama dengan **Penjaga grup**):
+
+- link Telegram, domain yang lo daftarin di **Domain phishing**, dan link di luar
+  daftar izin (`chat.whatsapp.com`, `wa.me`, `whatsapp.com`) → **dihapus**
+- kata judi/pinjol/promo (`slot`, `gacor`, `pinjol`, `promo`, …) → **dihapus**;
+  tambah kata sendiri di **Kata tambahan**
+- pelakunya **diperingatkan**; di pelanggaran ke-`batas strike` (bawaan 2) baru
+  **dikeluarkan** dari grup
+- **admin grup dan bot sendiri nggak pernah disentuh** — termasuk lo sebagai admin
+- **Izinkan link biasa**: kalau dinyalain, link selain domain terlarang dibiarkan
+
+Biar hapus pesan jalan, akun yang ditautkan **wajib admin** di grup itu. Kalau
+bukan, bot tetap kirim peringatan tapi lognya nulis gagal hapus (sekali, nggak
+spam log). Tombol **Kirim menu ke chat** ngirim daftar perintah ke chat diri
+sendiri tanpa ngetik; **Kosongin hitungan** nol-in statistik moderasi.
+
 ## Batre
 
 Bot ini **tidur** hampir sepanjang waktu. Yang nyala terus cuma proses kecil +
@@ -90,6 +150,12 @@ nyambung terus-terusan, dan riwayat chat nggak pernah ditarik.
 
 Yang paling berpengaruh ke batre: interval. Cek rilis tiap 15 menit + grup tiap
 5 menit itu ringan; interval 1–2 menit bakal kerasa.
+
+Pengecualian: kalau **Bot WA umum** nyala (moderasi atau perintah pribadi),
+WhatsApp memang tersambung terus selama engine jalan — itu harga dari fitur ini,
+dan di kartunya sudah ditulis. Mau hemat? Matikan moderasi kalau grupnya lagi
+sepi, atau matikan **Perintah pribadi** kalau perintah chat jarang dipakai:
+fitur lain (rilis, penjaga grup, lagu) tetap jalan normal tanpa itu.
 
 ## Channel WA: dapetnya dari mana?
 

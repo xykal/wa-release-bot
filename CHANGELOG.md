@@ -85,6 +85,37 @@ tetap menerima update.
   Pengaturan, kartu **Tampilan & suara**.
 - Bukti splash di workflow Screenshot app: jepretan detik pertama (`splash.png`) plus assert
   overlay `splash` + blok brand ada di dump UI.
+- **Cek perangkat (M13)**: kartu di tab Pengaturan membaca RAM, arsitektur, versi Android,
+  sisa penyimpanan, optimasi batre, dan izin notifikasi (`Perangkat.kt`), lalu menampilkan
+  peringatan kalau di bawah spek ideal (RAM 2 GB, Android 8, penyimpanan 300 MB) — tanpa
+  memblokir. Tombol **Ke log** menulis hasilnya ke log supaya gampang dilaporkan, dan
+  perangkat pas-pasan otomatis memakai partikel splash yang lebih hemat.
+- **Bot WA umum (M14)**: dua hal yang bikin WhatsApp harus tetap tersambung, jadi saklarnya
+  sendiri-sendiri di kartu **Bot WA umum** (tab Fitur) dengan catatan batre yang jujur.
+  (1) *Perintah pribadi* — tulis `.menu .ping .status .stiker .story .storygrup .grup .bersih`
+  di **chat sendiri**; perintah di grup sengaja tidak dilayani (kall: "command/comen di chat
+  sendiri aja"). (2) *Moderasi grup* — kiriman berisi link Telegram, domain phishing, atau kata
+  judi/pinjol/promo dihapus, pelakunya diberi peringatan, dan strike terakhir dikeluarkan
+  (`batasStrike`, bawaan 2); admin dan bot sendiri tidak pernah disentuh. Logika keputusannya
+  murni di `bot-js/src/pesan.mjs` (diuji unit), bagian WhatsApp-nya di
+  `bot-js/src/mesin/jaga-pesan.mjs`.
+- **Foto jadi stiker (M14)**: kirim/rebalas foto dengan keterangan `.stiker`. WhatsApp cuma
+  nerima stiker WebP, dan Node di dalam APK tidak punya encoder WebP — jadi gambar dititipkan
+  ke app lewat berkas di `dataDir` (app dan mesin Node satu sandbox; bridge WS batasnya 1 MB,
+  foto WhatsApp gampang lewat batas itu): event `minta_stiker` → `Stiker.kt` mengecilkan ke
+  512 px + kompres WebP bertahap sampai muat → cmd `stiker-jadi` → stiker dikirim ke chat
+  sendiri. Berkas sementaranya dihapus di dua sisi, dan sisa dari sesi sebelumnya dibuang
+  waktu engine nyala. Di CLI perintahnya dijawab jujur: konversi WebP butuh app Android.
+- **Story/status HD + tag grup (M15)**: foto/video dengan keterangan `.story` dikirim ke
+  `status@broadcast` **tanpa di-re-encode** (jadi tetap kualitas asli, bukan versi WA yang
+  dikompres ulang), penontonnya daftar nomor di kartu Bot WA umum; `.storygrup` menambah semua
+  anggota grup yang dipantau ke daftar penonton.
+- **Spek HP dipakai engine**: perintah `perangkat` dari app dicatat engine dan tampil di kartu
+  status; jadi kalau HP pas-pasan, engine tahu tanpa harus nebak. Bukti: unit test
+  `bot-js/test/pesan.test.mjs` (11 kasus: link Telegram, domain izin/terlarang, kata judi/promo,
+  admin dilewatkan, menu, hukuman strike), cek setting + perintah di `bot-js/test/engine.test.mjs`,
+  dan langkah `uji bot-umum` di `screenshot_emulator.sh` (kartu + saklar + menu + nilai yang
+  masih tersimpan setelah app dibuka ulang).
 - **Draft release internal** (job `release-internal` di `build-apk.yml` +
   `scripts-dev/rilis_internal.py`): tiap build `main` otomatis ditaruh di draft release
   bertag `internal-<versi>` (aset lama diganti, draft internal versi lain dihapus). Draft

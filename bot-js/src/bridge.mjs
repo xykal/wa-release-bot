@@ -83,5 +83,11 @@ export function createBridge({ dataDir, wsPort = 18790, log, onCommand }) {
     try { wss && wss.close(); } catch { /* ignore */ }
   }
 
-  return { send, close, eventsFile, cmdFile };
+  // Ada klien yang siap nerima event? Dipakai buat nolak lebih awal fitur yang
+  // cuma bisa dikerjakan app (mis. konversi stiker WebP di Android).
+  function adaKlien() {
+    return [...wsClients].some((c) => c.readyState === 1);
+  }
+
+  return { send, close, eventsFile, cmdFile, adaKlien };
 }

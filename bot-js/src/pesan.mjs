@@ -123,7 +123,7 @@ export function nilaiPesan(pesan = {}) {
 export function bacaPerintah(teks) {
   const t = String(teks || '').trim();
   // Awalan titik biar tidak bentrok dengan obrolan biasa.
-  const cocok = t.match(/^[.!\/](\S+)\s*([\s\S]*)$/);
+  const cocok = t.match(/^[.!/](\S+)\s*([\s\S]*)$/);
   if (!cocok) return null;
   const nama = cocok[1].toLowerCase();
   return { nama, arg: cocok[2].trim(), dikenal: nama in PERINTAH };

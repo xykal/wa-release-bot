@@ -97,7 +97,9 @@ read -r W H < <(adb shell wm size | sed -n 's/.*: *\([0-9]*\)x\([0-9]*\).*/\1 \2
 echo "layar ${W}x${H}"
 X=$((W / 2))
 
-adb shell am start -W -n "$PKG/$ACT" >/dev/null
+# --ez tahan_splash true: cuma buat CI, splash ditahan 6 dtk supaya jepretan dan
+# cek dump UI keburu kejadian (di pemakaian normal splash nutup di 1,6 dtk).
+adb shell am start -W -n "$PKG/$ACT" --ez tahan_splash true >/dev/null
 sleep 1
 
 tangkap() { adb exec-out screencap -p > "$OUT/$1.png"; echo "  $1.png"; }
@@ -170,7 +172,8 @@ else
   echo "uji splash: overlay splash tidak ketemu di detik pertama"; tangkap splash-gagal; exit 1
 fi
 tangkap splash
-sleep 5
+# dump UI butuh ~3 detik; splash masih kelihatan karena ditahan 6 detik di atas
+sleep 4
 
 tangkap beranda
 

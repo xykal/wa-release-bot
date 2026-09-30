@@ -29,7 +29,13 @@ internal class SplashUtama(
     private val settings: SettingsStore,
     private val uiSiap: () -> Boolean,
     // Animasi kartu masuk; yang dikasih MainActivity = kartu tab yang lagi kebuka.
-    private val animasiMasuk: () -> Unit
+    private val animasiMasuk: () -> Unit,
+    /**
+     * Tahan splash lebih lama. Dipakai workflow Screenshot app
+     * (`am start --ez tahan_splash true`) supaya jepretan + cek dump UI keburu
+     * kejadian sebelum splash-nya nutup; di pemakaian normal selalu false.
+     */
+    private val tahan: Boolean = false
 ) {
     private var mulaiPada = 0L
     private val label = arrayOf(
@@ -41,7 +47,9 @@ internal class SplashUtama(
             val lama = System.currentTimeMillis() - mulaiPada
             val service = BotService.instance
             val siap = uiSiap() && (service == null || BotBus.ui.serviceRunning)
-            if ((lama >= 1600 && siap) || lama >= 4500) tutup() else handler.postDelayed(this, 100)
+            val minMs = if (tahan) 6000L else 1600L
+            val maxMs = if (tahan) 9000L else 4500L
+            if ((lama >= minMs && siap) || lama >= maxMs) tutup() else handler.postDelayed(this, 100)
         }
     }
 

@@ -332,6 +332,16 @@ class BotService : Service() {
                 laguJudul = e.optString("laguJudul", "").orNull()
                 laguJatah = e.optString("laguJatah", "").orNull()
                 nextLaguAt = e.optLong("nextLaguAt", 0L).takeIf { it > 0 }
+                // bot WA umum (M14/M15)
+                jagaAktif = e.optBoolean("jagaAktif")
+                moderasiAktif = e.optBoolean("moderasiAktif")
+                moderasiHapus = e.optInt("moderasiHapus", 0)
+                moderasiPeringatan = e.optInt("moderasiPeringatan", 0)
+                moderasiKick = e.optInt("moderasiKick", 0)
+                perintahJalan = e.optInt("perintahJalan", 0)
+                stikerDibuat = e.optInt("stikerDibuat", 0)
+                storyDikirim = e.optInt("storyDikirim", 0)
+                perangkat = e.optString("perangkat", "").orNull()
             }
 
             "hosting_status" -> BotBus.publish {
@@ -382,6 +392,21 @@ class BotService : Service() {
                     daftarHitam = daftar
                     daftarHitamManual = manual
                     daftarHitamSeq += 1
+                }
+            }
+
+            // Engine minta foto dikonversi jadi stiker WebP (lihat Stiker.kt).
+            // Dikerjakan di thread lain supaya pembacaan event nggak nyangkut.
+            // Engine minta foto dikonversi jadi stiker WebP (lihat Stiker.kt).
+            // Fotonya dititipkan sebagai berkas di dataDir — jembatannya sama,
+            // app dan mesin Node jalan di satu sandbox — karena bridge WS
+            // batasnya 1 MB dan foto WhatsApp gampang lewat batas itu.
+            // Dikerjakan di thread lain supaya pembacaan event nggak nyangkut.
+            "minta_stiker" -> {
+                val id = e.optString("id")
+                val masuk = e.optString("file")
+                if (id.isNotEmpty() && masuk.isNotEmpty()) {
+                    scope.launch { buatStiker(id, masuk) }
                 }
             }
 
@@ -469,6 +494,45 @@ class BotService : Service() {
      * /data/data/... yang nggak bisa dibuka siapa-siapa tanpa root. Percuma
      * buat debugging di HP — itu sebabnya LogRecorder dipakai.
      */
+    /**
+     * Foto (berkas di dataDir, dari engine) -> stiker WebP (berkas juga).
+     * Nama berkas dari engine selalu `stiker/...`; di sini cuma nama filenya
+     * yang dipakai dan digabung ulang ke folder stiker, jadi path aneh dari
+     * luar nggak bisa nyasar ke berkas lain.
+     */
+    private fun buatStiker(id: String, berkasMasuk: String) {
+        val dir = File(dataDir, "stiker").apply { mkdirs() }
+        val masuk = File(dir, File(berkasMasuk).name)
+        val hasil = try {
+            if (masuk.isFile) Stiker.dariByte(masuk.readBytes()) else null
+        } catch (e: Throwable) {
+            LogRecorder.galat("Stiker", "baca foto gagal", e)
+            null
+        } finally {
+            masuk.delete()
+        }
+        if (hasil == null) {
+            appendLog("Stiker gagal: gambarnya nggak kebaca.")
+            sendCmd(mapOf("type" to "stiker-jadi", "id" to id, "gagal" to "decode"))
+            return
+        }
+        val keluar = File(dir, "keluar-$id.webp")
+        try {
+            keluar.writeBytes(hasil.data)
+            sendCmd(
+                mapOf(
+                    "type" to "stiker-jadi",
+                    "id" to id,
+                    "file" to "stiker/${keluar.name}",
+                    "kb" to hasil.kb
+                )
+            )
+        } catch (e: Throwable) {
+            LogRecorder.galat("Stiker", "tulis stiker gagal", e)
+            sendCmd(mapOf("type" to "stiker-jadi", "id" to id, "gagal" to "tulis"))
+        }
+    }
+
     private fun appendLog(msg: String) {
         val line =
             "[" + SimpleDateFormat("HH:mm:ss", Locale.US).format(Date()) + "] $msg"

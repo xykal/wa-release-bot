@@ -77,6 +77,16 @@ data class BotUi(
     // "n/12": lagu yang sudah diminta perangkat ini hari ini / jatah harian Worker
     var laguJatah: String? = null,
     var nextLaguAt: Long? = null,
+    // bot WA umum (M14/M15): moderasi grup, perintah pribadi, stiker, story
+    var jagaAktif: Boolean = false,
+    var moderasiAktif: Boolean = false,
+    var moderasiHapus: Int = 0,
+    var moderasiPeringatan: Int = 0,
+    var moderasiKick: Int = 0,
+    var perintahJalan: Int = 0,
+    var stikerDibuat: Int = 0,
+    var storyDikirim: Int = 0,
+    var perangkat: String? = null,
     // hosting bot custom
     var hosting: HostingUi = HostingUi(),
     var hostingLog: List<BarisKonsol> = emptyList(),

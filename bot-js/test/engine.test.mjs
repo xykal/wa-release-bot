@@ -162,6 +162,60 @@ test('engine: nyala, configure, start, cek release ke GitHub palsu, stop', async
   assert.equal(cfg.github.repo, REPO);
   assert.equal(cfg.bot.checkIntervalMinutes, 15);
 
+  // --- Modul "Bot WA umum" (M14/M15): moderasi grup + perintah pribadi. ---
+  // Semua di bawah ini dites TANPA WA: yang diuji cuma bacaan setting, jawaban
+  // perintah chat, dan konversi stiker dari app — persis bagian yang nggak
+  // butuh jaringan.
+  assert.equal(cfg.jaga.moderasi, false, 'moderasi default mati');
+  assert.equal(cfg.jaga.perintah, false, 'perintah pribadi opt-in: default mati');
+
+  await engine.kirim({
+    type: 'configure', repo: REPO, channel: '', token: '', intervalMinutes: 15,
+    moderasiAktif: true, moderasiStrike: 3, moderasiKata: 'sewa akun\njudol',
+    moderasiDomain: 'bit.ly, scam.example', moderasiIzinkanLink: true,
+    storyKe: '628111222333, 628444555666', perintahPribadi: true,
+  });
+  await engine.tungguStatus((ev) => ev.moderasiAktif === true, 'status moderasi nyala');
+  const cfg2 = JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8'));
+  assert.equal(cfg2.jaga.moderasi, true);
+  assert.equal(cfg2.jaga.batasStrike, 3);
+  assert.deepEqual(cfg2.jaga.kataTerlarang, ['sewa akun', 'judol']);
+  assert.deepEqual(cfg2.jaga.linkTerlarang, ['bit.ly', 'scam.example']);
+  assert.equal(cfg2.jaga.izinkanLink, true);
+  assert.deepEqual(cfg2.jaga.storyKe, ['628111222333@s.whatsapp.net', '628444555666@s.whatsapp.net']);
+
+  // batasStrike dijepit 1..5
+  await engine.kirim({ type: 'configure', repo: REPO, channel: '', token: '', intervalMinutes: 15, moderasiAktif: true, moderasiStrike: 99 });
+  await engine.tungguStatus((ev) => ev.moderasiAktif === true, 'status moderasi nyala lagi');
+  const cfg3 = JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8'));
+  assert.equal(cfg3.jaga.batasStrike, 5);
+
+  // Perintah engine: stiker-jadi tanpa data harus diam (bukan crash).
+  await engine.kirim({ type: 'stiker-jadi', id: 'stiker-1' });
+
+  // Stiker lewat berkas: app nulis hasil WebP di dataDir, engine baca + kirim,
+  // lalu dua berkasnya (masuk & keluar) dihapus. Di test ini WA belum nyambung,
+  // jadi kirimnya pasti gagal — yang dibuktikan: gagalnya ke-log, bukan crash,
+  // dan berkas sementaranya tetap dibersihkan (kalau nggak, numpuk di HP).
+  const dirStiker = path.join(dataDir, 'stiker');
+  fs.mkdirSync(dirStiker, { recursive: true });
+  fs.writeFileSync(path.join(dirStiker, 'masuk-uji.img'), Buffer.from('foto-palsu'));
+  fs.writeFileSync(path.join(dirStiker, 'keluar-uji.webp'), Buffer.from('webp-palsu'));
+  await engine.kirim({ type: 'stiker-jadi', id: 'uji', file: 'stiker/keluar-uji.webp', kb: 1 });
+  await engine.tungguLog('Stiker gagal dikirim');
+  assert.equal(fs.existsSync(path.join(dirStiker, 'masuk-uji.img')), false, 'berkas foto masuk dibersihkan');
+  assert.equal(fs.existsSync(path.join(dirStiker, 'keluar-uji.webp')), false, 'berkas stiker keluar dibersihkan');
+  await engine.kirim({ type: 'bersih-moderasi' });
+  await engine.tungguLog('Hitungan moderasi dikosongkan');
+  const stMod = await engine.tungguStatus(() => true, 'status setelah moderasi');
+  assert.equal(stMod.moderasiHapus, 0);
+  assert.equal(stMod.moderasiKick, 0);
+
+  // Perintah `perangkat` dari app (Perangkat.kt) dicatat di status.
+  await engine.kirim({ type: 'perangkat', ringkas: 'RAM 3.6 GB, API 30, hemat: tidak', hemat: false });
+  const stHp = await engine.tungguStatus((ev) => Boolean(ev.perangkat), 'status perangkat');
+  assert.ok(/RAM 3\.6 GB/.test(stHp.perangkat));
+
   await engine.kirim({ type: 'start' });
   await engine.tungguLog('Engine nyala');
   const jalan = await engine.tungguStatus((ev) => ev.running === true && ev.nextCheckAt, 'status running');

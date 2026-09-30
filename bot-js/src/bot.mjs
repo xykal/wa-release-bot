@@ -27,6 +27,7 @@ import { buatLaguMood } from './mesin/lagu-mood.mjs';
 import { buatPenjagaGrup } from './mesin/penjaga-grup.mjs';
 import { buatTautan } from './mesin/tautan.mjs';
 import { buatPerintah } from './mesin/perintah.mjs';
+import { buatJagaPesan } from './mesin/jaga-pesan.mjs';
 
 // ----------------------------- selftest ------------------------------------
 async function selftest() {
@@ -133,6 +134,10 @@ async function main() {
   // Sisa file lagu dari engine sebelumnya (mis. mati pas lagi ngirim) → buang.
   const dirLaguTmp = path.join(dataDir, 'lagu-tmp');
   try { fs.rmSync(dirLaguTmp, { recursive: true, force: true }); } catch { /* ignore */ }
+
+  // Sisa berkas stiker (foto masuk / WebP keluar, M14) dari sesi sebelumnya.
+  // Dititipkan lewat folder ini, bukan base64 di bridge: WS bridge batasnya 1 MB.
+  try { fs.rmSync(path.join(dataDir, 'stiker'), { recursive: true, force: true }); } catch { /* ignore */ }
 
   const cfgFile = path.join(dataDir, 'config.json');
   const stateFile = path.join(dataDir, 'state.json');
@@ -243,6 +248,16 @@ async function main() {
       laguJudul: state.lagu?.lastJudul || null,
       laguJatah: state.lagu?.jatah?.pemasang || null, // "n/12" hari ini, dari Worker
       nextLaguAt: ctx.nextLaguAt,
+      // Moderasi & perintah pribadi (mesin/jaga-pesan.mjs)
+      jagaAktif: Boolean(ctx.cfg?.jaga?.moderasi || ctx.cfg?.jaga?.perintah),
+      moderasiAktif: Boolean(ctx.cfg?.jaga?.moderasi),
+      moderasiHapus: ctx.fitur?.jaga?.hitung?.().dihapus || 0,
+      moderasiPeringatan: ctx.fitur?.jaga?.hitung?.().peringatan || 0,
+      moderasiKick: ctx.fitur?.jaga?.hitung?.().kick || 0,
+      perintahJalan: ctx.fitur?.jaga?.hitung?.().perintah || 0,
+      stikerDibuat: ctx.fitur?.jaga?.hitung?.().stiker || 0,
+      storyDikirim: ctx.fitur?.jaga?.hitung?.().story || 0,
+      perangkat: ctx.perangkat?.ringkas || null,
     });
   }
 
@@ -309,15 +324,19 @@ async function main() {
     if (repoAda()) bagian.push(`cek release tiap ${Math.round(intervalMs() / 60000)} mnt`);
     if (grupAktif()) bagian.push(`jaga grup tiap ${Math.round(intervalGrupMs() / 60000)} mnt`);
     if (laguAktif()) bagian.push(`lagu mood ±${ctx.cfg.lagu.perHari}x/hari`);
+    if (ctx.cfg.jaga?.moderasi) bagian.push('moderasi grup');
+    if (ctx.cfg.jaga?.perintah) bagian.push('perintah pribadi di chat sendiri');
     log('▶️ Engine nyala: ' + (bagian.join(' + ') || 'belum ada tugas'));
     emitStatus();
     scheduleNext(3000);
     jadwalGrup(8000);
     ctx.fitur.lagu.jadwalLagu();
+    if (ctx.cfg.jaga?.moderasi || ctx.cfg.jaga?.perintah) void ctx.fitur.jaga.mulai();
   }
 
   function stopEngine() {
     ctx.running = false;
+    ctx.fitur?.jaga?.hentikan();
     clearTimeout(timer);
     clearTimeout(timerGrup);
     clearTimeout(ctx.timerLagu);
@@ -338,8 +357,9 @@ async function main() {
   const lagu = buatLaguMood(ctx, { rilis });
   const grup = buatPenjagaGrup(ctx);
   const tautan = buatTautan(ctx, { rilis, grup });
-  const perintah = buatPerintah(ctx, { rilis, lagu, grup, tautan });
-  ctx.fitur = { rilis, lagu, grup, tautan, perintah };
+  const jaga = buatJagaPesan(ctx);
+  const perintah = buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga });
+  ctx.fitur = { rilis, lagu, grup, tautan, perintah, jaga };
 
   // ----------------------------- init ---------------------------------------
   log('🦴 wa-release-bot engine siap (node ' + process.version + '). Menunggu perintah dari app.');

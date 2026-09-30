@@ -296,4 +296,30 @@
     <string name="k_perangkat_oke">Perangkat lolos semua cek.</string>
     <string name="k_perangkat_ada_peringatan">Perangkat di bawah spek ideal: %1$s peringatan. Detailnya di kartu Cek perangkat.</string>
     <string name="k_hasil_cek_perangkat_masuk_log">Hasil cek perangkat masuk log.</string>
+    <!-- kartu Bot WA umum (M14/M15) -->
+    <string name="u_bot_wa_umum">Bot WA umum</string>
+    <string name="u_ket_bot_wa_umum">Moderasi grup dan perintah pribadi di chat sendiri. Dua-duanya bikin WA harus tersambung terus, jadi lebih boros batre.</string>
+    <string name="u_moderasi_grup">Moderasi grup</string>
+    <string name="u_ket_moderasi_grup">Hapus link/phishing/promo, peringatan, lalu dikeluarkan di strike terakhir. Admin dan bot sendiri nggak pernah disentuh.</string>
+    <string name="u_perintah_pribadi">Perintah pribadi di chat sendiri</string>
+    <string name="u_ket_perintah_pribadi">.menu .ping .status .stiker .story .grup — cuma jalan di chat sendiri, bukan di grup.</string>
+    <string name="u_izinkan_link_biasa">Izinkan link biasa</string>
+    <string name="u_ket_izinkan_link_biasa">Kalau nyala, link selain daftar domain terlarang nggak dihapus.</string>
+    <string name="u_batas_strike">BATAS STRIKE SEBELUM DIKELUARKAN</string>
+    <string name="u_kata_tambahan_spam">KATA TAMBAHAN YANG DIANGGAP SPAM</string>
+    <string name="u_contoh_kata_pisah_koma">mis. judi, pinjol, sewa akun (pisah pakai koma/baris)</string>
+    <string name="u_domain_phishing">DOMAIN YANG LANGSUNG DIANGGAP PHISHING</string>
+    <string name="u_penonton_story">NOMOR PENONTON STORY (SELAIN ANGGOTA GRUP)</string>
+    <string name="u_contoh_62812">mis. 628123456789, 628987654321</string>
+    <string name="u_kirim_menu_ke_chat">Kirim menu ke chat</string>
+    <string name="u_kosongin_hitungan">Kosongin hitungan</string>
+    <string name="k_menu_dikirim_ke_chat_sendiri">Menu dikirim ke chat sendiri (kalau WA tersambung).</string>
+    <string name="k_hitungan_moderasi_dikosongin">Hitungan moderasi dikosongin.</string>
+    <string name="k_moderasi_nyala">Moderasi grup: nyala</string>
+    <string name="k_moderasi_mati">Moderasi grup: mati</string>
+    <string name="k_perintah_pribadi_2">Perintah pribadi: %1$s</string>
+    <string name="k_dihapus_diperingatkan_dikeluarkan_2">Dihapus %1$s | diperingatkan %2$s | dikeluarkan %3$s</string>
+    <string name="k_stiker_story_perintah_2">Stiker %1$s | story %2$s | perintah %3$s</string>
+    <string name="k_perangkat_2">Perangkat: %1$s</string>
+    <string name="u_contoh_domain_phishing">mis. bit.ly, contoh-scam.com</string>
 </resources>

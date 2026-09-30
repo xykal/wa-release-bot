@@ -296,4 +296,30 @@
     <string name="k_perangkat_oke">Device passed every check.</string>
     <string name="k_perangkat_ada_peringatan">Device below ideal spec: %1$s warning(s). Details in the Device check card.</string>
     <string name="k_hasil_cek_perangkat_masuk_log">Device check written to the log.</string>
+    <!-- kartu Bot WA umum (M14/M15) -->
+    <string name="u_bot_wa_umum">WhatsApp features</string>
+    <string name="u_ket_bot_wa_umum">Group moderation and personal commands in your own chat. Both keep WhatsApp connected, so they use more battery.</string>
+    <string name="u_moderasi_grup">Group moderation</string>
+    <string name="u_ket_moderasi_grup">Delete links/phishing/ads, warn, then remove on the last strike. Admins and the bot itself are never touched.</string>
+    <string name="u_perintah_pribadi">Personal commands in your own chat</string>
+    <string name="u_ket_perintah_pribadi">.menu .ping .status .sticker .story .group — only in your own chat, never in groups.</string>
+    <string name="u_izinkan_link_biasa">Allow normal links</string>
+    <string name="u_ket_izinkan_link_biasa">When on, links other than the blocked domains are not deleted.</string>
+    <string name="u_batas_strike">STRIKES BEFORE REMOVAL</string>
+    <string name="u_kata_tambahan_spam">EXTRA SPAM KEYWORDS</string>
+    <string name="u_contoh_kata_pisah_koma">e.g. gambling, loan, account rental (comma or newline)</string>
+    <string name="u_domain_phishing">DOMAINS TREATED AS PHISHING</string>
+    <string name="u_penonton_story">STORY AUDIENCE NUMBERS (BESIDES GROUP MEMBERS)</string>
+    <string name="u_contoh_62812">e.g. 628123456789, 628987654321</string>
+    <string name="u_kirim_menu_ke_chat">Send menu to chat</string>
+    <string name="u_kosongin_hitungan">Reset counters</string>
+    <string name="k_menu_dikirim_ke_chat_sendiri">Menu sent to your own chat (when WhatsApp is connected).</string>
+    <string name="k_hitungan_moderasi_dikosongin">Moderation counters reset.</string>
+    <string name="k_moderasi_nyala">Group moderation: on</string>
+    <string name="k_moderasi_mati">Group moderation: off</string>
+    <string name="k_perintah_pribadi_2">Personal commands: %1$s</string>
+    <string name="k_dihapus_diperingatkan_dikeluarkan_2">Deleted %1$s | warned %2$s | removed %3$s</string>
+    <string name="k_stiker_story_perintah_2">Stickers %1$s | stories %2$s | commands %3$s</string>
+    <string name="k_perangkat_2">Device: %1$s</string>
+    <string name="u_contoh_domain_phishing">e.g. bit.ly, scam-example.com</string>
 </resources>

@@ -316,6 +316,14 @@ class MainActivity : AppCompatActivity() {
             withService { sendCmd(mapOf("type" to "lagu-sekarang")) }
             banner(getString(R.string.k_ngambil_lagu_dari_antrian_ngirim))
         }
+        pasang(R.id.btnKirimMenu, "Kirim menu ke chat") {
+            withService { sendCmd(mapOf("type" to "menu-sekarang")) }
+            banner(getString(R.string.k_menu_dikirim_ke_chat_sendiri))
+        }
+        pasang(R.id.btnBersihModerasi, "Kosongin hitungan moderasi") {
+            withService { sendCmd(mapOf("type" to "bersih-moderasi")) }
+            banner(getString(R.string.k_hitungan_moderasi_dikosongin))
+        }
         pasang(R.id.btnHosting, "Buka hosting") {
             startActivity(Intent(this, HostingActivity::class.java))
         }

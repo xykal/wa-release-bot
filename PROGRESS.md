@@ -84,3 +84,15 @@ Next:
 - kall: "gas semua dah". M9 i18n tahap 2: Onboarding, Repo, Hosting, notifikasi service
   (84 entri lagi, total 274) - seluruh UI app dua bahasa. Lalu gambar sandingan id/en di
   README dan galeri situs versi English dari screenshot en-US (tukar `src` per bahasa).
+
+## 2026-09-30 — hari kerja ke-2
+
+- Sisa 2026-09-29 malam: PR #24 PITCH, #25 uji engine dua repo, #26 `docs/JNI.md` + title/meta
+  situs ikut bahasa, #27 `deploy_web.py` berhenti di GET domain (token CF cukup Workers Scripts:
+  Edit). Deploy situs masih manual: token scoped belum dibuat kall.
+- kall: HP-nya armeabi-v7a, artefak push/PR cuma arm64. Sebab: set ABI push/PR dibatasi arm64 demi
+  waktu CI; v7a hanya dari tag/dispatch. PR #28: push `main` bangun arm64 + v7a; APK v7a dikirim
+  lewat artefak run 36657756843.
+- kall: launching dimajukan ke Minggu 2026-10-04 19.00 WIB (dari Jumat 2026-10-09). Diubah:
+  `LAUNCH_ISO`, popup, `.ics`, ROADMAP (jadwal hari H), CHANGELOG 1.0.0 di branch launching.
+  Belum: token CF scoped, uji APK v7a di HP kall, ulasan `values-en` penutur asli, remake Eps 2.

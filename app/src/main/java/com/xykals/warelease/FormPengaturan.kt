@@ -40,6 +40,7 @@ internal class FormPengaturan(
     private lateinit var rowBoot: View
     private lateinit var rowLogcat: View
     private lateinit var rowLaguAktif: View
+    private lateinit var rowSuaraSplash: View
 
     private fun saklar(id: Int): View {
         val v = a.findViewById<View>(id)
@@ -66,6 +67,16 @@ internal class FormPengaturan(
         rowBoot = saklar(R.id.rowBoot)
         rowLogcat = saklar(R.id.rowLogcat)
         rowLaguAktif = saklar(R.id.rowLaguAktif)
+
+        // Bukan lewat saklar(): nyalain baris ini artinya "boleh bunyi lagi",
+        // jadi bendera voSudahMain dikosongin (lihat SuaraSplash.kt).
+        rowSuaraSplash = a.findViewById(R.id.rowSuaraSplash)
+        rowSuaraSplash.setOnClickListener {
+            val baru = !rowSuaraSplash.isSelected
+            rowSuaraSplash.isSelected = baru
+            settings.suaraSplash = baru
+            if (baru) settings.voSudahMain = false
+        }
         etLaguPerHari = a.findViewById(R.id.etLaguPerHari)
         etLaguJamMulai = a.findViewById(R.id.etLaguJamMulai)
         etLaguJamSelesai = a.findViewById(R.id.etLaguJamSelesai)
@@ -93,6 +104,7 @@ internal class FormPengaturan(
         rowBoot.isSelected = settings.autoStartOnBoot
         rowLogcat.isSelected = settings.rekamLogcat
         rowLaguAktif.isSelected = settings.laguAktif
+        rowSuaraSplash.isSelected = settings.suaraSplash
         etLaguPerHari.setText(settings.laguPerHari.toString())
         etLaguJamMulai.setText(settings.laguJamMulai.toString())
         etLaguJamSelesai.setText(settings.laguJamSelesai.toString())
@@ -117,6 +129,7 @@ internal class FormPengaturan(
         settings.laguPerHari = etLaguPerHari.text.toString().toIntOrNull() ?: 2
         settings.laguJamMulai = etLaguJamMulai.text.toString().toIntOrNull() ?: 9
         settings.laguJamSelesai = etLaguJamSelesai.text.toString().toIntOrNull() ?: 22
+        settings.suaraSplash = rowSuaraSplash.isSelected
 
         val logcatLama = settings.rekamLogcat
         settings.rekamLogcat = rowLogcat.isSelected

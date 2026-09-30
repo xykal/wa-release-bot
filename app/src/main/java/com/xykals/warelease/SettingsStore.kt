@@ -96,6 +96,21 @@ class SettingsStore(ctx: Context) {
         get() = p.getBoolean("sambutanV2", false)
         set(v) = p.edit().putBoolean("sambutanV2", v).apply()
 
+    // ---- splash & suara ----
+    /** Saklar "Suara pembuka" di tab Pengaturan. */
+    var suaraSplash: Boolean
+        get() = p.getBoolean("suaraSplash", true)
+        set(v) = p.edit().putBoolean("suaraSplash", v).apply()
+
+    /**
+     * Voice over "XyVerse Technology Global" cuma bunyi SEKALI (permintaan kall
+     * 2026-09-30). Bendera ini dipasang setelah suaranya benar-benar mulai;
+     * nyalain saklarnya lagi akan mengosonginya, jadi bunyi sekali lagi.
+     */
+    var voSudahMain: Boolean
+        get() = p.getBoolean("voSudahMain", false)
+        set(v) = p.edit().putBoolean("voSudahMain", v).apply()
+
     // ---- batre ----
     var rekamLogcat: Boolean
         get() = p.getBoolean("rekamLogcat", true)

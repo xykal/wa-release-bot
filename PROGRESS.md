@@ -96,3 +96,10 @@ Next:
 - kall: launching dimajukan ke Minggu 2026-10-04 19.00 WIB (dari Jumat 2026-10-09). Diubah:
   `LAUNCH_ISO`, popup, `.ics`, ROADMAP (jadwal hari H), CHANGELOG 1.0.0 di branch launching.
   Belum: token CF scoped, uji APK v7a di HP kall, ulasan `values-en` penutur asli, remake Eps 2.
+- kall uji APK v7a: kotak isian layar Repo tidak bisa disentuh (EditText dari kode kehilangan
+  focusableInTouchMode) dan layar melompat ke log tiap ada baris baru (fullScroll menarik fokus)
+  -> PR #30 + langkah uji ketik di workflow Screenshot app. Permintaan baru buat 1.0.0: bottom
+  navbar + pecah layar, splash lebih epik + voice over "XyVerse Technology Global" (sekali
+  setelah pasang, ada toggle), fitur bot WA umum (stiker dari foto, moderasi anti-phishing/promo
+  kecuali admin, posting story HD + tag grup), peringatan spek HP. Launching diundur ke Minggu
+  2026-10-11 19.00 WIB supaya semua masuk 1.0.0 (PR #31).

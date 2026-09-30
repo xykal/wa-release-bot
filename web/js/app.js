@@ -21,6 +21,19 @@
       if (t[k] != null) el.textContent = t[k];
     });
     $$('[data-brand]').forEach((el) => { el.textContent = BRAND; });
+    // Tanggal di popup diturunkan dari LAUNCH_ISO (zona WIB) supaya jadwal cukup diubah di satu
+    // tempat; teks modal_waktu di teks.js tinggal cadangan kalau Intl gagal.
+    const elWaktu = $('[data-i18n="modal_waktu"]');
+    if (elWaktu) {
+      try {
+        const d = new Date(LAUNCH_ISO);
+        const tgl = new Intl.DateTimeFormat(bahasa === 'en' ? 'en-GB' : 'id-ID',
+          { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }).format(d);
+        const jam = new Intl.DateTimeFormat('en-GB',
+          { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Jakarta' }).format(d);
+        elWaktu.textContent = bahasa === 'en' ? tgl + ', ' + jam + ' WIB (UTC+7)' : tgl + ', ' + jam.replace(':', '.') + ' WIB';
+      } catch (_) { /* browser lama tanpa Intl zona waktu: pakai teks cadangan */ }
+    }
     // <title> dan meta description ikut bahasa (HTML statis memuat versi Indonesia
     // untuk crawler tanpa JS). Halaman dikenali dari <body data-halaman>.
     const halaman = document.body.dataset.halaman || 'beranda';
@@ -66,7 +79,7 @@
 
   // -------------------------- hitung mundur launching ----------------------
   const launch = new Date(LAUNCH_ISO).getTime();
-  // ?t=2026-10-04T12:00:01Z -> simulasi waktu (buat QA tampilan setelah launching)
+  // ?t=2026-10-11T12:00:01Z -> simulasi waktu (buat QA tampilan setelah launching)
   const geser = param.get('t') ? new Date(param.get('t')).getTime() - Date.now() : 0;
   const kini = () => Date.now() + geser;
   const tirai = $('#tirai');

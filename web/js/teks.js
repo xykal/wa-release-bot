@@ -4,9 +4,10 @@
 
 const BRAND = 'XyVerse Technology Global';
 const REPO = 'xykal/wa-release-bot';
-// Launching publik: Minggu 4 Oktober 2026, 19.00 WIB (= 12.00 UTC). Diputuskan kall 2026-09-30
-// (dimajukan dari Jumat 9 Oktober). Satu-satunya sumber tanggal; teks popup dan .ics ikut ini.
-const LAUNCH_ISO = '2026-10-04T12:00:00Z';
+// Launching publik: Minggu 11 Oktober 2026, 19.00 WIB (= 12.00 UTC). Diputuskan kall 2026-09-30
+// (semula 9 Okt, sempat 4 Okt; diundur karena scope 1.0.0 bertambah). Satu-satunya sumber
+// tanggal: teks popup diturunkan dari sini oleh app.js; .ics dan modal_waktu di bawah cuma cadangan.
+const LAUNCH_ISO = '2026-10-11T12:00:00Z';
 const VERSI_LAUNCH = '1.0.0';
 
 const TEKS = {
@@ -62,7 +63,7 @@ const TEKS = {
     unduh_gagal: 'Nggak bisa ngambil data rilis dari GitHub sekarang. Buka halaman Releases langsung.',
     modal_label: 'Segera', modal_judul: 'Launching WA Release Bot', modal_sub: 'Versi publik pertama, v' + VERSI_LAUNCH + '. APK bisa diunduh di halaman ini begitu hitung mundurnya habis.',
     hari: 'hari', jam: 'jam', menit: 'menit', detik: 'detik',
-    modal_waktu: 'Minggu, 4 Oktober 2026, 19.00 WIB', modal_lokal: 'Waktu lokal kamu:',
+    modal_waktu: 'Minggu, 11 Oktober 2026, 19.00 WIB', modal_lokal: 'Waktu lokal kamu:',
     modal_tunggu: 'Waktunya udah lewat. File rilis lagi diunggah, halaman ini ngecek ulang tiap menit.',
     modal_ics: 'Ingatkan di kalender', modal_github: 'Pantau di GitHub', modal_kembali: 'Kembali ke beranda',
     footer_lisensi: 'Lisensi pemakaian pribadi', footer_built: 'Built by xykal',
@@ -119,7 +120,7 @@ const TEKS = {
     unduh_gagal: 'Could not load release data from GitHub right now. Open the Releases page directly.',
     modal_label: 'Coming soon', modal_judul: 'Launching WA Release Bot', modal_sub: 'First public version, v' + VERSI_LAUNCH + '. The APK becomes downloadable on this page when the countdown ends.',
     hari: 'days', jam: 'hours', menit: 'minutes', detik: 'seconds',
-    modal_waktu: 'Sunday, 4 October 2026, 19:00 WIB (UTC+7)', modal_lokal: 'Your local time:',
+    modal_waktu: 'Sunday, 11 October 2026, 19:00 WIB (UTC+7)', modal_lokal: 'Your local time:',
     modal_tunggu: 'The time has passed. Release files are being uploaded; this page re-checks every minute.',
     modal_ics: 'Add a calendar reminder', modal_github: 'Watch on GitHub', modal_kembali: 'Back to home',
     footer_lisensi: 'Personal-use license', footer_built: 'Built by xykal',

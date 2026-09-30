@@ -214,9 +214,12 @@ test('engine: nyala, configure, start, cek release ke GitHub palsu, stop', async
   };
   assert.equal(await hilang(path.join(dirStiker, 'masuk-uji.img')), true, 'berkas foto masuk dibersihkan');
   assert.equal(await hilang(path.join(dirStiker, 'keluar-uji.webp')), true, 'berkas stiker keluar dibersihkan');
+  // Urutan tunggu mengikuti urutan kirim engine: `bersih-moderasi` ngirim
+  // status DULU baru log. Kalau log ditunggu lebih dulu, statusnya kebuang
+  // (tungguLog membuang event yang nggak cocok) dan tesnya timeout.
   await engine.kirim({ type: 'bersih-moderasi' });
+  const stMod = await engine.tungguStatus((ev) => ev.moderasiAktif === true, 'status setelah moderasi');
   await engine.tungguLog('Hitungan moderasi dikosongkan');
-  const stMod = await engine.tungguStatus(() => true, 'status setelah moderasi');
   assert.equal(stMod.moderasiHapus, 0);
   assert.equal(stMod.moderasiKick, 0);
 

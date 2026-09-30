@@ -69,13 +69,21 @@ internal object Stiker {
 
     private fun encode(bmp: Bitmap, mutu: Int): ByteArray {
         val out = ByteArrayOutputStream()
-        // WEBP_LOSSY ada sejak API 14; kalau HP-nya aneh dan balikin false,
-        // coba WEBP biasa (lossless) supaya tetap ada hasilnya.
-        val ok = bmp.compress(Bitmap.CompressFormat.WEBP_LOSSY, mutu, out)
-        if (!ok) bmp.compress(Bitmap.CompressFormat.WEBP, mutu, out)
+        bmp.compress(formatWebp(), mutu, out)
         return out.toByteArray()
     }
 
-    /** True kalau HP ini bisa nulis WebP (dipakai buat nolak lebih awal). */
-    fun didukung(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH
+    /**
+     * WEBP_LOSSY baru ada di API 30. Di Android 8/9 (HP kelas bawah, masih
+     * banyak) konstanta itu bikin NoSuchFieldError — dan itu ketangkep sebagai
+     * "gambar nggak kebaca", padahal HP-nya sehat. Jadi pilih berdasarkan versi:
+     * WEBP lama di bawah 30 (mutu < 100 = lossy juga), WEBP_LOSSY di atasnya.
+     */
+    @Suppress("DEPRECATION")
+    private fun formatWebp(): Bitmap.CompressFormat =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Bitmap.CompressFormat.WEBP_LOSSY
+        } else {
+            Bitmap.CompressFormat.WEBP
+        }
 }

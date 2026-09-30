@@ -16,8 +16,8 @@ push / PR ──┬─→ build-apk.yml    ─→ APK artifact  (+ GitHub Releas
 
 | Trigger | Yang terjadi |
 |---|---|
-| push ke `main` | build engine → APK release → upload artifact (30 hari) |
-| pull request | build engine → APK **debug** (cuma buat cek compile) |
+| push ke `main` | build engine → APK release arm64-v8a **dan** armeabi-v7a (HP uji 32-bit) → upload artifact |
+| pull request | build engine → APK arm64-v8a saja (cuma buat cek compile, cepat) |
 | push tag `v*` | semua di atas **+ GitHub Release** dengan APK & `sha256` |
 | `workflow_dispatch` | build manual, bisa pilih `release` / `debug` **dan ABI-nya** |
 | push tag `v*` | **tiga APK sekaligus** (arm64, armeabi-v7a, universal) → GitHub Release |

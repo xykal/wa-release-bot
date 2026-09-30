@@ -47,8 +47,8 @@ internal class SplashUtama(
             val lama = System.currentTimeMillis() - mulaiPada
             val service = BotService.instance
             val siap = uiSiap() && (service == null || BotBus.ui.serviceRunning)
-            val minMs = if (tahan) 6000L else 1600L
-            val maxMs = if (tahan) 9000L else 4500L
+            val minMs = if (tahan) 20_000L else 1600L
+            val maxMs = if (tahan) 26_000L else 4500L
             if ((lama >= minMs && siap) || lama >= maxMs) tutup() else handler.postDelayed(this, 100)
         }
     }

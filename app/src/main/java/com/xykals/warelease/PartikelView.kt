@@ -1,6 +1,5 @@
 package com.xykals.warelease
 
-import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -8,9 +7,9 @@ import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.RadialGradient
 import android.graphics.Shader
+import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.View
-import android.view.animation.LinearInterpolator
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.random.Random
@@ -42,6 +41,11 @@ class PartikelView @JvmOverloads constructor(
 
     private class Jatuh(val fase: Float, val laju: Float, val ekor: Float)
 
+    private companion object {
+        /** Satu putaran penuh animasi latar (ms). */
+        const val PERIODE = 5200L
+    }
+
     private val acak = Random(13)
     private val bintang = ArrayList<Bintang>(56)
     private val jatuh = ArrayList<Jatuh>(3)
@@ -54,25 +58,35 @@ class PartikelView @JvmOverloads constructor(
         strokeWidth = 2f * resources.displayMetrics.density
     }
 
+    // Waktu dinormalisasi 0..1 dengan periode [PERIODE] ms. Loop-nya pakai
+    // postOnAnimation + jam sistem, BUKAN ValueAnimator: ValueAnimator ikut
+    // setelan "animator duration scale" HP (kalau skalanya 0, animasinya
+    // langsung lompat ke akhir) - partikel nggak boleh ikut-ikutan.
     private var t = 0f
-    private val anim = ValueAnimator.ofFloat(0f, 1f).apply {
-        duration = 5200
-        repeatCount = ValueAnimator.INFINITE
-        interpolator = LinearInterpolator()
-        addUpdateListener {
-            t = it.animatedValue as Float
+    private var mulaiMs = 0L
+    private var jalan = false
+
+    private val langkah = object : Runnable {
+        override fun run() {
+            if (!jalan) return
+            t = ((SystemClock.uptimeMillis() - mulaiMs) % PERIODE) / PERIODE.toFloat()
             invalidate()
+            postOnAnimation(this)
         }
     }
 
     /** Dipanggil pas splash kelihatan. */
     fun mulai() {
-        if (!anim.isStarted) anim.start()
+        if (jalan) return
+        jalan = true
+        mulaiMs = SystemClock.uptimeMillis()
+        postOnAnimation(langkah)
     }
 
     /** Dipanggil pas splash ditutup, biar baterai nggak dikuras animasi tak terlihat. */
     fun berhenti() {
-        anim.cancel()
+        jalan = false
+        removeCallbacks(langkah)
         t = 0f
     }
 

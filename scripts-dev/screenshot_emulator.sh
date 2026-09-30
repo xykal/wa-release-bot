@@ -162,18 +162,26 @@ gulir_ke() {
 echo "menangkap:"
 echo "  sambutan.png"
 
-# Splash epik (M12): tampil minimal 1,6 dtk, jadi masih kelihatan di detik pertama.
-# Buktinya bukan cuma gambar: overlay splash + blok brand harus ada di dump UI
-# (PartikelView.kt sengaja nggak penting buat aksesibilitas, jadi nggak muncul di dump).
+# Splash epik (M12): di CI splash ditahan 20 dtk (--ez tahan_splash true di atas),
+# jadi jepretan dua kali + dump UI keburu kejadian. Buktinya tiga lapis:
+#   1. overlay splash + blok brand ada di dump UI,
+#   2. dua jepretan berurutan beda isinya (partikelnya benar-benar bergerak),
+#   3. jepretan disimpan buat mata manusia.
+tangkap splash
+sleep 2
+tangkap splash-gerak
+if cmp -s "$OUT/splash.png" "$OUT/splash-gerak.png"; then
+  echo "uji splash: dua jepretan identik, animasi latar tidak jalan"; exit 1
+fi
+echo "uji splash: latar bergerak (dua jepretan berbeda) OK"
 dump="$(dump_ui)"
 if [[ "$dump" == *"id/splash"* && "$dump" == *"id/tvBrandSplash"* ]]; then
-  echo "uji splash: overlay + brand kelihatan (animasi M12)"
+  echo "uji splash: overlay + brand kelihatan OK"
 else
-  echo "uji splash: overlay splash tidak ketemu di detik pertama"; tangkap splash-gagal; exit 1
+  echo "uji splash: overlay splash tidak ketemu di dump UI"; tangkap splash-gagal; exit 1
 fi
-tangkap splash
-# dump UI butuh ~3 detik; splash masih kelihatan karena ditahan 6 detik di atas
-sleep 4
+# sisa masa tahan: tunggu splash nutup sendiri (20 dtk dari app dibuka)
+sleep 16
 
 tangkap beranda
 

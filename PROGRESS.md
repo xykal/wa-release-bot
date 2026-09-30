@@ -114,3 +114,15 @@ Next:
   butuh kolom di tab lain pindah tab dulu. Bukti CI: langkah "uji navbar" di
   `scripts-dev/screenshot_emulator.sh` - item navLog wajib `selected="true"` dan bar Simpan
   wajib hilang di tab Log, plus jepretan per tab lewat bar navigasi.
+
+- M12 (permintaan kall: "splash screen bisa revisi lebih bagus, animasi super keren epic efek
+  smooth" + "sebutin made XyVerse voice over yang serem"): splash baru dengan latar `PartikelView.kt`
+  (cahaya hijau berdenyut, cincin melebar, 56 bintang berkedip, 3 bintang jatuh, semua digambar
+  di Canvas - tanpa library baru), logo masuk mantul (scale 0,68 -> 1 + rotasi -8 derajat),
+  gelembung chat naik dari bawah, dan brand di bawah dengan letterSpacing yang merenggang pelan.
+  Voice over "XyVerse Technology Global" dari `res/raw/vo_xyverse.ogg` (2,6 dtk, dibuat dengan
+  alat suara di sesi ini - lisensi TTS komersial masih perlu dicek kall): bunyi sekali setelah
+  pasang, bendera `voSudahMain` dipasang hanya kalau suaranya benar-benar mulai, mode senyap
+  dihormati, saklar di kartu baru "Tampilan & suara" (tab Pengaturan); nyalain saklarnya lagi
+  mengosongkan bendera jadi bunyi sekali lagi. Bukti CI: jepretan `splash.png` di detik pertama
+  plus assert overlay splash + blok brand di dump UI.

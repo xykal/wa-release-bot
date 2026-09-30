@@ -663,6 +663,37 @@
                 android:id="@+id/tabPengaturan"
                 style="@style/WadahTab"
                 android:visibility="gone">
+            <!-- ================= TAMPILAN & SUARA ================= -->
+            <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_setelan"
+                android:text="@string/u_tampilan_suara" />
+            <TextView style="@style/KetKartu" android:text="@string/u_ket_tampilan_suara" />
+            <LinearLayout android:id="@+id/rowSuaraSplash" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/u_suara_pembuka"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/u_ket_suara_pembuka"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+            </LinearLayout>
+
             <!-- ================= BATRE & NYALA OTOMATIS ================= -->
             <LinearLayout style="@style/Kartu">
             <TextView
@@ -897,6 +928,12 @@
         android:elevation="24dp"
         android:focusable="true"
         android:visibility="gone">
+        <!-- latar: cahaya, cincin, bintang berkedip, bintang jatuh (PartikelView.kt) -->
+        <com.xykals.warelease.PartikelView
+            android:id="@+id/partikel"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:importantForAccessibility="no" />
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -941,6 +978,7 @@
             </LinearLayout>
         </LinearLayout>
         <LinearLayout
+            android:id="@+id/wadahBrandSplash"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
@@ -948,6 +986,7 @@
             android:gravity="center_horizontal"
             android:orientation="vertical">
             <TextView
+                android:id="@+id/tvBrandSplash"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:letterSpacing="0.22"

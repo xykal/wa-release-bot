@@ -120,7 +120,11 @@ class MainActivity : AppCompatActivity() {
         dialogTaut = DialogTautan(this, handler, { settings.phone }, { banner(it) }, aksi)
         lembarHitam = LembarHitam(this, { banner(it) }) { cmd -> withService { sendCmd(cmd) } }
         nav = NavBawah(this) { t -> onPindahTab(t) }
-        splash = SplashUtama(this, handler, { uiPernahTampil }, { nav.animasiMasuk() })
+        splash = SplashUtama(
+            this, handler, settings, { uiPernahTampil }, { nav.animasiMasuk() },
+            // cuma dipakai workflow Screenshot app (am start --ez tahan_splash true)
+            tahan = intent?.getBooleanExtra("tahan_splash", false) == true
+        )
         wireViews()
         nav.ikat()
         if (savedInstanceState != null) nav.pulihkan(savedInstanceState)

@@ -37,7 +37,7 @@ Jadwal hari H (butuh aba-aba kall di chat; tidak ada penjadwal otomatis):
 | Milestone | Rencana | Status |
 |---|---|---|
 | M11 bottom navbar + layar dipecah lima tab | 2026-09-30 | selesai 2026-09-30 (branch `feat/nav-bawah-pecah-layar`) |
-| M12 splash baru: animasi lebih halus + partikel, voice over "XyVerse Technology Global" sekali setelah pasang (ada toggle, hormati mode senyap) | 2026-10-01/02 | belum |
+| M12 splash baru: animasi lebih halus + partikel (`PartikelView.kt`), voice over "XyVerse Technology Global" sekali setelah pasang (saklar di tab Pengaturan, mode senyap dihormati) | 2026-09-30 | selesai 2026-09-30 (branch `feat/splash-epik-vo`) |
 | M13 Cek perangkat: RAM, ABI, versi Android, optimasi batre; badge peringatan di bawah spek minimum (tanpa blokir) | 2026-10-03 | belum |
 | M14 fitur bot WA umum: foto jadi stiker HD, moderasi anti-phishing/promo kecuali admin (hapus, peringatan, kick strike kedua), menu perintah | 2026-10-04 s/d 10-06 | belum |
 | M15 posting story HD + tag grup (dari app dan perintah owner) | 2026-10-07/08 | belum |

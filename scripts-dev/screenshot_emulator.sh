@@ -97,8 +97,10 @@ read -r W H < <(adb shell wm size | sed -n 's/.*: *\([0-9]*\)x\([0-9]*\).*/\1 \2
 echo "layar ${W}x${H}"
 X=$((W / 2))
 
-adb shell am start -W -n "$PKG/$ACT" >/dev/null
-sleep 6
+# --ez tahan_splash true: cuma buat CI, splash ditahan 6 dtk supaya jepretan dan
+# cek dump UI keburu kejadian (di pemakaian normal splash nutup di 1,6 dtk).
+adb shell am start -W -n "$PKG/$ACT" --ez tahan_splash true >/dev/null
+sleep 1
 
 tangkap() { adb exec-out screencap -p > "$OUT/$1.png"; echo "  $1.png"; }
 
@@ -159,6 +161,28 @@ gulir_ke() {
 
 echo "menangkap:"
 echo "  sambutan.png"
+
+# Splash epik (M12): di CI splash ditahan 20 dtk (--ez tahan_splash true di atas),
+# jadi jepretan dua kali + dump UI keburu kejadian. Buktinya tiga lapis:
+#   1. overlay splash + blok brand ada di dump UI,
+#   2. dua jepretan berurutan beda isinya (partikelnya benar-benar bergerak),
+#   3. jepretan disimpan buat mata manusia.
+tangkap splash
+sleep 2
+tangkap splash-gerak
+if cmp -s "$OUT/splash.png" "$OUT/splash-gerak.png"; then
+  echo "uji splash: dua jepretan identik, animasi latar tidak jalan"; exit 1
+fi
+echo "uji splash: latar bergerak (dua jepretan berbeda) OK"
+dump="$(dump_ui)"
+if [[ "$dump" == *"id/splash"* && "$dump" == *"id/tvBrandSplash"* ]]; then
+  echo "uji splash: overlay + brand kelihatan OK"
+else
+  echo "uji splash: overlay splash tidak ketemu di dump UI"; tangkap splash-gagal; exit 1
+fi
+# sisa masa tahan: tunggu splash nutup sendiri (20 dtk dari app dibuka)
+sleep 16
+
 tangkap beranda
 
 # Sejak M11 layar dipecah jadi tab; tiap tab diketik lewat bar navigasi bawah.

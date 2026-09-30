@@ -28,6 +28,9 @@ on:
       hari-cache:
         description: 'Hapus cache yang tidak dipakai lebih dari (hari)'
         default: '2'
+      batas-cache-mb:
+        description: 'Batas total cache (MB); kelebihannya dibuang dari yang paling lama'
+        default: '1500'
 
 permissions:
   contents: read
@@ -54,6 +57,7 @@ jobs:
           HARI_RUN: ${{ inputs.hari-run || '2' }}
           HARI_ARTIFACT: ${{ inputs.hari-artifact || '1' }}
           HARI_CACHE: ${{ inputs.hari-cache || '2' }}
+          BATAS_CACHE_MB: ${{ inputs.batas-cache-mb || '1500' }}
           # run yang lagi jalan (termasuk yang barusan memicu workflow ini) jangan diutak-atik
           SIMPAN_RUN: '15'
         run: python3 scripts-dev/bersihkan_actions.py

@@ -254,6 +254,7 @@ umur yang lebih pendek kalau mau lebih agresif.
 | riwayat run (log + artifact-nya ikut hilang) | lebih tua dari 2 hari | `HARI_RUN` (run termuda `SIMPAN_RUN=15` selalu disimpan) |
 | artifact | lebih tua dari 1 hari (atau sudah `expired`) | `HARI_ARTIFACT` |
 | cache (Gradle, npm, nodejs-mobile) | tidak dipakai lebih dari 2 hari | `HARI_CACHE` |
+| cache, kalau totalnya masih di atas batas | 1500 MB | `BATAS_CACHE_MB` (yang paling lama dipakai dibuang dulu) |
 
 Logikanya di `scripts-dev/bersihkan_actions.py`; bisa dites dari lokal tanpa menghapus
 apa pun:

@@ -6,6 +6,7 @@ Instal dan langkah awal ada di README; halaman ini buat yang mau tahu lebih dala
 ## Daftar isi
 
 - [Cara kerja (singkat)](#cara-kerja-singkat)
+- [Navigasi bawah (tab)](#navigasi-bawah-tab)
 - [Penjaga grup (auto-approve)](#penjaga-grup-auto-approve)
 - [Batre](#batre)
 - [Channel WA: dapetnya dari mana?](#channel-wa-dapetnya-dari-mana)
@@ -23,6 +24,24 @@ Instal dan langkah awal ada di README; halaman ini buat yang mau tahu lebih dala
 | Cek release | GitHub REST API `/releases/latest` |
 
 Detail lengkap: [docs/ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Navigasi bawah (tab)
+
+Layar utama dipecah jadi lima tab; pindahnya lewat bar navigasi bawah:
+
+| Tab | Isi |
+|---|---|
+| Beranda | status WhatsApp/engine/rilis/penjaga grup, jadwal berikutnya, tombol Mulai dan Cek sekarang, kartu Tautkan WhatsApp |
+| Repo | kartu Rilis GitHub → Channel: daftar repo, link channel, token, interval, saklar kirim, tes kirim, bikin channel |
+| Fitur | Penjaga grup, Lagu mood, Hosting bot |
+| Log | catatan kerja bot, folder log, tombol kirim log, matikan service |
+| Pengaturan | Batre & nyala otomatis, Tentang |
+
+- Tombol **Simpan setting** nempel di atas bar navigasi dan tetap menyimpan semua tab
+  sekaligus; di tab Log tombol itu disembunyikan karena di situ tidak ada kolom isian.
+- Tab yang terakhir dibuka diingat waktu layar diputar (putar HP), tidak balik ke Beranda.
+- Tab Log dimulai dari baris paling baru tiap dibuka, tapi baris baru yang masuk tidak
+  menarik layar selama kamu sedang mengerjakan hal lain.
 
 ## Penjaga grup (auto-approve)
 

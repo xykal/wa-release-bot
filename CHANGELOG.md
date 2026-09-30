@@ -61,6 +61,13 @@ Semua perubahan penting proyek ini. Format mengikuti
 - Uji engine kedua (`test/engine.test.mjs`): dua repo sekaligus (satu prerelease dengan
   `includePrereleases`), ETag 304 pada cek kedua, release baru terdeteksi dan berhenti di
   "Channel WA masih kosong" tanpa menyentuh WhatsApp; `lastTag` tidak berubah sampai terkirim.
+- **Bar navigasi bawah** (`NavBawah.kt`): item navbar digambar sendiri (tanpa MaterialButton)
+  dengan gaya `NavItem`/`NavIkon`/`NavTeks`, drawable `bg_nav_item`/`bg_nav_aktif`, ikon
+  `ic_beranda`/`ic_fitur`, dan 5 string `u_nav_*` dua bahasa. Tab terakhir tersimpan di
+  `savedInstanceState`, jadi putar layar tidak balik ke Beranda.
+- Bukti otomatis di workflow Screenshot app: tiap tab dibuka lewat bar navigasi, lalu
+  dipastikan item `navLog` `selected="true"` dan bar Simpan hilang di tab Log
+  (`scripts-dev/screenshot_emulator.sh`).
 
 ### Diubah
 - App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,
@@ -77,6 +84,14 @@ Semua perubahan penting proyek ini. Format mengikuti
   landscape) lewat `scripts-dev/tangkap_web.py`; job CI `tangkapan` gagal kalau ada
   overflow horizontal. `scripts-dev/bingkai_screenshot.py` memasang tangkapan layar HP
   asli ke bingkai mockup web.
+- **Layar utama jadi lima tab** (Beranda, Repo, Fitur, Log, Pengaturan) dengan bar navigasi
+  bawah; isi kartu tidak berubah, cuma wadahnya dipisah. Bar Simpan disembunyikan di tab Log
+  (di situ tidak ada kolom isian) dan banner naik di atas bar simpan + bar navigasi.
+- Log cuma digulir otomatis kalau tab Log memang sedang kelihatan; begitu tab dibuka, isinya
+  langsung di baris paling baru (`PanelStatus.lompatKeBawah`).
+- Tombol yang kolom isiannya ada di tab lain (mis. **Kirim satu lagu sekarang** waktu channel
+  masih kosong) sekarang memindahkan layar ke tab Repo dulu, bukan menyuruh isi kolom yang
+  tidak kelihatan.
 
 ## [1.8.0] — 2026-09-29
 

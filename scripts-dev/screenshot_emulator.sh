@@ -5,7 +5,8 @@
 #   APK=app/build/outputs/apk/debug/app-debug.apk OUT=tangkapan-app bash scripts-dev/screenshot_emulator.sh
 #
 # Alur: pasang APK -> isi SharedPreferences contoh (repo, channel, grup, lagu) lewat
-# adb root / run-as supaya form tidak kosong -> buka MainActivity -> tiap bagian digulir sampai
+# adb root / run-as supaya form tidak kosong -> buka MainActivity -> pindah tab lewat
+# bar navigasi bawah (Beranda/Repo/Fitur/Log/Pengaturan), tiap bagian digulir sampai
 # terlihat (posisi dari uiautomator dump, bukan koordinat hafalan) -> screencap PNG.
 # WhatsApp tidak tersambung di emulator, jadi status yang tampil = "belum tertaut" (jujur).
 set -euo pipefail
@@ -110,6 +111,31 @@ posisi_atas() {
     | sed -n 's/.*bounds="\[[0-9]*,\([0-9]*\)\]\[[0-9]*,[0-9]*\]".*/\1/p' || true
 }
 
+# kotak_id <id> -> "x1 y1 x2 y2" elemen kalau kelihatan, kosong kalau tidak
+kotak_id() {
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || return 0
+  adb shell cat /sdcard/ui.xml | tr '>' '\n' | grep -F "resource-id=\"$PKG:id/$1\"" | head -n 1 \
+    | sed -n 's/.*bounds="\[\([0-9]*\),\([0-9]*\)\]\[\([0-9]*\),\([0-9]*\)\]".*/\1 \2 \3 \4/p' || true
+}
+
+# isi dump UI, satu node per baris (uiautomator menulisnya dalam satu baris panjang)
+dump_ui() {
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || true
+  adb shell cat /sdcard/ui.xml | tr '>' '\n'
+}
+
+# ketuk_nav <id-nav> <nama-jepretan>: buka tab lewat bar navigasi bawah, lalu tangkap.
+# Bukti M11: tiap layar dipisah tab, jadi jepretan per bagian HARUS lewat sini.
+ketuk_nav() {
+  local id="$1" nama="$2" kotak
+  kotak="$(kotak_id "$id")"
+  if [ -z "$kotak" ]; then echo "  nav $id tidak ketemu, dilewati"; return 0; fi
+  set -- $kotak
+  adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
+  sleep 0.9
+  if [ -n "$nama" ]; then tangkap "$nama"; fi
+}
+
 # gulir_ke <id> <nama>: gulir sampai elemen ada, geser supaya ~200px dari atas, lalu tangkap
 gulir_ke() {
   local id="$1" nama="$2" target="${3:-200}" atas="" i
@@ -134,16 +160,45 @@ gulir_ke() {
 echo "menangkap:"
 echo "  sambutan.png"
 tangkap beranda
-# etChannel ada di layout lama maupun baru (etRepo diganti tombol Kelola repo);
-# offset lebih besar supaya judul kartu "Rilis GitHub -> Channel" ikut terlihat
-gulir_ke etChannel pengaturan 860
+
+# Sejak M11 layar dipecah jadi tab; tiap tab diketik lewat bar navigasi bawah.
+ketuk_nav navRepo repo
+# etChannel ada di tab Repo; offset lebih besar supaya judul kartu
+# "Rilis GitHub -> Channel" ikut terlihat
+gulir_ke etChannel repo-channel 860
+
+ketuk_nav navFitur fitur
 # offset = jarak anchor dari atas layar setelah digeser; dipilih supaya judul kartu
 # di atas anchor ikut masuk (run 36621355435: judul terpotong dengan offset 200)
 gulir_ke etGrup grup 600
 gulir_ke etLaguPerHari lagu 560
 gulir_ke btnHosting hosting 500
-gulir_ke tvLog log 400
+
+ketuk_nav navLog log
+gulir_ke btnKill log-bawah 520
+
+# Bukti tab benar-benar jalan (M11): di tab Log, item navLog yang nyala dan
+# bar Simpan hilang (di tab ini nggak ada kolom isian).
+dump="$(dump_ui)"
+# [[ ]] bukan "grep -q" di ujung pipeline: grep -q keluar begitu ketemu, dan dengan
+# pipefail itu bisa kebaca gagal (SIGPIPE) walau sebenarnya cocok.
+navlog="$(printf '%s\n' "$dump" | grep -F "id/navLog" || true)"
+if [[ "$navlog" == *'selected="true"'* ]]; then
+  echo "uji navbar: navLog selected OK"
+else
+  echo "uji navbar: item navLog tidak selected"; tangkap navbar-gagal; exit 1
+fi
+if [[ "$dump" == *"id/barSimpan"* ]]; then
+  echo "uji navbar: bar Simpan masih kelihatan di tab Log"; tangkap navbar-gagal; exit 1
+fi
+echo "uji navbar: bar Simpan sembunyi di tab Log OK"
+
+ketuk_nav navPengaturan pengaturan
 gulir_ke tvTentang tentang 320
+
+# Balik ke Beranda: mastiin tab bisa dipindah bolak-balik dan navbar-nya kedip
+# di item yang benar (bukan cuma sekali jalan).
+ketuk_nav navBeranda beranda-lagi
 
 # Uji ketik layar Repo. Bug 2026-09-30 (HP kall): EditText yang dibuat dari kode dengan
 # konstruktor defStyleAttr=0 kehilangan focusableInTouchMode, jadi kotaknya nggak bisa

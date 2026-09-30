@@ -3,8 +3,6 @@ package com.xykals.warelease
 import android.app.Activity
 import android.os.Handler
 import android.view.View
-import android.view.ViewGroup
-import android.widget.ScrollView
 import android.widget.TextView
 
 /**
@@ -16,7 +14,9 @@ import android.widget.TextView
 internal class SplashUtama(
     private val a: Activity,
     private val handler: Handler,
-    private val uiSiap: () -> Boolean
+    private val uiSiap: () -> Boolean,
+    // Animasi kartu masuk; yang dikasih MainActivity = kartu tab yang lagi kebuka.
+    private val animasiMasuk: () -> Unit
 ) {
     private var mulaiPada = 0L
     private val label = arrayOf(
@@ -64,7 +64,7 @@ internal class SplashUtama(
             splash.visibility = View.GONE
             a.findViewById<MorphView>(R.id.morph).onGantiBentuk = null
         }.start()
-        (a.findViewById<ScrollView>(R.id.svUtama).getChildAt(0) as? ViewGroup)?.let { Denyut.munculBerurutan(it) }
+        animasiMasuk()
     }
 
     fun hancurkan() {

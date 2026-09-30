@@ -275,4 +275,11 @@
     <string name="k_ob_hosting_judul">HP lo jadi hosting bot</string>
     <string name="k_ob_hosting_isi">Punya project bot sendiri? Upload ZIP-nya, app ini yang jalanin. Log, input, restart — semua dari HP.</string>
     <string name="k_hosting_nyala_durasi">nyala %1$s</string>
+
+    <!-- bar navigasi bawah (NavBawah.kt) -->
+    <string name="u_nav_beranda">Beranda</string>
+    <string name="u_nav_repo">Repo</string>
+    <string name="u_nav_fitur">Fitur</string>
+    <string name="u_nav_log">Log</string>
+    <string name="u_nav_pengaturan">Pengaturan</string>
 </resources>

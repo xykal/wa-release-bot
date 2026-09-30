@@ -3,10 +3,11 @@
 Status per 2026-09-30. Ukuran effort: S (< 1 hari kerja), M (1-3 hari), L (> 3 hari).
 Semua item di sini menunggu "gas" dari kall kecuali ditandai *sedang jalan*.
 
-## Launching publik — Minggu 2026-10-04 19.00 WIB (12.00 UTC)
+## Launching publik — Minggu 2026-10-11 19.00 WIB (12.00 UTC)
 
-Keputusan kall (2026-09-29, tanggal dimajukan 2026-09-30 dari Jumat 2026-10-09): versi rilis
-publik pertama adalah **1.0.0**; versi internal
+Keputusan kall (2026-09-29; 2026-09-30 sempat dimajukan ke 4 Okt lalu diundur ke 11 Okt karena
+scope 1.0.0 ditambah: bottom navbar + pecah layar, splash baru + voice over, fitur bot WA umum,
+cek perangkat): versi rilis publik pertama adalah **1.0.0**; versi internal
 1.7.x/1.8.x tetap ada sebagai release **draft** (hanya kolaborator yang lihat, aset tidak bisa
 diunduh publik). Situs: <https://wabot.projectkal.my.id> — halaman unduh
 menampilkan hitung mundur sampai `LAUNCH_ISO` (`web/js/teks.js`), lalu otomatis membaca
@@ -27,9 +28,9 @@ Jadwal hari H (butuh aba-aba kall di chat; tidak ada penjadwal otomatis):
 
 | Kapan (WIB) | Apa |
 |---|---|
-| Sabtu 2026-10-03 | merge PR #18 (squash), tunggu CI `main` hijau, hapus draft + tag v1.7.0/v1.8.0 |
-| Minggu 2026-10-04 18.45 | push tag `v1.0.0` dari `main`; job `release` ~5 menit |
-| Minggu 2026-10-04 19.00 | popup unduh hilang sendiri; cek `releases/latest` 200 dan 6 aset; deploy situs tidak perlu |
+| Sabtu 2026-10-10 | merge PR #18 (squash), tunggu CI `main` hijau, hapus draft + tag v1.7.0/v1.8.0 |
+| Minggu 2026-10-11 18.45 | push tag `v1.0.0` dari `main`; job `release` ~5 menit |
+| Minggu 2026-10-11 19.00 | popup unduh hilang sendiri; cek `releases/latest` 200 dan 6 aset; deploy situs tidak perlu |
 
 ## Sekarang (v1.6.x, sedang jalan)
 

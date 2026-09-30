@@ -26,7 +26,7 @@ LAYAR = [
     ("ipad-air", 820, 1180), ("tablet-landscape", 1024, 768), ("laptop", 1280, 720),
     ("desktop", 1440, 900), ("fhd", 1920, 1080), ("ultrawide", 2560, 1080),
 ]
-HALAMAN = [("beranda", "/"), ("unduh", "/unduh/"), ("unduh-lewat", "/unduh/?t=2026-10-04T12:00:01Z"), ("beranda-en", "/?bahasa=en")]
+HALAMAN = [("beranda", "/"), ("unduh", "/unduh/"), ("unduh-lewat", "/unduh/?t=2026-10-11T12:00:01Z"), ("beranda-en", "/?bahasa=en")]
 
 CEK_JS = """() => {
   const w = document.documentElement.clientWidth;

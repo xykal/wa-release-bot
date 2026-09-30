@@ -105,14 +105,14 @@ class RepoActivity : AppCompatActivity() {
         // kartu tambah
         val kTambah = kartu()
         kTambah.addView(label(getString(R.string.k_repo)))
-        etRepo = EditText(this, null, 0, R.style.Isian).apply {
+        etRepo = isianBaru().apply {
             hint = getString(R.string.k_pemilik_nama_repo_atau_link)
             importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
             imeOptions = EditorInfo.IME_ACTION_NEXT
         }
         kTambah.addView(etRepo, LinearLayout.LayoutParams(-1, -2))
         kTambah.addView(label(getString(R.string.k_channel_khusus_opsional)))
-        etChannel = EditText(this, null, 0, R.style.Isian).apply {
+        etChannel = isianBaru().apply {
             hint = getString(R.string.k_kosong_pakai_channel_wa_utama)
             importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
             imeOptions = EditorInfo.IME_ACTION_DONE

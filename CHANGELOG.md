@@ -6,7 +6,7 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
-## [1.0.0] — 2026-10-04
+## [1.0.0] — 2026-10-11
 
 Rilis publik pertama. Nomor versi dimulai ulang dari 1.0.0; versi internal 1.1 sampai 1.8
 di bawah ini tidak pernah dipublikasikan dan isinya tergabung di sini. `versionCode` APK
@@ -71,8 +71,9 @@ tetap menerima update.
   "Channel WA masih kosong" tanpa menyentuh WhatsApp; `lastTag` tidak berubah sampai terkirim.
 
 #### Diubah
-- Situs: jadwal launching dimajukan ke Minggu 4 Oktober 2026 19.00 WIB (`LAUNCH_ISO`, teks
-  popup id/en, `launching.ics` dengan `SEQUENCE:1` supaya kalender yang sudah impor ikut geser).
+- Situs: jadwal launching Minggu 11 Oktober 2026 19.00 WIB (sempat 4 Oktober). Teks tanggal di
+  popup kini diturunkan dari `LAUNCH_ISO` lewat `Intl` zona Asia/Jakarta, jadi jadwal cukup
+  diubah di satu tempat; `launching.ics` naik `SEQUENCE` supaya kalender yang sudah impor ikut.
 - CI Build APK: push ke `main` kini membangun arm64-v8a dan armeabi-v7a (artifact terpisah);
   PR tetap arm64 saja. HP uji 32-bit sebelumnya cuma bisa pakai build manual atau tag.
 - `scripts-dev/deploy_web.py`: kalau custom domain sudah terpasang, berhenti di GET
@@ -97,6 +98,15 @@ tetap menerima update.
   landscape) lewat `scripts-dev/tangkap_web.py`; job CI `tangkapan` gagal kalau ada
   overflow horizontal. `scripts-dev/bingkai_screenshot.py` memasang tangkapan layar HP
   asli ke bingkai mockup web.
+
+#### Diperbaiki
+- App: kotak isian di layar Repo dan konsol Hosting tidak bisa disentuh. EditText yang dibuat
+  dari kode lewat konstruktor `defStyleAttr = 0` kehilangan `focusableInTouchMode` bawaan
+  `Widget.EditText`; sekarang lewat `isianBaru()` yang mengisi ulang atribut fokus. Bukti:
+  langkah "uji ketik" di `screenshot_emulator.sh`.
+- App: layar tidak lagi melompat ke kotak log tiap ada baris log baru. `ScrollView.fullScroll()`
+  memindahkan fokus sehingga halaman ikut tergulir dan keyboard tertutup; diganti `ikutKeBawah()`
+  yang menggulir isi kotak log saja, dan hanya kalau sebelumnya sudah di ujung bawah.
 
 ## Riwayat internal (tidak dirilis publik)
 

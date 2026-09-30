@@ -1,7 +1,9 @@
 name: Build APK
 
 # Alur:
-#   push ke main      → build APK arm64-v8a + armeabi-v7a, upload sebagai artifact
+#   push ke main      → build APK arm64-v8a + armeabi-v7a, taruh di **draft
+#                       release** `internal-<versi>` (job release-internal) +
+#                       artifact pendek buat debug
 #   PR                → build APK arm64-v8a saja (cepat)
 #   push tag v*        → build TIGA APK (arm64-v8a, armeabi-v7a, universal)
 #                        + bikin GitHub Release berisi ketiganya
@@ -168,7 +170,7 @@ jobs:
           name: engine-bundle
           path: bot-js/dist/bundle.cjs
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 2
 
   # ==========================================================================
   #  2) APK Android — satu job per set ABI (matrix)
@@ -325,7 +327,7 @@ jobs:
           name: android-lint-results
           path: app/build/reports/lint-results-*.{html,xml,sarif}
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 2
 
       - name: Build APK (${{ steps.vars.outputs.task }})
         run: |
@@ -472,9 +474,11 @@ jobs:
           name: ${{ steps.vars.outputs.apk-name }}
           path: dist/*
           if-no-files-found: error
-          # 2 hari: artifact repo publik bisa diunduh siapa pun yang login GitHub;
-          # sebelum launching APK tidak boleh beredar (release pun draft).
-          retention-days: 2
+          # 1 hari: artifact repo publik bisa diunduh siapa pun yang login GitHub,
+          # jadi umurnya sengaja pendek; yang dipakai sehari-hari ada di draft
+          # release `internal-<versi>` (cuma pemilik repo yang bisa lihat/unduh).
+          # Workflow "Bersihkan jejak Actions" nyapu sisanya tiap hari.
+          retention-days: 1
 
       # mapping.txt: peta nama lama → nama baru hasil R8. Disimpan buat
       # menerjemahkan stack trace dari HP (yang namanya udah di-obfuscate)
@@ -486,7 +490,8 @@ jobs:
           name: r8-mapping-${{ steps.vars.outputs.abi-slug }}
           path: app/build/outputs/mapping/*/mapping.txt
           if-no-files-found: ignore
-          retention-days: 30
+          # 3 hari: cuma berguna buat versi yang barusan dibuild
+          retention-days: 3
 
       - name: Ringkasan
         run: |
@@ -502,6 +507,43 @@ jobs:
             echo ""
             echo "SHA-256: \`$(cut -d' ' -f1 dist/${{ steps.vars.outputs.apk-name }}.sha256)\`"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # ==========================================================================
+  #  2b) Draft release internal — tiap push ke main
+  # ==========================================================================
+  #  APK hasil build main ditaruh di sini, bukan cuma artifact (artifact hilang
+  #  dalam 1-2 hari). Draft = cuma pemilik repo yang bisa lihat & unduh, jadi
+  #  bisa dipakai buat ngirim build ke HP uji tanpa bikin APK beredar publik.
+  #  Isi rilisnya diganti tiap build (tag `internal-<versi>`), jadi jejaknya
+  #  tetap satu, tidak menumpuk. Hapus draft `internal-*` + tag-nya nanti di
+  #  hari launching bareng draft v1.7.0/v1.8.0.
+  release-internal:
+    name: Draft release internal
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [engine, apk]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Ambil APK hasil matrix
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: wa-release-bot-*.apk
+          merge-multiple: true
+          path: dist
+
+      - name: Taruh di draft release internal
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ls -la dist/
+          python3 scripts-dev/rilis_internal.py --dist dist
 
   # ==========================================================================
   #  3) GitHub Release — cuma jalan kalau push tag v*

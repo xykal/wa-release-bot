@@ -215,7 +215,7 @@ plus `workflow_dispatch`.
 | Job | Isi | Bukti |
 |---|---|---|
 | `cek` | `node --check` semua JS + `worker.js`; HTML: referensi lokal ada, semua `data-i18n` punya teks id+en, brand tepat, tidak ada `style=`/handler inline (CSP `style-src 'self'`), tidak ada URL selain github.com / api.github.com / tiktok.com; `deploy_web.py --cek` (manifest hash) | gagal = merah |
-| `tangkapan` | `scripts-dev/tangkap_web.py`: Chromium headless render `/`, `/unduh/`, `/unduh/?t=<lewat>`, `/?bahasa=en` pada 14 ukuran layar (320 px sampai ultrawide 2560, portrait + landscape); gagal kalau `scrollWidth` > viewport atau ada elemen keluar layar | artifact `web-tangkapan` (PNG, 7 hari) |
+| `tangkapan` | `scripts-dev/tangkap_web.py`: Chromium headless render `/`, `/unduh/`, `/unduh/?t=<lewat>`, `/?bahasa=en` pada 14 ukuran layar (320 px sampai ultrawide 2560, portrait + landscape); gagal kalau `scrollWidth` > viewport atau ada elemen keluar layar | artifact `web-tangkapan` (PNG, 2 hari) |
 | `deploy` (bukan PR) | `python3 scripts-dev/deploy_web.py` kalau secret `CF_API_TOKEN` ada; kalau kosong: `::notice` lalu lewat | curl: header CSP ada + `/unduh/` punya `#tirai` |
 
 Deploy manual dari mesin sendiri:
@@ -238,3 +238,53 @@ Kenapa tanpa wrangler: aturan repo "tanpa dependensi runtime tambahan"; skrip me
 API yang sama (`assets-upload-session` → `assets/upload` → `PUT scripts/<nama>`), hash aset
 memakai rumus wrangler (BLAKE3 dari base64 isi + ekstensi) supaya file yang tidak berubah
 tidak diunggah ulang.
+
+## 7. `bersihkan.yml` — hapus jejak Actions
+
+Tiap push bikin lima workflow jalan. Log, artifact, dan cache-nya menumpuk terus:
+cukup beberapa hari sampai beberapa GB. Workflow ini yang nyapu, dan APK-nya tidak
+ikut hilang karena bukan artifact (lihat bagian berikutnya).
+
+Jalan **tiap hari 20.00 UTC (03.00 WIB)**, **tiap kali `build-apk.yml` selesai di
+`main`** (`workflow_run`), dan bisa dipanggil manual (`workflow_dispatch`) dengan
+umur yang lebih pendek kalau mau lebih agresif.
+
+| Yang dibersihkan | Bawaan | Env |
+|---|---|---|
+| riwayat run (log + artifact-nya ikut hilang) | lebih tua dari 2 hari | `HARI_RUN` (run termuda `SIMPAN_RUN=15` selalu disimpan) |
+| artifact | lebih tua dari 1 hari (atau sudah `expired`) | `HARI_ARTIFACT` |
+| cache (Gradle, npm, nodejs-mobile) | tidak dipakai lebih dari 2 hari | `HARI_CACHE` |
+
+Logikanya di `scripts-dev/bersihkan_actions.py`; bisa dites dari lokal tanpa menghapus
+apa pun:
+
+```bash
+GITHUB_TOKEN=... GITHUB_REPOSITORY=xykal/wa-release-bot \
+  python3 scripts-dev/bersihkan_actions.py --kering    # cuma lapor
+```
+
+Retention artifact di workflow lain juga dipendekkan (APK 1 hari, engine/lint 2 hari,
+R8 mapping 3 hari), jadi walau penyapu belum jalan, sampahnya tetap kecil.
+
+## 8. Draft release internal — APK buat HP uji
+
+Job `release-internal` di `build-apk.yml` (cuma jalan saat push ke `main`) menaruh APK
+arm64-v8a + armeabi-v7a di **draft release** bertag `internal-<versi>`:
+
+- draft = cuma pemilik repo yang bisa lihat dan unduh tautannya; `releases/latest`
+  tidak menghitung draft, jadi tidak ada APK yang beredar sebelum launching;
+- umurnya tidak habis sendiri (beda dari artifact yang mati dalam 1-2 hari);
+- isinya diganti tiap build (`scripts-dev/rilis_internal.py`), dan draft `internal-*`
+  versi lain dihapus otomatis, jadi jejaknya tetap satu.
+
+Cara ambil APK-nya: buka `https://github.com/xykal/wa-release-bot/releases` (selagi
+login), pilih **Build internal <versi>**, unduh APK yang sesuai. Bisa juga lewat API:
+
+```bash
+curl -sL -H "Authorization: Bearer $TOK" \
+  "https://api.github.com/repos/xykal/wa-release-bot/releases/tags/internal-1.8.0" | \
+  python3 -c "import json,sys; [print(a['name'], a['size']) for a in json.load(sys.stdin)['assets']]"
+```
+
+Hari launching, draft `internal-*` (beserta tag `internal-*`) dihapus bareng draft
+v1.7.0/v1.8.0 sebelum tag `v1.0.0` dipush.

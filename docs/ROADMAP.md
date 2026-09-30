@@ -19,7 +19,7 @@ Checklist PR launching (`chore/rilis-1.0.0`, dibuat H-1):
 |---|---|
 | Bump `versionName` 1.0.0 di `app/build.gradle`, 3 `package.json` + lockfile, CHANGELOG `[1.0.0]` | isi changelog = gabungan 1.1–1.8 dalam bahasa pengguna |
 | `versionCode` di CI: `1_000_000 + major*10000 + minor*100 + patch` = **1010000** | tanpa offset, 1.0.0 = 10000 < 10800 (v1.8.0) dan HP penguji menolak update; offset hanya diubah di PR ini |
-| Hapus draft v1.7.0/v1.8.0 **dan** tag-nya sebelum push tag `v1.0.0` | `releases/latest` memilih berdasarkan tanggal dibuat; tag lama tidak boleh tersisa |
+| Hapus draft v1.7.0/v1.8.0, draft `internal-*`, **dan** tag-nya sebelum push tag `v1.0.0` | `releases/latest` memilih berdasarkan tanggal dibuat; tag lama tidak boleh tersisa |
 | Tag `v1.0.0` tepat sebelum 19.00 WIB | job `release` butuh ~5 menit; halaman unduh cek tiap 60 detik |
 | Setelah tayang: uji `curl https://api.github.com/repos/xykal/wa-release-bot/releases/latest` tanpa token | harus 200 dengan 3 `.apk` + 3 `.sha256` |
 

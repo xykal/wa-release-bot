@@ -1,0 +1,68 @@
+name: Bersihkan jejak Actions
+
+# Tiap push bikin 5 workflow jalan; log, artifact, dan cache-nya numpuk terus.
+# Workflow ini yang nyapu: riwayat run lama, artifact kedaluwarsa, dan cache
+# yang sudah lama tidak dipakai. APK hasil build `main` TIDAK ikut hilang karena
+# dia bukan artifact — dia ada di draft release (job `release-internal` di
+# build-apk.yml).
+#
+# Jalan otomatis:
+#   - tiap hari 20.00 UTC (03.00 WIB);
+#   - tiap kali workflow "Build APK" untuk `main` selesai (jadi tiap update).
+# Bisa juga dipanggil manual dengan umur yang lebih pendek kalau mau lebih agresif.
+on:
+  schedule:
+    - cron: '0 20 * * *'
+  workflow_run:
+    workflows: ['Build APK']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      hari-run:
+        description: 'Hapus riwayat run yang lebih tua dari (hari)'
+        default: '2'
+      hari-artifact:
+        description: 'Hapus artifact yang lebih tua dari (hari)'
+        default: '1'
+      hari-cache:
+        description: 'Hapus cache yang tidak dipakai lebih dari (hari)'
+        default: '2'
+
+permissions:
+  contents: read
+  actions: write        # buat hapus run / artifact / cache
+
+concurrency:
+  group: bersihkan-actions
+  cancel-in-progress: false
+
+jobs:
+  bersihkan:
+    name: Sapu run, artifact, cache
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Bersihkan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HARI_RUN: ${{ inputs.hari-run || '2' }}
+          HARI_ARTIFACT: ${{ inputs.hari-artifact || '1' }}
+          HARI_CACHE: ${{ inputs.hari-cache || '2' }}
+          # run yang lagi jalan (termasuk yang barusan memicu workflow ini) jangan diutak-atik
+          SIMPAN_RUN: '15'
+        run: python3 scripts-dev/bersihkan_actions.py
+
+      - name: Sisa pakai
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -sS -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/cache/usage" |
+            python3 -c "import json,sys; d=json.load(sys.stdin); print('cache:', round(d.get('active_caches_size_in_bytes',0)/1048576,1), 'MB /', d.get('active_caches_count'), 'entri')"

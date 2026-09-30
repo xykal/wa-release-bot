@@ -126,3 +126,12 @@ Next:
   dihormati, saklar di kartu baru "Tampilan & suara" (tab Pengaturan); nyalain saklarnya lagi
   mengosongkan bendera jadi bunyi sekali lagi. Bukti CI: jepretan `splash.png` di detik pertama
   plus assert overlay splash + blok brand di dump UI.
+
+- kall: "setiap update selalu hapus jejak, hapus artifact, bersihkan cache - di actions 7 GB"
+  + "di release aja, tapi draft (cuma gua yang bisa unduh dan lihat)". Dikerjakan:
+  `scripts-dev/bersihkan_actions.py` + workflow `bersihkan.yml` (harian 03.00 WIB, tiap build
+  main selesai, manual; mode `--kering`) buat riwayat run/artifact/cache; retention artifact
+  dipendekkan (APK 1 hari, engine/lint 2, r8 3, web/screenshot 2); APK hasil build main
+  dipindah dari artifact ke draft release `internal-<versi>` lewat `scripts-dev/rilis_internal.py`
+  + job `release-internal` (aset diganti tiap build, draft internal lain dibuang). Dokumen:
+  docs/CI.md bagian 7 dan 8.

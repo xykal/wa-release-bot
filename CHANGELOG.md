@@ -85,6 +85,8 @@ Semua perubahan penting proyek ini. Format mengikuti
 - **Workflow `bersihkan.yml` + `scripts-dev/bersihkan_actions.py`**: nyapu riwayat run
   (log ikut hilang), artifact, dan cache yang menua. Jalan tiap hari 03.00 WIB dan tiap
   kali build `main` selesai; ada mode `--kering` buat lihat dulu tanpa menghapus.
+  Selain umur, total cache dibatasi (`BATAS_CACHE_MB`, bawaan 1500 MB): kelebihannya
+  dibuang dari yang paling lama dipakai, jadi penyimpanan tidak naik terus.
 
 ### Diubah
 - App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,

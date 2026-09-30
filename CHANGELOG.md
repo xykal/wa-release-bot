@@ -90,6 +90,9 @@ tetap menerima update.
   bertag `internal-<versi>` (aset lama diganti, draft internal versi lain dihapus). Draft
   hanya bisa dilihat dan diunduh pemilik repo, umurnya tidak habis seperti artifact, dan
   `releases/latest` tidak menghitungnya.
+  Pencariannya lewat daftar release, bukan `/releases/tags/<tag>`: endpoint itu menjawab
+  404 untuk release draft, jadi run kedua akan mengira draft-nya belum ada dan gagal
+  bikin tag yang sudah dipakai.
 - **Workflow `bersihkan.yml` + `scripts-dev/bersihkan_actions.py`**: nyapu riwayat run
   (log ikut hilang), artifact, dan cache yang menua. Jalan tiap hari 03.00 WIB dan tiap
   kali build `main` selesai; ada mode `--kering` buat lihat dulu tanpa menghapus.

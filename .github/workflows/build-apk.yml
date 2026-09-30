@@ -1,7 +1,8 @@
 name: Build APK
 
 # Alur:
-#   push ke main / PR  → build APK arm64-v8a, upload sebagai artifact
+#   push ke main      → build APK arm64-v8a + armeabi-v7a, upload sebagai artifact
+#   PR                → build APK arm64-v8a saja (cepat)
 #   push tag v*        → build TIGA APK (arm64-v8a, armeabi-v7a, universal)
 #                        + bikin GitHub Release berisi ketiganya
 #   workflow_dispatch  → build manual, bisa pilih varian dan ABI-nya
@@ -91,11 +92,15 @@ jobs:
         run: |
           # 1. build manual → hormati pilihan input 'abis'
           # 2. build dari TAG v* → tiga-tiganya (arm64, v7a, universal)
-          # 3. selain itu (push/PR) → arm64-v8a saja, biar CI-nya cepat.
+          # 3. push ke main → arm64-v8a + armeabi-v7a (HP uji kall 32-bit; sel
+          #    matrix jalan paralel, jadi waktu tunggunya sama)
+          # 4. PR → arm64-v8a saja, biar CI-nya cepat.
           if [ "$EVENT" = "workflow_dispatch" ]; then
             SET="[\"$INPUT_ABIS\"]"
           elif [[ "$REF" == refs/tags/v* ]]; then
             SET='["arm64-v8a","armeabi-v7a","arm64-v8a,armeabi-v7a"]'
+          elif [ "$EVENT" = "push" ] && [ "$REF" = "refs/heads/main" ]; then
+            SET='["arm64-v8a","armeabi-v7a"]'
           else
             SET='["arm64-v8a"]'
           fi

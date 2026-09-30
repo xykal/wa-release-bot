@@ -85,6 +85,16 @@ tetap menerima update.
   Pengaturan, kartu **Tampilan & suara**.
 - Bukti splash di workflow Screenshot app: jepretan detik pertama (`splash.png`) plus assert
   overlay `splash` + blok brand ada di dump UI.
+- **Draft release internal** (job `release-internal` di `build-apk.yml` +
+  `scripts-dev/rilis_internal.py`): tiap build `main` otomatis ditaruh di draft release
+  bertag `internal-<versi>` (aset lama diganti, draft internal versi lain dihapus). Draft
+  hanya bisa dilihat dan diunduh pemilik repo, umurnya tidak habis seperti artifact, dan
+  `releases/latest` tidak menghitungnya.
+- **Workflow `bersihkan.yml` + `scripts-dev/bersihkan_actions.py`**: nyapu riwayat run
+  (log ikut hilang), artifact, dan cache yang menua. Jalan tiap hari 03.00 WIB dan tiap
+  kali build `main` selesai; ada mode `--kering` buat lihat dulu tanpa menghapus.
+  Selain umur, total cache dibatasi (`BATAS_CACHE_MB`, bawaan 1500 MB): kelebihannya
+  dibuang dari yang paling lama dipakai, jadi penyimpanan tidak naik terus.
 
 #### Diubah
 - Situs: jadwal launching Minggu 11 Oktober 2026 19.00 WIB (sempat 4 Oktober). Teks tanggal di
@@ -117,6 +127,9 @@ tetap menerima update.
 - **Layar utama jadi lima tab** (Beranda, Repo, Fitur, Log, Pengaturan) dengan bar navigasi
   bawah; isi kartu tidak berubah, cuma wadahnya dipisah. Bar Simpan disembunyikan di tab Log
   (di situ tidak ada kolom isian) dan banner naik di atas bar simpan + bar navigasi.
+- Retention artifact dipendekkan (APK 1 hari, engine/lint 2 hari, R8 mapping 3 hari,
+  tangkapan web/screenshot 2 hari) supaya jejak Actions tidak menumpuk walau penyapu
+  belum jalan.
 - Log cuma digulir otomatis kalau tab Log memang sedang kelihatan; begitu tab dibuka, isinya
   langsung di baris paling baru (`PanelStatus.lompatKeBawah`).
 - Tombol yang kolom isiannya ada di tab lain (mis. **Kirim satu lagu sekarang** waktu channel

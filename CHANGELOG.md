@@ -6,6 +6,15 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+### Diperbaiki
+- App: kotak isian di layar Repo dan konsol Hosting tidak bisa disentuh. EditText yang dibuat
+  dari kode lewat konstruktor `defStyleAttr = 0` kehilangan `focusableInTouchMode` bawaan
+  `Widget.EditText`; sekarang lewat `isianBaru()` yang mengisi ulang atribut fokus. Bukti:
+  langkah "uji ketik" di `screenshot_emulator.sh`.
+- App: layar tidak lagi melompat ke kotak log tiap ada baris log baru. `ScrollView.fullScroll()`
+  memindahkan fokus sehingga halaman ikut tergulir dan keyboard tertutup; diganti `ikutKeBawah()`
+  yang menggulir isi kotak log saja, dan hanya kalau sebelumnya sudah di ujung bawah.
+
 ### Diubah
 - Situs: jadwal launching dimajukan ke Minggu 4 Oktober 2026 19.00 WIB (`LAUNCH_ISO`, teks
   popup id/en, `launching.ics` dengan `SEQUENCE:1` supaya kalender yang sudah impor ikut geser).

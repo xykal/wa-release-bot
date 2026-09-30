@@ -144,4 +144,27 @@ gulir_ke etLaguPerHari lagu 560
 gulir_ke btnHosting hosting 500
 gulir_ke tvLog log 400
 gulir_ke tvTentang tentang 320
+
+# Uji ketik layar Repo. Bug 2026-09-30 (HP kall): EditText yang dibuat dari kode dengan
+# konstruktor defStyleAttr=0 kehilangan focusableInTouchMode, jadi kotaknya nggak bisa
+# disentuh. Bukti perbaikan: ketuk kotak pertama, ketik, lalu pastikan teksnya benar-benar
+# masuk menurut uiautomator dump. Teks tidak masuk = skrip gagal = workflow merah.
+adb shell am start -W -n "$PKG/com.xykals.warelease.RepoActivity" >/dev/null
+sleep 2
+adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+kotak=$(adb shell cat /sdcard/ui.xml | tr '>' '\n' | grep -F 'class="android.widget.EditText"' | head -n 1 \
+  | sed -n 's/.*bounds="\[\([0-9]*\),\([0-9]*\)\]\[\([0-9]*\),\([0-9]*\)\]".*/\1 \2 \3 \4/p' || true)
+[ -n "$kotak" ] || { echo "uji ketik repo: kotak EditText tidak ditemukan"; tangkap repo-gagal; exit 1; }
+set -- $kotak
+adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
+sleep 1
+adb shell input text 'xykal/wa-release-bot'
+sleep 1
+adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+if adb shell cat /sdcard/ui.xml | grep -qF 'text="xykal/wa-release-bot"'; then
+  echo "uji ketik repo: OK"
+else
+  echo "uji ketik repo: GAGAL, teks tidak masuk ke kotak"; tangkap repo-gagal; exit 1
+fi
+tangkap repo-ketik
 ls -la "$OUT"

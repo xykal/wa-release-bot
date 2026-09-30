@@ -6,8 +6,10 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 
 /**
@@ -26,6 +28,32 @@ internal class Tombol(
 )
 
 internal fun Context.dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
+
+/**
+ * EditText yang dibuat dari kode. Konstruktor 4 argumen dengan defStyleAttr = 0
+ * melewati tema editTextStyle, jadi focusableInTouchMode/clickable bawaan
+ * Widget.EditText hilang dan kotaknya nggak bereaksi disentuh (layar Repo dan
+ * konsol Hosting di HP kall, 2026-09-30). Isi ulang atributnya di sini.
+ */
+internal fun Context.isianBaru(): EditText = EditText(this, null, 0, R.style.Isian).apply {
+    isFocusable = true
+    isFocusableInTouchMode = true
+    isClickable = true
+    isLongClickable = true
+    isCursorVisible = true
+}
+
+/**
+ * Gulir kotak log ke bawah tanpa memindahkan fokus. ScrollView.fullScroll()
+ * memanggil requestFocus(), sehingga ScrollView induk ikut menggulir ke kotak log
+ * dan keyboard tertutup tiap log bertambah. Panggil dengan hasil
+ * `!canScrollVertically(1)` yang diambil SEBELUM teks diganti: cuma menggulir kalau
+ * pengguna memang sedang di ujung bawah, yang lagi baca log lama nggak ditarik.
+ */
+internal fun ScrollView.ikutKeBawah(sebelumnyaDiBawah: Boolean) {
+    if (!sebelumnyaDiBawah) return
+    post { scrollTo(0, getChildAt(0)?.height ?: 0) } // ScrollView.scrollTo sudah membatasi ke rentang
+}
 
 /** Tampilkan lembar; tombol ditumpuk vertikal, yang `tutup = true` menutup dialog setelah aksinya. */
 internal fun Activity.lembar(judul: String, pesan: String, isi: View?, vararg tombol: Tombol): Dialog {

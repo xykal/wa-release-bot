@@ -166,3 +166,11 @@ Next:
     UI, saklar berubah jadi nyala, tombol kirim menu ngasih umpan balik, dan nilainya masih
     tersimpan setelah app dimatikan + dibuka ulang), plus cek `configure`/`perangkat`/
     `bersih-moderasi` di `bot-js/test/engine.test.mjs`.
+
+- Ketahuan satu cacat "tanpa jejak" yang sebelumnya dilaporkan aman: ternyata **dua** draft
+  `Build internal 1.8.0` menumpuk. Sebabnya `tag_name` draft berubah jadi `untagged-<hash>` begitu
+  draft lain memakai tag itu, jadi pencarian berbasis tag meleset dan tiap build bikin draft baru
+  (draft lama masih nyimpen APK basi). Dibereskan: draft basi (399915190) dihapus, skrip dicocokkan
+  lewat nama `Build internal <versi>`, pembersihan duplikat lewat `id`, dan resep/pelajaran itu
+  ditulis di docs/CI.md. Klaim "VERIFIED" di laporan sebelumnya soal isi draft internal terlalu
+  percaya pada pencarian tag — sekarang pembuktiannya lewat daftar release + hitungan draft.

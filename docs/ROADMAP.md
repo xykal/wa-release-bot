@@ -32,6 +32,22 @@ Jadwal hari H (butuh aba-aba kall di chat; tidak ada penjadwal otomatis):
 | Minggu 2026-10-11 18.45 | push tag `v1.0.0` dari `main`; job `release` ~5 menit |
 | Minggu 2026-10-11 19.00 | popup unduh hilang sendiri; cek `releases/latest` 200 dan 6 aset; deploy situs tidak perlu |
 
+## Menuju 1.0.0 (M11-M15, setelah launching diundur ke Minggu 2026-10-11)
+
+| Milestone | Rencana | Status |
+|---|---|---|
+| M11 bottom navbar + layar dipecah lima tab | 2026-09-30 | selesai 2026-09-30 (branch `feat/nav-bawah-pecah-layar`) |
+| M12 splash baru: animasi lebih halus + partikel, voice over "XyVerse Technology Global" sekali setelah pasang (ada toggle, hormati mode senyap) | 2026-10-01/02 | belum |
+| M13 Cek perangkat: RAM, ABI, versi Android, optimasi batre; badge peringatan di bawah spek minimum (tanpa blokir) | 2026-10-03 | belum |
+| M14 fitur bot WA umum: foto jadi stiker HD, moderasi anti-phishing/promo kecuali admin (hapus, peringatan, kick strike kedua), menu perintah | 2026-10-04 s/d 10-06 | belum |
+| M15 posting story HD + tag grup (dari app dan perintah owner) | 2026-10-07/08 | belum |
+| Jeda: tangkapan layar ulang, situs bagian fitur, dokumen | 2026-10-09 | belum |
+| Merge PR launching #18 + hapus draft/tag lama, tag `v1.0.0` | 2026-10-10 s/d 10-11 | belum |
+
+Catatan risiko M14/M15: stiker butuh encoder WebP, moderasi butuh bot jadi admin grup
+(dan admin harus dikecualikan), dan tag grup di story bergantung pada dukungan Baileys
+6.7.24 — ketiganya hanya bisa dibuktikan di HP dengan WhatsApp sungguhan, bukan di emulator CI.
+
 ## Sekarang (v1.6.x, sedang jalan)
 
 | Item | Status | Catatan |

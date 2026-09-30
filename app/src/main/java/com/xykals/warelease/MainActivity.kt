@@ -9,8 +9,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
-import android.view.ViewGroup
-import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -41,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var dialogTaut: DialogTautan
     private lateinit var lembarHitam: LembarHitam
     private lateinit var splash: SplashUtama
+    private lateinit var nav: NavBawah
 
     // Daftar repo terakhir yang dikirim ke engine; onResume membandingkannya
     // buat tahu apakah layar Repo mengubah sesuatu.
@@ -120,15 +119,18 @@ class MainActivity : AppCompatActivity() {
         panel = PanelStatus(this, settings, form)
         dialogTaut = DialogTautan(this, handler, { settings.phone }, { banner(it) }, aksi)
         lembarHitam = LembarHitam(this, { banner(it) }) { cmd -> withService { sendCmd(cmd) } }
-        splash = SplashUtama(this, handler) { uiPernahTampil }
+        nav = NavBawah(this) { t -> onPindahTab(t) }
+        splash = SplashUtama(this, handler, { uiPernahTampil }, { nav.animasiMasuk() })
         wireViews()
+        nav.ikat()
+        if (savedInstanceState != null) nav.pulihkan(savedInstanceState)
         form.muat()
         // pemanis: tiap tombol berdenyut pas dipencet, kartu muncul satu-satu
         Denyut.pasangSemua(window.decorView)
         if (savedInstanceState == null) {
             splash.mulai()
         } else {
-            (findViewById<ScrollView>(R.id.svUtama).getChildAt(0) as? ViewGroup)?.let { Denyut.munculBerurutan(it) }
+            nav.animasiMasuk()
         }
 
         if (Build.VERSION.SDK_INT >= 33) {
@@ -158,6 +160,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
         repoTerkirim = repoSekarang
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        if (::nav.isInitialized) nav.simpanKe(outState)
     }
 
     override fun onPause() {
@@ -288,6 +295,8 @@ class MainActivity : AppCompatActivity() {
         pasang(R.id.btnLaguSekarang, "Kirim lagu sekarang") {
             form.ambil()
             if (settings.channel.isBlank()) {
+                // Kolomnya di tab Repo; pindah dulu biar kelihatan, baru disuruh isi.
+                nav.pindah(Tab.REPO)
                 banner(getString(R.string.k_isi_channel_wa_dulu_lagunya))
                 form.etChannel.requestFocus()
                 return@pasang
@@ -315,6 +324,13 @@ class MainActivity : AppCompatActivity() {
                 Tombol(getString(R.string.k_batal), Gaya.LEMBUT)
             )
         }
+    }
+
+    /** Reaksi pas user pindah tab (dipanggil NavBawah sesudah tab-nya kelihatan). */
+    private fun onPindahTab(t: Tab) {
+        // Log panjang: begitu tab dibuka, yang kelihatan harus baris paling baru,
+        // bukan posisi gulung lama.
+        if (t == Tab.LOG) panel.lompatKeBawah()
     }
 
     // ----------------------------- simpan & perintah -----------------------------

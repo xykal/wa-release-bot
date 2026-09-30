@@ -187,8 +187,9 @@ internal class PanelStatus(
         if (err != null) tvError.text = err
 
         if (ui.log.isNotEmpty()) {
+            val diBawah = !svLog.canScrollVertically(1)
             tvLog.text = ui.log.takeLast(60).joinToString("\n")
-            svLog.post { svLog.fullScroll(View.FOCUS_DOWN) }
+            svLog.ikutKeBawah(diBawah)
         }
     }
 

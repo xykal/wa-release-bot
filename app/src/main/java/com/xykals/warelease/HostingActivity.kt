@@ -251,7 +251,7 @@ class HostingActivity : AppCompatActivity() {
         kKonsol.addView(svKonsol, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(8) })
 
         val barisInput = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        etInput = EditText(this, null, 0, R.style.Isian).apply {
+        etInput = isianBaru().apply {
             hint = getString(R.string.k_ketik_input_buat_bot_mis)
             imeOptions = EditorInfo.IME_ACTION_SEND
             setOnEditorActionListener { _, id, _ ->
@@ -360,7 +360,7 @@ class HostingActivity : AppCompatActivity() {
             if (w != 0) sb.setSpan(ForegroundColorSpan(warna(w)), mulai, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
         }
         tvKonsol.text = sb
-        if (bawah) svKonsol.post { svKonsol.fullScroll(View.FOCUS_DOWN) }
+        svKonsol.ikutKeBawah(bawah)
     }
 
     // ------------------------------------------------------------ aksi

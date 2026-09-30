@@ -7,6 +7,8 @@ Semua perubahan penting proyek ini. Format mengikuti
 ## [Unreleased]
 
 ### Diubah
+- CI Build APK: push ke `main` kini membangun arm64-v8a dan armeabi-v7a (artifact terpisah);
+  PR tetap arm64 saja. HP uji 32-bit sebelumnya cuma bisa pakai build manual atau tag.
 - `scripts-dev/deploy_web.py`: kalau custom domain sudah terpasang, berhenti di GET
   `workers/domains` sehingga token deploy cukup izin *Workers Scripts: Edit*; resep token
   scoped untuk secret `CF_API_TOKEN` ada di `docs/CI.md`.

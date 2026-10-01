@@ -169,6 +169,13 @@ Semua perubahan penting proyek ini. Format mengikuti
   tidak kelihatan.
 
 ### Diperbaiki
+- Draft release internal pernah gagal diperbarui karena artifact APK-nya sudah kehapus
+  sebelum job `release-internal` mengambilnya (sapuan Actions jalan sambil build). Sekarang
+  `scripts-dev/bersihkan_actions.py` **tidak pernah** menghapus artifact milik `SIMPAN_RUN`
+  run termuda, job draftnya mencoba unduh dua kali, dan kalau benar-benar kosong pesan
+  gagalnya menyebut sebabnya (bukan `ls: cannot access 'dist/'`). Job draft juga bisa
+  dipanggil manual lewat `workflow_dispatch` di `main` supaya draft basi bisa disegarkan
+  tanpa nunggu push baru.
 - Skrip uji UI bisa menggulir DUA arah: `gulir_ke` dulu cuma menggulir ke bawah dan pola sed-nya
   cuma menerima koordinat positif, jadi elemen yang sudah kelewat di atas layar dianggap "nggak
   ada" lalu uji terus menggulir menjauh (ketahuan di job emulator: "tombol kirim menu tidak

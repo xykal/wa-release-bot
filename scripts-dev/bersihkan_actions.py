@@ -13,7 +13,7 @@ Aturan bawaan (bisa ditimpa lewat env):
 | Yang dibersihkan | Umur | Env |
 |---|---|---|
 | riwayat run (log + artifact-nya) | > 2 hari | `HARI_RUN` (run termuda `SIMPAN_RUN` selalu disimpan) |
-| artifact (yang run-nya sudah hilang) | > 1 hari | `HARI_ARTIFACT` |
+| artifact (yang run-nya sudah hilang) | > 1 hari | `HARI_ARTIFACT` (artifact milik `SIMPAN_RUN` run termuda SELALU disimpan) |
 | cache (Gradle, npm, nodejs-mobile) | > 2 hari tidak dipakai | `HARI_CACHE` |
 | cache, kalau masih lebih dari batas | > 1500 MB | `BATAS_CACHE_MB` (yang paling lama dipakai dibuang dulu) |
 
@@ -96,10 +96,17 @@ def lebih_tua(teks: str | None, jam: float) -> bool:
     return (dt.datetime.now(dt.timezone.utc) - waktu(teks)) > dt.timedelta(hours=jam)
 
 
-def bersihkan_run(hari: float, simpan: int) -> int:
-    batas = hari * 24
+def daftar_run_simpan(simpan: int) -> tuple[list[dict], set[int]]:
+    """Semua run + id run termuda yang nggak boleh disentuh (beserta artifact-nya)."""
     runs = semua_halaman(f"{API}/repos/{REPO}/actions/runs", "workflow_runs")
     runs.sort(key=lambda r: waktu(r.get("created_at")), reverse=True)
+    return runs, {int(r["id"]) for r in runs[:simpan]}
+
+
+def bersihkan_run(hari: float, simpan: int, runs: list[dict] | None = None) -> int:
+    batas = hari * 24
+    if runs is None:
+        runs, _ = daftar_run_simpan(simpan)
     dihapus = 0
     for i, r in enumerate(runs):
         if i < simpan or not lebih_tua(r.get("created_at"), batas):
@@ -114,11 +121,25 @@ def bersihkan_run(hari: float, simpan: int) -> int:
     return dihapus
 
 
-def bersihkan_artifact(hari: float) -> int:
+def bersihkan_artifact(hari: float, run_simpan: set[int] | None = None) -> int:
+    """Hapus artifact menua — KECUALI milik run termuda.
+
+    Kenapa dikecualikan: draft release internal (job `release-internal`) mengambil
+    APK dari artifact run yang sedang jalan. Sapuan yang jalan di tengah build
+    pernah menghapus artifact itu lebih dulu, jadi draft-nya gagal dengan
+    "ls: cannot access 'dist/'" (kejadian 2026-10-01). Artifact milik run
+    termuda disimpan; yang menua tetap dibuang.
+    """
     batas = hari * 24
+    dilindungi = run_simpan or set()
     arts = semua_halaman(f"{API}/repos/{REPO}/actions/artifacts", "artifacts")
     dihapus = 0
+    disimpan = 0
     for a in arts:
+        run_id = int(((a.get("workflow_run") or {}).get("id")) or 0)
+        if run_id and run_id in dilindungi:
+            disimpan += 1
+            continue
         if not (lebih_tua(a.get("created_at"), batas) or a.get("expired")):
             continue
         if KERING:
@@ -127,7 +148,8 @@ def bersihkan_artifact(hari: float) -> int:
             continue
         if panggil("DELETE", f"{API}/repos/{REPO}/actions/artifacts/{a['id']}") == {}:
             dihapus += 1
-    print(f"artifact: {len(arts)} dibaca, {dihapus} {'akan dihapus' if KERING else 'dihapus'}")
+    print(f"artifact: {len(arts)} dibaca, {dihapus} {'akan dihapus' if KERING else 'dihapus'}, "
+          f"{disimpan} disimpan (milik run termuda)")
     return dihapus
 
 
@@ -191,8 +213,9 @@ def main() -> int:
           f"artifact > {hari_artifact} hari | cache > {hari_cache} hari tidak dipakai | "
           f"batas cache {batas_cache:.0f} MB{' [KERING]' if KERING else ''}")
 
-    total = bersihkan_run(hari_run, simpan_run)
-    total += bersihkan_artifact(hari_artifact)
+    runs, run_simpan = daftar_run_simpan(simpan_run)
+    total = bersihkan_run(hari_run, simpan_run, runs)
+    total += bersihkan_artifact(hari_artifact, run_simpan)
     total += bersihkan_cache(hari_cache)
     total += batasi_cache(batas_cache)
 

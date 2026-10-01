@@ -519,7 +519,9 @@ jobs:
   #  hari launching bareng draft v1.7.0/v1.8.0.
   release-internal:
     name: Draft release internal
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Bisa juga dipanggil manual (workflow_dispatch) di branch main: gunanya kalau
+    # draft-nya basi (mis. build terakhir gagal), nggak perlu nunggu push baru.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     needs: [engine, apk]
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -538,11 +540,27 @@ jobs:
           merge-multiple: true
           path: dist
 
+      # Artifact kosong = kemungkinan berkasnya belum kelihatan sepersekian detik
+      # setelah matrix job selesai (atau kesapu sapuan Actions yang jalan barengan).
+      # Dicoba sekali lagi; kalau tetap kosong, langkah berikutnya gagal dengan
+      # pesan jelas, bukan "ls: cannot access 'dist/'".
+      - name: Ambil APK hasil matrix (coba kedua)
+        if: hashFiles('dist/*.apk') == ''
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: wa-release-bot-*.apk
+          merge-multiple: true
+          path: dist
+
       - name: Taruh di draft release internal
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ls -la dist/
+          ls -la dist/ 2>/dev/null || true
+          if ! ls dist/*.apk >/dev/null 2>&1; then
+            echo "::error::APK hasil build tidak ada di artifact run ini. Kalau sapuan Actions (bersihkan.yml) jalan barengan build, artifact-nya bisa keburu kehapus — catatannya ada di docs/CI.md. Jalanin ulang: workflow_dispatch di branch main."
+            exit 1
+          fi
           python3 scripts-dev/rilis_internal.py --dist dist
 
   # ==========================================================================

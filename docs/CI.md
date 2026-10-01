@@ -252,9 +252,17 @@ umur yang lebih pendek kalau mau lebih agresif.
 | Yang dibersihkan | Bawaan | Env |
 |---|---|---|
 | riwayat run (log + artifact-nya ikut hilang) | lebih tua dari 2 hari | `HARI_RUN` (run termuda `SIMPAN_RUN=15` selalu disimpan) |
-| artifact | lebih tua dari 1 hari (atau sudah `expired`) | `HARI_ARTIFACT` |
+| artifact | lebih tua dari 1 hari (atau sudah `expired`) | `HARI_ARTIFACT` (artifact milik `SIMPAN_RUN` run termuda **selalu** disimpan) |
 | cache (Gradle, npm, nodejs-mobile) | tidak dipakai lebih dari 2 hari | `HARI_CACHE` |
 | cache, kalau totalnya masih di atas batas | 1500 MB | `BATAS_CACHE_MB` (yang paling lama dipakai dibuang dulu) |
+
+Jebakan yang sudah kena (2026-10-01): sapuan yang dijalankan **sambil build jalan**
+menghapus artifact APK run yang sedang berjalan, jadi job `release-internal` mendapati
+artifact kosong dan draft internalnya gagal diperbarui ("ls: cannot access 'dist/'").
+Sekarang ada dua penjaga: (1) sapuan tidak pernah menghapus artifact milik `SIMPAN_RUN`
+run termuda, dan (2) job draft mencoba unduh dua kali lalu gagal dengan pesan yang
+menyebut sebabnya. **Kalau tetap mau agresif, jangan pakai `HARI_ARTIFACT=0` selagi
+build jalan** — nol hari berarti "semua artifact", termasuk yang barusan diunggah.
 
 Logikanya di `scripts-dev/bersihkan_actions.py`; bisa dites dari lokal tanpa menghapus
 apa pun:
@@ -269,7 +277,9 @@ R8 mapping 3 hari), jadi walau penyapu belum jalan, sampahnya tetap kecil.
 
 ## 8. Draft release internal — APK buat HP uji
 
-Job `release-internal` di `build-apk.yml` (cuma jalan saat push ke `main`) menaruh APK
+Job `release-internal` di `build-apk.yml` (jalan saat push ke `main`, dan bisa
+dipanggil manual: `workflow_dispatch` di branch `main` — berguna kalau draft-nya
+ketinggalan gara-gara build terakhir gagal) menaruh APK
 arm64-v8a + armeabi-v7a di **draft release** bertag `internal-<versi>`:
 
 - draft = cuma pemilik repo yang bisa lihat dan unduh tautannya; `releases/latest`

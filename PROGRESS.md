@@ -334,7 +334,15 @@ Next:
   for this message" di chat kall. Status log `dikirim` hanya menunjukkan Baileys menerima kiriman,
   bukan bukti HP berhasil mendekripsinya.
 - Permintaan kall: simpan rekaman otomatis di `Android/media/<applicationId>/rekaman` agar tidak
-  bergantung pada kirim dokumen ke chat sendiri. Cabang `fix/rekam-auto-export` menyalin atomik
-  setiap perubahan dari salinan internal app ke `getExternalMediaDirs()/rekaman`; `.rekam kirim`
-  akan menunjukkan path lokal di Android. Tes engine dan Kotlin menutup ekspor, sinkronisasi data
-  lama, penghapusan kedua salinan, dan kondisi media tidak tersedia. Menunggu CI PR; belum diuji di HP.
+  bergantung pada kirim dokumen ke chat sendiri. PR #53 (merge `7570f89`) menyalin atomik setiap
+  perubahan dari salinan internal app ke `getExternalMediaDirs()/rekaman`; `.rekam kirim`
+  menunjukkan path lokal. Tes engine/Kotlin dan 18/18 PR checks lulus; main lulus 19/19, draft APK
+  arm64 + v7a diperbarui dan checksum cocok. Uji di HP setelah APK itu masih dibutuhkan.
+- Laporan kall: balasan teks di chat sendiri juga menampilkan "Waiting for this message". Akar yang
+  tampak di jalur kode: `jawab()` memakai alias JID pesan masuk (`jidBalasanSendiri`), sementara
+  tombol menu panel sudah memakai PN kanonis. Cabang `fix/self-chat-reply-jid` merutekan balasan
+  self-chat ke PN kanonis dan menambah uji integrasi untuk pesan `.menu` via LID serta tombol panel.
+  CI PR #54: tes engine + Node 18/20/22 dan APK arm64 lulus; CodeQL menandai path IPC stiker lama
+  sebagai high. Cabang juga mengunci ID/nama file stiker ke lokasi di `dataDir` dan menambah tes
+  traversal, sebelum CI dijalankan ulang. Ini kandidat perbaikan self-chat, bukan jaminan decrypt
+  semua pesan: E2EE tetap dikontrol WhatsApp dan perangkat penerima. Menunggu CI hijau dan uji kall.

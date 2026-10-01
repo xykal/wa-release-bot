@@ -27,7 +27,6 @@ export function buatJagaPesan(ctx, { rekam = null } = {}) {
   let jalan = false;      // loop lagi hidup
   let berhenti = false;   // diminta berhenti (engine stop / saklar dimatiin)
   let sockAktif = null;
-  let jidBalasanSendiri = null;
   const papan = { dihapus: 0, peringatan: 0, kick: 0, perintah: 0, stiker: 0, story: 0 };
 
   /** Jabarkan media dari satu pesan. `downloadMediaMessage` itu fungsi Baileys
@@ -47,7 +46,8 @@ export function buatJagaPesan(ctx, { rekam = null } = {}) {
    *   "nggak ada balasan" tanpa jejak apa pun.
    */
   async function jawab(sock, teks) {
-    const jid = jidBalasanSendiri || jidSendiri(sock);
+    // Balas ke PN akun sendiri yang kanonis, bukan alias LID pesan masuk.
+    const jid = jidSendiri(sock);
     if (!jid) {
       log('⚠️ Nggak bisa balas: nomor akun sendiri belum kebaca dari sesi WA (coba Tautkan ulang).');
       return false;
@@ -144,9 +144,8 @@ export function buatJagaPesan(ctx, { rekam = null } = {}) {
         for (const m of messages || []) {
           const jidChat = m.key?.remoteJid || '';
 
-          // PN dan LID bisa menunjuk akun yang sama; kunci balasan ke alias chat asal.
+          // PN/LID dikenali sebagai akun sendiri; jawab() selalu merutekan ke PN kanonis.
           if (jidChat && identitasSama(jidChat, sock.user)) {
-            jidBalasanSendiri = jidChat;
             const isi = teksPesan(m);
             const adaAwalanPerintah = /^[.!/]\S/.test(String(isi || '').trim());
             if (adaAwalanPerintah) log(`Perintah pribadi diterima: ${String(isi).trim().split(/\s+/)[0].slice(0, 32)}.`);
@@ -180,7 +179,6 @@ export function buatJagaPesan(ctx, { rekam = null } = {}) {
 
     try { close(); } catch { /* socket sudah tertutup */ }
     sockAktif = null;
-    jidBalasanSendiri = null;
   }
 
   /**

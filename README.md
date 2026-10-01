@@ -127,6 +127,8 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`): CLI meng-import modul `bot-
 Layar utama dipecah lima tab lewat bar navigasi bawah (**Beranda, Repo, Fitur, Log,
 Pengaturan**). Panduan lengkap tiap tab dan kartu (cara kerja, penjaga grup, batre, cara dapat
 link channel, lagu mood, hosting bot custom): [docs/PANDUAN-APP.md](docs/PANDUAN-APP.md).
+Fitur WhatsApp-nya (moderasi grup, perintah di chat sendiri, stiker, story, pesan berkala):
+[docs/PANDUAN-BOT-WA.md](docs/PANDUAN-BOT-WA.md).
 
 ### Bahasa
 
@@ -246,7 +248,7 @@ Laporan kerentanan: lihat [SECURITY.md](SECURITY.md).
 ├── cli/                      # versi Termux/PC — import langsung modul bot-js/src (engine identik)
 ├── scripts/                  # build-local.sh, fetch-nodejs-mobile.sh
 ├── web/                      # landing page + halaman unduh (statis, Cloudflare Workers)
-├── docs/                     # PANDUAN-APP, BUILD, TROUBLESHOOTING, ARCHITECTURE, JNI, CI, ROADMAP, PRD, PITCH
+├── docs/                     # PANDUAN-APP, PANDUAN-BOT-WA, BUILD, TROUBLESHOOTING, ARCHITECTURE, JNI, CI, ROADMAP, PRD, PITCH
 └── .github/workflows/        # build-apk, code-quality, codeql, security, deploy-web
 ```
 

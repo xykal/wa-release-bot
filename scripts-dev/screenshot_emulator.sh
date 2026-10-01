@@ -102,62 +102,7 @@ X=$((W / 2))
 adb shell am start -W -n "$PKG/$ACT" --ez tahan_splash true >/dev/null
 sleep 1
 
-tangkap() { adb exec-out screencap -p > "$OUT/$1.png"; echo "  $1.png"; }
-
-# posisi_atas <id> -> cetak koordinat atas elemen kalau terlihat, kosong kalau tidak
-posisi_atas() {
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || return 0
-  # grep tanpa hasil = exit 1; dengan pipefail itu akan mematikan skrip (set -e),
-  # padahal "belum kelihatan" adalah kondisi normal saat menggulir -> || true
-  adb shell cat /sdcard/ui.xml | tr '>' '\n' | grep -F "resource-id=\"$PKG:id/$1\"" | head -n 1 \
-    | sed -n 's/.*bounds="\[[0-9]*,\([0-9]*\)\]\[[0-9]*,[0-9]*\]".*/\1/p' || true
-}
-
-# kotak_id <id> -> "x1 y1 x2 y2" elemen kalau kelihatan, kosong kalau tidak
-kotak_id() {
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || return 0
-  adb shell cat /sdcard/ui.xml | tr '>' '\n' | grep -F "resource-id=\"$PKG:id/$1\"" | head -n 1 \
-    | sed -n 's/.*bounds="\[\([0-9]*\),\([0-9]*\)\]\[\([0-9]*\),\([0-9]*\)\]".*/\1 \2 \3 \4/p' || true
-}
-
-# isi dump UI, satu node per baris (uiautomator menulisnya dalam satu baris panjang)
-dump_ui() {
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || true
-  adb shell cat /sdcard/ui.xml | tr '>' '\n'
-}
-
-# ketuk_nav <id-nav> <nama-jepretan>: buka tab lewat bar navigasi bawah, lalu tangkap.
-# Bukti M11: tiap layar dipisah tab, jadi jepretan per bagian HARUS lewat sini.
-ketuk_nav() {
-  local id="$1" nama="$2" kotak
-  kotak="$(kotak_id "$id")"
-  if [ -z "$kotak" ]; then echo "  nav $id tidak ketemu, dilewati"; return 0; fi
-  set -- $kotak
-  adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
-  sleep 0.9
-  if [ -n "$nama" ]; then tangkap "$nama"; fi
-}
-
-# gulir_ke <id> <nama>: gulir sampai elemen ada, geser supaya ~200px dari atas, lalu tangkap
-gulir_ke() {
-  local id="$1" nama="$2" target="${3:-200}" atas="" i
-  for i in $(seq 1 14); do
-    atas="$(posisi_atas "$id")"
-    if [ -n "$atas" ]; then break; fi
-    adb shell input swipe "$X" $((H * 70 / 100)) "$X" $((H * 30 / 100)) 400
-    sleep 0.8
-  done
-  if [ -z "$atas" ]; then echo "  $nama: elemen $id tidak ketemu, dilewati"; return 0; fi
-  # geser elemen ke ~target px dari atas; dibatasi setengah layar supaya titik
-  # akhir swipe tidak keluar layar
-  local geser=$((atas - target))
-  if [ "$geser" -gt $((H / 2)) ]; then geser=$((H / 2)); fi
-  if [ "$geser" -gt 60 ]; then
-    adb shell input swipe "$X" $((H * 60 / 100)) "$X" $((H * 60 / 100 - geser)) 500
-    sleep 0.8
-  fi
-  tangkap "$nama"
-}
+source "$(dirname "$0")/ui-uji.sh"
 
 echo "menangkap:"
 echo "  sambutan.png"
@@ -196,83 +141,10 @@ ketuk_nav navFitur fitur
 # di atas anchor ikut masuk (run 36621355435: judul terpotong dengan offset 200)
 gulir_ke etGrup grup 600
 
-# Bot WA umum (M14/M15): bukti tiga hal.
-#   1. kartunya benar-benar ada dan bisa dijangkau di tab Fitur,
-#   2. saklar moderasi bisa dinyalain dan NEMPEL setelah Simpan + app dimatikan
-#      (M14 nambah 6 kunci baru di SettingsStore; kalau salah tipe atau nggak
-#      ikut disimpan, cuma kelihatan setelah app dibuka ulang),
-#   3. tombol "Kirim menu ke chat" ngasih umpan balik walau WA belum tersambung.
-# Catatan: kartunya tinggi (3 saklar + 3 kolom + 2 tombol), jadi tiap bagian
-# digulir ke sendiri-sendiri — satu jepretan nggak bisa nampung semuanya.
-gulir_ke rowModerasi bot-umum 320
-dump="$(dump_ui)"
-if [[ "$dump" == *"id/rowModerasi"* && "$dump" == *"id/rowPerintahPribadi"* && "$dump" == *"Bot WA umum"* ]]; then
-  echo "uji bot-umum: kartu + saklar moderasi + saklar perintah kelihatan OK"
-else
-  echo "uji bot-umum: kartu Bot WA umum tidak lengkap di dump UI"; tangkap bot-umum-gagal; exit 1
-fi
-
-kotak="$(kotak_id rowModerasi)"
-if [ -n "$kotak" ]; then
-  set -- $kotak
-  adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
-  sleep 0.6
-  baris="$(dump_ui | grep -F "id/rowModerasi" | head -n 1 || true)"
-  if [[ "$baris" == *'selected="true"'* ]]; then
-    echo "uji bot-umum: saklar moderasi nyala OK"
-  else
-    echo "uji bot-umum: saklar moderasi tidak berubah jadi nyala"; tangkap bot-umum-gagal; exit 1
-  fi
-else
-  echo "uji bot-umum: baris saklar moderasi tidak ketemu"; tangkap bot-umum-gagal; exit 1
-fi
-
-# Digulir ke kolom domain (bukan story): dua kolom ini jaraknya cuma ~1 layar,
-# jadi satu posisi cukup buat ngebuktiin dua-duanya ada di kartu.
-gulir_ke etModerasiDomain bot-umum-kolom 400
-dump="$(dump_ui)"
-if [[ "$dump" == *"id/etModerasiDomain"* && "$dump" == *"id/etStoryKe"* ]]; then
-  echo "uji bot-umum: kolom domain phishing + nomor penonton story kelihatan OK"
-else
-  echo "uji bot-umum: kolom baru Bot WA umum tidak ketemu di dump UI"; tangkap bot-umum-gagal; exit 1
-fi
-
-# Simpan, matikan app, buka lagi: nilai saklar harus balik nyala dari prefs.
-kotak="$(kotak_id btnSave)"
-if [ -z "$kotak" ]; then
-  echo "uji bot-umum: tombol Simpan tidak ketemu"; tangkap bot-umum-gagal; exit 1
-fi
-set -- $kotak
-adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
-sleep 1.4
-adb shell am force-stop "$PKG"
-sleep 1
-adb shell am start -W -n "$PKG/$ACT" >/dev/null
-sleep 3
-ketuk_nav navFitur fitur-lagi
-gulir_ke rowModerasi bot-umum-persist 320
-baris="$(dump_ui | grep -F "id/rowModerasi" | head -n 1 || true)"
-if [[ "$baris" == *'selected="true"'* ]]; then
-  echo "uji bot-umum: moderasi tersimpan di prefs (app dibuka ulang) OK"
-else
-  echo "uji bot-umum: moderasi hilang setelah app dibuka ulang"; tangkap bot-umum-persist-gagal; exit 1
-fi
-
-# Umpan balik tombol kirim menu (WA belum nyambung -> tetap ada pesan).
-gulir_ke btnKirimMenu bot-umum-tombol 720
-kotak="$(kotak_id btnKirimMenu)"
-if [ -z "$kotak" ]; then
-  echo "uji bot-umum: tombol kirim menu tidak ketemu"; tangkap bot-umum-gagal; exit 1
-fi
-set -- $kotak
-adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
-sleep 0.8
-dump="$(dump_ui)"
-if [[ "$dump" == *"chat sendiri"* ]]; then
-  echo "uji bot-umum: tombol kirim menu ngasih umpan balik OK"
-else
-  echo "uji bot-umum: tombol kirim menu diam saja"; tangkap bot-umum-gagal; exit 1
-fi
+# Uji kartu Fitur (M14/M15/M16) + tombol Simpan yang muncul kalau ada perubahan.
+# Dipisah ke berkas sendiri supaya skrip ini tetap pendek; variabel yang
+# dibutuhkan (PKG/ACT/OUT/X/H) diwariskan lewat environment.
+PKG="$PKG" ACT="$ACT" OUT="$OUT" X="$X" H="$H" bash "$(dirname "$0")/uji-fitur.sh"
 
 gulir_ke etLaguPerHari lagu 560
 gulir_ke btnHosting hosting 500

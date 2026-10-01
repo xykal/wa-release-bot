@@ -28,6 +28,7 @@ import { buatPenjagaGrup } from './mesin/penjaga-grup.mjs';
 import { buatTautan } from './mesin/tautan.mjs';
 import { buatPerintah } from './mesin/perintah.mjs';
 import { buatJagaPesan } from './mesin/jaga-pesan.mjs';
+import { buatPesanBerkala } from './mesin/pesan-berkala.mjs';
 
 // ----------------------------- selftest ------------------------------------
 async function selftest() {
@@ -258,6 +259,13 @@ async function main() {
       stikerDibuat: ctx.fitur?.jaga?.hitung?.().stiker || 0,
       storyDikirim: ctx.fitur?.jaga?.hitung?.().story || 0,
       perangkat: ctx.perangkat?.ringkas || null,
+      // pesan berkala (daftar hitam / teks sendiri)
+      berkalaAktif: Boolean(ctx.cfg?.berkala?.aktif),
+      berkalaJam: ctx.fitur?.berkala?.intervalJam?.() || null,
+      berkalaCount: ctx.state.berkala?.count || 0,
+      berkalaLastAt: ctx.state.berkala?.lastAt || null,
+      berkalaTerakhir: ctx.state.berkala?.terakhir || null,
+      nextBerkalaAt: ctx.nextBerkalaAt || null,
     });
   }
 
@@ -325,18 +333,21 @@ async function main() {
     if (grupAktif()) bagian.push(`jaga grup tiap ${Math.round(intervalGrupMs() / 60000)} mnt`);
     if (laguAktif()) bagian.push(`lagu mood ±${ctx.cfg.lagu.perHari}x/hari`);
     if (ctx.cfg.jaga?.moderasi) bagian.push('moderasi grup');
+    if (ctx.cfg.berkala?.aktif) bagian.push(`pesan berkala tiap ${ctx.fitur.berkala.intervalJam()} jam`);
     if (ctx.cfg.jaga?.perintah) bagian.push('perintah pribadi di chat sendiri');
     log('▶️ Engine nyala: ' + (bagian.join(' + ') || 'belum ada tugas'));
     emitStatus();
     scheduleNext(3000);
     jadwalGrup(8000);
     ctx.fitur.lagu.jadwalLagu();
+    ctx.fitur.berkala.jadwal(60_000);
     if (ctx.cfg.jaga?.moderasi || ctx.cfg.jaga?.perintah) void ctx.fitur.jaga.mulai();
   }
 
   function stopEngine() {
     ctx.running = false;
     ctx.fitur?.jaga?.hentikan();
+    ctx.fitur?.berkala?.hentikan();
     clearTimeout(timer);
     clearTimeout(timerGrup);
     clearTimeout(ctx.timerLagu);
@@ -356,10 +367,11 @@ async function main() {
   const rilis = buatRilis(ctx);
   const lagu = buatLaguMood(ctx, { rilis });
   const grup = buatPenjagaGrup(ctx);
+  const berkala = buatPesanBerkala(ctx, { grup });
   const tautan = buatTautan(ctx, { rilis, grup });
   const jaga = buatJagaPesan(ctx);
-  const perintah = buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga });
-  ctx.fitur = { rilis, lagu, grup, tautan, perintah, jaga };
+  const perintah = buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga, berkala });
+  ctx.fitur = { rilis, lagu, grup, tautan, perintah, jaga, berkala };
 
   // ----------------------------- init ---------------------------------------
   log('🦴 wa-release-bot engine siap (node ' + process.version + '). Menunggu perintah dari app.');

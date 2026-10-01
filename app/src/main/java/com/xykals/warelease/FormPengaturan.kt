@@ -2,6 +2,7 @@ package com.xykals.warelease
 
 import android.app.Activity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
 import com.xykals.warelease.util.RepoDaftar
@@ -48,11 +49,54 @@ internal class FormPengaturan(
     private lateinit var etModerasiKata: EditText
     private lateinit var etModerasiDomain: EditText
     private lateinit var etStoryKe: EditText
+    private lateinit var rowBerkalaAktif: View
+    private lateinit var etBerkalaJam: EditText
+    private lateinit var etBerkalaTeks: EditText
+
+    /** Dipanggil tiap ada perubahan (buat tombol Simpan yang muncul-muncul). */
+    private var onBerubah: (() -> Unit)? = null
+
+    private fun kabari() {
+        onBerubah?.invoke()
+    }
 
     private fun saklar(id: Int): View {
         val v = a.findViewById<View>(id)
-        v.setOnClickListener { v.isSelected = !v.isSelected }
+        v.setOnClickListener {
+            v.isSelected = !v.isSelected
+            kabari()
+        }
         return v
+    }
+
+    /**
+     * Mulai mantau perubahan. Dipanggil SETELAH muat() — kalau dipanggil
+     * sebelum, isian awal dari prefs bakal dikira perubahan user dan tombol
+     * Simpan langsung nongol sendiri.
+     */
+    fun pantauPerubahan(fn: () -> Unit) {
+        onBerubah = fn
+        for (et in semuaIsian()) {
+            et.addTextChangedListener(object : android.text.TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = Unit
+                override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = kabari()
+                override fun afterTextChanged(s: android.text.Editable?) = Unit
+            })
+        }
+    }
+
+    /** Semua EditText di layar utama: itu semua isian setting, jadi ikut dipantau. */
+    private fun semuaIsian(): List<EditText> {
+        val hasil = mutableListOf<EditText>()
+        fun telusuri(v: View) {
+            if (v is EditText) {
+                hasil.add(v)
+                return
+            }
+            if (v is ViewGroup) for (i in 0 until v.childCount) telusuri(v.getChildAt(i))
+        }
+        telusuri(a.findViewById(android.R.id.content))
+        return hasil
     }
 
     /** Cari semua view; dipanggil sekali setelah setContentView. */
@@ -83,6 +127,7 @@ internal class FormPengaturan(
             rowSuaraSplash.isSelected = baru
             settings.suaraSplash = baru
             if (baru) settings.voSudahMain = false
+            kabari()
         }
         etLaguPerHari = a.findViewById(R.id.etLaguPerHari)
         etLaguJamMulai = a.findViewById(R.id.etLaguJamMulai)
@@ -95,6 +140,10 @@ internal class FormPengaturan(
         etModerasiKata = a.findViewById(R.id.etModerasiKata)
         etModerasiDomain = a.findViewById(R.id.etModerasiDomain)
         etStoryKe = a.findViewById(R.id.etStoryKe)
+
+        rowBerkalaAktif = saklar(R.id.rowBerkalaAktif)
+        etBerkalaJam = a.findViewById(R.id.etBerkalaJam)
+        etBerkalaTeks = a.findViewById(R.id.etBerkalaTeks)
     }
 
     fun renderRepoRingkas() {
@@ -127,6 +176,9 @@ internal class FormPengaturan(
         etModerasiKata.setText(settings.moderasiKata)
         etModerasiDomain.setText(settings.moderasiDomain)
         etStoryKe.setText(settings.storyKe)
+        rowBerkalaAktif.isSelected = settings.berkalaAktif
+        etBerkalaJam.setText(settings.berkalaJam.toString())
+        etBerkalaTeks.setText(settings.berkalaTeks)
         etLaguPerHari.setText(settings.laguPerHari.toString())
         etLaguJamMulai.setText(settings.laguJamMulai.toString())
         etLaguJamSelesai.setText(settings.laguJamSelesai.toString())
@@ -159,6 +211,9 @@ internal class FormPengaturan(
         settings.moderasiKata = etModerasiKata.text.toString()
         settings.moderasiDomain = etModerasiDomain.text.toString()
         settings.storyKe = etStoryKe.text.toString()
+        settings.berkalaAktif = rowBerkalaAktif.isSelected
+        settings.berkalaJam = etBerkalaJam.text.toString().toIntOrNull() ?: 12
+        settings.berkalaTeks = etBerkalaTeks.text.toString()
 
         val logcatLama = settings.rekamLogcat
         settings.rekamLogcat = rowLogcat.isSelected

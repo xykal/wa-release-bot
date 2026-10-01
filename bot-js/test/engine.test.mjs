@@ -190,6 +190,36 @@ test('engine: nyala, configure, start, cek release ke GitHub palsu, stop', async
   const cfg3 = JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8'));
   assert.equal(cfg3.jaga.batasStrike, 5);
 
+  // Pesan berkala (M16): nolak kalau grup tujuan belum nyala, dan tersimpan
+  // kalau grupnya nyala. Dua-duanya dites tanpa WA.
+  await engine.kirim({
+    type: 'configure', repo: REPO, channel: '', token: '', intervalMinutes: 15,
+    berkalaAktif: true, berkalaJam: 6, berkalaTeks: 'Aturan grup: jangan kirim link.',
+  });
+  await engine.tunggu((ev) => ev.type === 'cmd_error' && /Pesan berkala butuh/.test(ev.msg),
+    'cmd_error berkala tanpa grup');
+
+  await engine.kirim({
+    type: 'configure', repo: REPO, channel: '', token: '', intervalMinutes: 15,
+    grupAktif: true, grupTarget: 'https://chat.whatsapp.com/ContohGrupAlami',
+    berkalaAktif: true, berkalaJam: 6, berkalaTeks: 'Aturan grup: jangan kirim link.',
+  });
+  await engine.tungguStatus((ev) => ev.berkalaAktif === true, 'status berkala nyala');
+  const cfgBerkala = JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8'));
+  assert.equal(cfgBerkala.berkala.aktif, true);
+  assert.equal(cfgBerkala.berkala.intervalJam, 6);
+  assert.equal(cfgBerkala.berkala.teks, 'Aturan grup: jangan kirim link.');
+
+  // Interval di luar batas dijepit, bukan ditolak.
+  await engine.kirim({ type: 'configure', berkalaAktif: true, berkalaJam: 500, grupAktif: true,
+    grupTarget: 'https://chat.whatsapp.com/ContohGrupAlami', repo: REPO, intervalMinutes: 15 });
+  await engine.tungguStatus(() => true, 'status setelah jepit interval');
+  const cfgJepit = JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8'));
+  assert.equal(cfgJepit.berkala.intervalJam, 168);
+
+  await engine.kirim({ type: 'berkala-sekarang' });
+  await engine.tungguLog('Pesan berkala');
+
   // Perintah engine: stiker-jadi tanpa data harus diam (bukan crash).
   await engine.kirim({ type: 'stiker-jadi', id: 'stiker-1' });
 

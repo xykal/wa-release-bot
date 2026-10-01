@@ -342,6 +342,12 @@ class BotService : Service() {
                 stikerDibuat = e.optInt("stikerDibuat", 0)
                 storyDikirim = e.optInt("storyDikirim", 0)
                 perangkat = e.optString("perangkat", "").orNull()
+                // pesan berkala
+                berkalaAktif = e.optBoolean("berkalaAktif")
+                berkalaJam = e.optInt("berkalaJam", 0)
+                berkalaCount = e.optInt("berkalaCount", 0)
+                berkalaTerakhir = e.optString("berkalaTerakhir", "").orNull()
+                nextBerkalaAt = e.optLong("nextBerkalaAt", 0L).takeIf { it > 0 }
             }
 
             "hosting_status" -> BotBus.publish {

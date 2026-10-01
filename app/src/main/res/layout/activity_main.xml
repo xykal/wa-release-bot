@@ -632,6 +632,72 @@
             </LinearLayout>
             </LinearLayout>
 
+            <!-- ================= PESAN BERKALA KE GRUP (M16) ================= -->
+            <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_lagu"
+                android:text="@string/u_pesan_berkala_grup" />
+            <TextView style="@style/KetKartu" android:text="@string/u_ket_pesan_berkala_grup" />
+
+            <LinearLayout android:id="@+id/rowBerkalaAktif" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/u_kirim_berkala"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/u_ket_kirim_berkala"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+
+            <TextView style="@style/Label" android:text="@string/u_setiap_berapa_jam" />
+            <EditText
+                android:id="@+id/etBerkalaJam"
+                style="@style/Isian"
+                android:hint="12"
+                android:inputType="number" />
+
+            <TextView style="@style/Label" android:text="@string/u_pesan_kalau_dikosongin_daftar" />
+            <EditText
+                android:id="@+id/etBerkalaTeks"
+                style="@style/Isian"
+                android:hint="@string/u_contoh_aturan_grup_pisah_baris"
+                android:importantForAutofill="no"
+                android:gravity="top"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:singleLine="false" />
+
+            <TextView
+                android:id="@+id/tvBerkalaStat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_ubin"
+                android:padding="12dp"
+                android:textColor="@color/wr_teks"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/btnBerkalaSekarang"
+                style="@style/TombolGaris"
+                android:layout_marginTop="12dp"
+                android:drawableStart="@drawable/ic_kirim"
+                android:text="@string/u_kirim_sekarang" />
+            </LinearLayout>
+
             <!-- ================= LAGU MOOD ================= -->
             <LinearLayout style="@style/Kartu">
             <TextView

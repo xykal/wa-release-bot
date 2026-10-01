@@ -73,6 +73,29 @@ Yang **bukan** tanggung jawab proyek ini:
 - Engine diuji di **Node 18.20.4** — versi asli di dalam APK — bukan cuma di
   Node terbaru.
 
+## Siapa yang bisa menjalankan Actions
+
+Repo ini **publik** (biar bisa dipasang siapa aja tanpa akun), jadi yang dikunci adalah
+siapa yang bisa **menjalankan** workflow, bukan siapa yang bisa membacanya:
+
+| Setelan | Nilai | Artinya |
+|---|---|---|
+| Menjalankan `workflow_dispatch` / push | cuma kolaborator dengan izin tulis | orang luar nggak bisa memicu build pakai akunnya sendiri |
+| `default_workflow_permissions` | `read` | token Actions nggak bisa nulis ke repo kecuali job-nya minta eksplisit |
+| `can_approve_pull_request_reviews` | mati | token Actions nggak bisa nge-approve PR |
+| PR dari fork | wajib **disetujui manual** | nggak ada workflow yang jalan dari PR orang lain tanpa persetujuan pemilik |
+| `sha_pinning_required` | nyala | semua `uses:` wajib commit SHA, nggak bisa diselundupin tag yang berubah |
+| Proteksi `main` | wajib PR, tanpa force push/hapus | nggak ada push langsung ke main, dari siapa pun |
+| Job `bersihkan` | tolak `workflow_run` dari fork | `workflow_run` yang bawa secret nggak bisa dipicu dari fork |
+
+Resep lengkapnya (endpoint API + alasannya) ada di [docs/CI.md](docs/CI.md).
+
+Yang **tidak bisa** ditutup tanpa bikin repo privat: **log Actions bisa dibaca siapa aja**
+begitu workflow jalan. Karena itu repo ini (a) nggak pernah menulis secret ke log, (b)
+menyimpan artifact sependek mungkin lalu menghapusnya, dan (c) menjalankan `bersihkan.yml`
+tiap Build APK selesai plus tiap hari. APK internal juga nggak pernah jadi artifact publik:
+dia masuk **draft release** yang cuma bisa diunduh pemilik repo.
+
 ## Batasan yang diketahui
 
 - `libnode.so` dari nodejs-mobile masih align 4 KB, belum 16 KB (syarat

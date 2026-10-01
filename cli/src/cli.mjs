@@ -299,7 +299,7 @@ async function runRekam(cfg, state, { jumlah, tungguDetik }) {
     const tujuan = path.join(ROOT, 'rekaman-channel.json');
     writeFileSync(tujuan, JSON.stringify(rekaman, null, 2));
     for (const e of [...rekaman.diambil, ...rekaman.masuk]) log(`  ${e.attrs?.server_id ?? 'live'}: ${e.jenis ?? e.gagalDecode ?? 'tanpa plaintext'}`);
-    log(`Rekaman disimpan: ${tujuan} (kirim file ini ke dev, isinya udah dipotong & tanpa media).`);
+    log(`Rekaman disimpan: ${tujuan} (kirim file ini ke dev; teksnya dipotong, byte mentah ikut buat postingan kecil).`);
   } finally {
     close();
   }

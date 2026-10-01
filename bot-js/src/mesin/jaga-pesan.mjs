@@ -16,7 +16,7 @@ import { downloadMediaMessage } from '@whiskeysockets/baileys';
 import { tungguSocketJaga } from '../wa-socket-share.mjs';
 import { menuTeks } from '../pesan.mjs';
 import { sendText, jidSendiri } from '../wa.mjs';
-import { identitas } from '../grup.mjs';
+import { identitas, identitasSama } from '../grup.mjs';
 import { bacaTarget, JENIS } from '../channel.mjs';
 import { buatAksiPesan, teksPesan } from './aksi-pesan.mjs';
 import { buatAksiMedia } from './aksi-media.mjs';
@@ -27,6 +27,7 @@ export function buatJagaPesan(ctx) {
   let jalan = false;      // loop lagi hidup
   let berhenti = false;   // diminta berhenti (engine stop / saklar dimatiin)
   let sockAktif = null;
+  let jidBalasanSendiri = null;
   const papan = { dihapus: 0, peringatan: 0, kick: 0, perintah: 0, stiker: 0, story: 0 };
 
   /** Jabarkan media dari satu pesan. `downloadMediaMessage` itu fungsi Baileys
@@ -46,7 +47,7 @@ export function buatJagaPesan(ctx) {
    *   "nggak ada balasan" tanpa jejak apa pun.
    */
   async function jawab(sock, teks) {
-    const jid = jidSendiri(sock);
+    const jid = jidBalasanSendiri || jidSendiri(sock);
     if (!jid) {
       log('⚠️ Nggak bisa balas: nomor akun sendiri belum kebaca dari sesi WA (coba Tautkan ulang).');
       return false;
@@ -122,7 +123,6 @@ export function buatJagaPesan(ctx) {
     sockAktif = sock;
     // Rekam postingan channel (kalau diminta `.rekam on`) nempel di socket ini.
     try { ctx.fitur?.rekam?.pasang(sock); } catch (e) { log(`⚠️ Rekam channel nggak kepasang: ${e.message}`); }
-    const jidSaya = jidSendiri(sock);
     log(
       `👀 Mode jaga pesan nyala (perintah: ${aksi.aktifPerintah() ? 'ya' : 'tidak'}, ` +
       `moderasi: ${aksi.aktifModerasi() ? 'ya' : 'tidak'}) — makan batre lebih, matikan kalau nggak dipakai.`
@@ -144,9 +144,12 @@ export function buatJagaPesan(ctx) {
         for (const m of messages || []) {
           const jidChat = m.key?.remoteJid || '';
 
-          // 1. perintah pribadi: cuma di chat sendiri, jalur cepat.
-          if (jidSaya && jidChat === jidSaya) {
+          // PN dan LID bisa menunjuk akun yang sama; kunci balasan ke alias chat asal.
+          if (jidChat && identitasSama(jidChat, sock.user)) {
+            jidBalasanSendiri = jidChat;
             const isi = teksPesan(m);
+            const adaAwalanPerintah = /^[.!/]\S/.test(String(isi || '').trim());
+            if (adaAwalanPerintah) log(`Perintah pribadi diterima: ${String(isi).trim().split(/\s+/)[0].slice(0, 32)}.`);
             if (aksi.aktifPerintah()) {
               void aksi.tanganiPerintah(sock, m, isi)
                 .catch((e) => log(`⚠️ Perintah ${isi.slice(0, 20)} gagal: ${e.message}`));
@@ -177,6 +180,7 @@ export function buatJagaPesan(ctx) {
 
     try { close(); } catch { /* socket sudah tertutup */ }
     sockAktif = null;
+    jidBalasanSendiri = null;
   }
 
   /**

@@ -24,7 +24,7 @@ import { kelompokHitam, bukaBlokir, labelOrang } from '../src/grup.mjs';
 import { createBridge } from '../src/bridge.mjs';
 import { normalisasiNomor } from '../src/nomor.mjs';
 import {
-  rapikanJid, identitas, cariYangKeluar, catatAnggota, putuskan, daftarHitamManual, namaOrang,
+  rapikanJid, identitas, identitasSama, cariYangKeluar, catatAnggota, putuskan, daftarHitamManual, namaOrang,
 } from '../src/grup.mjs';
 
 // ---------------------------------------------------------------- parseRepo
@@ -268,6 +268,13 @@ test('identitas: gabung nomor HP + LID', () => {
   );
   assert.deepEqual(identitas({ jid: '777@lid', phone_number: '628222@s.whatsapp.net' }).sort(),
     ['628222@s.whatsapp.net', '777@lid']);
+});
+
+test('identitasSama: chat sendiri cocok lewat LID atau PN walau JID berubah bentuk', () => {
+  const akun = { id: '628111:4@s.whatsapp.net', lid: '999@lid' };
+  assert.equal(identitasSama('999@lid', akun), true);
+  assert.equal(identitasSama('628111@s.whatsapp.net', akun), true);
+  assert.equal(identitasSama('888@lid', akun), false);
 });
 
 test('cariYangKeluar: yang hilang dari daftar = keluar; diri sendiri nggak dihitung', () => {

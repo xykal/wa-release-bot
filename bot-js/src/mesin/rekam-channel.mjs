@@ -63,14 +63,20 @@ export function buatRekamChannel(ctx) {
       if (!aktif) return;
       try {
         const hasil = entriRekaman(node);
-        if (!hasil.ok) return; // notifikasi lain: abaikan senyap, jangan berisik di log
+        if (!hasil.ok) {
+          const adaPesan = Array.isArray(node?.content) && node.content.some((anak) => anak?.tag === 'message');
+          if (node?.attrs?.type === 'newsletter' && adaPesan) {
+            log(`Rekam channel melewatkan postingan: ${hasil.alasan}.`);
+          }
+          return;
+        }
         const lama = baca();
         const data = rapikan({ ...lama, entri: tambahEntri(lama.entri, hasil.entri, MAKS_ENTRI) });
         data.diperbarui = new Date().toISOString();
         tulis(data);
         jumlahKirim += 1;
         log(
-          `🎙️ Rekaman channel: 1 postingan ketangkap (${hasil.entri.byte} byte, ` +
+          `Rekam channel: 1 postingan tersimpan (${hasil.entri.byte} byte, ` +
           `tipe ${hasil.entri.tipe || 'teks'}, total ${data.entri.length}).`
         );
         emitStatus();

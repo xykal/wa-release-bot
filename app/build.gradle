@@ -8,9 +8,11 @@ plugins {
 def releaseKeystoreFile = System.getenv("RELEASE_KEYSTORE_FILE")
 
 // Versi bisa di-override dari CI:  ./gradlew assembleRelease -PversionName=1.2.0 -PversionCode=5
-def appVersionName = (project.findProperty('versionName') ?: '1.8.0').toString()
-// Default ikut rumus CI (major*10000 + minor*100 + patch) supaya build lokal tidak lebih rendah dari APK rilis.
-def appVersionCode = (project.findProperty('versionCode') ?: '10800').toString().toInteger()
+def appVersionName = (project.findProperty('versionName') ?: '1.0.0').toString()
+// Default ikut rumus CI (1_000_000 + major*10000 + minor*100 + patch) supaya build lokal tidak lebih
+// rendah dari APK rilis. Offset 1_000_000 dipakai sejak rilis publik 1.0.0: tanpa itu 1.0.0 = 10000,
+// lebih kecil dari versionCode internal 1.8.0 (10800) dan Android menolak update.
+def appVersionCode = (project.findProperty('versionCode') ?: '1010000').toString().toInteger()
 
 android {
     namespace 'com.xykals.warelease'

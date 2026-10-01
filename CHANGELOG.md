@@ -6,7 +6,46 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
-### Ditambah
+## [1.0.0] — 2026-10-11
+
+Rilis publik pertama. Nomor versi dimulai ulang dari 1.0.0; versi internal 1.1 sampai 1.8
+di bawah ini tidak pernah dipublikasikan dan isinya tergabung di sini. `versionCode` APK
+memakai offset 1.000.000 (1.0.0 = 1010000) supaya HP yang pernah memasang versi internal
+tetap menerima update.
+
+### Ringkasan buat pengguna
+- **Bot rilis GitHub → WhatsApp** yang tidur di antara pengecekan: cek repo tiap N menit,
+  ada release baru → posting ke channel atau grup WA, lalu putus lagi. Node.js 18 asli di
+  dalam APK (nodejs-mobile) + Baileys; tanpa server.
+- **Tautkan sekali** lewat pairing code 8 huruf (tanpa HP kedua) atau QR; **bikin channel**
+  langsung dari app.
+- **Layar Repo**: banyak repo sekaligus, tiap repo boleh punya channel sendiri.
+- **Penjaga grup**: auto-approve permintaan join, tolak yang pernah keluar/dikeluarkan,
+  daftar hitam nomor.
+- **Lagu mood**: voice note lagu + caption beberapa kali sehari pada jam yang ditentukan.
+- **Hosting bot**: jalankan project Node.js sendiri dari ZIP (konsol, restart otomatis).
+- **Tahan banting**: watchdog WorkManager + boot receiver, izin batre/Autostart Xiaomi,
+  posting anti dobel, notifikasi + laporan ke chat sendiri kalau 3 kali gagal kirim,
+  folder log yang bisa dibaca tanpa root.
+- **CLI Termux/PC** dengan engine yang sama: `setup --pair`, `once` (cron), `loop`,
+  `dry-run`, `test`.
+- **Situs** <https://wabot.projectkal.my.id>: landing page + halaman unduh yang membaca
+  release terbaru otomatis.
+- **Dua bahasa**: seluruh UI app Indonesia (bawaan) atau Inggris mengikuti bahasa HP;
+  pesan bot di WhatsApp dan log tetap Indonesia.
+- **Keamanan**: cek release pakai ETag (repo tidak berubah = 0 byte), timeout 20 detik,
+  cleartext hanya ke 127.0.0.1, `allowBackup=false`, APK dari GitHub Actions dengan
+  `.sha256`; action dipin SHA, gitleaks, CodeQL, Scorecard.
+
+### Rincian sejak 1.8.0
+#### Ditambah
+- **Pesan berkala ke grup (M16)**: kartu di tab Fitur buat mengirim pesan berulang ke grup yang
+  dipantau — bawaan **daftar hitam grup** (nomor + sejak kapan + nomor yang admin daftarkan
+  sendiri), atau teks sendiri kalau kolom pesannya diisi (mis. aturan grup). Jaraknya diatur
+  dalam jam (1-168). Tiap kirim = sekali sambung WhatsApp lalu tutup, jadi batre tetap aman
+  (beda dari mode jaga pesan yang nyambung terus). Isi pesannya disusun `bot-js/src/berkala.mjs`
+  (murni, 7 unit test), pengirimnya `bot-js/src/mesin/pesan-berkala.mjs`. Tombol **Kirim sekarang**
+  di app mengirim tanpa nunggu jadwal.
 - Saklar **Selalu kirim daftar hitam** di kartu Pesan berkala: kalau nyala, yang dikirim cuma
   daftar hitam grup dan kolom pesan diabaikan (permintaan kall). Logikanya `pilihIsi()` di
   `bot-js/src/berkala.mjs` (murni, ada ujinya); `.berkala` di chat nunjukin mode yang sedang
@@ -51,7 +90,9 @@ Semua perubahan penting proyek ini. Format mengikuti
   Galeri situs versi English memakai tangkapan en-US (`web/img/hp-*-en.webp`, ditukar
   `app.js` lewat `data-src-en`; `bingkai_screenshot.py --akhiran en`); README memuat
   sandingan id/en (`docs/img/i18n-app.webp`).
+
 - `docs/PITCH.md`: satu halaman pitch (masalah, solusi, untuk siapa, batasan yang jujur).
+
 - Uji engine kedua (`test/engine.test.mjs`): dua repo sekaligus (satu prerelease dengan
   `includePrereleases`), ETag 304 pada cek kedua, release baru terdeteksi dan berhenti di
   "Channel WA masih kosong" tanpa menyentuh WhatsApp; `lastTag` tidak berubah sampai terkirim.
@@ -85,13 +126,6 @@ Semua perubahan penting proyek ini. Format mengikuti
   (`batasStrike`, bawaan 2); admin dan bot sendiri tidak pernah disentuh. Logika keputusannya
   murni di `bot-js/src/pesan.mjs` (diuji unit), bagian WhatsApp-nya di
   `bot-js/src/mesin/jaga-pesan.mjs`.
-- **Pesan berkala ke grup (M16)**: kartu di tab Fitur buat mengirim pesan berulang ke grup yang
-  dipantau — bawaan **daftar hitam grup** (nomor + sejak kapan + nomor yang admin daftarkan
-  sendiri), atau teks sendiri kalau kolom pesannya diisi (mis. aturan grup). Jaraknya diatur
-  dalam jam (1-168). Tiap kirim = sekali sambung WhatsApp lalu tutup, jadi batre tetap aman
-  (beda dari mode jaga pesan yang nyambung terus). Isi pesannya disusun `bot-js/src/berkala.mjs`
-  (murni, 7 unit test), pengirimnya `bot-js/src/mesin/pesan-berkala.mjs`. Tombol **Kirim sekarang**
-  di app mengirim tanpa nunggu jadwal.
 - **Foto jadi stiker (M14)**: kirim/rebalas foto dengan keterangan `.stiker`. WhatsApp cuma
   nerima stiker WebP, dan Node di dalam APK tidak punya encoder WebP — jadi gambar dititipkan
   ke app lewat berkas di `dataDir` (app dan mesin Node satu sandbox; bridge WS batasnya 1 MB,
@@ -123,7 +157,7 @@ Semua perubahan penting proyek ini. Format mengikuti
   Selain umur, total cache dibatasi (`BATAS_CACHE_MB`, bawaan 1500 MB): kelebihannya
   dibuang dari yang paling lama dipakai, jadi penyimpanan tidak naik terus.
 
-### Diubah
+#### Diubah
 - Workflow **Screenshot app** ikut jalan kalau `scripts-dev/uji-fitur.sh` atau `ui-uji.sh` berubah.
   Sebelumnya daftar pemicunya cuma dua berkas lain, jadi perubahan skrip uji UI nggak keuji
   sama sekali di PR.
@@ -142,6 +176,19 @@ Semua perubahan penting proyek ini. Format mengikuti
   ke commit SHA (`sha_pinning_required`), dan `main` dilindungi: wajib lewat PR, tanpa force
   push. Job `bersihkan` juga menolak dipicu run dari fork (`workflow_run` adalah celah klasik).
   Resepnya ditulis di `docs/CI.md` dan `SECURITY.md`.
+- Situs: jadwal launching Minggu 11 Oktober 2026 19.00 WIB (sempat 4 Oktober). Teks tanggal di
+  popup kini diturunkan dari `LAUNCH_ISO` lewat `Intl` zona Asia/Jakarta, jadi jadwal cukup
+  diubah di satu tempat; `launching.ics` naik `SEQUENCE` supaya kalender yang sudah impor ikut.
+- CI Build APK: push ke `main` kini membangun arm64-v8a dan armeabi-v7a (artifact terpisah);
+  PR tetap arm64 saja. HP uji 32-bit sebelumnya cuma bisa pakai build manual atau tag.
+- `scripts-dev/deploy_web.py`: kalau custom domain sudah terpasang, berhenti di GET
+  `workers/domains` sehingga token deploy cukup izin *Workers Scripts: Edit*; resep token
+  scoped untuk secret `CF_API_TOKEN` ada di `docs/CI.md`.
+- Situs: `<title>`, meta description dan `og:description` ikut bahasa yang dipilih
+  (`judul_*`/`deskripsi_*` di `teks.js`, halaman dikenali dari `<body data-halaman>`);
+  HTML statis tetap Indonesia untuk crawler tanpa JS.
+- Dokumen: bagian jembatan JNI dan polyfill WebCrypto dipindah dari `docs/ARCHITECTURE.md`
+  ke `docs/JNI.md` supaya tiap berkas tetap di bawah ~250 baris.
 - App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,
   `DialogTautan`, `LembarHitam`, `AksiSistem`, `SplashUtama`, `Lembar` (komponen dialog).
   Pemindahan mekanis, perilaku dan tampilan sama.
@@ -149,7 +196,7 @@ Semua perubahan penting proyek ini. Format mengikuti
   `src/mesin/{rilis,lagu-mood,penjaga-grup,tautan,perintah}.mjs`; keadaan bersama lewat satu
   objek `ctx`. Perilaku tidak berubah. Uji ujung-ke-ujung baru `test/engine.test.mjs`
   menjalankan engine dengan GitHub palsu (`WR_GITHUB_API`, khusus tes) di Node 18/20/22.
-- Release v1.7.0 dan v1.8.0 jadi **draft** (tidak publik) sampai launching 1.0.0.
+- Release v1.7.0 dan v1.8.0 (draft) beserta tag-nya dihapus saat rilis 1.0.0.
 - Dokumen (README, docs/, CHANGELOG, template PR) tanpa emoji; anchor README dislug ulang;
   CI menolak emoji di dokumen dan `web/` (`scripts-dev/bersihkan_emoji.py --cek`).
 - Web responsif diverifikasi di 14 ukuran layar (320 px sampai ultrawide, portrait dan
@@ -168,7 +215,8 @@ Semua perubahan penting proyek ini. Format mengikuti
   masih kosong) sekarang memindahkan layar ke tab Repo dulu, bukan menyuruh isi kolom yang
   tidak kelihatan.
 
-### Diperbaiki
+#### Diperbaiki
+- CI: job `Lockfile root` nggak lagi gagal kalau `main` menolak push langsung (main sekarang wajib PR); pesannya berubah jadi arahan bikin PR.
 - Draft release internal pernah gagal diperbarui karena artifact APK-nya sudah kehapus
   sebelum job `release-internal` mengambilnya (sapuan Actions jalan sambil build). Sekarang
   `scripts-dev/bersihkan_actions.py` **tidak pernah** menghapus artifact milik `SIMPAN_RUN`
@@ -228,17 +276,10 @@ Semua perubahan penting proyek ini. Format mengikuti
 - App: layar tidak lagi melompat ke kotak log tiap ada baris log baru. `ScrollView.fullScroll()`
   memindahkan fokus sehingga halaman ikut tergulir dan keyboard tertutup; diganti `ikutKeBawah()`
   yang menggulir isi kotak log saja, dan hanya kalau sebelumnya sudah di ujung bawah.
-- CI: job `Lockfile root` nggak lagi gagal kalau `main` menolak push langsung (main sekarang wajib PR); pesannya berubah jadi arahan bikin PR.
-- CI Build APK: push ke `main` kini membangun arm64-v8a dan armeabi-v7a (artifact terpisah);
-  PR tetap arm64 saja. HP uji 32-bit sebelumnya cuma bisa pakai build manual atau tag.
-- `scripts-dev/deploy_web.py`: kalau custom domain sudah terpasang, berhenti di GET
-  `workers/domains` sehingga token deploy cukup izin *Workers Scripts: Edit*; resep token
-  scoped untuk secret `CF_API_TOKEN` ada di `docs/CI.md`.
-- Situs: `<title>`, meta description dan `og:description` ikut bahasa yang dipilih
-  (`judul_*`/`deskripsi_*` di `teks.js`, halaman dikenali dari `<body data-halaman>`);
-  HTML statis tetap Indonesia untuk crawler tanpa JS.
-- Dokumen: bagian jembatan JNI dan polyfill WebCrypto dipindah dari `docs/ARCHITECTURE.md`
-  ke `docs/JNI.md` supaya tiap berkas tetap di bawah ~250 baris.
+
+## Riwayat internal (tidak dirilis publik)
+
+Tag dan release versi di bawah ini sudah dihapus dari GitHub; judulnya tidak lagi bertaut.
 
 ## [1.8.0] — 2026-09-29
 
@@ -1031,33 +1072,9 @@ kritikal di dependency.
   syarat halaman 16 KB Android 15+. Ini batasan upstream — lihat
   [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#-batasan-yang-diketahui).
 
-## [1.0.0] — 2026-09-24
+## [1.0.0-awal] — 2026-09-24
 
 Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.8.0...HEAD
-[1.8.0]: ../../compare/v1.7.0...v1.8.0
-[1.7.0]: ../../compare/v1.6.7...v1.7.0
-[1.6.7]: ../../compare/v1.6.6...v1.6.7
-[1.6.6]: ../../compare/v1.6.5...v1.6.6
-[1.6.5]: ../../compare/v1.6.4...v1.6.5
-[1.6.4]: ../../compare/v1.6.3...v1.6.4
-[1.6.3]: ../../compare/v1.6.2...v1.6.3
-[1.6.2]: ../../compare/v1.6.1...v1.6.2
-[1.6.1]: ../../compare/v1.6.0...v1.6.1
-[1.6.0]: ../../compare/v1.5.0...v1.6.0
-[1.5.0]: ../../compare/v1.4.3...v1.5.0
-[1.4.3]: ../../compare/v1.4.2...v1.4.3
-[1.4.2]: ../../compare/v1.4.1...v1.4.2
-[1.4.1]: ../../compare/v1.4.0...v1.4.1
-[1.4.0]: ../../compare/v1.3.0...v1.4.0
-[1.3.0]: ../../compare/v1.2.1...v1.3.0
-[1.2.2]: ../../compare/v1.2.1...v1.2.2
-[1.2.1]: ../../compare/v1.2.0...v1.2.1
-[1.2.0]: ../../compare/v1.1.4...v1.2.0
-[1.1.4]: ../../compare/v1.1.3...v1.1.4
-[1.1.3]: ../../compare/v1.1.2...v1.1.3
-[1.1.2]: ../../compare/v1.1.1...v1.1.2
-[1.1.1]: ../../compare/v1.1.0...v1.1.1
-[1.1.0]: ../../compare/v1.0.0...v1.1.0
+[Unreleased]: ../../compare/v1.0.0...HEAD
 [1.0.0]: ../../releases/tag/v1.0.0

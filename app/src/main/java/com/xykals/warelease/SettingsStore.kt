@@ -132,6 +132,22 @@ class SettingsStore(ctx: Context) {
         get() = p.getString("storyKe", "") ?: ""
         set(v) = p.edit().putString("storyKe", v).apply()
 
+    // ---- pesan berkala ke grup ----
+    /** Kirim pesan berkala (mis. daftar hitam) ke grup yang dipantau. */
+    var berkalaAktif: Boolean
+        get() = p.getBoolean("berkalaAktif", false)
+        set(v) = p.edit().putBoolean("berkalaAktif", v).apply()
+
+    /** Jarak antar pesan dalam jam (1-168; di luar itu dijepit engine). */
+    var berkalaJam: Int
+        get() = p.getInt("berkalaJam", 12)
+        set(v) = p.edit().putInt("berkalaJam", v.coerceIn(1, 168)).apply()
+
+    /** Kalau kosong, yang dikirim daftar hitam grup; kalau diisi, teks ini. */
+    var berkalaTeks: String
+        get() = p.getString("berkalaTeks", "") ?: ""
+        set(v) = p.edit().putString("berkalaTeks", v).apply()
+
     // ---- splash & suara ----
     /** Saklar "Suara pembuka" di tab Pengaturan. */
     var suaraSplash: Boolean
@@ -195,6 +211,9 @@ class SettingsStore(ctx: Context) {
         "moderasiDomain" to moderasiDomain,
         "moderasiIzinkanLink" to moderasiIzinkanLink,
         "storyKe" to storyKe,
+        "berkalaAktif" to berkalaAktif,
+        "berkalaJam" to berkalaJam,
+        "berkalaTeks" to berkalaTeks,
         "laguAktif" to laguAktif,
         "laguPerHari" to laguPerHari,
         "laguJamMulai" to laguJamMulai,
@@ -235,6 +254,13 @@ class SettingsStore(ctx: Context) {
                 .put("linkTerlarang", moderasiDomain.split(",", "\n").map { it.trim() }.filter { it.isNotEmpty() })
                 .put("izinkanLink", moderasiIzinkanLink)
                 .put("storyKe", storyKe)
+        )
+        .put(
+            "berkala",
+            JSONObject()
+                .put("aktif", berkalaAktif)
+                .put("intervalJam", berkalaJam)
+                .put("teks", berkalaTeks)
         )
         .put(
             "lagu",

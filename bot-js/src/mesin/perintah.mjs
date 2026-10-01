@@ -7,9 +7,9 @@ import { SUMBER_BAWAAN } from '../lagu.mjs';
 
 /**
  * @param {object} ctx konteks engine (lihat bot.mjs)
- * @param {{ rilis: object, lagu: object, grup: object, tautan: object, jaga: object }} deps modul-modul fitur
+ * @param {{ rilis: object, lagu: object, grup: object, tautan: object, jaga: object, berkala: object }} deps modul-modul fitur
  */
-export function buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga }) {
+export function buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga, berkala }) {
   const {
     log, saveState, emitStatus, bridge, cfgFile, hosting,
     scheduleNext, intervalMs, repoAda, grupAktif, laguAktif, jadwalGrup, startEngine, stopEngine,
@@ -69,6 +69,13 @@ export function buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga }) {
             storyKe: String(cmd.storyKe || '').split(/[,\n]/).map((s) => s.trim()).filter(Boolean)
               .map((n) => (n.includes('@') ? n : `${n.replace(/[^0-9]/g, '')}@s.whatsapp.net`)),
           },
+          berkala: {
+            // Pesan berkala ke grup (mis. daftar hitam tiap N jam). Butuh grup
+            // yang dipantau: tanpa itu nggak ada tujuan kirim.
+            aktif: Boolean(cmd.berkalaAktif),
+            intervalJam: Math.min(Math.max(Number(cmd.berkalaJam) || 12, 1), 168),
+            teks: String(cmd.berkalaTeks || '').trim(),
+          },
           lagu: {
             aktif: Boolean(cmd.laguAktif),
             perHari: Math.min(Math.max(Number(cmd.laguPerHari) || 2, 1), 8),
@@ -80,6 +87,10 @@ export function buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga }) {
         };
         if (!next.github.repo && !next.grup.aktif && !next.lagu.aktif && !next.jaga.moderasi && !next.jaga.perintah) {
           bridge.send({ type: 'cmd_error', msg: 'Isi repo GitHub, nyalain penjaga grup, lagu mood, moderasi grup, atau perintah pribadi — minimal salah satu.' });
+          return;
+        }
+        if (next.berkala.aktif && !next.grup.aktif) {
+          bridge.send({ type: 'cmd_error', msg: 'Pesan berkala butuh Penjaga grup nyala: grup itu tujuan kirimnya. Nyalain dulu di kartu Penjaga grup.' });
           return;
         }
         if (next.grup.aktif && !next.grup.target) {
@@ -98,6 +109,10 @@ export function buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga }) {
         saveState();
         log(`⚙️ Setting diperbarui: repo=${next.github.repo || '-'}, channel=${next.whatsapp.channel || '-'}, ` +
           `interval=${next.bot.checkIntervalMinutes}m, grup=${next.grup.aktif ? 'nyala' : 'mati'}`);
+        // Pesan berkala dijadwalkan ulang tiap setting disimpan: interval, teks,
+        // atau saklarnya bisa berubah kapan aja.
+        berkala.hentikan();
+        if (ctx.running && next.berkala.aktif) berkala.jadwal(60_000);
         // Mode jaga pesan nyala/mati mengikuti setting yang baru disimpan.
         if (ctx.running) {
           if (next.jaga.moderasi || next.jaga.perintah) {
@@ -186,6 +201,11 @@ export function buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga }) {
         log('🧽 Daftar hitam otomatis dikosongin (yang manual di setting nggak disentuh).');
         grup.lihatHitam(true);
         emitStatus();
+        break;
+
+      case 'berkala-sekarang':
+        // Tombol "Kirim sekarang" di app: nggak nunggu jadwal.
+        void berkala.kirimSekarang({ paksa: true, sumber: 'diminta app' });
         break;
 
       case 'menu-sekarang':

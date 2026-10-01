@@ -310,3 +310,54 @@ for r in json.load(sys.stdin):
 
 Hari launching, draft `internal-*` (beserta tag `internal-*`) dihapus bareng draft
 v1.7.0/v1.8.0 sebelum tag `v1.0.0` dipush.
+
+## 9. Siapa yang bisa menjalankan workflow (repo tetap publik)
+
+Repo publik = kode boleh dibaca siapa aja. Yang dikunci di sisi Actions (semuanya
+diatur lewat API, jadi nggak gantung setelan di UI):
+
+```bash
+# 1. izin default token Actions: read-only
+curl -X PUT -H "Authorization: Bearer $TOK" \
+  https://api.github.com/repos/xykal/wa-release-bot/actions/permissions/workflow \
+  -d '{"default_workflow_permissions":"read","can_approve_pull_request_reviews":false}'
+
+# 2. PR dari fork wajib disetujui manual sebelum ada workflow yang jalan
+curl -X PUT -H "Authorization: Bearer $TOK" \
+  https://api.github.com/repos/xykal/wa-release-bot/actions/permissions/fork-pr-contributor-approval \
+  -d '{"approval_policy":"all_external_contributors"}'
+
+# 3. semua action wajib dipin ke commit SHA
+curl -X PUT -H "Authorization: Bearer $TOK" \
+  https://api.github.com/repos/xykal/wa-release-bot/actions/permissions \
+  -d '{"enabled":true,"allowed_actions":"all","sha_pinning_required":true}'
+
+# 4. main wajib lewat PR, tanpa force push
+curl -X PUT -H "Authorization: Bearer $TOK" \
+  https://api.github.com/repos/xykal/wa-release-bot/branches/main/protection \
+  -d '{"required_status_checks":null,"enforce_admins":false,
+       "required_pull_request_reviews":{"required_approving_review_count":0},
+       "restrictions":null,"allow_force_pushes":false,"allow_deletions":false}'
+```
+
+Plus penjaga di workflow: job `bersihkan` (yang dipicu `workflow_run` dan pegang token
+repo) menolak run yang datang dari fork:
+
+```yaml
+if: github.event_name != 'workflow_run' ||
+    github.event.workflow_run.head_repository.full_name == github.repository
+```
+
+```bash
+# cek setelannya sudah seperti di atas
+curl -s -H "Authorization: Bearer $TOK" \
+  "https://api.github.com/repos/xykal/wa-release-bot/actions/permissions" ; echo
+curl -s -H "Authorization: Bearer $TOK" \
+  "https://api.github.com/repos/xykal/wa-release-bot/actions/permissions/fork-pr-contributor-approval" ; echo
+```
+
+Batas jujurnya: **log run tetap publik** (karena repo publik). Yang bisa dilakukan cuma
+menghapus jejaknya secepat mungkin (bagian 7 (`bersihkan.yml`)) dan memastikan nggak
+ada secret yang muncul di log. `workflow_dispatch` sendiri sudah otomatis cuma bisa
+dipicu kolaborator dengan izin tulis.
+

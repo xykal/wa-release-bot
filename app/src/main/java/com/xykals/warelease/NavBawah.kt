@@ -40,6 +40,13 @@ internal class NavBawah(
     var aktif: Tab = Tab.BERANDA
         private set
 
+    /**
+     * Ada perubahan yang belum disimpan? Tombol Simpan cuma muncul kalau ini
+     * true, biar layarnya bersih dan nggak ada tombol yang nggak ada gunanya.
+     * Diisi FormPengaturan lewat pantauPerubahan() (semua kotak isian + saklar).
+     */
+    private var adaPerubahan = false
+
     private val barSimpan: View get() = a.findViewById(R.id.barSimpan)
 
     private companion object {
@@ -70,13 +77,39 @@ internal class NavBawah(
         (a.findViewById<View>(aktif.wadah) as? ViewGroup)?.let { Denyut.munculBerurutan(it) }
     }
 
+    /** Dipanggil tiap user ngubah isian/saklar. */
+    fun tandaiBerubah() {
+        if (adaPerubahan) return
+        adaPerubahan = true
+        aturBarSimpan()
+    }
+
+    /** Dipanggil setelah setting benar-benar tersimpan ke engine. */
+    fun bersihkanPerubahan() {
+        if (!adaPerubahan) return
+        adaPerubahan = false
+        aturBarSimpan()
+    }
+
+    /** Tombol Simpan: cuma kelihatan di tab yang punya isian DAN ada perubahan. */
+    private fun aturBarSimpan() {
+        val tampil = aktif.adaSimpan && adaPerubahan
+        barSimpan.visibility = if (tampil) View.VISIBLE else View.GONE
+        if (tampil) {
+            // tanpa animasi alpha: uiautomator (CI) membaca visibility, dan
+            // tombol yang "muncul" harus langsung bisa dipencet.
+            barSimpan.translationY = a.resources.displayMetrics.density * 8f
+            barSimpan.animate().translationY(0f).setDuration(160).start()
+        }
+    }
+
     private fun tampilkan(t: Tab, kabari: Boolean) {
         aktif = t
         for (x in Tab.entries) {
             a.findViewById<View>(x.wadah).visibility = if (x == t) View.VISIBLE else View.GONE
             a.findViewById<View>(x.tombol).isSelected = x == t
         }
-        barSimpan.visibility = if (t.adaSimpan) View.VISIBLE else View.GONE
+        aturBarSimpan()
         // Tiap tab mulai dari atas; tanpa ini tab baru kebuka di posisi gulung
         // tab sebelumnya.
         a.findViewById<ScrollView>(R.id.svUtama).scrollTo(0, 0)

@@ -133,6 +133,8 @@ class MainActivity : AppCompatActivity() {
         nav.ikat()
         if (savedInstanceState != null) nav.pulihkan(savedInstanceState)
         form.muat()
+        // Tombol Simpan baru muncul kalau ada yang diubah (permintaan kall).
+        form.pantauPerubahan { nav.tandaiBerubah() }
         // pemanis: tiap tombol berdenyut pas dipencet, kartu muncul satu-satu
         Denyut.pasangSemua(window.decorView)
         if (savedInstanceState == null) {
@@ -320,6 +322,11 @@ class MainActivity : AppCompatActivity() {
             withService { sendCmd(mapOf("type" to "menu-sekarang")) }
             banner(getString(R.string.k_menu_dikirim_ke_chat_sendiri))
         }
+        pasang(R.id.btnBerkalaSekarang, "Kirim pesan berkala sekarang") {
+            if (!simpanDiamDiam()) return@pasang
+            withService { sendCmd(mapOf("type" to "berkala-sekarang")) }
+            banner(getString(R.string.k_pesan_berkala_dikirim_sekarang))
+        }
         pasang(R.id.btnBersihModerasi, "Kosongin hitungan moderasi") {
             withService { sendCmd(mapOf("type" to "bersih-moderasi")) }
             banner(getString(R.string.k_hitungan_moderasi_dikosongin))
@@ -380,11 +387,20 @@ class MainActivity : AppCompatActivity() {
             banner(getString(R.string.k_penjaga_grup_dinyalain_tapi_link))
             return false
         }
+        // Pesan berkala kirim ke grup yang dipantau: tanpa penjaga grup nyala
+        // nggak ada tujuan kirim (engine juga nolak yang sama, ini biar user
+        // dapet pesannya di app, bukan cuma di log).
+        if (settings.berkalaAktif && !settings.grupAktif) {
+            banner(getString(R.string.k_pesan_berkala_butuh_penjaga_grup))
+            return false
+        }
         if (!settings.hasValidSettings()) {
             banner(getString(R.string.k_isi_repo_github_nyalain_penjaga))
             return false
         }
         withService { sendCmd(settings.toConfigureCmd()) }
+        // Setting sudah dikirim ke engine: tombol Simpan boleh sembunyi lagi.
+        nav.bersihkanPerubahan()
         repoTerkirim = settings.repo
         if (!diam) {
             banner(

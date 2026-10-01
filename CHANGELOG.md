@@ -25,7 +25,20 @@ Semua perubahan penting proyek ini. Format mengikuti
   yang menggulir isi kotak log saja, dan hanya kalau sebelumnya sudah di ujung bawah.
 
 ### Diubah
-- Situs: jadwal launching Minggu 11 Oktober 2026 19.00 WIB (sempat 4 Oktober). Teks tanggal di
+- App: tombol **Simpan** di layar utama tidak lagi nongol terus — muncul cuma kalau ada yang
+  diubah (saklar dipencet, kotak isian diketik, tabel repo diubah) dan sembunyi lagi setelah
+  setting terkirim ke engine. Di tab Log tetap nggak ada tombol itu.
+- **Keamanan Actions**: bukan repo privat, jadi yang dikunci adalah siapa yang bisa menjalankan
+  workflow. `default_workflow_permissions` jadi **read** (token Actions nggak bisa nulis
+  sembarangan), `can_approve_pull_request_reviews` dimatikan, PR dari fork wajib **disetujui
+  manual** (`first_time_contributors` -> `all_external_contributors`), semua action wajib dipin
+  ke commit SHA (`sha_pinning_required`), dan `main` dilindungi: wajib lewat PR, tanpa force
+  push. Job `bersihkan` juga menolak dipicu run dari fork (`workflow_run` adalah celah klasik).
+  Resepnya ditulis di `docs/CI.md` dan `SECURITY.md`.
+
+### Diperbaiki
+- CI: job `Lockfile root` nggak lagi gagal kalau `main` menolak push langsung (main sekarang
+  wajib PR); pesannya berubah jadi arahan bikin PR. (sempat 4 Oktober). Teks tanggal di
   popup kini diturunkan dari `LAUNCH_ISO` lewat `Intl` zona Asia/Jakarta, jadi jadwal cukup
   diubah di satu tempat; `launching.ics` naik `SEQUENCE` supaya kalender yang sudah impor ikut.
 - CI Build APK: push ke `main` kini membangun arm64-v8a dan armeabi-v7a (artifact terpisah);
@@ -100,6 +113,13 @@ Semua perubahan penting proyek ini. Format mengikuti
   (`batasStrike`, bawaan 2); admin dan bot sendiri tidak pernah disentuh. Logika keputusannya
   murni di `bot-js/src/pesan.mjs` (diuji unit), bagian WhatsApp-nya di
   `bot-js/src/mesin/jaga-pesan.mjs`.
+- **Pesan berkala ke grup (M16)**: kartu di tab Fitur buat mengirim pesan berulang ke grup yang
+  dipantau — bawaan **daftar hitam grup** (nomor + sejak kapan + nomor yang admin daftarkan
+  sendiri), atau teks sendiri kalau kolom pesannya diisi (mis. aturan grup). Jaraknya diatur
+  dalam jam (1-168). Tiap kirim = sekali sambung WhatsApp lalu tutup, jadi batre tetap aman
+  (beda dari mode jaga pesan yang nyambung terus). Isi pesannya disusun `bot-js/src/berkala.mjs`
+  (murni, 7 unit test), pengirimnya `bot-js/src/mesin/pesan-berkala.mjs`. Tombol **Kirim sekarang**
+  di app mengirim tanpa nunggu jadwal.
 - **Foto jadi stiker (M14)**: kirim/rebalas foto dengan keterangan `.stiker`. WhatsApp cuma
   nerima stiker WebP, dan Node di dalam APK tidak punya encoder WebP — jadi gambar dititipkan
   ke app lewat berkas di `dataDir` (app dan mesin Node satu sandbox; bridge WS batasnya 1 MB,

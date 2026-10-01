@@ -322,4 +322,17 @@
     <string name="k_stiker_story_perintah_2">Stickers %1$s | stories %2$s | commands %3$s</string>
     <string name="k_perangkat_2">Device: %1$s</string>
     <string name="u_contoh_domain_phishing">e.g. bit.ly, scam-example.com</string>
+    <!-- kartu pesan berkala (M16) -->
+    <string name="u_pesan_berkala_grup">Periodic message to group</string>
+    <string name="u_ket_pesan_berkala_grup">Send your own message to the monitored group, e.g. the blacklist every 12 hours. Each send opens WhatsApp once, so it stays battery friendly.</string>
+    <string name="u_kirim_berkala">Send periodically</string>
+    <string name="u_ket_kirim_berkala">Requires the group guard to be on: that group is the destination.</string>
+    <string name="u_setiap_berapa_jam">HOW OFTEN IN HOURS (1-168)</string>
+    <string name="u_pesan_kalau_dikosongin_daftar">MESSAGE (EMPTY = SEND THE GROUP BLACKLIST)</string>
+    <string name="u_contoh_aturan_grup_pisah_baris">e.g. Group rules: no links (separate with new lines)</string>
+    <string name="u_kirim_sekarang">Send now</string>
+    <string name="k_pesan_berkala_dikirim_sekarang">Periodic message sent now (when WhatsApp is connected).</string>
+    <string name="k_pesan_berkala_mati">Periodic message: off</string>
+    <string name="k_pesan_berkala_2">Periodic message every %1$s h | last: %2$s | total %3$s | next: %4$s</string>
+    <string name="k_pesan_berkala_butuh_penjaga_grup">Periodic messages need the group guard on: that group is the destination. Turn it on in the group guard card first.</string>
 </resources>

@@ -54,7 +54,9 @@ jobs:
           git config --local user.email "xykal@users.noreply.github.com"
           git add package-lock.json
           git commit -m "chore(deps): bootstrap package-lock.json root (npm workspaces)" || echo "nothing to commit"
-          git push
+          # `main` dilindungi (wajib PR), jadi push langsung dari Actions bisa
+          # ditolak. Itu bukan kegagalan CI: lockfile-nya bisa dibawa lewat PR.
+          git push || echo "push ke main ditolak (main wajib PR) - buat PR dari perubahan ini"
 
   # ---------------------------------------------------------------- JavaScript
   js:

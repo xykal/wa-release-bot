@@ -13,6 +13,7 @@
 // jalan di dua jalur terpisah supaya balasan perintah tetap cepat.
 
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
+import { tungguSocketJaga } from '../wa-socket-share.mjs';
 import { menuTeks } from '../pesan.mjs';
 import { sendText, jidSendiri } from '../wa.mjs';
 import { identitas } from '../grup.mjs';
@@ -117,7 +118,7 @@ export function buatJagaPesan(ctx) {
 
   /** Satu koneksi WA yang dipakai terus sampai putus / diminta berhenti. */
   async function satuSesi() {
-    const { sock, close } = await sambung({ onStatus: (m) => log(m) });
+    const { sock, close } = await sambung({ onStatus: (m) => log(m), lewatiSocketJaga: true });
     sockAktif = sock;
     // Rekam postingan channel (kalau diminta `.rekam on`) nempel di socket ini.
     try { ctx.fitur?.rekam?.pasang(sock); } catch (e) { log(`⚠️ Rekam channel nggak kepasang: ${e.message}`); }
@@ -167,6 +168,7 @@ export function buatJagaPesan(ctx) {
       });
       sock.ev.on('connection.update', ({ connection }) => {
         if (connection === 'close') {
+          if (sockAktif === sock) sockAktif = null;
           log('🔌 Koneksi jaga pesan putus, nyambung ulang...');
           resolve();
         }
@@ -207,6 +209,13 @@ export function buatJagaPesan(ctx) {
     sockAktif = null;
     log('🛑 Mode jaga pesan berhenti.');
     emitStatus();
+  }
+
+  function pinjamSocket() {
+    return tungguSocketJaga({
+      aktif: () => jalan && !berhenti,
+      ambilSocket: () => sockAktif,
+    });
   }
 
   function hentikan() {
@@ -266,6 +275,7 @@ export function buatJagaPesan(ctx) {
     penontonStory: media.penontonStory,
     kirimStikerJadi: (cmd) => media.kirimStikerJadi(cmd, sockAktif),
     kirimMenuSekarang,
+    pinjamSocket,
     aktifModerasi: aksi.aktifModerasi,
     aktifPerintah: aksi.aktifPerintah,
     sedangJalan: () => jalan,

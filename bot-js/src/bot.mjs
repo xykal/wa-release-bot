@@ -20,6 +20,7 @@ import { createBridge } from './bridge.mjs';
 import { pcmKeOgg } from './opus.mjs';
 import { MPEGDecoder } from 'mpg123-decoder';
 import { connectToWhatsApp, statusSesi } from './wa.mjs';
+import { sambungDenganSocketJaga } from './wa-socket-share.mjs';
 import { daftarRepo, teksRepo, sinkronState, ringkasTag, pendingAktif } from './repo.mjs';
 import { buatHosting } from './hosting.mjs';
 import { buatRilis } from './mesin/rilis.mjs';
@@ -287,11 +288,27 @@ async function main() {
   }
 
   async function sambung(opsi = {}) {
+    // Socket jaga pesan sudah login dengan sesi yang sama. Login kedua—misalnya
+    // cek grup atau kirim berkala—membuat WA menutup salah satunya (code 440).
+    // Tugas singkat nebeng socket persisten; hanya jaga-pesan yang boleh bikin
+    // koneksi baru saat loop itu sedang membangun ulang socket-nya.
+    const { lewatiSocketJaga = false, ...opsiWA } = opsi;
+    if (!lewatiSocketJaga) {
+      const bersama = await sambungDenganSocketJaga({
+        pinjamSocket: () => ctx.fitur?.jaga?.pinjamSocket?.() || null,
+        sambungBaru: async () => {
+          const { sock, close } = await connectToWhatsApp({
+            sessionDir, mode: 'none', onStatus: (m) => log(m), ...opsiWA,
+          });
+          return { sock, close: () => { ctx.waConnected = false; close(); emitStatus(); } };
+        },
+      });
+      ctx.waConnected = true;
+      emitStatus();
+      return bersama;
+    }
     const { sock, close } = await connectToWhatsApp({
-      sessionDir,
-      mode: 'none',
-      onStatus: (m) => log(m),
-      ...opsi,
+      sessionDir, mode: 'none', onStatus: (m) => log(m), ...opsiWA,
     });
     ctx.waConnected = true;
     emitStatus();

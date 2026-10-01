@@ -201,6 +201,11 @@ Next:
 
 ## 2026-10-01 — hari kerja ke-3
 
+- Log uji kall dari HP (22:31–22:47): tombol Kirim menu berhasil (`Menu dikirim ke chat sendiri`) dan pesan berkala berhasil dikirim ke grup dengan daftar 20 nomor. Log juga menunjukkan socket jaga berulang kali tutup dengan code 440 / `Connection Closed`, lalu reconnect; ini belum aman untuk dipakai lama.
+  - Akar yang cocok dengan urutan log: tugas WA singkat seperti cek grup/pesan berkala membuka socket login kedua memakai sesi yang sama sementara socket jaga masih hidup. Penjaga grup memang menjaga satu socket terus; antrian `pakaiWA` sebelumnya tidak mencakup koneksi persisten itu.
+  - Perbaikan: `sambung()` kini meminjam socket mode jaga untuk tugas singkat dan tidak menutupnya; kalau mode jaga sedang reconnect, tugas menunggu sampai socket siap (batas 30 dtk). Loop jaga sendiri melewati jalur pinjam supaya tidak menunggu dirinya sendiri. Kalau mode jaga mati, pola koneksi sekali pakai tetap berlaku.
+  - Empat uji baru memeriksa peminjaman socket (close tidak mematikan sesi persisten), menunggu socket saat reconnect, mode jaga mati, dan fallback ke koneksi sementara. Syntax check + 4/4 uji lokal lulus; bukti final menunggu CI Actions.
+  - Bukan bukti bahwa error `Timed Out` / unhandled rejection dari Baileys semuanya hilang; perlu kall coba APK setelah CI hijau, terutama biarkan mode jaga + cek grup + pesan berkala jalan bersamaan.
 - Pertanyaan kall: "rekaman channel tu kek mana?" dan "story HD tanpa kompres pastikan untuk
   pribadi di chat sendiri, bukan di grup". Dua-duanya dijawab di kode, bukan cuma diomongin.
 - Story: penonton dipindah ke modul murni `bot-js/src/story.mjs` (+6 uji) supaya aturannya

@@ -149,6 +149,13 @@ else
   echo "uji berkala: saklar selalu-daftar-hitam tidak ketemu di dump UI"; tangkap_gagal berkala-gagal; exit 1
 fi
 
+# Tombol menu ada di kartu sebelumnya; reset ke atas agar elemen offscreen
+# kembali masuk ke hierarchy uiautomator sebelum gulir_ke mencari posisinya.
+for _ in 1 2 3 4 5; do
+  adb shell input swipe "$X" $((H * 30 / 100)) "$X" $((H * 70 / 100)) 400
+  sleep 0.4
+done
+
 # Umpan balik tombol kirim menu (WA belum nyambung -> tetap ada pesan).
 gulir_ke btnKirimMenu bot-umum-tombol 720
 kotak="$(kotak_id btnKirimMenu)"

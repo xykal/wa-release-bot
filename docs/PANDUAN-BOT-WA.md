@@ -89,20 +89,40 @@ Kartu **Pesan berkala ke grup** ngirim pesan berulang ke grup yang sama dengan
   nggak boleh masuk lagi + sejak kapan, plus nomor yang lo daftarin sendiri di
   kartu Penjaga grup). Kalau diisi: teks lo yang dikirim (misal aturan grup).
 - **Kirim sekarang** — ngirim sekali tanpa nunggu jadwal, buat ngecek tampilannya.
+- Dari chat sendiri: `.berkala` buat **lihat dulu** isi pesannya tanpa kirim ke grup, dan
+  `.berkala kirim` buat kirim sekarang (nebeng koneksi mode jaga, jadi nggak buka koneksi
+  kedua).
+
+Nomor yang lo daftarin sendiri boleh ditulis bebas (`0812-3456-7890`, `+62 813 …`,
+`813999888777`) — semuanya dinormalkan ke `+62…`, duplikat sama daftar otomatis digabung jadi
+satu baris, dan baris yang bukan nomor dibuang. Urutannya dari nomor kecil ke besar, ID
+samaran di belakang; kalau lebih dari 30 orang, sisanya diringkas jadi "…dan N orang lainnya"
+(hitungannya tetap jumlah orang sebenarnya).
 
 Contoh isi daftar hitam:
 
 ```
 Daftar hitam Alumni SMK (2 orang):
-1. +62 812-3456-7890 (sejak 30/9)
-2. +62 811-222-333 (sejak 28/9)
+1. +6281234567890 (sejak 30/9)
+2. +62811222333 (didaftarkan admin)
 
-Diperbarui 1/10/2026, 19.05.42. Orang di daftar ini nggak bisa masuk
+Diperbarui 1 Okt 2026, 19.05 WIB. Orang di daftar ini nggak bisa masuk
 lagi lewat link grup. Admin grup bisa minta buka blokir.
 ```
 
 Kalau daftar hitamnya kosong, pesannya bukan daftar hampa tapi keterangan
 "masih kosong" — biar jelas, bukan kayak bot yang error.
+
+## Kecepatan balasan
+
+- Perintah di chat sendiri (`.menu`, `.rekam`, `.berkala`, …) dijawab di **jalur cepat**:
+  moderasi grup yang berat (tarik metadata, hapus pesan, tendang orang) jalan di antrean
+  sendiri, jadi perintah nggak nunggu di belakangnya.
+- Kiriman yang bikin **koneksi baru** (rilis, lagu, pesan berkala) sebelumnya selalu minta
+  versi protokol WA terbaru tiap nyambung; sekarang hasilnya di-cache 6 jam, jadi satu
+  round-trip lebih cepat tiap kirim.
+- Yang tetap kerasa lambat: apa pun yang naikin media (stiker, `.rekam kirim`, story) — itu
+  nunggu unduh/unggah, bukan masalah jalur perintahnya.
 
 ## Batre & koneksi
 

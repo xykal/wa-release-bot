@@ -26,6 +26,24 @@ import {
 
 export { normalisasiNomor };
 
+// Cache versi protokol: { nilai, waktu }. Lihat komentar di connectToWhatsApp.
+let cacheVersi = { nilai: undefined, waktu: 0 };
+const UMUR_CACHE_VERSI_MS = 6 * 60 * 60 * 1000;
+
+/** Versi protokol WA terbaru (di-cache). Gagal ambil = pakai yang terakhir. */
+export async function versiWA() {
+  if (cacheVersi.nilai && Date.now() - cacheVersi.waktu < UMUR_CACHE_VERSI_MS) {
+    return cacheVersi.nilai;
+  }
+  try {
+    const { version } = await fetchLatestBaileysVersion();
+    if (version) cacheVersi = { nilai: version, waktu: Date.now() };
+    return version;
+  } catch {
+    return cacheVersi.nilai; // undefined = Baileys pakai bawaannya
+  }
+}
+
 /**
  * Status sesi di folder session:
  *   'kosong'   → belum pernah ditautkan
@@ -104,12 +122,11 @@ export async function connectToWhatsApp({
     if (!nomor) throw new Error('Nomor WA buat pairing code nggak valid. Contoh: 6281234567890');
   }
 
-  let version;
-  try {
-    ({ version } = await fetchLatestBaileysVersion());
-  } catch {
-    version = undefined; // jaringan bermasalah → pakai versi default Baileys
-  }
+  // Versi protokol WA di-cache 6 jam (versiWA): kiriman terjadwal bikin koneksi
+  // baru tiap kali, dan round-trip minta versi itu kebuang percuma di depan
+  // tiap kirim. Umurnya pendek supaya kalau WA naik versi, bot nggak
+  // ketinggalan lama. Gagal ambil = pakai hasil terakhir / bawaan Baileys.
+  const version = await versiWA();
 
   const batasWaktu = Date.now() + timeoutMs;
   let kodeSudahDiminta = false;

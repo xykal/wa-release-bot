@@ -5,7 +5,9 @@
 
 import { bacaPerintah, nilaiPesan, hukumanModerasi, menuTeks } from '../pesan.mjs';
 import { sendText } from '../wa.mjs';
-import { identitas } from '../grup.mjs';
+import { identitas, kelompokHitam } from '../grup.mjs';
+import { teksBerkala } from '../berkala.mjs';
+import { formatWaktu } from '../waktu.mjs';
 
 /** Teks dari semua bentuk pesan yang kita pedulikan. */
 export function teksPesan(m) {
@@ -116,7 +118,7 @@ export function buatAksiPesan(ctx, alat) {
         break;
 
       case 'ping':
-        await jawab(sock, `Pong. Engine ${ctx.running ? 'jalan' : 'jeda'}, ${new Date().toLocaleTimeString('id-ID')}.`);
+        await jawab(sock, `Pong. Engine ${ctx.running ? 'jalan' : 'jeda'}, ${formatWaktu(Date.now())}.`);
         break;
 
       case 'status': {
@@ -167,10 +169,42 @@ export function buatAksiPesan(ctx, alat) {
           const r = rekam.ringkas();
           await jawab(sock, [
             `Rekam channel: ${r.aktif ? 'NYALA' : 'mati'} — ${r.jumlah} postingan tersimpan` +
-              (r.terakhir ? `, terakhir ${new Date(r.terakhir).toLocaleString('id-ID')}` : '') + '.',
+              (r.terakhir ? `, terakhir ${formatWaktu(r.terakhir)}` : '') + '.',
             'Pakai: .rekam on | .rekam off | .rekam kirim | .rekam kosong',
           ].join('\n'));
         }
+        break;
+      }
+
+      case 'berkala': {
+        const berkala = ctx.fitur?.berkala;
+        const arg = String(p.arg || '').toLowerCase().split(/\s+/)[0] || '';
+        if (arg === 'kirim' || arg === 'sekarang') {
+          if (!berkala) {
+            await jawab(sock, 'Fitur pesan berkala nggak kepasang di engine ini.');
+            break;
+          }
+          // Dikirim lewat socket mode jaga yang lagi kebuka: nggak buka
+          // koneksi kedua (dua socket sesi sama = WA nendang salah satunya).
+          const ok = await berkala.kirimSekarang({ paksa: true, sumber: 'chat', sock });
+          await jawab(sock, ok
+            ? 'Pesan berkala dikirim ke grup sekarang.'
+            : 'Nggak terkirim — cek Penjaga grup nyala dan link grup udah bener.');
+          break;
+        }
+        if (arg === 'kustom' && berkala) {
+          await jawab(sock, [
+            'Isi pesan berkala di app, tab Fitur, kartu Pesan berkala:',
+            'kalau kolom teksnya diisi, yang dikirim teks itu; kalau kosong,',
+            'daftar hitam grup yang dikirim (versi yang barusan kamu lihat).',
+          ].join('\n'));
+          break;
+        }
+        await jawab(sock, [
+          teksBerkalaSekarang(),
+          '',
+          'Ketik .berkala kirim buat ngirim versi ini ke grup sekarang.',
+        ].join('\n'));
         break;
       }
 
@@ -194,6 +228,16 @@ export function buatAksiPesan(ctx, alat) {
       default:
         await jawab(sock, 'Perintahnya belum diimplementasi.');
     }
+  }
+
+  /** Teks pesan berkala apa adanya (daftar hitam atau teks sendiri) tanpa kirim. */
+  function teksBerkalaSekarang() {
+    const g = ctx.state.grup || {};
+    const kustom = String(ctx.cfg?.berkala?.teks || '').trim();
+    const hitam = kustom ? [] : kelompokHitam(g.hitam || [], g.hitamInfo || []);
+    const manual = kustom ? [] : String(ctx.cfg?.grup?.daftarHitam || '')
+      .split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
+    return teksBerkala({ namaGrup: g.nama, hitam, manual, teksKustom: kustom });
   }
 
   function bersihkanHitungan() {

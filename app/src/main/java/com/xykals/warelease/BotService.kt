@@ -487,6 +487,18 @@ class BotService : Service() {
 
             "cmd_error" -> appendLog("⚠️ " + e.optString("msg"))
 
+            "banner" -> {
+                // Engine ngasih tau hasil aksi tombol (mis. menu terkirim / gagal).
+                val teks = e.optString("teks")
+                if (teks.isNotBlank()) {
+                    appendLog(if (e.optBoolean("ok")) "ℹ️ $teks" else "⚠️ $teks")
+                    BotBus.publish {
+                        bannerPesan = teks
+                        bannerSeq = bannerSeq + 1
+                    }
+                }
+            }
+
             else -> Unit
         }
     }

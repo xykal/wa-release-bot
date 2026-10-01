@@ -46,6 +46,10 @@ tetap menerima update.
   (beda dari mode jaga pesan yang nyambung terus). Isi pesannya disusun `bot-js/src/berkala.mjs`
   (murni, 7 unit test), pengirimnya `bot-js/src/mesin/pesan-berkala.mjs`. Tombol **Kirim sekarang**
   di app mengirim tanpa nunggu jadwal.
+- Saklar **Selalu kirim daftar hitam** di kartu Pesan berkala: kalau nyala, yang dikirim cuma
+  daftar hitam grup dan kolom pesan diabaikan (permintaan kall). Logikanya `pilihIsi()` di
+  `bot-js/src/berkala.mjs` (murni, ada ujinya); `.berkala` di chat nunjukin mode yang sedang
+  dipakai.
 - Perintah baru `.berkala`: lihat dulu isi pesan berkala (daftar hitam / teks sendiri) di chat
   sendiri tanpa mengirim ke grup, plus `.berkala kirim` buat kirim sekarang lewat koneksi mode
   jaga yang sudah terbuka (nggak bikin koneksi kedua ke sesi WA yang sama).
@@ -154,6 +158,9 @@ tetap menerima update.
   dibuang dari yang paling lama dipakai, jadi penyimpanan tidak naik terus.
 
 #### Diubah
+- Workflow **Screenshot app** ikut jalan kalau `scripts-dev/uji-fitur.sh` atau `ui-uji.sh` berubah.
+  Sebelumnya daftar pemicunya cuma dua berkas lain, jadi perubahan skrip uji UI nggak keuji
+  sama sekali di PR.
 - Perintah `.story` dan `.storygrup` dijelaskan ulang di menu dan docs: story itu urusan
   pribadi, dan `.storygrup` sekarang turun jadi `.story` kalau Penjaga grup mati (sebelumnya
   tetap menembak anggota grup yang tersimpan di state, padahal penjaganya nggak jalan).
@@ -210,6 +217,24 @@ tetap menerima update.
 
 #### Diperbaiki
 - CI: job `Lockfile root` nggak lagi gagal kalau `main` menolak push langsung (main sekarang wajib PR); pesannya berubah jadi arahan bikin PR.
+- Skrip uji UI bisa menggulir DUA arah: `gulir_ke` dulu cuma menggulir ke bawah dan pola sed-nya
+  cuma menerima koordinat positif, jadi elemen yang sudah kelewat di atas layar dianggap "nggak
+  ada" lalu uji terus menggulir menjauh (ketahuan di job emulator: "tombol kirim menu tidak
+  ketemu" padahal tombolnya cuma kelewat). Sekarang koordinat negatif dibaca sebagai "di atas
+  layar" dan isinya digulir balik ke atas.
+- Skrip uji UI (`scripts-dev/ui-uji.sh`) nahan emulator yang gagal sesaat: `uiautomator dump`
+  kadang nggak jadi nulis berkasnya (emulator baru boot / lagi sibuk) dan dulu itu mematikan
+  seluruh uji dengan pesan `cat: /sdcard/ui.xml: No such file or directory` yang nggak nyebut
+  sebabnya. Sekarang dump dicoba 3x dulu dan pesannya jelas kalau benar-benar nggak jadi.
+- Tombol **Kirim menu ke chat** nggak lagi diam waktu mode jaga mati: jalur utamanya tetap
+  socket mode jaga, tapi kalau nggak ada, bot buka koneksi sekali pakai, kirim menu, lalu tutup
+  (pola yang sama dengan pesan berkala). Hasilnya dikirim balik ke app sebagai banner
+  (berhasil atau alasannya) — dulu app langsung ngeklaim "menu dikirim" sementara kegagalannya
+  cuma nulis di tab Log.
+- Perintah di chat sendiri yang datang waktu saklar **Perintah pribadi** mati nggak lagi diem:
+  bot balas sekali (jeda 10 menit) buat nunjukin di mana saklarnya.
+- `jawab()` di `mesin/jaga-pesan.mjs` sekarang ngembalikan status kirim dan nge-log kalau JID
+  akun sendiri nggak kebaca — dulu gagal kirim tanpa jejak sama sekali.
 - **Pesan daftar hitam kelihatan rusak** (laporan kall): nomor yang didaftarkan admin
   ditampilkan mentah apa adanya, jadi barisnya campur (`0812-3456-7890`, `+62 813 1111 2222`),
   ada baris sampah (`abc`), satu orang bisa muncul dua kali (versi otomatis + versi manual),

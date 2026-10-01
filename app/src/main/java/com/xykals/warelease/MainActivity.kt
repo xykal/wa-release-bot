@@ -61,6 +61,8 @@ class MainActivity : AppCompatActivity() {
     // tiap engine ngirim daftar baru (mis. habis buka blokir).
     private var mauLihatHitam = false
     private var hitamSeqTerakhir = -1
+    // Banner yang datang dari engine (bridge event `banner`), ditampilkan sekali.
+    private var bannerSeqTerakhir = 0
 
     // Aksi Mulai / Jeda / Matikan yang lagi ditunggu hasilnya. Selama belum
     // kejadian, tombolnya nunjukin "Menyalakan…" dst. dan nggak bisa dipencet
@@ -320,6 +322,8 @@ class MainActivity : AppCompatActivity() {
         }
         pasang(R.id.btnKirimMenu, "Kirim menu ke chat") {
             withService { sendCmd(mapOf("type" to "menu-sekarang")) }
+            // Hasil sebenarnya datang dari engine (banner "Menu sudah dikirim…"
+            // atau alasannya kenapa gagal) — jangan janji "sudah dikirim" dulu.
             banner(getString(R.string.k_menu_dikirim_ke_chat_sendiri))
         }
         pasang(R.id.btnBerkalaSekarang, "Kirim pesan berkala sekarang") {
@@ -489,6 +493,13 @@ class MainActivity : AppCompatActivity() {
     private fun renderUi(ui: BotUi) {
         uiPernahTampil = true
         if (isFinishing || isDestroyed) return
+
+        // Hasil aksi dari engine (mis. "Menu sudah dikirim ke chat sendiri") —
+        // dulu hasilnya cuma nongol di tab Log, sekarang kelihatan di layar.
+        if (ui.bannerSeq != bannerSeqTerakhir) {
+            bannerSeqTerakhir = ui.bannerSeq
+            ui.bannerPesan?.let { if (it.isNotBlank()) banner(it) }
+        }
         if (ui.serviceRunning) BotService.instance?.setUiTerlihat(true)
 
         engineJalan = ui.engineRunning

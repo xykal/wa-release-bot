@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { jelaskanInterval, jatuhTempo, teksBerkala, susunDaftarHitam } from '../src/berkala.mjs';
+import { jelaskanInterval, jatuhTempo, teksBerkala, susunDaftarHitam, pilihIsi } from '../src/berkala.mjs';
 
 test('jelaskanInterval: dijepit 1..168 jam, bukan error', () => {
   assert.equal(jelaskanInterval(12), 12);
@@ -116,4 +116,16 @@ test('teksBerkala: waktu ditulis Indonesia tanpa ICU (bukan 10/1/2026 7:00 PM)',
   });
   assert.match(denganIsi, /Diperbarui \d{1,2} \w{3} \d{4}, \d{2}\.\d{2}/);
   assert.ok(!/AM|PM/.test(denganIsi), 'jangan format 12 jam Amerika');
+});
+
+test('pilihIsi: daftar hitam vs teks sendiri (mode "selalu daftar hitam")', () => {
+  // teks kosong = daftar hitam (bawaan lama, nggak berubah)
+  assert.deepEqual(pilihIsi({ teks: '' }), { kustom: '', mode: 'hitam' });
+  assert.deepEqual(pilihIsi({ teks: '   ' }), { kustom: '', mode: 'hitam' });
+  // ada teks = teks sendiri
+  assert.deepEqual(pilihIsi({ teks: '  aturan grup  ' }), { kustom: 'aturan grup', mode: 'teks' });
+  // saklar nyala: teks diabaikan, walau ada isinya
+  assert.deepEqual(pilihIsi({ hitamSaja: true, teks: 'aturan grup' }), { kustom: '', mode: 'hitam' });
+  assert.deepEqual(pilihIsi({ hitamSaja: true }), { kustom: '', mode: 'hitam' });
+  assert.deepEqual(pilihIsi(), { kustom: '', mode: 'hitam' });
 });

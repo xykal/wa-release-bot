@@ -52,6 +52,7 @@ internal class FormPengaturan(
     private lateinit var rowBerkalaAktif: View
     private lateinit var etBerkalaJam: EditText
     private lateinit var etBerkalaTeks: EditText
+    private lateinit var rowBerkalaHitam: View
 
     /** Dipanggil tiap ada perubahan (buat tombol Simpan yang muncul-muncul). */
     private var onBerubah: (() -> Unit)? = null
@@ -144,6 +145,7 @@ internal class FormPengaturan(
         rowBerkalaAktif = saklar(R.id.rowBerkalaAktif)
         etBerkalaJam = a.findViewById(R.id.etBerkalaJam)
         etBerkalaTeks = a.findViewById(R.id.etBerkalaTeks)
+        rowBerkalaHitam = saklar(R.id.rowBerkalaHitam)
     }
 
     fun renderRepoRingkas() {
@@ -179,6 +181,7 @@ internal class FormPengaturan(
         rowBerkalaAktif.isSelected = settings.berkalaAktif
         etBerkalaJam.setText(settings.berkalaJam.toString())
         etBerkalaTeks.setText(settings.berkalaTeks)
+        rowBerkalaHitam.isSelected = settings.berkalaHitamSaja
         etLaguPerHari.setText(settings.laguPerHari.toString())
         etLaguJamMulai.setText(settings.laguJamMulai.toString())
         etLaguJamSelesai.setText(settings.laguJamSelesai.toString())
@@ -214,6 +217,7 @@ internal class FormPengaturan(
         settings.berkalaAktif = rowBerkalaAktif.isSelected
         settings.berkalaJam = etBerkalaJam.text.toString().toIntOrNull() ?: 12
         settings.berkalaTeks = etBerkalaTeks.text.toString()
+        settings.berkalaHitamSaja = rowBerkalaHitam.isSelected
 
         val logcatLama = settings.rekamLogcat
         settings.rekamLogcat = rowLogcat.isSelected

@@ -281,3 +281,10 @@ Next:
     dump` nggak jadi nulis `/sdcard/ui.xml` (sebelumnya kelihatan emulator sempat "device
     offline" waktu boot) dan skrip mati dengan `cat: ... No such file or directory`. Skrip uji
     UI sekarang nyoba 3x + pesan jelas; dijalankan lagi buat lihat hasil aslinya.
+  - Job emulator kedua (5bc4fb7) maju jauh — semua uji Simpan, kartu Bot WA umum, berkala
+    (termasuk baris baru "Selalu kirim daftar hitam" + persist) hijau — lalu gagal di uji tombol
+    menu: "tombol kirim menu tidak ketemu". Setelah jepretan kegagalannya diperiksa: layarnya
+    sudah di bawah kartu Lagu mood, artinya `gulir_ke` menggulir ke arah yang salah. Sebabnya
+    pola sed `posisi_atas` cuma menerima angka positif, jadi elemen yang ada di ATAS layar
+    (koordinat negatif) dianggap tidak ada → terus digulir ke bawah. Diperbaiki: regex menerima
+    negatif dan `gulir_ke` sekarang dua arah (dites di lokal pakai contoh dump positif/negatif).

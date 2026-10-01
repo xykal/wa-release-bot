@@ -169,6 +169,11 @@ Semua perubahan penting proyek ini. Format mengikuti
   tidak kelihatan.
 
 ### Diperbaiki
+- Skrip uji UI bisa menggulir DUA arah: `gulir_ke` dulu cuma menggulir ke bawah dan pola sed-nya
+  cuma menerima koordinat positif, jadi elemen yang sudah kelewat di atas layar dianggap "nggak
+  ada" lalu uji terus menggulir menjauh (ketahuan di job emulator: "tombol kirim menu tidak
+  ketemu" padahal tombolnya cuma kelewat). Sekarang koordinat negatif dibaca sebagai "di atas
+  layar" dan isinya digulir balik ke atas.
 - Skrip uji UI (`scripts-dev/ui-uji.sh`) nahan emulator yang gagal sesaat: `uiautomator dump`
   kadang nggak jadi nulis berkasnya (emulator baru boot / lagi sibuk) dan dulu itu mematikan
   seluruh uji dengan pesan `cat: /sdcard/ui.xml: No such file or directory` yang nggak nyebut

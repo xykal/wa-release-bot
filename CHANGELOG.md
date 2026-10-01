@@ -169,6 +169,7 @@ Semua perubahan penting proyek ini. Format mengikuti
   tidak kelihatan.
 
 ### Diperbaiki
+- **Code 440 berulang saat Mode jaga pesan aktif**: log kall membuktikan menu sukses terkirim dan pesan berkala berisi 20 nomor, tapi socket WA beberapa kali putus lalu nyambung ulang. Penyebabnya, tugas singkat (cek grup/kirim berkala) login dengan sesi yang sama walau socket mode jaga masih hidup; WhatsApp menutup salah satu koneksi. Sekarang tugas singkat meminjam socket jaga (dan tidak menutupnya), menunggu socket pulih saat reconnect, dan hanya membuka koneksi sendiri kalau mode jaga mati. Ada uji untuk peminjaman dan fallback.
 - Draft release internal pernah gagal diperbarui karena artifact APK-nya sudah kehapus
   sebelum job `release-internal` mengambilnya (sapuan Actions jalan sambil build). Sekarang
   `scripts-dev/bersihkan_actions.py` **tidak pernah** menghapus artifact milik `SIMPAN_RUN`

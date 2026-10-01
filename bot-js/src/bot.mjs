@@ -367,7 +367,7 @@ async function main() {
   const rilis = buatRilis(ctx);
   const lagu = buatLaguMood(ctx, { rilis });
   const grup = buatPenjagaGrup(ctx);
-  const berkala = buatPesanBerkala(ctx, { grup });
+  const berkala = buatPesanBerkala(ctx);
   const tautan = buatTautan(ctx, { rilis, grup });
   const jaga = buatJagaPesan(ctx);
   const perintah = buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga, berkala });

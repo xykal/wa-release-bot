@@ -12,8 +12,10 @@ import { bacaTarget, JENIS } from '../channel.mjs';
 import { kelompokHitam } from '../grup.mjs';
 import { jatuhTempo, jelaskanInterval, teksBerkala } from '../berkala.mjs';
 
-export function buatPesanBerkala(ctx, { grup }) {
-  const { log, saveState, emitStatus, pakaiWA, sambung, bridge } = ctx;
+export function buatPesanBerkala(ctx) {
+  // `grupAktif` datang dari bot.mjs (satu definisi dengan penjaga grup): jangan
+  // bikin tebakan sendiri soal "grup nyala nggak", itu sumber bug.
+  const { log, saveState, emitStatus, pakaiWA, sambung, grupAktif } = ctx;
   let timer = null;
 
   const aktif = () => Boolean(ctx.cfg?.berkala?.aktif);
@@ -49,7 +51,7 @@ export function buatPesanBerkala(ctx, { grup }) {
       return false;
     }
     const g = ctx.state.grup || {};
-    if (!grup.aktif()) {
+    if (!grupAktif()) {
       log('⚠️ Pesan berkala nggak dikirim: Penjaga grup belum nyala.');
       return false;
     }
@@ -90,7 +92,7 @@ export function buatPesanBerkala(ctx, { grup }) {
   function jadwal(delayMs) {
     clearTimeout(timer);
     timer = null;
-    if (!ctx.running || !aktif() || !grup.aktif()) {
+    if (!ctx.running || !aktif() || !grupAktif()) {
       ctx.nextBerkalaAt = null;
       emitStatus();
       return;

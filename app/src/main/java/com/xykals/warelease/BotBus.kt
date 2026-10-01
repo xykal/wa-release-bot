@@ -48,6 +48,11 @@ data class BotUi(
     // lalu ngisi field "Channel WA" sendiri — biar user nggak perlu nyalin JID.
     var channelBaru: String? = null,
     var qr: String? = null,
+    // Pesan singkat dari engine buat ditampilkan sebagai banner di layar utama
+    // (mis. hasil tombol "Kirim menu ke chat"). `bannerSeq` naik tiap pesan baru
+    // supaya banner yang sama nggak muncul dua kali waktu state dipublikasikan ulang.
+    var bannerPesan: String? = null,
+    var bannerSeq: Int = 0,
     // Pairing code 8 huruf (format ABCD-1234) — ditampilkan di lembar khusus.
     var pairingCode: String? = null,
     // Cara nautin yang lagi jalan: "pairing" / "qr" (null = nggak lagi nautin).

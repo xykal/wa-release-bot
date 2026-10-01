@@ -10,7 +10,7 @@
 import { sendText } from '../wa.mjs';
 import { bacaTarget, JENIS } from '../channel.mjs';
 import { kelompokHitam } from '../grup.mjs';
-import { jatuhTempo, jelaskanInterval, susunDaftarHitam, teksBerkala } from '../berkala.mjs';
+import { jatuhTempo, jelaskanInterval, pilihIsi, susunDaftarHitam, teksBerkala } from '../berkala.mjs';
 
 export function buatPesanBerkala(ctx) {
   // `grupAktif` datang dari bot.mjs (satu definisi dengan penjaga grup): jangan
@@ -61,7 +61,10 @@ export function buatPesanBerkala(ctx) {
       log('⚠️ Pesan berkala nggak dikirim: Penjaga grup belum nyala.');
       return false;
     }
-    const kustom = String(ctx.cfg?.berkala?.teks || '').trim();
+    const { kustom } = pilihIsi({
+      hitamSaja: Boolean(ctx.cfg?.berkala?.hitamSaja),
+      teks: ctx.cfg?.berkala?.teks,
+    });
     const hitam = kustom ? [] : kelompokHitam(g.hitam || [], g.hitamInfo || []);
     const manual = kustom ? [] : String(ctx.cfg?.grup?.daftarHitam || '')
       .split(/[,\n]/).map((s) => s.trim()).filter(Boolean);

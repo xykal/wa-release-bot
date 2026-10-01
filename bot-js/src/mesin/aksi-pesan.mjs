@@ -6,7 +6,7 @@
 import { bacaPerintah, nilaiPesan, hukumanModerasi, menuTeks } from '../pesan.mjs';
 import { sendText } from '../wa.mjs';
 import { identitas, kelompokHitam } from '../grup.mjs';
-import { teksBerkala } from '../berkala.mjs';
+import { pilihIsi, teksBerkala } from '../berkala.mjs';
 import { formatWaktu } from '../waktu.mjs';
 
 /** Teks dari semua bentuk pesan yang kita pedulikan. */
@@ -200,8 +200,11 @@ export function buatAksiPesan(ctx, alat) {
           ].join('\n'));
           break;
         }
+        const { teks, mode } = teksBerkalaSekarang();
         await jawab(sock, [
-          teksBerkalaSekarang(),
+          `Isi pesan berkala sekarang: ${mode === 'teks' ? 'teks sendiri' : 'daftar hitam grup'}.`,
+          '',
+          teks,
           '',
           'Ketik .berkala kirim buat ngirim versi ini ke grup sekarang.',
         ].join('\n'));
@@ -233,11 +236,14 @@ export function buatAksiPesan(ctx, alat) {
   /** Teks pesan berkala apa adanya (daftar hitam atau teks sendiri) tanpa kirim. */
   function teksBerkalaSekarang() {
     const g = ctx.state.grup || {};
-    const kustom = String(ctx.cfg?.berkala?.teks || '').trim();
+    const { kustom, mode } = pilihIsi({
+      hitamSaja: Boolean(ctx.cfg?.berkala?.hitamSaja),
+      teks: ctx.cfg?.berkala?.teks,
+    });
     const hitam = kustom ? [] : kelompokHitam(g.hitam || [], g.hitamInfo || []);
     const manual = kustom ? [] : String(ctx.cfg?.grup?.daftarHitam || '')
       .split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
-    return teksBerkala({ namaGrup: g.nama, hitam, manual, teksKustom: kustom });
+    return { teks: teksBerkala({ namaGrup: g.nama, hitam, manual, teksKustom: kustom }), mode };
   }
 
   function bersihkanHitungan() {

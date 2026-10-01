@@ -220,6 +220,20 @@ test('engine: nyala, configure, start, cek release ke GitHub palsu, stop', async
   const cfgJepit = JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8'));
   assert.equal(cfgJepit.berkala.intervalJam, 168);
 
+  // Saklar "selalu kirim daftar hitam" (permintaan kall): kalau nyala, teks yang
+  // ada di kotak pesan diabaikan dan yang dikirim cuma daftar hitam grup.
+  await engine.kirim({
+    type: 'configure', repo: REPO, channel: '', intervalMinutes: 15, moderasiAktif: true,
+    berkalaAktif: true, berkalaJam: 6, berkalaTeks: 'aturan lama', berkalaHitamSaja: true,
+    grupAktif: true, grupTarget: 'https://chat.whatsapp.com/ContohGrupAlami',
+  });
+  // Tunggu status yang memang cuma muncul kalau nilainya sudah kepakai — log
+  // "Setting diperbarui" sudah pernah keluar sebelumnya, jadi bukan penanda aman.
+  await engine.tungguStatus((ev) => ev.berkalaHitamSaja === true, 'status saklar daftar hitam');
+  const cfgHitam = JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8'));
+  assert.equal(cfgHitam.berkala.hitamSaja, true);
+  assert.equal(cfgHitam.berkala.teks, 'aturan lama', 'teks tetap disimpan, cuma nggak dipakai');
+
   await engine.kirim({ type: 'berkala-sekarang' });
   await engine.tungguLog('Pesan berkala');
 

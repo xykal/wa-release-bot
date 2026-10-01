@@ -132,6 +132,13 @@ else
   echo "uji berkala: pengaturan berkala hilang setelah app dibuka ulang"; tangkap_gagal berkala-persist-gagal; exit 1
 fi
 
+# Saklar "selalu kirim daftar hitam" harus ada dan keadaannya ikut tersimpan.
+if [[ "$(dump_ui)" == *"id/rowBerkalaHitam"* ]]; then
+  echo "uji berkala: saklar selalu-daftar-hitam kelihatan OK"
+else
+  echo "uji berkala: saklar selalu-daftar-hitam tidak ketemu di dump UI"; tangkap_gagal berkala-gagal; exit 1
+fi
+
 # Umpan balik tombol kirim menu (WA belum nyambung -> tetap ada pesan).
 gulir_ke btnKirimMenu bot-umum-tombol 720
 kotak="$(kotak_id btnKirimMenu)"

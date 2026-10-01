@@ -85,9 +85,12 @@ Kartu **Pesan berkala ke grup** ngirim pesan berulang ke grup yang sama dengan
 
 - **Kirim berkala** — saklar utama.
 - **Setiap berapa jam** — 1 sampai 168 (seminggu). Bawaannya 12 jam.
+- **Selalu kirim daftar hitam** — kalau nyala, yang dikirim **cuma daftar hitam grup**;
+  kolom pesan di bawahnya diabaikan (jadi draf teks bisa disimpan tanpa takut kepakai).
 - **Pesan** — dibiarkan kosong: yang dikirim **daftar hitam grup** (nomor yang
   nggak boleh masuk lagi + sejak kapan, plus nomor yang lo daftarin sendiri di
-  kartu Penjaga grup). Kalau diisi: teks lo yang dikirim (misal aturan grup).
+  kartu Penjaga grup). Kalau diisi dan saklar di atas mati: teks lo yang dikirim
+  (misal aturan grup).
 - **Kirim sekarang** — ngirim sekali tanpa nunggu jadwal, buat ngecek tampilannya.
 - Dari chat sendiri: `.berkala` buat **lihat dulu** isi pesannya tanpa kirim ke grup, dan
   `.berkala kirim` buat kirim sekarang (nebeng koneksi mode jaga, jadi nggak buka koneksi
@@ -112,6 +115,19 @@ lagi lewat link grup. Admin grup bisa minta buka blokir.
 
 Kalau daftar hitamnya kosong, pesannya bukan daftar hampa tapi keterangan
 "masih kosong" — biar jelas, bukan kayak bot yang error.
+
+## Kalau tombol/perintah nggak ada balasan
+
+Urutan cek (dari yang paling sering):
+
+1. **Engine jalan?** Kalau dijeda, nggak ada yang dengerin pesan. Tab Beranda → Mulai.
+2. **WA ditautkan?** Kalau belum, tekan **Tautkan WA** di app.
+3. **Perintah di chat sendiri** (`.menu`, `.berkala`, …) butuh saklar **Perintah pribadi**
+   nyala (kartu Bot WA umum). Kalau mati, bot bakal bales sekali: "saklar perintah pribadi
+   masih mati" — bukan diem.
+4. **Tombol "Kirim menu ke chat"** nggak butuh saklar itu: bot nyambung sekali pakai, kirim,
+   terus putus. Hasilnya muncul sebagai banner di layar (berhasil / alasannya kenapa gagal),
+   bukan cuma di tab Log.
 
 ## Kecepatan balasan
 

@@ -254,3 +254,37 @@ Next:
   - Perintah baru `.berkala` (lihat) dan `.berkala kirim` (kirim lewat socket mode jaga) —
     dipakai buat cek tampilan pesan tanpa nunggu 12 jam, dan tanpa bikin koneksi kedua.
   - Uji murni: berkala 11/11, pesan 11/11, story 6/6, rekam-mentah 7/7.
+
+- Laporan kall (2026-10-01, lanjutan): "udah kirim menu ke nomor sendiri, kok nggak ada balasan"
+  dan "pesan berkala bisa nggak cuma daftar hitam".
+  - Menu nggak ada balasan: tombol di app cuma jalan kalau mode jaga sedang nyala, dan
+    kegagalannya cuma nulis satu baris di tab Log — app malah ngeklaim "menu dikirim". Sekarang
+    tombolnya ada jalur cadangan (koneksi sekali pakai lewat `pakaiWA`, sama seperti pesan
+    berkala), hasilnya balik ke app lewat bridge event `banner` dan tampil di layar. Selain itu
+    `jawab()` nggak lagi diem kalau JID akun sendiri nggak kebaca, dan perintah yang datang
+    waktu saklar "Perintah pribadi" mati dijawab sekali (jeda 10 menit) biar kasus "kok nggak
+    ada balasan" nggak berulang.
+  - Pesan berkala cuma daftar hitam: saklar baru **Selalu kirim daftar hitam** (`berkala.hitamSaja`),
+    keputusan isi di `pilihIsi()` (murni, ada uji); teks di kolom pesan diabaikan kalau nyala,
+    dan `.berkala` nunjukin mode yang aktif.
+  - Kalau ternyata akarnya tetap "engine belum jalan" atau "WA belum ditautkan", teks banner-nya
+    nyebut itu langsung (bukan "gagal" doang).
+  - String app: 330 nama di `values` dan `values-en` (2 baru buat saklar, 1 teks lama diperbaiki
+    isinya, bukan ditambah).
+  - Ketahuan satu kesalahan sendiri di putaran ini: komentar baru berisi spasi zero-width
+    (U+200B), ditolak `no-irregular-whitespace` di job Lint Node 22. Lokal nggak ketahuan karena
+    eslint nggak dipasang; sekarang ada pemeriksa kecil buat spasi tak wajar sebelum commit.
+  - Catatan proses: job emulator dulu cuma dipicu perubahan `screenshot-app.yml` dan
+    `screenshot_emulator.sh`; `uji-fitur.sh` (isi ujinya sendiri) nggak masuk daftar. Sekarang
+    keempatnya masuk, jadi klaim "uji UI hijau" nggak bisa lewat tanpa benar-benar jalan.
+  - Job emulator nyala (predikat path sudah benar) tapi gagal di langkah pertama: `uiautomator
+    dump` nggak jadi nulis `/sdcard/ui.xml` (sebelumnya kelihatan emulator sempat "device
+    offline" waktu boot) dan skrip mati dengan `cat: ... No such file or directory`. Skrip uji
+    UI sekarang nyoba 3x + pesan jelas; dijalankan lagi buat lihat hasil aslinya.
+  - Job emulator kedua (5bc4fb7) maju jauh — semua uji Simpan, kartu Bot WA umum, berkala
+    (termasuk baris baru "Selalu kirim daftar hitam" + persist) hijau — lalu gagal di uji tombol
+    menu: "tombol kirim menu tidak ketemu". Setelah jepretan kegagalannya diperiksa: layarnya
+    sudah di bawah kartu Lagu mood, artinya `gulir_ke` menggulir ke arah yang salah. Sebabnya
+    pola sed `posisi_atas` cuma menerima angka positif, jadi elemen yang ada di ATAS layar
+    (koordinat negatif) dianggap tidak ada → terus digulir ke bawah. Diperbaiki: regex menerima
+    negatif dan `gulir_ke` sekarang dua arah (dites di lokal pakai contoh dump positif/negatif).

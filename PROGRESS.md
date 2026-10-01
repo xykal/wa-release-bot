@@ -277,3 +277,7 @@ Next:
   - Catatan proses: job emulator dulu cuma dipicu perubahan `screenshot-app.yml` dan
     `screenshot_emulator.sh`; `uji-fitur.sh` (isi ujinya sendiri) nggak masuk daftar. Sekarang
     keempatnya masuk, jadi klaim "uji UI hijau" nggak bisa lewat tanpa benar-benar jalan.
+  - Job emulator nyala (predikat path sudah benar) tapi gagal di langkah pertama: `uiautomator
+    dump` nggak jadi nulis `/sdcard/ui.xml` (sebelumnya kelihatan emulator sempat "device
+    offline" waktu boot) dan skrip mati dengan `cat: ... No such file or directory`. Skrip uji
+    UI sekarang nyoba 3x + pesan jelas; dijalankan lagi buat lihat hasil aslinya.

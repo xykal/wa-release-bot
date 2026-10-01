@@ -8,9 +8,26 @@
 
 tangkap() { adb exec-out screencap -p > "$OUT/$1.png"; echo "  $1.png"; }
 
+# Siapkan /sdcard/ui.xml. uiautomator kadang gagal sesaat (emulator baru boot /
+# lagi sibuk menggambar) dan berkasnya nggak jadi — dulu itu bikin skrip mati
+# dengan pesan "cat: /sdcard/ui.xml: No such file or directory" yang nggak
+# nyebut sebabnya. Sekarang dicoba 3x dulu.
+siapkan_dump() {
+  local coba isi
+  for coba in 1 2 3; do
+    adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || true
+    isi="$(adb shell cat /sdcard/ui.xml 2>/dev/null || true)"
+    if [ -n "$isi" ]; then return 0; fi
+    echo "  (dump UI percobaan $coba kosong, ulangi 2 dtk lagi)" >&2
+    sleep 2
+  done
+  echo "  dump UI kosong 3x — emulator tidak menghasilkan /sdcard/ui.xml" >&2
+  return 1
+}
+
 # posisi_atas <id> -> cetak koordinat atas elemen kalau terlihat, kosong kalau tidak
 posisi_atas() {
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || return 0
+  siapkan_dump >/dev/null 2>&1 || return 0
   # grep tanpa hasil = exit 1; dengan pipefail itu akan mematikan skrip (set -e),
   # padahal "belum kelihatan" adalah kondisi normal saat menggulir -> || true
   adb shell cat /sdcard/ui.xml | tr '>' '\n' | grep -F "resource-id=\"$PKG:id/$1\"" | head -n 1 \
@@ -31,15 +48,17 @@ ketuk_id() {
 
 # kotak_id <id> -> "x1 y1 x2 y2" elemen kalau kelihatan, kosong kalau tidak
 kotak_id() {
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || return 0
+  siapkan_dump >/dev/null 2>&1 || return 0
   adb shell cat /sdcard/ui.xml | tr '>' '\n' | grep -F "resource-id=\"$PKG:id/$1\"" | head -n 1 \
     | sed -n 's/.*bounds="\[\([0-9]*\),\([0-9]*\)\]\[\([0-9]*\),\([0-9]*\)\]".*/\1 \2 \3 \4/p' || true
 }
 
 # isi dump UI, satu node per baris (uiautomator menulisnya dalam satu baris panjang)
 dump_ui() {
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1 || true
-  adb shell cat /sdcard/ui.xml | tr '>' '\n'
+  siapkan_dump >/dev/null 2>&1 || true
+  # pipefail: kalau cat gagal, jangan matikan skrip di sini — biar pemanggil yang
+  # ngasih pesan spesifiknya (mis. "kartu bot-umum tidak lengkap di dump UI").
+  { adb shell cat /sdcard/ui.xml 2>/dev/null || true; } | tr '>' '\n'
 }
 
 # ketuk_nav <id-nav> <nama-jepretan>: buka tab lewat bar navigasi bawah, lalu tangkap.

@@ -169,6 +169,10 @@ Semua perubahan penting proyek ini. Format mengikuti
   tidak kelihatan.
 
 ### Diperbaiki
+- Skrip uji UI (`scripts-dev/ui-uji.sh`) nahan emulator yang gagal sesaat: `uiautomator dump`
+  kadang nggak jadi nulis berkasnya (emulator baru boot / lagi sibuk) dan dulu itu mematikan
+  seluruh uji dengan pesan `cat: /sdcard/ui.xml: No such file or directory` yang nggak nyebut
+  sebabnya. Sekarang dump dicoba 3x dulu dan pesannya jelas kalau benar-benar nggak jadi.
 - Tombol **Kirim menu ke chat** nggak lagi diam waktu mode jaga mati: jalur utamanya tetap
   socket mode jaga, tapi kalau nggak ada, bot buka koneksi sekali pakai, kirim menu, lalu tutup
   (pola yang sama dengan pesan berkala). Hasilnya dikirim balik ke app sebagai banner

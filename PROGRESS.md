@@ -338,11 +338,10 @@ Next:
   perubahan dari salinan internal app ke `getExternalMediaDirs()/rekaman`; `.rekam kirim`
   menunjukkan path lokal. Tes engine/Kotlin dan 18/18 PR checks lulus; main lulus 19/19, draft APK
   arm64 + v7a diperbarui dan checksum cocok. Uji di HP setelah APK itu masih dibutuhkan.
-- Laporan kall: balasan teks di chat sendiri juga menampilkan "Waiting for this message". Akar yang
-  tampak di jalur kode: `jawab()` memakai alias JID pesan masuk (`jidBalasanSendiri`), sementara
-  tombol menu panel sudah memakai PN kanonis. Cabang `fix/self-chat-reply-jid` merutekan balasan
-  self-chat ke PN kanonis dan menambah uji integrasi untuk pesan `.menu` via LID serta tombol panel.
-  CI PR #54: tes engine + Node 18/20/22 dan APK arm64 lulus; CodeQL menandai path IPC stiker lama
-  sebagai high. Cabang juga mengunci ID/nama file stiker ke lokasi di `dataDir` dan menambah tes
-  traversal, sebelum CI dijalankan ulang. Ini kandidat perbaikan self-chat, bukan jaminan decrypt
-  semua pesan: E2EE tetap dikontrol WhatsApp dan perangkat penerima. Menunggu CI hijau dan uji kall.
+- Laporan kall: balasan teks di chat sendiri menampilkan "Waiting for this message". PR #54
+  merutekan self-chat ke PN kanonis, menguji `.menu` masuk via LID + tombol panel, mengunci path
+  file stiker, dan menambah tes traversal/tempfile aman. CI PR 18/18 hijau, CodeQL tanpa alert baru;
+  merge `d2307a8`, APK draft diperbarui. Kall memastikan screenshot sesudah update masih menunjukkan
+  warning; jadi routing PN belum membuktikan/fikskan dekripsi, akar sesi/E2EE masih terbuka.
+  JSON rekaman kall (2026-10-01 19:24:58Z) menunjukkan payload 24 byte, outer `type=text`, proto
+  field 101 `questionMessage`; JID disamarkan di tes golden baru yang sedang disiapkan di branch.

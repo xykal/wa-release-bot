@@ -288,3 +288,13 @@ Next:
     pola sed `posisi_atas` cuma menerima angka positif, jadi elemen yang ada di ATAS layar
     (koordinat negatif) dianggap tidak ada → terus digulir ke bawah. Diperbaiki: regex menerima
     negatif dan `gulir_ke` sekarang dua arah (dites di lokal pakai contoh dump positif/negatif).
+
+- Kejadian penting (2026-10-01): build `main` untuk rilis #44 **gagal** di job "Draft release
+  internal" (`Found 0 artifact(s)` → `ls: cannot access 'dist/'`). Sebabnya bukan kodenya:
+  sapuan jejak Actions yang saya jalanin (`HARI_ARTIFACT=0`) keburu menghapus artifact APK run
+  yang masih berjalan, jadi draft-nya nggak bisa update. Konsekuensinya APK di draft internal
+  masih build lama.
+  - Penjaga baru: `bersihkan_actions.py` melewati artifact milik `SIMPAN_RUN` run termuda
+    (diuji `--kering`), job draft mencoba unduh 2x + pesan gagal yang menyebut sebabnya, dan
+    `release-internal` bisa dipanggil `workflow_dispatch` di `main` buat nyegarkan draft basi.
+  - Dijalankan ulang lewat workflow_dispatch setelah perubahan ini, terus draft dicek asetnya.

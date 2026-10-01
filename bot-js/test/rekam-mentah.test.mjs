@@ -4,10 +4,16 @@
 //  react/view/metadata diabaikan, byte mentah tersimpan utuh sebagai base64.
 //  Jalankan:  npm test -w bot-js
 // ============================================================================
+import '../polyfills/webcrypto.cjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { EventEmitter } from 'node:events';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 import { entriRekaman, tambahEntri, ringkasRekaman, cariAnak, keBuffer } from '../src/rekam-mentah.mjs';
+import { buatRekamChannel } from '../src/mesin/rekam-channel.mjs';
 
 /** Stanza seperti yang dikirim WA buat postingan channel. */
 function stanza({ tipe = 'text', plaintext = Buffer.from('{"question":"halo"}', 'binary'), attrs = {} } = {}) {
@@ -34,6 +40,31 @@ test('postingan channel: byte mentah disimpan apa adanya', () => {
   assert.equal(h.entri.byte, 4);
   assert.equal(h.entri.waktu, 111);
   assert.deepEqual(Buffer.from(h.entri.b64, 'base64'), isi);
+});
+
+test('rekam channel: hanya simpan posting setelah aktif dan log payload yang dilewatkan', () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rekam-channel-'));
+  const ws = new EventEmitter();
+  const log = [];
+  try {
+    const rekam = buatRekamChannel({ dataDir, log: (pesan) => log.push(pesan), emitStatus() {} });
+    rekam.pasang({ ws });
+    ws.emit('CB:notification', stanza({ tipe: 'questionMessage' }));
+    assert.equal(rekam.ringkas().jumlah, 0);
+
+    rekam.nyalakan();
+    ws.emit('CB:notification', stanza({ tipe: 'questionMessage' }));
+    assert.equal(rekam.ringkas().jumlah, 1);
+    const tersimpan = JSON.parse(fs.readFileSync(rekam.berkas(), 'utf8'));
+    assert.equal(tersimpan.entri[0].tipe, 'questionMessage');
+    assert.equal(log.some((pesan) => pesan.includes('1 postingan tersimpan')), true);
+
+    ws.emit('CB:notification', stanza({ tipe: 'questionMessage', plaintext: null }));
+    assert.equal(rekam.ringkas().jumlah, 1);
+    assert.equal(log.some((pesan) => pesan.includes('melewatkan postingan')), true);
+  } finally {
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  }
 });
 
 test('notifikasi lain (reaction/view) nggak ikut direkam', () => {

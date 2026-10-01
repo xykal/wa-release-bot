@@ -43,6 +43,12 @@ export function identitas(entri) {
   return [...set];
 }
 
+/** Cocokkan dua bentuk akun kalau salah satunya kelihatan sebagai PN atau LID. */
+export function identitasSama(a, b) {
+  const kiri = new Set(identitas(a));
+  return identitas(b).some((jid) => kiri.has(jid));
+}
+
 /** Nomor dari daftar hitam manual → JID. Isinya dipisah koma / spasi / baris. */
 export function daftarHitamManual(teks, normalisasiNomor) {
   const hasil = new Set();

@@ -6,52 +6,6 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
-### Diperbaiki
-- CI: draft release internal sempat **menumpuk**. `GET /releases/tags/<tag>` memang sudah tidak
-  dipakai lagi, tapi ternyata `tag_name` sebuah draft juga bukan pegangan stabil: begitu ada draft
-  lain yang memakai tag itu, GitHub membalasnya sebagai `untagged-<hash>`, jadi pencarian meleset
-  dan tiap build `main` bikin draft baru (ketahuan 2026-09-30: dua draft `Build internal 1.8.0`,
-  yang lama masih menyimpan APK basi). Sekarang draft dicocokkan lewat **nama**
-  (`Build internal <versi>`) juga, dan pembersihan duplikat memakai `id`, bukan tag. Bukti:
-  dry-run `scripts-dev/rilis_internal.py --kering` di repo ini menyebut "pakai draft
-  internal-1.8.0 yang ada (4 aset lama dibuang)" — bukan "bikin draft baru"; lalu build `main`
-  berikutnya mengganti aset di draft yang sama dan jumlah draft internal tetap satu.
-- App: kotak isian di layar Repo dan konsol Hosting tidak bisa disentuh. EditText yang dibuat
-  dari kode lewat konstruktor `defStyleAttr = 0` kehilangan `focusableInTouchMode` bawaan
-  `Widget.EditText`; sekarang lewat `isianBaru()` yang mengisi ulang atribut fokus. Bukti:
-  langkah "uji ketik" di `screenshot_emulator.sh`.
-- App: layar tidak lagi melompat ke kotak log tiap ada baris log baru. `ScrollView.fullScroll()`
-  memindahkan fokus sehingga halaman ikut tergulir dan keyboard tertutup; diganti `ikutKeBawah()`
-  yang menggulir isi kotak log saja, dan hanya kalau sebelumnya sudah di ujung bawah.
-
-### Diubah
-- App: tombol **Simpan** di layar utama tidak lagi nongol terus — muncul cuma kalau ada yang
-  diubah (saklar dipencet, kotak isian diketik, tabel repo diubah) dan sembunyi lagi setelah
-  setting terkirim ke engine. Di tab Log tetap nggak ada tombol itu.
-- **Keamanan Actions**: bukan repo privat, jadi yang dikunci adalah siapa yang bisa menjalankan
-  workflow. `default_workflow_permissions` jadi **read** (token Actions nggak bisa nulis
-  sembarangan), `can_approve_pull_request_reviews` dimatikan, PR dari fork wajib **disetujui
-  manual** (`first_time_contributors` -> `all_external_contributors`), semua action wajib dipin
-  ke commit SHA (`sha_pinning_required`), dan `main` dilindungi: wajib lewat PR, tanpa force
-  push. Job `bersihkan` juga menolak dipicu run dari fork (`workflow_run` adalah celah klasik).
-  Resepnya ditulis di `docs/CI.md` dan `SECURITY.md`.
-
-### Diperbaiki
-- CI: job `Lockfile root` nggak lagi gagal kalau `main` menolak push langsung (main sekarang
-  wajib PR); pesannya berubah jadi arahan bikin PR. (sempat 4 Oktober). Teks tanggal di
-  popup kini diturunkan dari `LAUNCH_ISO` lewat `Intl` zona Asia/Jakarta, jadi jadwal cukup
-  diubah di satu tempat; `launching.ics` naik `SEQUENCE` supaya kalender yang sudah impor ikut.
-- CI Build APK: push ke `main` kini membangun arm64-v8a dan armeabi-v7a (artifact terpisah);
-  PR tetap arm64 saja. HP uji 32-bit sebelumnya cuma bisa pakai build manual atau tag.
-- `scripts-dev/deploy_web.py`: kalau custom domain sudah terpasang, berhenti di GET
-  `workers/domains` sehingga token deploy cukup izin *Workers Scripts: Edit*; resep token
-  scoped untuk secret `CF_API_TOKEN` ada di `docs/CI.md`.
-- Situs: `<title>`, meta description dan `og:description` ikut bahasa yang dipilih
-  (`judul_*`/`deskripsi_*` di `teks.js`, halaman dikenali dari `<body data-halaman>`);
-  HTML statis tetap Indonesia untuk crawler tanpa JS.
-- Dokumen: bagian jembatan JNI dan polyfill WebCrypto dipindah dari `docs/ARCHITECTURE.md`
-  ke `docs/JNI.md` supaya tiap berkas tetap di bawah ~250 baris.
-
 ### Ditambah
 - **Screenshot app otomatis**: workflow `screenshot-app.yml` membangun APK release x86_64,
   menjalankannya di emulator Android 14 (GitHub Actions) dan menangkap tiap layar
@@ -77,9 +31,7 @@ Semua perubahan penting proyek ini. Format mengikuti
   Galeri situs versi English memakai tangkapan en-US (`web/img/hp-*-en.webp`, ditukar
   `app.js` lewat `data-src-en`; `bingkai_screenshot.py --akhiran en`); README memuat
   sandingan id/en (`docs/img/i18n-app.webp`).
-
 - `docs/PITCH.md`: satu halaman pitch (masalah, solusi, untuk siapa, batasan yang jujur).
-
 - Uji engine kedua (`test/engine.test.mjs`): dua repo sekaligus (satu prerelease dengan
   `includePrereleases`), ETag 304 pada cek kedua, release baru terdeteksi dan berhenti di
   "Channel WA masih kosong" tanpa menyentuh WhatsApp; `lastTag` tidak berubah sampai terkirim.
@@ -152,6 +104,16 @@ Semua perubahan penting proyek ini. Format mengikuti
   dibuang dari yang paling lama dipakai, jadi penyimpanan tidak naik terus.
 
 ### Diubah
+- App: tombol **Simpan** di layar utama tidak lagi nongol terus — muncul cuma kalau ada yang
+  diubah (saklar dipencet, kotak isian diketik, tabel repo diubah) dan sembunyi lagi setelah
+  setting terkirim ke engine. Di tab Log tetap nggak ada tombol itu.
+- **Keamanan Actions**: bukan repo privat, jadi yang dikunci adalah siapa yang bisa menjalankan
+  workflow. `default_workflow_permissions` jadi **read** (token Actions nggak bisa nulis
+  sembarangan), `can_approve_pull_request_reviews` dimatikan, PR dari fork wajib **disetujui
+  manual** (`first_time_contributors` -> `all_external_contributors`), semua action wajib dipin
+  ke commit SHA (`sha_pinning_required`), dan `main` dilindungi: wajib lewat PR, tanpa force
+  push. Job `bersihkan` juga menolak dipicu run dari fork (`workflow_run` adalah celah klasik).
+  Resepnya ditulis di `docs/CI.md` dan `SECURITY.md`.
 - App: `MainActivity.kt` (1285 baris) dipecah per tanggung jawab: `FormPengaturan`, `PanelStatus`,
   `DialogTautan`, `LembarHitam`, `AksiSistem`, `SplashUtama`, `Lembar` (komponen dialog).
   Pemindahan mekanis, perilaku dan tampilan sama.
@@ -177,6 +139,35 @@ Semua perubahan penting proyek ini. Format mengikuti
 - Tombol yang kolom isiannya ada di tab lain (mis. **Kirim satu lagu sekarang** waktu channel
   masih kosong) sekarang memindahkan layar ke tab Repo dulu, bukan menyuruh isi kolom yang
   tidak kelihatan.
+
+### Diperbaiki
+- CI: draft release internal sempat **menumpuk**. `GET /releases/tags/<tag>` memang sudah tidak
+  dipakai lagi, tapi ternyata `tag_name` sebuah draft juga bukan pegangan stabil: begitu ada draft
+  lain yang memakai tag itu, GitHub membalasnya sebagai `untagged-<hash>`, jadi pencarian meleset
+  dan tiap build `main` bikin draft baru (ketahuan 2026-09-30: dua draft `Build internal 1.8.0`,
+  yang lama masih menyimpan APK basi). Sekarang draft dicocokkan lewat **nama**
+  (`Build internal <versi>`) juga, dan pembersihan duplikat memakai `id`, bukan tag. Bukti:
+  dry-run `scripts-dev/rilis_internal.py --kering` di repo ini menyebut "pakai draft
+  internal-1.8.0 yang ada (4 aset lama dibuang)" — bukan "bikin draft baru"; lalu build `main`
+  berikutnya mengganti aset di draft yang sama dan jumlah draft internal tetap satu.
+- App: kotak isian di layar Repo dan konsol Hosting tidak bisa disentuh. EditText yang dibuat
+  dari kode lewat konstruktor `defStyleAttr = 0` kehilangan `focusableInTouchMode` bawaan
+  `Widget.EditText`; sekarang lewat `isianBaru()` yang mengisi ulang atribut fokus. Bukti:
+  langkah "uji ketik" di `screenshot_emulator.sh`.
+- App: layar tidak lagi melompat ke kotak log tiap ada baris log baru. `ScrollView.fullScroll()`
+  memindahkan fokus sehingga halaman ikut tergulir dan keyboard tertutup; diganti `ikutKeBawah()`
+  yang menggulir isi kotak log saja, dan hanya kalau sebelumnya sudah di ujung bawah.
+- CI: job `Lockfile root` nggak lagi gagal kalau `main` menolak push langsung (main sekarang wajib PR); pesannya berubah jadi arahan bikin PR.
+- CI Build APK: push ke `main` kini membangun arm64-v8a dan armeabi-v7a (artifact terpisah);
+  PR tetap arm64 saja. HP uji 32-bit sebelumnya cuma bisa pakai build manual atau tag.
+- `scripts-dev/deploy_web.py`: kalau custom domain sudah terpasang, berhenti di GET
+  `workers/domains` sehingga token deploy cukup izin *Workers Scripts: Edit*; resep token
+  scoped untuk secret `CF_API_TOKEN` ada di `docs/CI.md`.
+- Situs: `<title>`, meta description dan `og:description` ikut bahasa yang dipilih
+  (`judul_*`/`deskripsi_*` di `teks.js`, halaman dikenali dari `<body data-halaman>`);
+  HTML statis tetap Indonesia untuk crawler tanpa JS.
+- Dokumen: bagian jembatan JNI dan polyfill WebCrypto dipindah dari `docs/ARCHITECTURE.md`
+  ke `docs/JNI.md` supaya tiap berkas tetap di bawah ~250 baris.
 
 ## [1.8.0] — 2026-09-29
 

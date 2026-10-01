@@ -325,3 +325,9 @@ Next:
     Draft internal `399924120` diperbarui 2026-10-01 16:47 UTC dengan APK arm64 + armeabi-v7a.
   - Masih perlu uji kall di HP. Bila pesan channel tetap tak tercatat, log baru membedakan payload
     yang dilewatkan dari event newsletter yang sama sekali tidak sampai ke hook.
+- Log kall setelah merge #51 (02:47–03:02): mode jaga tersambung dan `.rekam on` sukses, tetapi
+  tidak ada log tersimpan/dilewatkan setelah posting Pertanyaan. Source Baileys 6.7.24 juga
+  menerima posting channel sebagai node `CB:message` langsung; recorder lama cuma memasang
+  `CB:notification` dan parser hanya menerima bentuk bersarang. Cabang `fix/rekam-channel-message-node`
+  sekarang menambah penangkapan kedua bentuk dengan uji regresi. Hipotesis ini belum terverifikasi
+  di HP; menunggu CI PR dan tes kall pada APK baru.

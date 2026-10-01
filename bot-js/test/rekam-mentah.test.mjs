@@ -42,6 +42,37 @@ test('postingan channel: byte mentah disimpan apa adanya', () => {
   assert.deepEqual(Buffer.from(h.entri.b64, 'base64'), isi);
 });
 
+test('rekam channel: node CB:message newsletter langsung menyimpan posting Pertanyaan', () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rekam-channel-'));
+  const ws = new EventEmitter();
+  const log = [];
+  try {
+    const rekam = buatRekamChannel({ dataDir, log: (pesan) => log.push(pesan), emitStatus: () => {} });
+    rekam.pasang({ ws });
+    rekam.nyalakan();
+    ws.emit('CB:message', {
+      tag: 'message',
+      attrs: { from: '628111@s.whatsapp.net', type: 'text', id: 'PRIVATE1' },
+      content: [{ tag: 'plaintext', attrs: {}, content: Buffer.from('pesan pribadi') }],
+    });
+    assert.equal(rekam.ringkas().jumlah, 0);
+
+    ws.emit('CB:message', {
+      tag: 'message',
+      attrs: { from: '120363000000000000@newsletter', type: 'text', id: 'MSG2', server_id: '8' },
+      content: [{ tag: 'plaintext', attrs: {}, content: Buffer.from('{"questionMessage":{"question":"halo"}}') }],
+    });
+
+    assert.equal(rekam.ringkas().jumlah, 1);
+    const tersimpan = JSON.parse(fs.readFileSync(rekam.berkas(), 'utf8'));
+    assert.equal(tersimpan.entri[0].id, '8');
+    assert.equal(tersimpan.entri[0].tipe, 'text');
+    assert.equal(log.some((pesan) => pesan.includes('1 postingan tersimpan')), true);
+  } finally {
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  }
+});
+
 test('rekam channel: hanya simpan posting setelah aktif dan log payload yang dilewatkan', () => {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rekam-channel-'));
   const ws = new EventEmitter();

@@ -32,21 +32,22 @@ export function keBuffer(content) {
 }
 
 /**
- * Ubah satu stanza `<notification type="newsletter">` jadi satu entri rekaman.
+ * Ubah notifikasi newsletter atau node pesan langsung dari channel jadi entri.
  * Notifikasi lain (reaction/view/settings) ditolak: yang direkam cuma postingan.
  *
- * @param {object} node stanza CB:notification
+ * @param {object} node stanza CB:notification atau CB:message
  * @param {{ waktu?: number }} opsi
  * @returns {{ ok: boolean, alasan?: string, entri?: object }}
  */
 export function entriRekaman(node, { waktu = Date.now() } = {}) {
-  const tipeNotif = String(node?.attrs?.type || '');
-  if (tipeNotif !== 'newsletter') {
-    return { ok: false, alasan: `bukan notifikasi newsletter (${tipeNotif || 'tanpa tipe'})` };
+  const notifikasiNewsletter = node?.tag === 'notification' && node?.attrs?.type === 'newsletter';
+  const pesanNewsletter = node?.tag === 'message' && String(node?.attrs?.from || '').endsWith('@newsletter');
+  if (!notifikasiNewsletter && !pesanNewsletter) {
+    return { ok: false, alasan: 'bukan notifikasi atau pesan newsletter' };
   }
 
   const isi = Array.isArray(node?.content) ? node.content : [];
-  const pesan = isi.find((a) => a?.tag === 'message');
+  const pesan = pesanNewsletter ? node : isi.find((a) => a?.tag === 'message');
   if (!pesan) return { ok: false, alasan: 'bukan postingan (nggak ada tag <message>)' };
 
   const teks = cariAnak(pesan, 'plaintext');
@@ -61,7 +62,7 @@ export function entriRekaman(node, { waktu = Date.now() } = {}) {
     entri: {
       waktu,
       channel: String(node?.attrs?.from || ''),
-      id: String(pesan.attrs?.message_id || pesan.attrs?.server_id || ''),
+      id: String(pesan.attrs?.message_id || pesan.attrs?.server_id || pesan.attrs?.id || ''),
       tipe: String(pesan.attrs?.type || ''),
       byte: buf.length,
       b64: buf.toString('base64'),

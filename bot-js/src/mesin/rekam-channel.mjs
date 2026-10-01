@@ -3,14 +3,13 @@
 // contohnya postingan Pertanyaan di channel: kita simpan byte aslinya, bukan
 // hasil decode (lihat catatan di ../rekam-mentah.mjs).
 //
-// Satu-satunya hook yang dipakai: `sock.ws.on('CB:notification', ...)` —
-// Baileys sendiri memakai jalur yang sama buat ngurus notifikasi newsletter,
-// jadi kita cuma nebeng baca, nggak ngubah perilaku library.
+// Hook mentah dipasang pada CB:notification dan CB:message: postingan channel
+// bisa datang dalam salah satu bentuk, dan harus disalin sebelum proto decode.
 
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { entriRekaman, tambahEntri, ringkasRekaman, MAKS_ENTRI } from '../rekam-mentah.mjs';
+import { entriRekaman, tambahEntri, ringkasRekaman, cariAnak, MAKS_ENTRI } from '../rekam-mentah.mjs';
 import { jidSendiri } from '../wa.mjs';
 
 /** Batas total file rekaman; postingan paling lama dibuang kalau lewat. */
@@ -60,13 +59,14 @@ export function buatRekamChannel(ctx) {
       log('⚠️ Rekam channel: socket ini nggak bisa dipasangi hook, rekaman dilewati.');
       return;
     }
-    ws.on('CB:notification', (node) => {
+    const tangkap = (node) => {
       if (!aktif) return;
       try {
         const hasil = entriRekaman(node);
         if (!hasil.ok) {
-          const adaPesan = Array.isArray(node?.content) && node.content.some((anak) => anak?.tag === 'message');
-          if (node?.attrs?.type === 'newsletter' && adaPesan) {
+          const pesanLangsung = node?.tag === 'message' && String(node?.attrs?.from || '').endsWith('@newsletter');
+          const notifPost = node?.tag === 'notification' && node?.attrs?.type === 'newsletter' && cariAnak(node, 'message');
+          if (pesanLangsung || notifPost) {
             statusTerakhir = { status: 'dilewatkan', alasan: hasil.alasan };
             log(`Rekam channel melewatkan postingan: ${hasil.alasan}.`);
             emitStatus();
@@ -89,7 +89,12 @@ export function buatRekamChannel(ctx) {
         log(`⚠️ Rekam channel gagal nyimpen: ${e.message}`);
         emitStatus();
       }
-    });
+    };
+
+    // Baileys dapat menerima posting channel sebagai node message langsung,
+    // bukan notification newsletter; kedua bentuk perlu direkam tanpa decode.
+    ws.on('CB:notification', tangkap);
+    ws.on('CB:message', tangkap);
   }
 
   function nyalakan() {

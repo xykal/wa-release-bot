@@ -137,6 +137,7 @@ export const PERINTAH = {
   stiker: 'Balas/kirim foto dengan keterangan .stiker → jadi stiker WA',
   story: 'Kirim foto/video dengan keterangan .story → naik ke story kamu (HD, byte asli); penonton = nomor di kolom Story',
   storygrup: 'Sama seperti .story + anggota grup yang dipantau (cuma kalau Penjaga grup nyala)',
+  berkala: 'Lihat isi pesan berkala (daftar hitam); tambah "kirim" buat kirim sekarang',
   rekam: 'Rekam postingan channel (buat fitur WA yang belum didukung): on/off/kirim/kosong',
   grup: 'Info grup yang dipantau: nama, jumlah anggota, mode moderasi',
   bersih: 'Kosongkan hitungan moderasi hari ini (pesan dihapus & kick)',

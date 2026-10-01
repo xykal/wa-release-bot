@@ -9,7 +9,8 @@
 // nyambung tiap N menit). Jadi saklarnya terpisah, bawaannya mati, dan app
 // ngejelasin harganya (batre) di kartu Bot WA umum.
 //
-// Aksi per pesannya sendiri ada di mesin/aksi-pesan.mjs.
+// Aksi per pesannya sendiri ada di mesin/aksi-pesan.mjs. Perintah dan moderasi
+// jalan di dua jalur terpisah supaya balasan perintah tetap cepat.
 
 import { downloadMediaMessage } from '@whiskeysockets/baileys';
 import { menuTeks } from '../pesan.mjs';
@@ -100,27 +101,34 @@ export function buatJagaPesan(ctx) {
       `moderasi: ${aksi.aktifModerasi() ? 'ya' : 'tidak'}) — makan batre lebih, matikan kalau nggak dipakai.`
     );
 
+    // Dua jalur dipisah (kall, 2026-10-01: "menu/rekam mesti cepat"):
+    //   - PERINTAH pribadi dijalankan langsung, nggak di-await di loop. Dulu
+    //     perintah ngantre di belakang kerjaan moderasi grup (tarik metadata,
+    //     hapus pesan, tendang orang) yang bisa makan detik-detik — jadi .menu
+    //     yang harusnya kilat kerasa lambat waktu grup rame.
+    //   - MODERASI grup punya antrean sendiri dan tetap urut (strike pertama
+    //     harus kelihatan sebelum yang kedua), tapi nggak ngeblok perintah.
+    let antreanModerasi = Promise.resolve();
     await new Promise((resolve) => {
-      sock.ev.on('messages.upsert', async ({ messages, type }) => {
+      sock.ev.on('messages.upsert', ({ messages, type }) => {
         if (berhenti) return;
         if (type !== 'notify' && type !== 'append') return;
+        const grupTarget = grupDipantau();
         for (const m of messages || []) {
-          try {
-            const jidChat = m.key?.remoteJid || '';
-            const grupTarget = grupDipantau();
+          const jidChat = m.key?.remoteJid || '';
 
-            // 1. perintah pribadi: cuma di chat sendiri.
-            if (aksi.aktifPerintah() && jidSaya && jidChat === jidSaya) {
-              await aksi.tanganiPerintah(sock, m, teksPesan(m));
-              continue;
-            }
+          // 1. perintah pribadi: cuma di chat sendiri, jalur cepat.
+          if (aksi.aktifPerintah() && jidSaya && jidChat === jidSaya) {
+            void aksi.tanganiPerintah(sock, m, teksPesan(m))
+              .catch((e) => log(`⚠️ Perintah ${teksPesan(m).slice(0, 20)} gagal: ${e.message}`));
+            continue;
+          }
 
-            // 2. moderasi: cuma di grup yang dipantau, dan bukan pesan sendiri.
-            if (aksi.aktifModerasi() && jidChat.endsWith('@g.us') && jidChat === grupTarget && !m.key?.fromMe) {
-              await aksi.tanganiGrup(sock, m, jidChat);
-            }
-          } catch (e) {
-            log(`⚠️ Gagal proses satu pesan: ${e.message}`);
+          // 2. moderasi: cuma di grup yang dipantau, dan bukan pesan sendiri.
+          if (aksi.aktifModerasi() && jidChat.endsWith('@g.us') && jidChat === grupTarget && !m.key?.fromMe) {
+            antreanModerasi = antreanModerasi
+              .then(() => aksi.tanganiGrup(sock, m, jidChat))
+              .catch((e) => log(`⚠️ Moderasi gagal: ${e.message}`));
           }
         }
       });

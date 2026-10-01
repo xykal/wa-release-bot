@@ -4,6 +4,20 @@
 //   1. daftar hitam grup — "siapa aja yang nggak boleh masuk lagi";
 //   2. teks sendiri, kalau user mau pesan lain (aturan grup, jadwal, dsb).
 // Kapan kirimnya juga di sini, bukan di bot.mjs: biar gampang dites tanpa WA.
+//
+// Susunan daftar hitam dirapikan lagi 2026-10-01 (kall: "list daftar hitamnya
+// rusak"): nomor yang diketik admin dulu ditampilkan mentah apa adanya, jadi
+// barisnya campur ("0812-3456-7890", "+62 813 1111 2222"), ada baris sampah
+// ("abc"), dan satu orang bisa muncul dua kali (versi otomatis + versi manual)
+// sementara hitungannya bilang "6 orang" padahal isinya 3. Sekarang semua
+// masukan lewat normalisasi nomor, dibuang duplikatnya, diurutkan, dan
+// hitungannya = jumlah orang.
+
+import { normalisasiNomor } from './nomor.mjs';
+import { formatWaktu, tanggalPendek } from './waktu.mjs';
+
+/** Paling banyak sekian baris ditulis; sisanya diringkas. Pesan grup jangan kepanjangan. */
+export const MAKS_BARIS = 30;
 
 /** Jarak antar pesan: 1-168 jam (seminggu). Di luar itu dijepit, bukan error. */
 export function jelaskanInterval(jam) {
@@ -19,11 +33,80 @@ export function jatuhTempo({ lastAt, intervalJam, sekarang = Date.now() }) {
   return sekarang - lastAt >= jeda;
 }
 
-/** Tanggal pendek dd/mm tanpa ICU (mesin di HP nggak punya data lokal lengkap). */
-function tanggalPendek(ms) {
-  if (!ms) return '';
-  const d = new Date(ms);
-  return `${d.getDate()}/${d.getMonth() + 1}`;
+/** Satu masukan (nomor apa pun bentuknya) → satu orang yang bisa dibandingkan. */
+function orangDariMasukan(masukan) {
+  const t = String(masukan ?? '').trim();
+  if (!t) return null;
+  // Sudah berbentuk JID (dari daftar otomatis atau ditempel apa adanya).
+  if (t.includes('@')) {
+    const [user, domain] = t.split('@');
+    const angka = user.split(':')[0].replace(/[^\d]/g, '');
+    if (!angka) return null;
+    if (domain === 's.whatsapp.net' || domain === 'c.us') {
+      // JID yang belum ber-kode-negara (mis. "813…@s.whatsapp.net" yang
+      // ditempel manual) dinormalkan dulu, biar nggak muncul dua baris buat
+      // satu nomor yang sama.
+      const n = normalisasiNomor(angka) || angka;
+      return { kunci: n, label: `+${n}` };
+    }
+    return { kunci: `lid:${angka}`, label: `ID samaran …${angka.slice(-4)}` };
+  }
+  const n = normalisasiNomor(t);
+  if (n) return { kunci: n, label: `+${n}` };
+  // Bukan nomor dan bukan JID: jangan ditampilkan sebagai baris hantu.
+  return null;
+}
+
+/**
+ * Susun daftar hitam yang siap ditampilkan: normalisasi, buang duplikat
+ * (otomatis vs manual), urutkan nomor kecil dulu, ID samaran di belakang.
+ *
+ * @param {{ hitam?: object[], manual?: (string|number)[] }} opsi
+ *   `hitam` = hasil `kelompokHitam()` (punya { label, ids, sejak }).
+ * @returns {{ baris: string[], jumlah: number, sejak: Map<string, number|null> }}
+ */
+export function susunDaftarHitam({ hitam = [], manual = [] } = {}) {
+  const orang = new Map(); // kunci → { label, sejak, manual }
+
+  // 1. dari daftar otomatis (yang keluar dari grup)
+  for (const o of hitam || []) {
+    const kandidat = (o?.ids || []).map(orangDariMasukan).filter(Boolean);
+    const utama = kandidat.find((k) => k.kunci.startsWith('62')) || kandidat[0];
+    if (!utama) continue;
+    if (!orang.has(utama.kunci)) {
+      orang.set(utama.kunci, { label: utama.label, sejak: o?.sejak || null, manual: false });
+    }
+  }
+
+  // 2. dari yang diketik admin di app (nomor bisa berantakan: spasi, strip, +62)
+  for (const m of manual || []) {
+    const o = orangDariMasukan(m);
+    if (!o) continue;
+    const ada = orang.get(o.kunci);
+    if (ada) {
+      ada.manual = true; // ditandai admin, tetap satu baris
+      ada.sejak = ada.sejak || null;
+    } else {
+      orang.set(o.kunci, { label: o.label, sejak: null, manual: true });
+    }
+  }
+
+  const urut = [...orang.entries()].sort((a, b) => {
+    const lidA = a[0].startsWith('lid:');
+    const lidB = b[0].startsWith('lid:');
+    if (lidA !== lidB) return lidA ? 1 : -1; // nomor HP dulu, ID samaran belakang
+    return a[0].localeCompare(b[0], 'en', { numeric: true });
+  });
+
+  const baris = [];
+  const sejak = new Map();
+  for (const [kunci, info] of urut) {
+    const tanda = [info.sejak ? `sejak ${tanggalPendek(info.sejak)}` : null, info.manual ? 'didaftarkan admin' : null]
+      .filter(Boolean).join(', ');
+    baris.push(`${info.label}${tanda ? ` (${tanda})` : ''}`);
+    sejak.set(kunci, info.sejak);
+  }
+  return { baris, jumlah: baris.length, sejak };
 }
 
 /**
@@ -31,7 +114,7 @@ function tanggalPendek(ms) {
  *
  * @param {{ namaGrup?: string, hitam?: object[], manual?: string[], teksKustom?: string, sekarang?: number }} opsi
  *   `hitam` = hasil `kelompokHitam()` (punya { label, sejak }), `manual` = nomor yang
- *   didaftarkan user sendiri.
+ *   didaftarkan user sendiri (bentuk bebas: "0812-3456-7890", "+62 813 …", JID).
  * @returns {string}
  */
 export function teksBerkala({ namaGrup = '', hitam = [], manual = [], teksKustom = '', sekarang = Date.now() } = {}) {
@@ -39,16 +122,9 @@ export function teksBerkala({ namaGrup = '', hitam = [], manual = [], teksKustom
   if (kustom) return kustom;
 
   const grup = namaGrup || 'grup ini';
-  const baris = [];
-  hitam.forEach((o, i) => {
-    const sejak = tanggalPendek(o?.sejak);
-    baris.push(`${i + 1}. ${o?.label || '?'}${sejak ? ` (sejak ${sejak})` : ''}`);
-  });
-  manual.forEach((n, i) => {
-    baris.push(`${hitam.length + i + 1}. ${n} (didaftarkan admin)`);
-  });
+  const { baris, jumlah } = susunDaftarHitam({ hitam, manual });
 
-  if (!baris.length) {
+  if (!jumlah) {
     return [
       `Daftar hitam ${grup}: masih kosong.`,
       '',
@@ -56,12 +132,17 @@ export function teksBerkala({ namaGrup = '', hitam = [], manual = [], teksKustom
       'otomatis masuk daftar ini.',
     ].join('\n');
   }
-  const jumlah = baris.length;
-  return [
+
+  const tampil = baris.slice(0, MAKS_BARIS);
+  const isi = [
     `Daftar hitam ${grup} (${jumlah} orang):`,
-    ...baris,
+    ...tampil.map((b, i) => `${i + 1}. ${b}`),
+  ];
+  if (baris.length > tampil.length) isi.push(`…dan ${baris.length - tampil.length} orang lainnya.`);
+  isi.push(
     '',
-    `Diperbarui ${new Date(sekarang).toLocaleString('id-ID')}. Orang di daftar ini`,
-    'nggak bisa masuk lagi lewat link grup. Admin grup bisa minta buka blokir.',
-  ].join('\n');
+    `Diperbarui ${formatWaktu(sekarang)}. Orang di daftar ini nggak bisa masuk lagi`,
+    'lewat link grup. Admin grup bisa minta buka blokir.'
+  );
+  return isi.join('\n');
 }

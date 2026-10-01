@@ -10,7 +10,7 @@
 import { sendText } from '../wa.mjs';
 import { bacaTarget, JENIS } from '../channel.mjs';
 import { kelompokHitam } from '../grup.mjs';
-import { jatuhTempo, jelaskanInterval, teksBerkala } from '../berkala.mjs';
+import { jatuhTempo, jelaskanInterval, susunDaftarHitam, teksBerkala } from '../berkala.mjs';
 
 export function buatPesanBerkala(ctx) {
   // `grupAktif` datang dari bot.mjs (satu definisi dengan penjaga grup): jangan
@@ -40,12 +40,18 @@ export function buatPesanBerkala(ctx) {
 
   /**
    * Kirim sekarang juga. `paksa` = true dipakai tombol "Kirim sekarang" di app
-   * (nggak nunggu jadwal), sedangkan jadwal otomatis lewat jatuhTempo().
+   * dan perintah `.berkala kirim` (nggak nunggu jadwal), sedangkan jadwal
+   * otomatis lewat jatuhTempo().
+   *
+   * `sock` (opsional) = nebeng socket mode jaga yang lagi kebuka. Itu jalur
+   * yang dipakai `.berkala kirim` dari chat: sekali kirim langsung kelar, dan
+   * nggak ada dua socket memakai sesi WA yang sama (itu bikin WA nendang
+   * salah satunya).
    */
-  async function kirimSekarang({ paksa = false, sumber = 'jadwal' } = {}) {
-    if (!ctx.running && !paksa) return false;
+  async function kirimSekarang({ paksa = false, sumber = 'jadwal', sock: sockLuar = null } = {}) {
+    if (!ctx.running && !paksa && !sockLuar) return false;
     if (!aktif() && !paksa) return false;
-    if (ctx.busy) {
+    if (!sockLuar && ctx.busy) {
       // Jangan rebutan socket dengan tugas lain; jadwalnya diulang nanti.
       log('⏳ Pesan berkala ditunda: ada tugas lain yang lagi pakai WhatsApp.');
       return false;
@@ -59,23 +65,31 @@ export function buatPesanBerkala(ctx) {
     const hitam = kustom ? [] : kelompokHitam(g.hitam || [], g.hitamInfo || []);
     const manual = kustom ? [] : String(ctx.cfg?.grup?.daftarHitam || '')
       .split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
+    // Jumlah orang dihitung dari daftar yang sudah dirapikan (nomor duplikat /
+    // sampah nggak dihitung dua kali), bukan dari panjang teks mentahnya.
+    const jumlahOrang = kustom ? 0 : susunDaftarHitam({ hitam, manual }).jumlah;
     const teks = teksBerkala({ namaGrup: g.nama, hitam, manual, teksKustom: kustom });
 
     try {
-      const hasil = await pakaiWA('berkala', async () => {
-        const { sock, close } = await sambung({ onStatus: () => {} });
-        try {
-          const jid = await jidGrup(sock);
-          await sendText(sock, jid, teks);
-          return jid;
-        } finally {
-          try { close(); } catch { /* socket sudah tertutup */ }
-        }
-      });
+      const kirimLewat = async (sock) => {
+        const jid = await jidGrup(sock);
+        await sendText(sock, jid, teks);
+        return jid;
+      };
+      const hasil = sockLuar
+        ? await kirimLewat(sockLuar)
+        : await pakaiWA('berkala', async () => {
+          const { sock, close } = await sambung({ onStatus: () => {} });
+          try {
+            return await kirimLewat(sock);
+          } finally {
+            try { close(); } catch { /* socket sudah tertutup */ }
+          }
+        });
       ctx.state.berkala = {
         lastAt: Date.now(),
         count: (ctx.state.berkala?.count || 0) + 1,
-        terakhir: kustom ? 'teks sendiri' : `${hitam.length + manual.length} nomor`,
+        terakhir: kustom ? 'teks sendiri' : `${jumlahOrang} nomor`,
       };
       saveState();
       log(`📣 Pesan berkala (${sumber}) ke ${g.nama || hasil || 'grup'}: ${ctx.state.berkala.terakhir}.`);

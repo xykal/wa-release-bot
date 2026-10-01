@@ -16,6 +16,22 @@
 import { normalisasiNomor } from './nomor.mjs';
 import { formatWaktu, tanggalPendek } from './waktu.mjs';
 
+/**
+ * Putuskan isi yang dikirim: daftar hitam grup atau teks sendiri.
+ *
+ * `hitamSaja` = saklar "Selalu kirim daftar hitam" di app (permintaan kall
+ * 2026-10-01: pengin pesan berkala yang isinya CUMA daftar hitam). Kalau nyala,
+ * kolom teks diabaikan — jadi orang bisa nyimpen draf teks tanpa takut kepakai.
+ *
+ * @returns {{ kustom: string, mode: 'hitam'|'teks' }}
+ */
+export function pilihIsi({ hitamSaja = false, teks = '' } = {}) {
+  const kustom = String(teks || '').trim();
+  if (hitamSaja) return { kustom: '', mode: 'hitam' };
+  if (kustom) return { kustom, mode: 'teks' };
+  return { kustom: '', mode: 'hitam' }; // teks kosong = daftar hitam (bawaan lama)
+}
+
 /** Paling banyak sekian baris ditulis; sisanya diringkas. Pesan grup jangan kepanjangan. */
 export const MAKS_BARIS = 30;
 

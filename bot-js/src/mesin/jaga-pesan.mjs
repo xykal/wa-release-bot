@@ -38,14 +38,24 @@ export function buatJagaPesan(ctx) {
     });
   }
 
-  /** Kirim jawaban ke chat sendiri (perintah pribadi tidak pernah dijawab di grup). */
+  /**
+   * Kirim jawaban ke chat sendiri (perintah pribadi tidak pernah dijawab di grup).
+   * @returns {Promise<boolean>} true kalau benar-benar terkirim — dulu fungsi ini
+   *   diam saja waktu JID diri sendiri nggak kebaca, jadi tombol/​perintah kelihatan
+   *   "nggak ada balasan" tanpa jejak apa pun.
+   */
   async function jawab(sock, teks) {
     const jid = jidSendiri(sock);
-    if (!jid) return;
+    if (!jid) {
+      log('⚠️ Nggak bisa balas: nomor akun sendiri belum kebaca dari sesi WA (coba Tautkan ulang).');
+      return false;
+    }
     try {
       await sendText(sock, jid, teks);
+      return true;
     } catch (e) {
       log(`⚠️ Nggak bisa balas di chat sendiri: ${e.message}`);
+      return false;
     }
   }
 
@@ -89,6 +99,22 @@ export function buatJagaPesan(ctx) {
     return admin;
   }
 
+  /**
+   * Perintah diketik sementara saklar "Perintah pribadi" mati. Dulu cuma diam;
+   * sekarang dijawab sekali (tiap 10 menit) supaya orang nggak bingung kenapa
+   * nggak ada balasan. Nggak ngirim apa-apa kalau memang nggak ada socket.
+   */
+  let kabarTerakhir = 0;
+  async function kabariPerintahMati(sock) {
+    if (Date.now() - kabarTerakhir < 10 * 60_000) return;
+    kabarTerakhir = Date.now();
+    await jawab(sock,
+      'Bot dengerin, tapi saklar "Perintah pribadi" masih mati.\n' +
+      'Nyalain di app: tab Fitur, kartu Bot WA umum, lalu Simpan.\n' +
+      'Selama mati, perintah di chat ini nggak diproses.');
+    log('ℹ️ Ada perintah masuk, tapi saklar perintah pribadi mati — dikasih arahan.');
+  }
+
   /** Satu koneksi WA yang dipakai terus sampai putus / diminta berhenti. */
   async function satuSesi() {
     const { sock, close } = await sambung({ onStatus: (m) => log(m) });
@@ -118,9 +144,16 @@ export function buatJagaPesan(ctx) {
           const jidChat = m.key?.remoteJid || '';
 
           // 1. perintah pribadi: cuma di chat sendiri, jalur cepat.
-          if (aksi.aktifPerintah() && jidSaya && jidChat === jidSaya) {
-            void aksi.tanganiPerintah(sock, m, teksPesan(m))
-              .catch((e) => log(`⚠️ Perintah ${teksPesan(m).slice(0, 20)} gagal: ${e.message}`));
+          if (jidSaya && jidChat === jidSaya) {
+            const isi = teksPesan(m);
+            if (aksi.aktifPerintah()) {
+              void aksi.tanganiPerintah(sock, m, isi)
+                .catch((e) => log(`⚠️ Perintah ${isi.slice(0, 20)} gagal: ${e.message}`));
+            } else if (/^[.!/]\S/.test(String(isi || '').trim())) {
+              // Ketikan perintah jelas, tapi saklarnya mati: kasih arahan
+              // (nggak sering-sering, lihat kabariPerintahMati).
+              void kabariPerintahMati(sock);
+            }
             continue;
           }
 
@@ -182,15 +215,47 @@ export function buatJagaPesan(ctx) {
     sockAktif = null;
   }
 
-  /** Tombol "Kirim menu ke chat" di app. */
+  /**
+   * Tombol "Kirim menu ke chat" di app.
+   *
+   * Dulu tombol ini cuma jalan kalau mode jaga sedang nyala; kalau nggak, cuma
+   * nulis peringatan di log app (kall: "kok gada balasan"). Sekarang ada jalur
+   * cadangan: buka koneksi sekali pakai, kirim, tutup — sama seperti pesan
+   * berkala. Hasilnya dikirim balik ke app lewat bridge event `banner` biar
+   * kelihatan di layar, bukan cuma di tab Log.
+   */
   async function kirimMenuSekarang() {
-    if (!sockAktif) {
-      log('⚠️ Menu nggak dikirim: WA belum nyambung. Nyalain engine + mode jaga dulu.');
-      return false;
+    const teks = menuTeks(ctx.cfg?.brand?.nama || 'WA Release Bot');
+    const kabari = (ok, pesan) => {
+      try { ctx.bridge?.send({ type: 'banner', ok, teks: pesan }); } catch { /* app nggak nyambung */ }
+      return { ok, alasan: ok ? null : pesan };
+    };
+
+    if (sockAktif && await jawab(sockAktif, teks)) {
+      log('📨 Menu dikirim ke chat sendiri.');
+      return kabari(true, 'Menu sudah dikirim ke chat sendiri.');
     }
-    await jawab(sockAktif, menuTeks(ctx.cfg?.brand?.nama || 'WA Release Bot'));
-    log('📨 Menu dikirim ke chat sendiri.');
-    return true;
+
+    try {
+      await ctx.pakaiWA('menu', async () => {
+        const { sock, close } = await sambung({ onStatus: () => {} });
+        try {
+          const jid = jidSendiri(sock);
+          if (!jid) throw new Error('nomor akun sendiri belum kebaca dari sesi WA');
+          await sendText(sock, jid, teks);
+        } finally {
+          try { close(); } catch { /* socket sudah tertutup */ }
+        }
+      });
+      log('📨 Menu dikirim ke chat sendiri (koneksi sekali pakai).');
+      return kabari(true, 'Menu sudah dikirim ke chat sendiri.');
+    } catch (e) {
+      const alasan = e?.code === 'BELUM_TAUT'
+        ? 'WA belum ditautkan. Tekan "Tautkan WA" di app dulu.'
+        : e.message;
+      log(`⚠️ Menu nggak terkirim: ${alasan}`);
+      return kabari(false, `Menu nggak terkirim: ${alasan}`);
+    }
   }
 
   return {

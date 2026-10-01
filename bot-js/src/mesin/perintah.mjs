@@ -75,6 +75,8 @@ export function buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga, berkala }) 
             aktif: Boolean(cmd.berkalaAktif),
             intervalJam: Math.min(Math.max(Number(cmd.berkalaJam) || 12, 1), 168),
             teks: String(cmd.berkalaTeks || '').trim(),
+            // Saklar "selalu daftar hitam": teks di atas diabaikan kalau nyala.
+            hitamSaja: Boolean(cmd.berkalaHitamSaja),
           },
           lagu: {
             aktif: Boolean(cmd.laguAktif),

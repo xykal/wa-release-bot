@@ -313,7 +313,7 @@
     <string name="u_contoh_62812">e.g. 628123456789, 628987654321</string>
     <string name="u_kirim_menu_ke_chat">Send menu to chat</string>
     <string name="u_kosongin_hitungan">Reset counters</string>
-    <string name="k_menu_dikirim_ke_chat_sendiri">Menu sent to your own chat (when WhatsApp is connected).</string>
+    <string name="k_menu_dikirim_ke_chat_sendiri">Sending to your own chat (the result shows when it finishes).</string>
     <string name="k_hitungan_moderasi_dikosongin">Moderation counters reset.</string>
     <string name="k_moderasi_nyala">Group moderation: on</string>
     <string name="k_moderasi_mati">Group moderation: off</string>
@@ -335,4 +335,6 @@
     <string name="k_pesan_berkala_mati">Periodic message: off</string>
     <string name="k_pesan_berkala_2">Periodic message every %1$s h | last: %2$s | total %3$s | next: %4$s</string>
     <string name="k_pesan_berkala_butuh_penjaga_grup">Periodic messages need the group guard on: that group is the destination. Turn it on in the group guard card first.</string>
+    <string name="u_selalu_daftar_hitam">Always send the blacklist</string>
+    <string name="u_ket_selalu_daftar_hitam">When on: the message box below is ignored, only the group blacklist is sent.</string>
 </resources>

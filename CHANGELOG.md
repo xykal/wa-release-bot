@@ -7,6 +7,10 @@ Semua perubahan penting proyek ini. Format mengikuti
 ## [Unreleased]
 
 ### Ditambah
+- Saklar **Selalu kirim daftar hitam** di kartu Pesan berkala: kalau nyala, yang dikirim cuma
+  daftar hitam grup dan kolom pesan diabaikan (permintaan kall). Logikanya `pilihIsi()` di
+  `bot-js/src/berkala.mjs` (murni, ada ujinya); `.berkala` di chat nunjukin mode yang sedang
+  dipakai.
 - Perintah baru `.berkala`: lihat dulu isi pesan berkala (daftar hitam / teks sendiri) di chat
   sendiri tanpa mengirim ke grup, plus `.berkala kirim` buat kirim sekarang lewat koneksi mode
   jaga yang sudah terbuka (nggak bikin koneksi kedua ke sesi WA yang sama).
@@ -162,6 +166,15 @@ Semua perubahan penting proyek ini. Format mengikuti
   tidak kelihatan.
 
 ### Diperbaiki
+- Tombol **Kirim menu ke chat** nggak lagi diam waktu mode jaga mati: jalur utamanya tetap
+  socket mode jaga, tapi kalau nggak ada, bot buka koneksi sekali pakai, kirim menu, lalu tutup
+  (pola yang sama dengan pesan berkala). Hasilnya dikirim balik ke app sebagai banner
+  (berhasil atau alasannya) — dulu app langsung ngeklaim "menu dikirim" sementara kegagalannya
+  cuma nulis di tab Log.
+- Perintah di chat sendiri yang datang waktu saklar **Perintah pribadi** mati nggak lagi diem:
+  bot balas sekali (jeda 10 menit) buat nunjukin di mana saklarnya.
+- `jawab()` di `mesin/jaga-pesan.mjs` sekarang ngembalikan status kirim dan nge-log kalau JID
+  akun sendiri nggak kebaca — dulu gagal kirim tanpa jejak sama sekali.
 - **Pesan daftar hitam kelihatan rusak** (laporan kall): nomor yang didaftarkan admin
   ditampilkan mentah apa adanya, jadi barisnya campur (`0812-3456-7890`, `+62 813 1111 2222`),
   ada baris sampah (`abc`), satu orang bisa muncul dua kali (versi otomatis + versi manual),

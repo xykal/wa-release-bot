@@ -144,6 +144,11 @@ class SettingsStore(ctx: Context) {
         set(v) = p.edit().putInt("berkalaJam", v.coerceIn(1, 168)).apply()
 
     /** Kalau kosong, yang dikirim daftar hitam grup; kalau diisi, teks ini. */
+    /** Saklar "selalu daftar hitam": teks di kolom pesan diabaikan kalau nyala. */
+    var berkalaHitamSaja: Boolean
+        get() = p.getBoolean("berkalaHitamSaja", false)
+        set(v) = p.edit().putBoolean("berkalaHitamSaja", v).apply()
+
     var berkalaTeks: String
         get() = p.getString("berkalaTeks", "") ?: ""
         set(v) = p.edit().putString("berkalaTeks", v).apply()
@@ -214,6 +219,7 @@ class SettingsStore(ctx: Context) {
         "berkalaAktif" to berkalaAktif,
         "berkalaJam" to berkalaJam,
         "berkalaTeks" to berkalaTeks,
+        "berkalaHitamSaja" to berkalaHitamSaja,
         "laguAktif" to laguAktif,
         "laguPerHari" to laguPerHari,
         "laguJamMulai" to laguJamMulai,
@@ -261,6 +267,7 @@ class SettingsStore(ctx: Context) {
                 .put("aktif", berkalaAktif)
                 .put("intervalJam", berkalaJam)
                 .put("teks", berkalaTeks)
+                .put("hitamSaja", berkalaHitamSaja)
         )
         .put(
             "lagu",

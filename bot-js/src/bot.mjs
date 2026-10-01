@@ -263,6 +263,8 @@ async function main() {
       // pesan berkala (daftar hitam / teks sendiri)
       berkalaAktif: Boolean(ctx.cfg?.berkala?.aktif),
       berkalaJam: ctx.fitur?.berkala?.intervalJam?.() || null,
+      // Mode isi: true = selalu daftar hitam (teks di app diabaikan).
+      berkalaHitamSaja: Boolean(ctx.cfg?.berkala?.hitamSaja),
       berkalaCount: ctx.state.berkala?.count || 0,
       berkalaLastAt: ctx.state.berkala?.lastAt || null,
       berkalaTerakhir: ctx.state.berkala?.terakhir || null,

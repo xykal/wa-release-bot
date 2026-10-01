@@ -313,7 +313,7 @@
     <string name="u_contoh_62812">mis. 628123456789, 628987654321</string>
     <string name="u_kirim_menu_ke_chat">Kirim menu ke chat</string>
     <string name="u_kosongin_hitungan">Kosongin hitungan</string>
-    <string name="k_menu_dikirim_ke_chat_sendiri">Menu dikirim ke chat sendiri (kalau WA tersambung).</string>
+    <string name="k_menu_dikirim_ke_chat_sendiri">Lagi dikirim ke chat sendiri (hasilnya muncul setelah selesai).</string>
     <string name="k_hitungan_moderasi_dikosongin">Hitungan moderasi dikosongin.</string>
     <string name="k_moderasi_nyala">Moderasi grup: nyala</string>
     <string name="k_moderasi_mati">Moderasi grup: mati</string>
@@ -335,4 +335,6 @@
     <string name="k_pesan_berkala_mati">Pesan berkala: mati</string>
     <string name="k_pesan_berkala_2">Pesan berkala tiap %1$s jam | terakhir: %2$s | total %3$s | berikut: %4$s</string>
     <string name="k_pesan_berkala_butuh_penjaga_grup">Pesan berkala butuh Penjaga grup nyala: grup itu tujuan kirimnya. Nyalain dulu di kartu Penjaga grup.</string>
+    <string name="u_selalu_daftar_hitam">Selalu kirim daftar hitam</string>
+    <string name="u_ket_selalu_daftar_hitam">Kalau nyala: kolom pesan di bawah diabaikan, yang dikirim cuma daftar hitam grup.</string>
 </resources>

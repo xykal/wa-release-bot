@@ -206,6 +206,8 @@ internal class PanelStatus(
                 append("\n")
                 append(a.getString(R.string.k_perangkat_2, it))
             }
+            append("\n")
+            append(a.teksStatusRekamChannel(ui))
         }
 
         tvBerkalaStat.text = if (!ui.berkalaAktif) {

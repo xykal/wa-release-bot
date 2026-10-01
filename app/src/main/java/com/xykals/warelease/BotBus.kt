@@ -98,6 +98,9 @@ data class BotUi(
     var berkalaCount: Int = 0,
     var berkalaTerakhir: String? = null,
     var nextBerkalaAt: Long? = null,
+    var rekamChannelAktif: Boolean = false,
+    var rekamChannelJumlah: Int = 0,
+    var rekamChannelTerakhir: String? = null,
     // hosting bot custom
     var hosting: HostingUi = HostingUi(),
     var hostingLog: List<BarisKonsol> = emptyList(),

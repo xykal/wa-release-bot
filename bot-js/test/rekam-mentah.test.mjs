@@ -46,21 +46,33 @@ test('rekam channel: hanya simpan posting setelah aktif dan log payload yang dil
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rekam-channel-'));
   const ws = new EventEmitter();
   const log = [];
+  let statusDikirim = 0;
   try {
-    const rekam = buatRekamChannel({ dataDir, log: (pesan) => log.push(pesan), emitStatus() {} });
+    const rekam = buatRekamChannel({
+      dataDir,
+      log: (pesan) => log.push(pesan),
+      emitStatus: () => { statusDikirim += 1; },
+    });
     rekam.pasang({ ws });
     ws.emit('CB:notification', stanza({ tipe: 'questionMessage' }));
     assert.equal(rekam.ringkas().jumlah, 0);
 
     rekam.nyalakan();
+    const statusSebelumSimpan = statusDikirim;
     ws.emit('CB:notification', stanza({ tipe: 'questionMessage' }));
+    assert.equal(statusDikirim, statusSebelumSimpan + 1);
     assert.equal(rekam.ringkas().jumlah, 1);
+    assert.equal(rekam.ringkas().terakhirStatus, 'tersimpan');
     const tersimpan = JSON.parse(fs.readFileSync(rekam.berkas(), 'utf8'));
     assert.equal(tersimpan.entri[0].tipe, 'questionMessage');
     assert.equal(log.some((pesan) => pesan.includes('1 postingan tersimpan')), true);
 
+    const statusSebelumLewat = statusDikirim;
     ws.emit('CB:notification', stanza({ tipe: 'questionMessage', plaintext: null }));
+    assert.equal(statusDikirim, statusSebelumLewat + 1);
     assert.equal(rekam.ringkas().jumlah, 1);
+    assert.equal(rekam.ringkas().terakhirStatus, 'dilewatkan');
+    assert.match(rekam.ringkas().terakhirAlasan, /plaintext/);
     assert.equal(log.some((pesan) => pesan.includes('melewatkan postingan')), true);
   } finally {
     fs.rmSync(dataDir, { recursive: true, force: true });

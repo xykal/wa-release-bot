@@ -345,6 +345,11 @@
     <string name="k_pesan_berkala_dikirim_sekarang">Periodic message sent now (when WhatsApp is connected).</string>
     <string name="k_pesan_berkala_mati">Periodic message: off</string>
     <string name="k_pesan_berkala_2">Periodic message every %1$s h | last: %2$s | total %3$s | next: %4$s</string>
+    <string name="k_rekam_channel_status">Channel recording: %1$s | %2$d posts saved</string>
+    <string name="k_rekam_channel_terakhir_disimpan">Latest: post saved.</string>
+    <string name="k_rekam_channel_terakhir_dilewatkan">Latest: post skipped.</string>
+    <string name="k_rekam_channel_terakhir_gagal">Latest: save failed.</string>
+    <string name="k_rekam_channel_belum_ada">No channel post processed yet.</string>
     <string name="k_pesan_berkala_butuh_penjaga_grup">Periodic messages need the group guard on: that group is the destination. Turn it on in the group guard card first.</string>
     <string name="u_selalu_daftar_hitam">Always send the blacklist</string>
     <string name="u_ket_selalu_daftar_hitam">When on: the message box below is ignored, only the group blacklist is sent.</string>

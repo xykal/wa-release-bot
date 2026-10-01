@@ -23,6 +23,7 @@ export function buatRekamChannel(ctx) {
   const { log, emitStatus } = ctx;
   let aktif = false;
   let jumlahKirim = 0;
+  let statusTerakhir = null;
 
   const berkas = () => path.join(ctx.dataDir, 'rekaman-channel.json');
   const namaBerkas = 'rekaman-channel.json';
@@ -66,7 +67,9 @@ export function buatRekamChannel(ctx) {
         if (!hasil.ok) {
           const adaPesan = Array.isArray(node?.content) && node.content.some((anak) => anak?.tag === 'message');
           if (node?.attrs?.type === 'newsletter' && adaPesan) {
+            statusTerakhir = { status: 'dilewatkan', alasan: hasil.alasan };
             log(`Rekam channel melewatkan postingan: ${hasil.alasan}.`);
+            emitStatus();
           }
           return;
         }
@@ -75,13 +78,16 @@ export function buatRekamChannel(ctx) {
         data.diperbarui = new Date().toISOString();
         tulis(data);
         jumlahKirim += 1;
+        statusTerakhir = { status: 'tersimpan', alasan: null };
         log(
           `Rekam channel: 1 postingan tersimpan (${hasil.entri.byte} byte, ` +
           `tipe ${hasil.entri.tipe || 'teks'}, total ${data.entri.length}).`
         );
         emitStatus();
       } catch (e) {
+        statusTerakhir = { status: 'gagal', alasan: 'gagal menyimpan file' };
         log(`⚠️ Rekam channel gagal nyimpen: ${e.message}`);
+        emitStatus();
       }
     });
   }
@@ -109,7 +115,13 @@ export function buatRekamChannel(ctx) {
   }
 
   function ringkas() {
-    return { aktif, kiriman: jumlahKirim, ...ringkasRekaman(baca()) };
+    return {
+      aktif,
+      kiriman: jumlahKirim,
+      ...ringkasRekaman(baca()),
+      terakhirStatus: statusTerakhir?.status || null,
+      terakhirAlasan: statusTerakhir?.alasan || null,
+    };
   }
 
   /** Kirim file rekaman ke chat sendiri (dokumen), biar bisa diteruskan ke dev. */

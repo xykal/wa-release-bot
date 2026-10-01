@@ -9,7 +9,8 @@
 #      Simpan -> tetap sembunyi setelah app dibuka ulang,
 #   3. nilai saklar NEMPEL di prefs (dibuktikan dengan membuka ulang app),
 #   4. kolom-kolom baru ada (domain phishing, nomor story, interval, teks berkala),
-#   5. tombol kirim menu ngasih umpan balik walau WA belum tersambung.
+#   5. tombol kirim menu ngasih umpan balik walau WA belum tersambung;
+#   6. status rekam channel dan kondisi awalnya tampil di kartu Bot WA umum.
 set -euo pipefail
 
 : "${PKG:?PKG belum diisi}" "${ACT:?ACT belum diisi}" "${OUT:?OUT belum diisi}"
@@ -23,6 +24,15 @@ if [[ "$dump" == *"id/rowModerasi"* && "$dump" == *"id/rowPerintahPribadi"* && "
 else
   echo "uji bot-umum: kartu Bot WA umum tidak lengkap di dump UI"; tangkap_gagal bot-umum-gagal; exit 1
 fi
+
+gulir_ke tvModerasiStat bot-umum-rekam-channel 360
+dump="$(dump_ui)"
+if [[ ("$dump" == *"Rekam channel:"* && "$dump" == *"Belum ada postingan channel yang diproses."*) || ("$dump" == *"Channel recording:"* && "$dump" == *"No channel post processed yet."*) ]]; then
+  echo "uji rekam channel: status awal tampil di kartu Bot WA umum OK"
+else
+  echo "uji rekam channel: status awal tidak tampil"; tangkap_gagal rekam-channel-gagal; exit 1
+fi
+gulir_ke rowModerasi bot-umum-kembali 360
 
 # M16: bar Simpan harus MULAI dari sembunyi (belum ada perubahan).
 if [[ "$dump" == *"id/barSimpan"* ]]; then

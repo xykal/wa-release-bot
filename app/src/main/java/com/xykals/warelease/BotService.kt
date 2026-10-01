@@ -348,6 +348,9 @@ class BotService : Service() {
                 berkalaCount = e.optInt("berkalaCount", 0)
                 berkalaTerakhir = e.optString("berkalaTerakhir", "").orNull()
                 nextBerkalaAt = e.optLong("nextBerkalaAt", 0L).takeIf { it > 0 }
+                rekamChannelAktif = e.optBoolean("rekamChannelAktif")
+                rekamChannelJumlah = e.optInt("rekamChannelJumlah", 0)
+                rekamChannelTerakhir = e.optString("rekamChannelTerakhir", "").orNull()
             }
 
             "hosting_status" -> BotBus.publish {

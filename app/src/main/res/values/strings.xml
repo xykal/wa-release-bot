@@ -345,6 +345,11 @@
     <string name="k_pesan_berkala_dikirim_sekarang">Pesan berkala dikirim sekarang (kalau WA tersambung).</string>
     <string name="k_pesan_berkala_mati">Pesan berkala: mati</string>
     <string name="k_pesan_berkala_2">Pesan berkala tiap %1$s jam | terakhir: %2$s | total %3$s | berikut: %4$s</string>
+    <string name="k_rekam_channel_status">Rekam channel: %1$s | %2$d postingan tersimpan</string>
+    <string name="k_rekam_channel_terakhir_disimpan">Terakhir: postingan tersimpan.</string>
+    <string name="k_rekam_channel_terakhir_dilewatkan">Terakhir: postingan dilewatkan.</string>
+    <string name="k_rekam_channel_terakhir_gagal">Terakhir: gagal menyimpan.</string>
+    <string name="k_rekam_channel_belum_ada">Belum ada postingan channel yang diproses.</string>
     <string name="k_pesan_berkala_butuh_penjaga_grup">Pesan berkala butuh Penjaga grup nyala: grup itu tujuan kirimnya. Nyalain dulu di kartu Penjaga grup.</string>
     <string name="u_selalu_daftar_hitam">Selalu kirim daftar hitam</string>
     <string name="u_ket_selalu_daftar_hitam">Kalau nyala: kolom pesan di bawah diabaikan, yang dikirim cuma daftar hitam grup.</string>

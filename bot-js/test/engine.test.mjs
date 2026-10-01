@@ -211,9 +211,12 @@ test('engine: nyala, configure, start, cek release ke GitHub palsu, stop', async
   assert.equal(cfgBerkala.berkala.teks, 'Aturan grup: jangan kirim link.');
 
   // Interval di luar batas dijepit, bukan ditolak.
+  // Moderasi ikut dinyalain lagi di sini: `configure` selalu nulis SELURUH
+  // setting, jadi kalau nggak disebut, yang tadi nyala malah ikut mati.
   await engine.kirim({ type: 'configure', berkalaAktif: true, berkalaJam: 500, grupAktif: true,
-    grupTarget: 'https://chat.whatsapp.com/ContohGrupAlami', repo: REPO, intervalMinutes: 15 });
-  await engine.tungguStatus(() => true, 'status setelah jepit interval');
+    grupTarget: 'https://chat.whatsapp.com/ContohGrupAlami', repo: REPO, intervalMinutes: 15,
+    moderasiAktif: true });
+  await engine.tungguStatus((ev) => ev.moderasiAktif === true, 'status setelah jepit interval');
   const cfgJepit = JSON.parse(fs.readFileSync(path.join(dataDir, 'config.json'), 'utf8'));
   assert.equal(cfgJepit.berkala.intervalJam, 168);
 

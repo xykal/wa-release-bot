@@ -77,14 +77,19 @@ if [ -n "$kotak" ]; then
   set -- $kotak
   adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
   sleep 0.5
+  # Kosongin dulu (nilainya "12" dari prefs): 4x DEL lebih dari cukup, biar
+  # hasilnya persis "6" -- kalau cuma 1x DEL, isinya jadi "16" dan assert
+  # text="6" bakal gagal walau kotaknya sebenarnya bisa diketik.
   adb shell input keyevent KEYCODE_MOVE_END
-  adb shell input keyevent KEYCODE_DEL
+  for _ in 1 2 3 4; do adb shell input keyevent KEYCODE_DEL; done
   adb shell input text '6'
   sleep 0.5
-  if [[ "$(dump_ui)" == *'text="6"'* ]]; then
+  baris="$(dump_ui | grep -F "id/etBerkalaJam" | head -n 1 || true)"
+  if [[ "$baris" == *'text="6"'* ]]; then
     echo "uji berkala: interval bisa diketik OK"
   else
-    echo "uji berkala: teks interval tidak masuk ke kotak"; tangkap_gagal berkala-gagal; exit 1
+    echo "uji berkala: teks interval tidak masuk ke kotak (dapat: $baris)"
+    tangkap_gagal berkala-gagal; exit 1
   fi
 fi
 tangkap berkala

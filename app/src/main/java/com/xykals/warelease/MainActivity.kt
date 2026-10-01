@@ -99,6 +99,10 @@ class MainActivity : AppCompatActivity() {
 
     private val notifPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    private val simpanBerkasLog =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+            if (uri != null && ::aksi.isInitialized) aksi.eksporLog(uri)
+        }
 
     private val sembunyikanBanner = Runnable {
         tvBanner.animate().alpha(0f).setDuration(200).withEndAction {
@@ -225,6 +229,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvVersi).text =
             getString(R.string.k_v_rilis_github_whatsapp, BuildConfig.VERSION_NAME)
         tvFolderLog.text = LogRecorder.dir?.absolutePath ?: "(folder log nggak kebaca)"
+        findViewById<View>(R.id.rowRekamLogcat).isSelected = settings.rekamLogcat
         val namaApp = getString(R.string.app_name)
         findViewById<TextView>(R.id.tvTentang).text =
             getString(R.string.k_v_bot_pribadi_rilis_github, namaApp, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
@@ -359,6 +364,19 @@ class MainActivity : AppCompatActivity() {
         }
         pasang(R.id.btnBatre, "Izin batre") { aksi.mintaIzinBatre() }
         pasang(R.id.btnAutostart, "Autostart") { aksi.bukaAutostart() }
+        pasang(R.id.rowRekamLogcat, "Rekam log detail") {
+            val aktif = !settings.rekamLogcat
+            form.aturRekamLogcat(aktif)
+            findViewById<View>(R.id.rowRekamLogcat).isSelected = aktif
+            banner(getString(if (aktif) R.string.k_logcat_nyala else R.string.k_logcat_mati))
+        }
+        pasang(R.id.btnSalinLog, "Salin tampilan log") {
+            val berhasil = aksi.salin(findViewById<TextView>(R.id.tvLog).text.toString())
+            banner(getString(if (berhasil) R.string.k_log_disalin else R.string.k_log_gagal_salin))
+        }
+        pasang(R.id.btnUnduhLog, "Unduh semua log") {
+            simpanBerkasLog.launch("wa-release-bot-log.zip")
+        }
         pasang(R.id.btnBukaLog, "Buka folder log") { aksi.bukaFolderLog() }
         pasang(R.id.btnKirimLog, "Kirim log") { aksi.kirimLog() }
         pasang(R.id.btnKill, "Matikan service") {

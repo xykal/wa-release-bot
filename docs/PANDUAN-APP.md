@@ -38,7 +38,7 @@ Layar utama dipecah jadi lima tab; pindahnya lewat bar navigasi bawah:
 | Beranda | status WhatsApp/engine/rilis/penjaga grup, jadwal berikutnya, tombol Mulai dan Cek sekarang, kartu Tautkan WhatsApp |
 | Repo | kartu Rilis GitHub → Channel: daftar repo, link channel, token, interval, saklar kirim, tes kirim, bikin channel |
 | Fitur | Penjaga grup, Lagu mood, Hosting bot |
-| Log | catatan kerja bot, folder log, tombol kirim log, matikan service |
+| Log | catatan kerja bot, rekam log detail, salin tampilan, unduh/bagikan log internal, matikan service |
 | Pengaturan | Batre & nyala otomatis, Tentang |
 
 - Tombol **Simpan setting** nempel di atas bar navigasi dan tetap menyimpan semua tab
@@ -179,7 +179,9 @@ JID grup (`120363...@g.us`) atau link undangan grup-nya
 | **Kosongin** | Reset daftar hitam otomatis |
 | **Izinkan jalan di latar** | Minta dikecualikan dari optimasi batre |
 | **Buka izin Autostart** | Buka menu Autostart (Xiaomi dll) |
-| **Buka folder / Kirim log** | Buka / bagikan file log |
+| **Rekam log detail** (tab Log) | Nyalakan/matikan logcat Android; log app dan mesin selalu direkam |
+| **Salin tampilan / Unduh semua log** | Salin log yang terlihat, atau simpan ZIP berisi log app, mesin, Android, dan crash lewat pemilih lokasi Android |
+| **Buka folder / Kirim log** | Buka folder log atau bagikan file log |
 | **Matikan service** | Matikan semuanya sampai dinyalakan lagi |
 
 **Biar HP nggak "neror":**

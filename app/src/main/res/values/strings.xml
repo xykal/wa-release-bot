@@ -68,8 +68,12 @@
     <string name="u_izinkan_jalan_di_latar_batre">Izinkan jalan di latar (batre)</string>
     <string name="u_buka_izin_autostart_xiaomi_dll">Buka izin Autostart (Xiaomi dll)</string>
     <string name="u_log">Log</string>
-    <string name="u_catatan_kerja_bot_kalau_ada">Catatan kerja bot. Kalau ada yang aneh, tekan Kirim log.</string>
+    <string name="u_catatan_kerja_bot_kalau_ada">Log app dan mesin selalu direkam. Rekam logcat Android dari sini; Unduh semua log untuk menyimpan salinan. Log bisa memuat nomor atau tautan—cek sebelum dibagikan.</string>
+    <string name="u_rekam_logcat">Rekam log detail</string>
+    <string name="u_ket_rekam_logcat">Termasuk logcat Android dan output Node; app dan mesin tetap direkam.</string>
     <string name="u_belum_ada_log">(belum ada log)</string>
+    <string name="u_salin_log">Salin tampilan</string>
+    <string name="u_unduh_log">Unduh semua log</string>
     <string name="u_buka_folder">Buka folder</string>
     <string name="u_kirim_log">Kirim log</string>
     <string name="u_matikan_service">Matikan service</string>
@@ -83,6 +87,13 @@
     <string name="k_daftar_repo_diperbarui">Daftar repo diperbarui.</string>
     <string name="k_daftar_repo_kosong_bot_nggak">Daftar repo kosong — bot nggak mantau apa-apa sampai lo nambah repo.</string>
     <string name="k_gagal">\"%1$s\" gagal: %2$s</string>
+    <string name="k_log_disalin">Tampilan log disalin.</string>
+    <string name="k_log_gagal_salin">Gagal menyalin log.</string>
+    <string name="k_logcat_nyala">Rekam log detail nyala.</string>
+    <string name="k_logcat_mati">Rekam log detail mati.</string>
+    <string name="k_log_berhasil_diunduh">Semua log disimpan ke berkas ZIP.</string>
+    <string name="k_log_gagal_diunduh">Gagal menyimpan log: %1$s</string>
+    <string name="k_log_kosong_diunduh">Belum ada file log yang bisa disimpan.</string>
     <string name="k_v_rilis_github_whatsapp">v%1$s · rilis GitHub → WhatsApp</string>
     <string name="k_v_bot_pribadi_rilis_github">%1$s v%2$s (%3$s)\nBot pribadi: rilis GitHub → saluran WA, penjaga grup, lagu mood, hosting bot.\nLisensi: pemakaian pribadi — nggak boleh dijual / disebar ulang tanpa izin.</string>
     <string name="k_nggak_ada_browser_buat_buka">Nggak ada browser buat buka link-nya.</string>

@@ -222,6 +222,7 @@ async function main() {
   function emitStatus() {
     const { state, cfg } = ctx;
     const g = state.grup || {};
+    const rekamRingkas = ctx.fitur?.rekam?.ringkas?.();
     bridge.send({
       type: 'status',
       running: ctx.running,
@@ -271,8 +272,9 @@ async function main() {
       berkalaTerakhir: ctx.state.berkala?.terakhir || null,
       nextBerkalaAt: ctx.nextBerkalaAt || null,
       // rekam postingan channel (buat fitur WA yang belum didukung Baileys)
-      rekamChannelAktif: Boolean(ctx.fitur?.rekam?.sedangRekam?.()),
-      rekamChannelJumlah: ctx.fitur?.rekam?.ringkas?.().jumlah || 0,
+      rekamChannelAktif: Boolean(rekamRingkas?.aktif),
+      rekamChannelJumlah: rekamRingkas?.jumlah || 0,
+      rekamChannelTerakhir: rekamRingkas?.terakhirStatus || null,
     });
   }
 

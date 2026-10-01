@@ -9,7 +9,8 @@
 #      Simpan -> tetap sembunyi setelah app dibuka ulang,
 #   3. nilai saklar NEMPEL di prefs (dibuktikan dengan membuka ulang app),
 #   4. kolom-kolom baru ada (domain phishing, nomor story, interval, teks berkala),
-#   5. tombol kirim menu ngasih umpan balik walau WA belum tersambung.
+#   5. tombol kirim menu ngasih umpan balik walau WA belum tersambung;
+#   6. status rekam channel dan kondisi awalnya tampil di kartu Bot WA umum.
 set -euo pipefail
 
 : "${PKG:?PKG belum diisi}" "${ACT:?ACT belum diisi}" "${OUT:?OUT belum diisi}"
@@ -124,6 +125,15 @@ fi
 if [[ "$dump" == *"id/barSimpan"* ]]; then
   echo "uji simpan: bar Simpan muncul sendiri setelah app dibuka ulang"; tangkap_gagal simpan-gagal; exit 1
 fi
+
+gulir_ke tvModerasiStat bot-umum-rekam-channel 360
+dump="$(dump_ui)"
+if [[ ("$dump" == *"Rekam channel:"* && "$dump" == *"Belum ada postingan channel yang diproses."*) || ("$dump" == *"Channel recording:"* && "$dump" == *"No channel post processed yet."*) ]]; then
+  echo "uji rekam channel: status awal tampil di kartu Bot WA umum OK"
+else
+  echo "uji rekam channel: status awal tidak tampil"; tangkap_gagal rekam-channel-gagal; exit 1
+fi
+
 gulir_ke rowBerkalaAktif berkala-persist 340
 baris="$(dump_ui | grep -F "id/rowBerkalaAktif" | head -n 1 || true)"
 if [[ "$baris" == *'selected="true"'* ]]; then
@@ -138,6 +148,13 @@ if [[ "$(dump_ui)" == *"id/rowBerkalaHitam"* ]]; then
 else
   echo "uji berkala: saklar selalu-daftar-hitam tidak ketemu di dump UI"; tangkap_gagal berkala-gagal; exit 1
 fi
+
+# Tombol menu ada di kartu sebelumnya; reset ke atas agar elemen offscreen
+# kembali masuk ke hierarchy uiautomator sebelum gulir_ke mencari posisinya.
+for _ in 1 2 3 4 5; do
+  adb shell input swipe "$X" $((H * 30 / 100)) "$X" $((H * 70 / 100)) 400
+  sleep 0.4
+done
 
 # Umpan balik tombol kirim menu (WA belum nyambung -> tetap ada pesan).
 gulir_ke btnKirimMenu bot-umum-tombol 720

@@ -13,7 +13,14 @@ on:
         options: [id-ID, en-US]
         default: id-ID
   pull_request:
-    paths: ['.github/workflows/screenshot-app.yml', 'scripts-dev/screenshot_emulator.sh']
+    # Skrip uji UI ada di daftar ini juga: kalau uji-fitur.sh / ui-uji.sh diubah,
+    # emulator harus ikut jalan — dulu perubahan di sana nggak memicu apa-apa,
+    # jadi klaim "hijau" bisa nggak nyentuh skrip yang barusan diedit.
+    paths:
+      - '.github/workflows/screenshot-app.yml'
+      - 'scripts-dev/screenshot_emulator.sh'
+      - 'scripts-dev/uji-fitur.sh'
+      - 'scripts-dev/ui-uji.sh'
 
 permissions:
   contents: read

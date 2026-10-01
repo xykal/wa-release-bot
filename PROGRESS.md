@@ -274,3 +274,6 @@ Next:
   - Ketahuan satu kesalahan sendiri di putaran ini: komentar baru berisi spasi zero-width
     (U+200B), ditolak `no-irregular-whitespace` di job Lint Node 22. Lokal nggak ketahuan karena
     eslint nggak dipasang; sekarang ada pemeriksa kecil buat spasi tak wajar sebelum commit.
+  - Catatan proses: job emulator dulu cuma dipicu perubahan `screenshot-app.yml` dan
+    `screenshot_emulator.sh`; `uji-fitur.sh` (isi ujinya sendiri) nggak masuk daftar. Sekarang
+    keempatnya masuk, jadi klaim "uji UI hijau" nggak bisa lewat tanpa benar-benar jalan.

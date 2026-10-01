@@ -124,6 +124,9 @@ Semua perubahan penting proyek ini. Format mengikuti
   dibuang dari yang paling lama dipakai, jadi penyimpanan tidak naik terus.
 
 ### Diubah
+- Workflow **Screenshot app** ikut jalan kalau `scripts-dev/uji-fitur.sh` atau `ui-uji.sh` berubah.
+  Sebelumnya daftar pemicunya cuma dua berkas lain, jadi perubahan skrip uji UI nggak keuji
+  sama sekali di PR.
 - Perintah `.story` dan `.storygrup` dijelaskan ulang di menu dan docs: story itu urusan
   pribadi, dan `.storygrup` sekarang turun jadi `.story` kalau Penjaga grup mati (sebelumnya
   tetap menembak anggota grup yang tersimpan di state, padahal penjaganya nggak jalan).

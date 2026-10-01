@@ -73,6 +73,40 @@ test('rekam channel: node CB:message newsletter langsung menyimpan posting Perta
   }
 });
 
+test('rekam channel: ekspor otomatis ke Android/media tanpa kirim dokumen WA', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rekam-export-'));
+  const dataDir = path.join(root, 'internal');
+  const exportDir = path.join(root, 'Android', 'media', 'com.xykals.warelease', 'rekaman');
+  fs.mkdirSync(dataDir, { recursive: true });
+  fs.writeFileSync(path.join(dataDir, 'rekaman-channel.json'), JSON.stringify({ entri: [] }));
+  const ws = new EventEmitter();
+  try {
+    const rekam = buatRekamChannel({
+      dataDir,
+      rekamExportDir: exportDir,
+      log: () => {},
+      emitStatus: () => {},
+    });
+    const fileEkspor = path.join(exportDir, 'rekaman-channel.json');
+    assert.equal(fs.readFileSync(fileEkspor, 'utf8'), fs.readFileSync(rekam.berkas(), 'utf8'));
+
+    rekam.pasang({ ws });
+    rekam.nyalakan();
+    ws.emit('CB:notification', stanza({ tipe: 'questionMessage' }));
+    assert.equal(fs.readFileSync(fileEkspor, 'utf8'), fs.readFileSync(rekam.berkas(), 'utf8'));
+    assert.equal(JSON.parse(fs.readFileSync(fileEkspor, 'utf8')).entri.length, 1);
+
+    const hasil = await rekam.kirimKe(null);
+    assert.equal(hasil.ok, true);
+    assert.equal(hasil.lokasi, path.join('Android', 'media', 'com.xykals.warelease', 'rekaman', 'rekaman-channel.json'));
+    rekam.kosongkan();
+    assert.equal(fs.existsSync(fileEkspor), false);
+    assert.equal(fs.existsSync(rekam.berkas()), false);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('rekam channel: hanya simpan posting setelah aktif dan log payload yang dilewatkan', () => {
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rekam-channel-'));
   const ws = new EventEmitter();

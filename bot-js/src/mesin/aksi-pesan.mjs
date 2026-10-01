@@ -153,15 +153,16 @@ export function buatAksiPesan(ctx, alat) {
           rekam.nyalakan();
           await jawab(sock, [
             'Rekam channel NYALA.',
-            'Sekarang kirim/posting yang mau direkam di channel (mis. Pertanyaan),',
-            'terus ketik .rekam kirim buat ngirimin file rekamannya ke chat ini.',
+            'Publikasikan postingan baru di channel (mis. Pertanyaan); rekaman tersimpan otomatis.',
+            'Ketik .rekam kirim kalau perlu lihat lokasi file ekspornya.',
           ].join('\n'));
         } else if (arg === 'off' || arg === 'mati') {
           rekam.matikan();
           await jawab(sock, 'Rekam channel mati.');
         } else if (arg === 'kirim' || arg === 'unduh') {
           const hasil = await rekam.kirimKe(sock);
-          if (!hasil.ok) await jawab(sock, `Rekaman nggak terkirim: ${hasil.alasan}`);
+          if (!hasil.ok) await jawab(sock, `Rekaman nggak tersedia: ${hasil.alasan}`);
+          else if (hasil.lokasi) await jawab(sock, `Rekaman sudah disimpan di ${hasil.lokasi}`);
         } else if (arg === 'kosong' || arg === 'hapus') {
           rekam.kosongkan();
           await jawab(sock, 'Rekaman channel dikosongkan.');

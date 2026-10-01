@@ -26,6 +26,23 @@ export function buatRekamChannel(ctx) {
 
   const berkas = () => path.join(ctx.dataDir, 'rekaman-channel.json');
   const namaBerkas = 'rekaman-channel.json';
+  const dirEkspor = ctx.rekamExportDir ? path.resolve(ctx.rekamExportDir) : null;
+  const berkasEkspor = () => dirEkspor ? path.join(dirEkspor, namaBerkas) : null;
+  const lokasiEkspor = () => dirEkspor
+    ? path.join('Android', 'media', path.basename(path.dirname(dirEkspor)), path.basename(dirEkspor), namaBerkas)
+    : null;
+
+  function tulisAtomik(target, isi) {
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    const sementara = `${target}.tmp`;
+    try {
+      fs.writeFileSync(sementara, isi);
+      fs.renameSync(sementara, target);
+    } catch (e) {
+      try { fs.unlinkSync(sementara); } catch { /* file sementara mungkin belum dibuat */ }
+      throw e;
+    }
+  }
 
   function baca() {
     try {
@@ -38,8 +55,16 @@ export function buatRekamChannel(ctx) {
 
   function tulis(data) {
     // Tanpa indentasi: isinya base64, indentasi cuma bikin file dua kali lipat.
-    fs.mkdirSync(ctx.dataDir, { recursive: true });
-    fs.writeFileSync(berkas(), JSON.stringify(data));
+    const isi = JSON.stringify(data);
+    tulisAtomik(berkas(), isi);
+    const ekspor = berkasEkspor();
+    if (ekspor) {
+      try {
+        tulisAtomik(ekspor, isi);
+      } catch (e) {
+        log(`Rekam channel: data aman di penyimpanan app, ekspor Android gagal: ${e.message}`);
+      }
+    }
   }
 
   /** Buang entri paling lama sampai totalnya masuk batas. */
@@ -100,7 +125,7 @@ export function buatRekamChannel(ctx) {
   function nyalakan() {
     aktif = true;
     const r = ringkas();
-    log('🎙️ Rekam channel NYALA: postingan berikutnya di channel yang kamu ikuti bakal disimpan.');
+    log(`🎙️ Rekam channel NYALA: postingan berikutnya disimpan${lokasiEkspor() ? ` ke ${lokasiEkspor()}` : ' internal'}.`);
     emitStatus();
     return r;
   }
@@ -113,7 +138,11 @@ export function buatRekamChannel(ctx) {
   }
 
   function kosongkan() {
-    try { fs.unlinkSync(berkas()); } catch { /* belum ada berkasnya */ }
+    for (const target of [berkas(), berkasEkspor()].filter(Boolean)) {
+      try { fs.unlinkSync(target); } catch (e) {
+        if (e.code !== 'ENOENT') log(`Rekam channel: gagal menghapus ${target}: ${e.message}`);
+      }
+    }
     log('🎙️ Rekaman channel dikosongkan.');
     emitStatus();
     return ringkas();
@@ -129,10 +158,33 @@ export function buatRekamChannel(ctx) {
     };
   }
 
-  /** Kirim file rekaman ke chat sendiri (dokumen), biar bisa diteruskan ke dev. */
+  function siapkanEkspor() {
+    if (!dirEkspor) {
+      log('Rekam channel: folder Android nggak tersedia, rekaman hanya disimpan internal.');
+      return;
+    }
+    log(`Rekam channel: salinan otomatis di ${lokasiEkspor()}.`);
+    if (!fs.existsSync(berkas())) return;
+    try {
+      tulisAtomik(berkasEkspor(), fs.readFileSync(berkas()));
+    } catch (e) {
+      log(`Rekam channel: gagal menyalin rekaman lama ke folder Android: ${e.message}`);
+    }
+  }
+
+  /** Kirim file rekaman ke chat sendiri hanya bila ekspor Android tidak tersedia. */
   async function kirimKe(sock) {
-    if (!sock) return { ok: false, alasan: 'WA belum nyambung.' };
     if (!fs.existsSync(berkas())) return { ok: false, alasan: 'Belum ada rekaman.' };
+    if (dirEkspor) {
+      try {
+        if (!fs.existsSync(berkasEkspor())) tulisAtomik(berkasEkspor(), fs.readFileSync(berkas()));
+        log(`Rekam channel tersedia di ${lokasiEkspor()}.`);
+        return { ok: true, lokasi: lokasiEkspor() };
+      } catch (e) {
+        return { ok: false, alasan: `Gagal menyalin ke folder Android: ${e.message}` };
+      }
+    }
+    if (!sock) return { ok: false, alasan: 'WA belum nyambung.' };
     const jid = jidSendiri(sock);
     if (!jid) return { ok: false, alasan: 'Chat sendiri nggak ketemu.' };
     const data = fs.readFileSync(berkas());
@@ -142,9 +194,10 @@ export function buatRekamChannel(ctx) {
       mimetype: 'application/json',
       caption: 'Rekaman postingan channel. Kirim file ini ke developer (upload), jangan diedit.',
     });
-    log(`📤 Rekaman channel dikirim ke chat sendiri (${Math.round(data.length / 1024)} KB).`);
+    log(`Rekaman channel dikirim ke chat sendiri (${data.length} byte).`);
     return { ok: true, byte: data.length };
   }
 
+  siapkanEkspor();
   return { pasang, nyalakan, matikan, kosongkan, kirimKe, ringkas, berkas, sedangRekam: () => aktif };
 }

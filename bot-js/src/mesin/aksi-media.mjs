@@ -5,6 +5,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomBytes } from 'node:crypto';
 
 import { jidSendiri } from '../wa.mjs';
 import { penontonStory as hitungPenonton, keteranganPenonton } from '../story.mjs';
@@ -58,11 +59,13 @@ export function buatAksiMedia(ctx, alat) {
         await jawab(sock, `Fotonya kegedean (${Math.round(buf.length / 1048576)} MB). Kirim ulang sebagai foto biasa ya, jangan sebagai dokumen.`);
         return;
       }
-      const id = String(Date.now());
+      // Use an unpredictable, exclusive, owner-only temp file: photos are private
+      // and a stale path/symlink must never be overwritten by a new request.
+      const id = randomBytes(16).toString('hex');
       bersihkanStikerTua();
-      fs.mkdirSync(dirStiker(), { recursive: true });
+      fs.mkdirSync(dirStiker(), { recursive: true, mode: 0o700 });
       const berkas = `stiker/masuk-${id}.img`;
-      fs.writeFileSync(path.join(ctx.dataDir, berkas), buf);
+      fs.writeFileSync(path.join(ctx.dataDir, berkas), buf, { flag: 'wx', mode: 0o600 });
       ctx.tungguStiker = ctx.tungguStiker || new Map();
       ctx.tungguStiker.set(id, { dimintaAt: Date.now() });
       ctx.bridge.send({ type: 'minta_stiker', id, file: berkas });

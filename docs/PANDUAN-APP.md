@@ -10,7 +10,8 @@ Instal dan langkah awal ada di README; halaman ini buat yang mau tahu lebih dala
 - [Splash & suara pembuka](#splash--suara-pembuka)
 - [Cek perangkat](#cek-perangkat)
 - [Penjaga grup (auto-approve)](#penjaga-grup-auto-approve)
-- [Bot WA umum (moderasi + perintah di chat sendiri)](#bot-wa-umum-moderasi--perintah-di-chat-sendiri)
+- [Bot WA umum, moderasi, dan pesan berkala](#bot-wa-umum-moderasi-dan-pesan-berkala)
+- [Tombol Simpan muncul kalau ada perubahan](#tombol-simpan-muncul-kalau-ada-perubahan)
 - [Batre](#batre)
 - [Channel WA: dapetnya dari mana?](#channel-wa-dapetnya-dari-mana)
 - [Lagu mood](#lagu-mood)
@@ -96,50 +97,19 @@ anggota yang berubah antar-cek, jadi:
   **Buka blokir** biar bisa join lagi. **Kosongin** buat reset semuanya
 - **Tes kirim** (di kartu Penjaga grup) kirim pesan singkat ke grup buat ngecek
 
-## Bot WA umum (moderasi + perintah di chat sendiri)
+## Bot WA umum, moderasi, dan pesan berkala
 
-Kartu **Bot WA umum** di tab Fitur punya dua saklar. Dua-duanya bikin WhatsApp
-**tetap tersambung** selama engine jalan — beda dari fitur lain yang cuma
-nyambung sebentar tiap jadwal. Karena itu saklarnya terpisah dan bawaannya
-mati-kecuali: moderasi **mati**, perintah pribadi **nyala**.
+Fitur yang jalan di sisi WhatsApp (perintah pribadi, moderasi grup, stiker,
+story, pesan berkala ke grup) dipindah ke dokumen sendiri supaya halaman ini
+tetap fokus ke kartu-kartu di app: [PANDUAN-BOT-WA.md](PANDUAN-BOT-WA.md).
 
-**Perintah pribadi** (cuma jalan di **chat diri sendiri** — bukan di grup):
-kirim `.menu` buat lihat daftarnya. Yang ada sekarang:
+## Tombol Simpan muncul kalau ada perubahan
 
-| Perintah | Gunanya |
-|---|---|
-| `.menu` / `.bantu` | daftar perintah |
-| `.ping` | cek bot hidup |
-| `.status` | repo, rilis terakhir, penjaga grup, hitungan moderasi |
-| `.stiker` | kirim/rebalas **foto** dengan keterangan `.stiker` → jadi stiker WA |
-| `.story` | kirim/rebalas **foto/video** dengan keterangan `.story` → status/story HD |
-| `.storygrup` | sama, tapi penontonnya ditambah anggota grup yang dipantau |
-| `.grup` | info grup yang dipantau: nama, jumlah anggota, daftar hitam |
-| `.bersih` | kosongkan hitungan moderasi hari ini |
-
-Stiker diproses di HP: WhatsApp cuma nerima stiker **WebP**, sementara mesin Node
-di dalam app nggak punya encoder WebP. Jadi fotonya dititipkan lewat berkas di
-folder data app, dikecilkan ke 512 px dan dikompres di `Stiker.kt`, baru balik
-jadi stiker. Foto besar/format aneh otomatis diturunkan mutunya; kalau tetap
-nggak kebaca, bot balas pesan gagal (nggak diem-dieman). Karena butuh Android,
-`.stiker` di CLI dijawab: pakai app buat fitur ini. Foto sebagai **dokumen**
-(di atas 6 MB) juga ditolak dengan pesan — kirim sebagai foto biasa saja.
-
-**Moderasi grup** (nyalain saklarnya, grup harus sama dengan **Penjaga grup**):
-
-- link Telegram, domain yang lo daftarin di **Domain phishing**, dan link di luar
-  daftar izin (`chat.whatsapp.com`, `wa.me`, `whatsapp.com`) → **dihapus**
-- kata judi/pinjol/promo (`slot`, `gacor`, `pinjol`, `promo`, …) → **dihapus**;
-  tambah kata sendiri di **Kata tambahan**
-- pelakunya **diperingatkan**; di pelanggaran ke-`batas strike` (bawaan 2) baru
-  **dikeluarkan** dari grup
-- **admin grup dan bot sendiri nggak pernah disentuh** — termasuk lo sebagai admin
-- **Izinkan link biasa**: kalau dinyalain, link selain domain terlarang dibiarkan
-
-Biar hapus pesan jalan, akun yang ditautkan **wajib admin** di grup itu. Kalau
-bukan, bot tetap kirim peringatan tapi lognya nulis gagal hapus (sekali, nggak
-spam log). Tombol **Kirim menu ke chat** ngirim daftar perintah ke chat diri
-sendiri tanpa ngetik; **Kosongin hitungan** nol-in statistik moderasi.
+Tombol **Simpan setting** nggak nongol terus: dia muncul begitu ada yang lo ubah
+(saklar dipencet, kotak diketik, daftar repo diubah) dan sembunyi lagi setelah
+setting terkirim ke engine. Di tab Log tombol itu nggak ada sama sekali — di
+sana nggak ada yang bisa disimpan. Jadi kalau lo ngerasa "kok nggak ada tombol
+Simpan", artinya nggak ada perubahan yang belum disimpan.
 
 ## Batre
 

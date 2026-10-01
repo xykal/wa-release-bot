@@ -36,6 +36,7 @@ internal class PanelStatus(
     private lateinit var tvLaguStat: TextView
     private lateinit var tvHostingStat: TextView
     private lateinit var tvModerasiStat: TextView
+    private lateinit var tvBerkalaStat: TextView
     private lateinit var tvLog: TextView
     private lateinit var svLog: ScrollView
     private lateinit var btnMulai: TextView
@@ -54,6 +55,7 @@ internal class PanelStatus(
         tvLaguStat = a.findViewById(R.id.tvLaguStat)
         tvHostingStat = a.findViewById(R.id.tvHostingStat)
         tvModerasiStat = a.findViewById(R.id.tvModerasiStat)
+        tvBerkalaStat = a.findViewById(R.id.tvBerkalaStat)
         tvLog = a.findViewById(R.id.tvLog)
         svLog = a.findViewById(R.id.svLog)
         btnMulai = a.findViewById(R.id.btnMulai)
@@ -204,6 +206,19 @@ internal class PanelStatus(
                 append("\n")
                 append(a.getString(R.string.k_perangkat_2, it))
             }
+        }
+
+        tvBerkalaStat.text = if (!ui.berkalaAktif) {
+            a.getString(R.string.k_pesan_berkala_mati)
+        } else {
+            val berikut = ui.nextBerkalaAt?.let { Durasi.human(it - System.currentTimeMillis()) }
+            a.getString(
+                R.string.k_pesan_berkala_2,
+                ui.berkalaJam.toString(),
+                ui.berkalaTerakhir ?: "-",
+                ui.berkalaCount.toString(),
+                berikut ?: "-"
+            )
         }
 
         val err = ui.engineError

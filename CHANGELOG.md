@@ -39,6 +39,13 @@ tetap menerima update.
 
 ### Rincian sejak 1.8.0
 #### Ditambah
+- **Pesan berkala ke grup (M16)**: kartu di tab Fitur buat mengirim pesan berulang ke grup yang
+  dipantau — bawaan **daftar hitam grup** (nomor + sejak kapan + nomor yang admin daftarkan
+  sendiri), atau teks sendiri kalau kolom pesannya diisi (mis. aturan grup). Jaraknya diatur
+  dalam jam (1-168). Tiap kirim = sekali sambung WhatsApp lalu tutup, jadi batre tetap aman
+  (beda dari mode jaga pesan yang nyambung terus). Isi pesannya disusun `bot-js/src/berkala.mjs`
+  (murni, 7 unit test), pengirimnya `bot-js/src/mesin/pesan-berkala.mjs`. Tombol **Kirim sekarang**
+  di app mengirim tanpa nunggu jadwal.
 - **Screenshot app otomatis**: workflow `screenshot-app.yml` membangun APK release x86_64,
   menjalankannya di emulator Android 14 (GitHub Actions) dan menangkap tiap layar
   (`scripts-dev/screenshot_emulator.sh`); hasilnya dibingkai `scripts-dev/bingkai_screenshot.py`
@@ -131,6 +138,16 @@ tetap menerima update.
   dibuang dari yang paling lama dipakai, jadi penyimpanan tidak naik terus.
 
 #### Diubah
+- App: tombol **Simpan** di layar utama tidak lagi nongol terus — muncul cuma kalau ada yang
+  diubah (saklar dipencet, kotak isian diketik, tabel repo diubah) dan sembunyi lagi setelah
+  setting terkirim ke engine. Di tab Log tetap nggak ada tombol itu.
+- **Keamanan Actions**: bukan repo privat, jadi yang dikunci adalah siapa yang bisa menjalankan
+  workflow. `default_workflow_permissions` jadi **read** (token Actions nggak bisa nulis
+  sembarangan), `can_approve_pull_request_reviews` dimatikan, PR dari fork wajib **disetujui
+  manual** (`first_time_contributors` -> `all_external_contributors`), semua action wajib dipin
+  ke commit SHA (`sha_pinning_required`), dan `main` dilindungi: wajib lewat PR, tanpa force
+  push. Job `bersihkan` juga menolak dipicu run dari fork (`workflow_run` adalah celah klasik).
+  Resepnya ditulis di `docs/CI.md` dan `SECURITY.md`.
 - Situs: jadwal launching Minggu 11 Oktober 2026 19.00 WIB (sempat 4 Oktober). Teks tanggal di
   popup kini diturunkan dari `LAUNCH_ISO` lewat `Intl` zona Asia/Jakarta, jadi jadwal cukup
   diubah di satu tempat; `launching.ics` naik `SEQUENCE` supaya kalender yang sudah impor ikut.
@@ -171,6 +188,7 @@ tetap menerima update.
   tidak kelihatan.
 
 #### Diperbaiki
+- CI: job `Lockfile root` nggak lagi gagal kalau `main` menolak push langsung (main sekarang wajib PR); pesannya berubah jadi arahan bikin PR.
 - CI: draft release internal sempat **menumpuk**. `GET /releases/tags/<tag>` memang sudah tidak
   dipakai lagi, tapi ternyata `tag_name` sebuah draft juga bukan pegangan stabil: begitu ada draft
   lain yang memakai tag itu, GitHub membalasnya sebagai `untagged-<hash>`, jadi pencarian meleset

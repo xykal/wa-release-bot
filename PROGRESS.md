@@ -174,3 +174,22 @@ Next:
   lewat nama `Build internal <versi>`, pembersihan duplikat lewat `id`, dan resep/pelajaran itu
   ditulis di docs/CI.md. Klaim "VERIFIED" di laporan sebelumnya soal isi draft internal terlalu
   percaya pada pencarian tag — sekarang pembuktiannya lewat daftar release + hitungan draft.
+
+- Permintaan kall (2026-10-01): hapus bukti di workspace (sudah: folder `bukti/` dibuang),
+  tombol Simpan cuma muncul kalau ada perubahan, tambah fitur pesan berkala ke grup (mis. daftar
+  hitam), dan kunci siapa yang bisa menjalankan Actions tanpa bikin repo privat.
+  - Tombol Simpan: `FormPengaturan.pantauPerubahan()` mantau semua EditText + saklar;
+    `NavBawah` nyembunyiin bar-nya sampai ada perubahan, dan `onSave()` yang sukses
+    ngebersihin bendera. Dijaga dari salah tandai: pemantauan dipasang SETELAH `muat()`,
+    jadi isian awal dari prefs bukan dianggap perubahan.
+  - Pesan berkala: `bot-js/src/berkala.mjs` (murni: jatuh tempo + susun teks daftar hitam) +
+    `bot-js/src/mesin/pesan-berkala.mjs` (sambung sekali per kirim, bukan socket nyala terus).
+    Kartu baru di tab Fitur: saklar, interval jam, teks opsional, tombol Kirim sekarang.
+    Validasi: berkala butuh Penjaga grup nyala (tanpa grup nggak ada tujuan kirim).
+  - Actions: setelan repo diubah lewat API (bukan cuma dokumen) — izin default workflow jadi
+    read-only, approve-PR lewat token dimatikan, PR fork wajib disetujui manual, action wajib
+    dipin ke SHA, dan `main` wajib PR tanpa force push. Job `bersihkan` nolak `workflow_run`
+    dari fork. Yang TIDAK bisa ditutup di repo publik: log run tetap bisa dibaca siapa aja —
+    itu sebabnya tetap dibersihkan berkala dan nggak ada secret di dalamnya.
+  - Skrip uji UI dirapikan: fungsi bantu adb pindah ke `scripts-dev/ui-uji.sh`, uji kartu Fitur
+    pindah ke `scripts-dev/uji-fitur.sh` (skrip utama balik ke ~200 baris).

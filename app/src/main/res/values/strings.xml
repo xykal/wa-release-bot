@@ -322,4 +322,17 @@
     <string name="k_stiker_story_perintah_2">Stiker %1$s | story %2$s | perintah %3$s</string>
     <string name="k_perangkat_2">Perangkat: %1$s</string>
     <string name="u_contoh_domain_phishing">mis. bit.ly, contoh-scam.com</string>
+    <!-- kartu pesan berkala (M16) -->
+    <string name="u_pesan_berkala_grup">Pesan berkala ke grup</string>
+    <string name="u_ket_pesan_berkala_grup">Kirim pesan sendiri ke grup yang dipantau, misal daftar hitam tiap 12 jam. Sekali kirim = sekali sambung WA, jadi tetap hemat batre.</string>
+    <string name="u_kirim_berkala">Kirim berkala</string>
+    <string name="u_ket_kirim_berkala">Butuh Penjaga grup nyala: grup itu tujuan kirimnya.</string>
+    <string name="u_setiap_berapa_jam">SETIAP BERAPA JAM (1-168)</string>
+    <string name="u_pesan_kalau_dikosongin_daftar">PESAN (KOSONGIN = KIRIM DAFTAR HITAM GRUP)</string>
+    <string name="u_contoh_aturan_grup_pisah_baris">mis. Aturan grup: jangan kirim link (pisah pakai baris)</string>
+    <string name="u_kirim_sekarang">Kirim sekarang</string>
+    <string name="k_pesan_berkala_dikirim_sekarang">Pesan berkala dikirim sekarang (kalau WA tersambung).</string>
+    <string name="k_pesan_berkala_mati">Pesan berkala: mati</string>
+    <string name="k_pesan_berkala_2">Pesan berkala tiap %1$s jam | terakhir: %2$s | total %3$s | berikut: %4$s</string>
+    <string name="k_pesan_berkala_butuh_penjaga_grup">Pesan berkala butuh Penjaga grup nyala: grup itu tujuan kirimnya. Nyalain dulu di kartu Penjaga grup.</string>
 </resources>

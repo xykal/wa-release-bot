@@ -43,6 +43,12 @@ concurrency:
 jobs:
   bersihkan:
     name: Sapu run, artifact, cache
+    # workflow_run jalan dengan secret repo, jadi harus dipastiin yang micu
+    # adalah run dari repo INI -- bukan PR dari fork yang cabangnya kebetulan
+    # diberi nama "main". Tanpa penjaga ini, alur `workflow_run` jadi celah
+    # klasik buat nyolong token dari fork.
+    if: github.event_name != 'workflow_run' ||
+        github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

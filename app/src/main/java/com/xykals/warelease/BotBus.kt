@@ -87,6 +87,12 @@ data class BotUi(
     var stikerDibuat: Int = 0,
     var storyDikirim: Int = 0,
     var perangkat: String? = null,
+    // pesan berkala ke grup (daftar hitam / teks sendiri)
+    var berkalaAktif: Boolean = false,
+    var berkalaJam: Int = 0,
+    var berkalaCount: Int = 0,
+    var berkalaTerakhir: String? = null,
+    var nextBerkalaAt: Long? = null,
     // hosting bot custom
     var hosting: HostingUi = HostingUi(),
     var hostingLog: List<BarisKonsol> = emptyList(),

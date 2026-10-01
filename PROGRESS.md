@@ -237,3 +237,20 @@ Next:
     `docs/PANDUAN-BOT-WA.md`.
 - Uji murni lokal: story 6/6, rekam 7/7, pesan 11/11, berkala 7/7. Engine & unit tetap
   CI-only (butuh `node_modules`; `unit.test.mjs` gugur lokal karena Baileys nggak ada).
+
+- Laporan kall (2026-10-01): "menu/rekam mesti respon cepat" dan "pesan berkala daftar hitam
+  nya rusak".
+  - Yang rusak memang nyata dan ketemu dari mencetak isi pesannya sendiri: nomor manual
+    ditampilkan mentah (`0812-3456-7890`, `+62 813 1111 2222`), ada baris sampah (`abc`), dan
+    satu orang muncul dua kali sementara hitungannya "6 orang" padahal 3. Dirapikan di
+    `bot-js/src/berkala.mjs` (`susunDaftarHitam` + normalisasi `nomor.mjs`): duplikat digabung,
+    sampah dibuang, urutan nomor kecil dulu, daftar panjang diringkas, hitungan = jumlah orang.
+  - Akar masalah kedua: format waktu pakai `toLocaleString('id-ID')`, dan Node di APK
+    (nodejs-mobile) ber-ICU kecil → hasilnya format Amerika. Diganti `bot-js/src/waktu.mjs`
+    (murni, tanpa ICU): "1 Okt 2026, 19.06 WIB".
+  - Kecepatan: jalur perintah dan moderasi dipisah di `mesin/jaga-pesan.mjs` (perintah dijawab
+    langsung, moderasi tetap urut di antreannya sendiri), dan versi protokol WA di-cache 6 jam
+    (`versiWA()` di `wa.mjs`) supaya kiriman terjadwal nggak minta versi tiap nyambung.
+  - Perintah baru `.berkala` (lihat) dan `.berkala kirim` (kirim lewat socket mode jaga) —
+    dipakai buat cek tampilan pesan tanpa nunggu 12 jam, dan tanpa bikin koneksi kedua.
+  - Uji murni: berkala 11/11, pesan 11/11, story 6/6, rekam-mentah 7/7.

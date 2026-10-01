@@ -46,6 +46,9 @@ tetap menerima update.
   (beda dari mode jaga pesan yang nyambung terus). Isi pesannya disusun `bot-js/src/berkala.mjs`
   (murni, 7 unit test), pengirimnya `bot-js/src/mesin/pesan-berkala.mjs`. Tombol **Kirim sekarang**
   di app mengirim tanpa nunggu jadwal.
+- Perintah baru `.berkala`: lihat dulu isi pesan berkala (daftar hitam / teks sendiri) di chat
+  sendiri tanpa mengirim ke grup, plus `.berkala kirim` buat kirim sekarang lewat koneksi mode
+  jaga yang sudah terbuka (nggak bikin koneksi kedua ke sesi WA yang sama).
 - **Rekam postingan channel bisa langsung dari chat** (`.rekam on|off|kirim|kosong`).
   Perekam lama (CLI `npm run rekam`, untuk nangkep format **Pertanyaan** channel) butuh
   komputer/Termux; sekarang jalan dari chat sendiri tanpa alat tambahan. Bedanya juga:
@@ -207,6 +210,24 @@ tetap menerima update.
 
 #### Diperbaiki
 - CI: job `Lockfile root` nggak lagi gagal kalau `main` menolak push langsung (main sekarang wajib PR); pesannya berubah jadi arahan bikin PR.
+- **Pesan daftar hitam kelihatan rusak** (laporan kall): nomor yang didaftarkan admin
+  ditampilkan mentah apa adanya, jadi barisnya campur (`0812-3456-7890`, `+62 813 1111 2222`),
+  ada baris sampah (`abc`), satu orang bisa muncul dua kali (versi otomatis + versi manual),
+  dan hitungannya bilang "6 orang" padahal isinya 3. Sekarang semua masukan lewat normalisasi
+  nomor di `bot-js/src/berkala.mjs` (`susunDaftarHitam`, murni), duplikat digabung, baris bukan
+  nomor dibuang, urutan rapi (nomor kecil dulu, ID samaran belakang), daftar di atas 30 orang
+  diringkas dengan hitungan tetap jujur, dan `state.berkala.terakhir` mencatat jumlah orang
+  sebenarnya.
+- Waktu di pesan bot nggak lagi bergantung ICU: dulu `toLocaleString('id-ID')` dipakai buat
+  pesan berkala, `.ping`, dan status `.rekam` — di HP (nodejs-mobile ber-ICU kecil) itu jatuh
+  ke format Amerika ("10/1/2026, 7:00:00 PM"). Sekarang lewat `bot-js/src/waktu.mjs` (murni):
+  "1 Okt 2026, 19.06 WIB".
+- **Balasan perintah dipercepat**: moderasi grup dan perintah pribadi dipisah jadi dua jalur di
+  `mesin/jaga-pesan.mjs`. Dulu perintah ngantre di belakang kerjaan moderasi (tarik metadata,
+  hapus pesan, tendang) yang bisa makan detik-detik waktu grup rame; sekarang perintah dijawab
+  langsung sementara moderasi tetap urut di antreannya sendiri. Ditambah: versi protokol WA
+  (`fetchLatestBaileysVersion`) di-cache 6 jam, jadi kiriman yang bikin koneksi baru nggak
+  buang satu round-trip HTTP di depan tiap kirim.
 - CI: draft release internal sempat **menumpuk**. `GET /releases/tags/<tag>` memang sudah tidak
   dipakai lagi, tapi ternyata `tag_name` sebuah draft juga bukan pegangan stabil: begitu ada draft
   lain yang memakai tag itu, GitHub membalasnya sebagai `untagged-<hash>`, jadi pencarian meleset

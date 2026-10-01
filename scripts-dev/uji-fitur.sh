@@ -25,15 +25,6 @@ else
   echo "uji bot-umum: kartu Bot WA umum tidak lengkap di dump UI"; tangkap_gagal bot-umum-gagal; exit 1
 fi
 
-gulir_ke tvModerasiStat bot-umum-rekam-channel 360
-dump="$(dump_ui)"
-if [[ ("$dump" == *"Rekam channel:"* && "$dump" == *"Belum ada postingan channel yang diproses."*) || ("$dump" == *"Channel recording:"* && "$dump" == *"No channel post processed yet."*) ]]; then
-  echo "uji rekam channel: status awal tampil di kartu Bot WA umum OK"
-else
-  echo "uji rekam channel: status awal tidak tampil"; tangkap_gagal rekam-channel-gagal; exit 1
-fi
-gulir_ke rowModerasi bot-umum-kembali 360
-
 # M16: bar Simpan harus MULAI dari sembunyi (belum ada perubahan).
 if [[ "$dump" == *"id/barSimpan"* ]]; then
   echo "uji simpan: bar Simpan kelihatan padahal belum ada perubahan"; tangkap_gagal simpan-gagal; exit 1
@@ -134,6 +125,15 @@ fi
 if [[ "$dump" == *"id/barSimpan"* ]]; then
   echo "uji simpan: bar Simpan muncul sendiri setelah app dibuka ulang"; tangkap_gagal simpan-gagal; exit 1
 fi
+
+gulir_ke tvModerasiStat bot-umum-rekam-channel 360
+dump="$(dump_ui)"
+if [[ ("$dump" == *"Rekam channel:"* && "$dump" == *"Belum ada postingan channel yang diproses."*) || ("$dump" == *"Channel recording:"* && "$dump" == *"No channel post processed yet."*) ]]; then
+  echo "uji rekam channel: status awal tampil di kartu Bot WA umum OK"
+else
+  echo "uji rekam channel: status awal tidak tampil"; tangkap_gagal rekam-channel-gagal; exit 1
+fi
+
 gulir_ke rowBerkalaAktif berkala-persist 340
 baris="$(dump_ui | grep -F "id/rowBerkalaAktif" | head -n 1 || true)"
 if [[ "$baris" == *'selected="true"'* ]]; then

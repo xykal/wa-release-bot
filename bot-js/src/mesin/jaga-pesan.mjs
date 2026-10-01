@@ -41,7 +41,7 @@ export function buatJagaPesan(ctx) {
   /**
    * Kirim jawaban ke chat sendiri (perintah pribadi tidak pernah dijawab di grup).
    * @returns {Promise<boolean>} true kalau benar-benar terkirim — dulu fungsi ini
-   *   diam saja waktu JID diri sendiri nggak kebaca, jadi tombol/​perintah kelihatan
+   *   diam saja waktu JID diri sendiri nggak kebaca, jadi tombol/perintah kelihatan
    *   "nggak ada balasan" tanpa jejak apa pun.
    */
   async function jawab(sock, teks) {

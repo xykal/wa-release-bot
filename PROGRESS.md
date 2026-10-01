@@ -271,3 +271,6 @@ Next:
     nyebut itu langsung (bukan "gagal" doang).
   - String app: 330 nama di `values` dan `values-en` (2 baru buat saklar, 1 teks lama diperbaiki
     isinya, bukan ditambah).
+  - Ketahuan satu kesalahan sendiri di putaran ini: komentar baru berisi spasi zero-width
+    (U+200B), ditolak `no-irregular-whitespace` di job Lint Node 22. Lokal nggak ketahuan karena
+    eslint nggak dipasang; sekarang ada pemeriksa kecil buat spasi tak wajar sebelum commit.

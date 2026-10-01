@@ -7,6 +7,10 @@ Semua perubahan penting proyek ini. Format mengikuti
 ## [Unreleased]
 
 ### Ditambah
+- Tab Log sekarang punya saklar rekam logcat Android, tombol salin untuk log yang terlihat,
+  dan unduh ZIP berisi `app.log`, `mesin.log`, `logcat.log`, `crash.log` serta rotasinya.
+  Log app/engine tetap direkam otomatis; ekspor memakai pemilih dokumen Android, tanpa izin
+  penyimpanan.
 - Saklar **Selalu kirim daftar hitam** di kartu Pesan berkala: kalau nyala, yang dikirim cuma
   daftar hitam grup dan kolom pesan diabaikan (permintaan kall). Logikanya `pilihIsi()` di
   `bot-js/src/berkala.mjs` (murni, ada ujinya); `.berkala` di chat nunjukin mode yang sedang

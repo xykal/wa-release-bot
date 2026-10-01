@@ -840,6 +840,28 @@
                 android:drawableStart="@drawable/ic_log"
                 android:text="@string/u_log" />
             <TextView style="@style/KetKartu" android:text="@string/u_catatan_kerja_bot_kalau_ada" />
+            <LinearLayout android:id="@+id/rowRekamLogcat" style="@style/BarisSaklar" android:layout_marginTop="10dp">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/u_rekam_logcat"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/u_ket_rekam_logcat"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
             <ScrollView
                 android:id="@+id/svLog"
                 android:layout_width="match_parent"
@@ -867,6 +889,27 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:id="@+id/btnSalinLog"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_salin"
+                    android:text="@string/u_salin_log" />
+                <TextView
+                    android:id="@+id/btnUnduhLog"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    style="@style/TombolLembut"
+                    android:drawableStart="@drawable/ic_unduh"
+                    android:text="@string/u_unduh_log" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:orientation="horizontal">
                 <TextView
                     android:id="@+id/btnBukaLog"

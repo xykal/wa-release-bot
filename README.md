@@ -200,9 +200,10 @@ Langkah rinci, versi toolchain, dan signing: [docs/BUILD.md](docs/BUILD.md).
 
 ## Debugging dan troubleshooting
 
-Semua log ada di `Android/media/com.xykals.warelease/log/` (`app.log`, `mesin.log`, `logcat.log`,
-`crash.log`) — bisa dibuka tanpa root; paling gampang tekan **Kirim Log** di app. Isi tiap file,
-cara baca crash, dan daftar error yang sering muncul: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
+Log app/engine direkam otomatis; logcat Android dapat dinyalakan dari tab Log. Di sana tekan
+**Unduh semua log** untuk menyimpan ZIP (app, mesin, logcat, crash), **Salin tampilan** untuk
+menyalin baris yang terlihat, atau **Kirim Log** untuk membagikan file. Log bisa memuat nomor
+atau tautan, jadi cek sebelum dibagikan. Detail: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 ---
 

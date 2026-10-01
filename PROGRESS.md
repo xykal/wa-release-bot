@@ -201,6 +201,14 @@ Next:
 
 ## 2026-10-01 — hari kerja ke-3
 
+- Permintaan kall: rekam log internal langsung dari APK, unduh log, dan sediakan tombol salin.
+  `LogRecorder` sudah merekam `app.log`/`mesin.log` otomatis dan `logcat.log` (opsional), tapi
+  kontrolnya tersembunyi di Pengaturan; unduh ZIP dan salin dari tab Log belum ada.
+  - PR menambahkan saklar rekam detail (logcat Android/Node), **Salin tampilan**, dan
+    **Unduh semua log** lewat pemilih lokasi Android. Ekspor memasukkan app, mesin, logcat,
+    crash, serta file rotasi ke ZIP tanpa izin penyimpanan.
+  - README, panduan app, dan troubleshooting diperbarui. Uji emulator memastikan saklar berubah,
+    tombol salin memberi feedback, dan tombol unduh membuka pemilih dokumen.
 - Log uji kall dari HP (22:31–22:47): tombol Kirim menu berhasil (`Menu dikirim ke chat sendiri`) dan pesan berkala berhasil dikirim ke grup dengan daftar 20 nomor. Log juga menunjukkan socket jaga berulang kali tutup dengan code 440 / `Connection Closed`, lalu reconnect; ini belum aman untuk dipakai lama.
   - Akar yang cocok dengan urutan log: tugas WA singkat seperti cek grup/pesan berkala membuka socket login kedua memakai sesi yang sama sementara socket jaga masih hidup. Penjaga grup memang menjaga satu socket terus; antrian `pakaiWA` sebelumnya tidak mencakup koneksi persisten itu.
   - Perbaikan: `sambung()` kini meminjam socket mode jaga untuk tugas singkat dan tidak menutupnya; kalau mode jaga sedang reconnect, tugas menunggu sampai socket siap (batas 30 dtk). Loop jaga sendiri melewati jalur pinjam supaya tidak menunggu dirinya sendiri. Kalau mode jaga mati, pola koneksi sekali pakai tetap berlaku.

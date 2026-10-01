@@ -152,6 +152,13 @@ internal class FormPengaturan(
         tvRepoRingkas.text = RepoDaftar.ringkas(settings.repo)
     }
 
+    /** Saklar di kartu Log dan Pengaturan berbagi satu preferensi. */
+    fun aturRekamLogcat(aktif: Boolean) {
+        settings.rekamLogcat = aktif
+        rowLogcat.isSelected = aktif
+        if (aktif) LogRecorder.mulaiRekamLogcat() else LogRecorder.berhentiRekamLogcat()
+    }
+
     /** prefs -> view */
     fun muat() {
         etPhone.setText(settings.phone)

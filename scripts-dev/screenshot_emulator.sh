@@ -150,6 +150,43 @@ gulir_ke etLaguPerHari lagu 560
 gulir_ke btnHosting hosting 500
 
 ketuk_nav navLog log
+gulir_ke rowRekamLogcat log-kontrol 260
+dump="$(dump_ui)"
+for id in rowRekamLogcat btnSalinLog btnUnduhLog; do
+  if [[ "$dump" != *"id/$id"* ]]; then
+    echo "uji log: kontrol $id tidak ada"; tangkap_gagal "log-$id-gagal"; exit 1
+  fi
+done
+
+# Saklar rekam detail harus bisa dimatikan lalu dinyalakan lagi dari tab Log.
+baris="$(printf '%s\n' "$dump" | grep -F "id/rowRekamLogcat" | head -n 1 || true)"
+awal=false
+[[ "$baris" == *'selected="true"'* ]] && awal=true
+ketuk_id rowRekamLogcat "saklar rekam logcat"
+baris="$(dump_ui | grep -F "id/rowRekamLogcat" | head -n 1 || true)"
+if [[ ( "$awal" == true && "$baris" == *'selected="true"'* ) || ( "$awal" == false && "$baris" != *'selected="true"'* ) ]]; then
+  echo "uji log: saklar rekam detail tidak berubah"; tangkap_gagal log-saklar-gagal; exit 1
+fi
+ketuk_id rowRekamLogcat "pulihkan saklar rekam logcat"
+baris="$(dump_ui | grep -F "id/rowRekamLogcat" | head -n 1 || true)"
+if [[ ( "$awal" == true && "$baris" != *'selected="true"'* ) || ( "$awal" == false && "$baris" == *'selected="true"'* ) ]]; then
+  echo "uji log: saklar rekam detail tidak balik ke keadaan semula"; tangkap_gagal log-saklar-gagal; exit 1
+fi
+
+# Salin harus memberi umpan balik di app; Unduh harus membuka pemilih dokumen Android.
+gulir_ke btnSalinLog log-salin 620
+ketuk_id btnSalinLog "salin tampilan log"
+if [[ "$(dump_ui)" != *"log disalin"* && "$(dump_ui)" != *"log copied"* ]]; then
+  echo "uji log: tombol salin tidak memberi umpan balik"; tangkap_gagal log-salin-gagal; exit 1
+fi
+gulir_ke btnUnduhLog log-unduh 620
+ketuk_id btnUnduhLog "unduh semua log"
+sleep 1
+if ! adb shell dumpsys activity activities | grep -qi 'documentsui'; then
+  echo "uji log: tombol unduh tidak membuka pemilih file Android"; tangkap_gagal log-unduh-gagal; exit 1
+fi
+adb shell input keyevent KEYCODE_BACK
+sleep 0.5
 gulir_ke btnKill log-bawah 520
 
 # Bukti tab benar-benar jalan (M11): di tab Log, item navLog yang nyala dan

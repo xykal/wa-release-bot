@@ -22,8 +22,13 @@ app-nya sendiri — jadi percuma buat nyari masalah.
 | `logcat.log` | Log mentah Android — termasuk output mentah Node & stack trace |
 | `crash.log` | **Ada isinya = app pernah mati sendiri.** Bagian atasnya nulis versi app, HP apa, dan penyebabnya |
 
-Cara paling gampang: **Kirim Log** di app → pilih WhatsApp/email → kirim ke
-tujuan. Kalau mau lihat sendiri: **Buka Folder Log**.
+Log app (`app.log`) dan engine (`mesin.log`) direkam otomatis. **Rekam log detail**
+di tab Log menyalakan/mematikan `logcat.log` (termasuk output Node dan stack trace);
+`crash.log` mencatat crash app. Tekan **Unduh semua log** untuk menyimpan ZIP ke
+folder pilihan, atau **Salin tampilan** untuk menyalin log yang kelihatan di layar.
+**Kirim Log** tetap membuka menu bagikan; **Buka Folder Log** membuka foldernya.
+
+Periksa dulu sebelum mengirim: log dapat memuat nomor, nama repo/grup, atau tautan.
 
 Tiap file maksimal 2 MB lalu di-rotate (yang lama jadi `.1`). Folder ini boleh
 dihapus kapan aja — bakal dibikin ulang.

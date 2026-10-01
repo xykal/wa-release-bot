@@ -21,6 +21,12 @@ on:
       - 'scripts-dev/screenshot_emulator.sh'
       - 'scripts-dev/uji-fitur.sh'
       - 'scripts-dev/ui-uji.sh'
+      - 'app/src/main/res/layout/activity_main.xml'
+      - 'app/src/main/res/values/strings.xml'
+      - 'app/src/main/res/values-en/strings.xml'
+      - 'app/src/main/java/com/xykals/warelease/MainActivity.kt'
+      - 'app/src/main/java/com/xykals/warelease/AksiSistem.kt'
+      - 'app/src/main/java/com/xykals/warelease/FormPengaturan.kt'
 
 permissions:
   contents: read

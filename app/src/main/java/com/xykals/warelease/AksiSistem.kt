@@ -10,6 +10,8 @@ import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.core.content.FileProvider
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 /**
  * Aksi yang keluar dari app ke sistem / app lain: izin batre, menu autostart
@@ -146,11 +148,50 @@ internal class AksiSistem(
         a.startActivity(Intent.createChooser(kirim, a.getString(R.string.k_kirim_log_ke)))
     }
 
-    fun salin(teks: String) {
-        try {
+    /** Simpan semua log internal ke satu ZIP lewat pemilih lokasi Android. */
+    fun eksporLog(uri: Uri) {
+        val d = LogRecorder.dir
+        if (d == null) {
+            banner(a.getString(R.string.k_folder_log_nggak_kebaca))
+            return
+        }
+        val nama = setOf("app.log", "mesin.log", "logcat.log", "crash.log")
+        val berkas = d.listFiles()?.filter { f ->
+            f.isFile && (f.name in nama || nama.any { f.name == "$it.1" })
+        }?.sortedBy { it.name } ?: emptyList()
+        if (berkas.isEmpty()) {
+            banner(a.getString(R.string.k_log_kosong_diunduh))
+            return
+        }
+        Thread({
+            try {
+                val tujuan = a.contentResolver.openOutputStream(uri)
+                    ?: throw IllegalStateException("Android nggak bisa buka tujuan file.")
+                ZipOutputStream(tujuan.buffered()).use { zip ->
+                    for (f in berkas) {
+                        zip.putNextEntry(ZipEntry(f.name))
+                        f.inputStream().buffered().use { it.copyTo(zip) }
+                        zip.closeEntry()
+                    }
+                }
+                a.runOnUiThread { banner(a.getString(R.string.k_log_berhasil_diunduh)) }
+            } catch (e: Throwable) {
+                LogRecorder.galat("Log", "ekspor ZIP gagal", e)
+                a.runOnUiThread {
+                    banner(a.getString(R.string.k_log_gagal_diunduh, e.message ?: "error"))
+                }
+            }
+        }, "wr-ekspor-log").start()
+    }
+
+    fun salin(teks: String): Boolean {
+        return try {
             (a.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
                 .setPrimaryClip(ClipData.newPlainText("wa-release-bot", teks))
-        } catch (_: Throwable) {
+            true
+        } catch (e: Throwable) {
+            LogRecorder.galat("Clipboard", "gagal menyalin teks", e)
+            false
         }
     }
 

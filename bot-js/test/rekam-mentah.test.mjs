@@ -16,6 +16,8 @@ import { entriRekaman, tambahEntri, ringkasRekaman, cariAnak, keBuffer } from '.
 import { buatRekamChannel } from '../src/mesin/rekam-channel.mjs';
 
 /** Stanza seperti yang dikirim WA buat postingan channel. */
+const QUESTION_PAYLOAD_B64 = 'qgYVChMyEQoEaGFsb1AAigED+AMB6AEA';
+
 function stanza({ tipe = 'text', plaintext = Buffer.from('{"question":"halo"}', 'binary'), attrs = {} } = {}) {
   return {
     tag: 'notification',
@@ -57,16 +59,22 @@ test('rekam channel: node CB:message newsletter langsung menyimpan posting Perta
     });
     assert.equal(rekam.ringkas().jumlah, 0);
 
+    // Sampel kall (JID diganti): outer `type=text`, tapi protobuf mentah
+    // punya field 101 (`questionMessage`) yang versi Baileys terpasang belum tahu.
+    const payloadPertanyaan = Buffer.from(QUESTION_PAYLOAD_B64, 'base64');
+    assert.equal(payloadPertanyaan.length, 24);
     ws.emit('CB:message', {
       tag: 'message',
       attrs: { from: '120363000000000000@newsletter', type: 'text', id: 'MSG2', server_id: '8' },
-      content: [{ tag: 'plaintext', attrs: {}, content: Buffer.from('{"questionMessage":{"question":"halo"}}') }],
+      content: [{ tag: 'plaintext', attrs: {}, content: payloadPertanyaan }],
     });
 
     assert.equal(rekam.ringkas().jumlah, 1);
     const tersimpan = JSON.parse(fs.readFileSync(rekam.berkas(), 'utf8'));
     assert.equal(tersimpan.entri[0].id, '8');
     assert.equal(tersimpan.entri[0].tipe, 'text');
+    assert.equal(tersimpan.entri[0].byte, 24);
+    assert.equal(tersimpan.entri[0].b64, QUESTION_PAYLOAD_B64, 'questionMessage mentah harus tetap utuh');
     assert.equal(log.some((pesan) => pesan.includes('1 postingan tersimpan')), true);
   } finally {
     fs.rmSync(dataDir, { recursive: true, force: true });

@@ -311,3 +311,17 @@ Next:
     (diuji `--kering`), job draft mencoba unduh 2x + pesan gagal yang menyebut sebabnya, dan
     `release-internal` bisa dipanggil `workflow_dispatch` di `main` buat nyegarkan draft basi.
   - Dijalankan ulang lewat workflow_dispatch setelah perubahan ini, terus draft dicek asetnya.
+- Laporan kall: perintah `.menu` dan `.rekam on` di chat sendiri tidak diproses; pertanyaan
+  channel tidak masuk rekaman. Akar di source: dispatch membandingkan remote JID persis dengan
+  JID PN sendiri, jadi alias LID bisa lolos tanpa diproses. Bukti runtime belum punya nilai JID
+  masuk, jadi mismatch ini cocok dengan laporan tetapi belum dikonfirmasi dari HP.
+  - PR #48 mencocokkan identitas PN/LID, membalas ke alias chat asal, dan mencatat saat perintah
+    ber-prefix diterima. Perekam menulis alasan bila postingan newsletter dengan payload pesan
+    tidak bisa disimpan; tes recorder mencakup `questionMessage`, mode aktif/mati, dan payload
+    tanpa plaintext.
+  - PR #48 lulus semua 18 check di Actions dan digabung sebagai `0ddb2cf`. Run verifikasi:
+    `https://github.com/xykal/wa-release-bot/actions/runs/36893404950`.
+  - Build `main` untuk merge commit lulus: `https://github.com/xykal/wa-release-bot/actions/runs/36894020207`.
+    Draft internal `399924120` diperbarui 2026-10-01 16:47 UTC dengan APK arm64 + armeabi-v7a.
+  - Masih perlu uji kall di HP. Bila pesan channel tetap tak tercatat, log baru membedakan payload
+    yang dilewatkan dari event newsletter yang sama sekali tidak sampai ke hook.

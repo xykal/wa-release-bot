@@ -81,10 +81,13 @@ export function buatAksiMedia(ctx, alat) {
    */
   async function kirimStikerJadi(cmd, sock) {
     const id = String(cmd.id || '');
-    if (!id) return;
+    // IPC is local, but validate identifiers and never trust a returned path:
+    // this prevents a malformed app command from reading/deleting outside dataDir.
+    if (!/^[A-Za-z0-9_-]{1,64}$/.test(id)) return;
     const masuk = path.join(ctx.dataDir, 'stiker', `masuk-${id}.img`);
-    const keluar = cmd.file ? path.join(ctx.dataDir, String(cmd.file)) : '';
+    const keluar = path.join(ctx.dataDir, 'stiker', `keluar-${id}.webp`);
     try {
+      if (cmd.file !== `stiker/keluar-${id}.webp`) throw new Error('jalur stiker tidak valid');
       if (cmd.gagal) {
         log(`⚠️ Konversi stiker ${id} gagal di app (${cmd.gagal}).`);
         return;

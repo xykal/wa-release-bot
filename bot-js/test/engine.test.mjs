@@ -261,6 +261,15 @@ test('engine: nyala, configure, start, cek release ke GitHub palsu, stop', async
   };
   assert.equal(await hilang(path.join(dirStiker, 'masuk-uji.img')), true, 'berkas foto masuk dibersihkan');
   assert.equal(await hilang(path.join(dirStiker, 'keluar-uji.webp')), true, 'berkas stiker keluar dibersihkan');
+
+  // Path dari IPC tidak boleh membuat engine membaca/menghapus di luar dataDir.
+  const markerLuar = path.join(path.dirname(dataDir), `${path.basename(dataDir)}-escaped.webp`);
+  t.after(() => fs.rmSync(markerLuar, { force: true }));
+  fs.writeFileSync(markerLuar, Buffer.from('jangan dihapus'));
+  await engine.kirim({ type: 'stiker-jadi', id: 'escape', file: `../${path.basename(markerLuar)}` });
+  await engine.tungguLog('Stiker gagal dikirim (escape)');
+  assert.equal(fs.readFileSync(markerLuar, 'utf8'), 'jangan dihapus', 'path IPC asing tidak tersentuh');
+
   // Urutan tunggu mengikuti urutan kirim engine: `bersih-moderasi` ngirim
   // status DULU baru log. Kalau log ditunggu lebih dulu, statusnya kebuang
   // (tungguLog membuang event yang nggak cocok) dan tesnya timeout.

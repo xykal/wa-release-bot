@@ -342,5 +342,7 @@ Next:
   tampak di jalur kode: `jawab()` memakai alias JID pesan masuk (`jidBalasanSendiri`), sementara
   tombol menu panel sudah memakai PN kanonis. Cabang `fix/self-chat-reply-jid` merutekan balasan
   self-chat ke PN kanonis dan menambah uji integrasi untuk pesan `.menu` via LID serta tombol panel.
-  Ini kandidat perbaikan untuk chat sendiri, bukan jaminan decrypt semua pesan: E2EE tetap dikontrol
-  WhatsApp dan perangkat penerima. Menunggu CI dan uji kall.
+  CI PR #54: tes engine + Node 18/20/22 dan APK arm64 lulus; CodeQL menandai path IPC stiker lama
+  sebagai high. Cabang juga mengunci ID/nama file stiker ke lokasi di `dataDir` dan menambah tes
+  traversal, sebelum CI dijalankan ulang. Ini kandidat perbaikan self-chat, bukan jaminan decrypt
+  semua pesan: E2EE tetap dikontrol WhatsApp dan perangkat penerima. Menunggu CI hijau dan uji kall.

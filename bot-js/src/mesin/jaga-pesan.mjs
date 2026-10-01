@@ -21,7 +21,7 @@ import { bacaTarget, JENIS } from '../channel.mjs';
 import { buatAksiPesan, teksPesan } from './aksi-pesan.mjs';
 import { buatAksiMedia } from './aksi-media.mjs';
 
-export function buatJagaPesan(ctx) {
+export function buatJagaPesan(ctx, { rekam = null } = {}) {
   const { log, emitStatus, sambung } = ctx;
 
   let jalan = false;      // loop lagi hidup
@@ -70,7 +70,7 @@ export function buatJagaPesan(ctx) {
     adminDi,
     papan,
     media,
-    rekam: ctx.fitur?.rekam || null,
+    rekam,
   });
 
   /** Grup yang dimoderasi = grup yang sama dengan Penjaga grup. */

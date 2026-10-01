@@ -394,9 +394,10 @@ async function main() {
   const grup = buatPenjagaGrup(ctx);
   const berkala = buatPesanBerkala(ctx);
   const tautan = buatTautan(ctx, { rilis, grup });
-  const jaga = buatJagaPesan(ctx);
+  const rekam = buatRekamChannel(ctx);
+  const jaga = buatJagaPesan(ctx, { rekam });
   const perintah = buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga, berkala });
-  ctx.fitur = { rilis, lagu, grup, tautan, perintah, jaga, berkala, rekam: buatRekamChannel(ctx) };
+  ctx.fitur = { rilis, lagu, grup, tautan, perintah, jaga, berkala, rekam };
 
   // ----------------------------- init ---------------------------------------
   log('🦴 wa-release-bot engine siap (node ' + process.version + '). Menunggu perintah dari app.');

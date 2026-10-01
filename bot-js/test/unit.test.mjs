@@ -22,6 +22,7 @@ import { kumpulkanNodeMessage, susunEntri, jenisPesan } from '../src/rekam.mjs';
 import { BRAND, TANDA_TANGAN } from '../src/config/brand.mjs';
 import { kelompokHitam, bukaBlokir, labelOrang } from '../src/grup.mjs';
 import { createBridge } from '../src/bridge.mjs';
+import { buatAksiPesan } from '../src/mesin/aksi-pesan.mjs';
 import { normalisasiNomor } from '../src/nomor.mjs';
 import {
   rapikanJid, identitas, identitasSama, cariYangKeluar, catatAnggota, putuskan, daftarHitamManual, namaOrang,
@@ -353,6 +354,33 @@ test('format: ajakan bales cuma muncul kalau diminta', () => {
   assert.ok(!formatReleasePost(rel, 'o/r').includes(AJAKAN_BALAS));
   assert.ok(formatTestMessage('o/r', { ajakBalas: true }).includes(AJAKAN_BALAS));
   assert.ok(formatTesGrup('Grup A').includes('Grup A'));
+});
+
+test('perintah .rekam on memakai recorder yang diinjeksi ke aksi pesan', async () => {
+  const dipanggil = [];
+  const balasan = [];
+  const ctx = { cfg: { jaga: { perintah: true } }, state: {} };
+  const aksi = buatAksiPesan(ctx, {
+    log() {},
+    saveState() {},
+    emitStatus() {},
+    jawab: async (_sock, teks) => balasan.push(teks),
+    adminDi: async () => false,
+    papan: { perintah: 0 },
+    media: { mintaStiker: async () => {}, kirimStory: async () => {} },
+    rekam: {
+      nyalakan: () => dipanggil.push('nyalakan'),
+      matikan() {},
+      kosongkan() {},
+      kirimKe: async () => ({ ok: true }),
+      ringkas: () => ({ aktif: false, jumlah: 0 }),
+    },
+  });
+
+  await aksi.tanganiPerintah({}, { key: {} }, '.rekam on');
+  assert.deepEqual(dipanggil, ['nyalakan']);
+  assert.equal(balasan.some((teks) => teks.includes('Fitur rekam channel nggak kepasang')), false);
+  assert.equal(balasan.some((teks) => teks.includes('Rekam channel NYALA')), true);
 });
 
 test('sendPertanyaan: channel → questionMessage, grup → teks biasa', async () => {

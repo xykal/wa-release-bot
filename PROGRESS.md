@@ -160,7 +160,7 @@ Next:
     `minta_stiker`, BotService balas cmd `stiker-jadi`.
   - App: kartu Bot WA umum (saklar moderasi, saklar perintah pribadi, izin link biasa, batas
     strike, kata tambahan, domain phishing, nomor penonton story, tombol kirim menu + kosongin
-    hitungan) + baris statistik moderasi di kartu status; 24 string baru dua bahasa (307 total,
+    hitungan) + baris statistik moderasi di kartu status; 24 string baru dua bahasa (316 total,
     jumlah sama di `values` dan `values-en`).
   - Bukti CI: langkah `uji bot-umum` di `screenshot_emulator.sh` (kartu + kolom story ada di dump
     UI, saklar berubah jadi nyala, tombol kirim menu ngasih umpan balik, dan nilainya masih
@@ -193,3 +193,8 @@ Next:
     itu sebabnya tetap dibersihkan berkala dan nggak ada secret di dalamnya.
   - Skrip uji UI dirapikan: fungsi bantu adb pindah ke `scripts-dev/ui-uji.sh`, uji kartu Fitur
     pindah ke `scripts-dev/uji-fitur.sh` (skrip utama balik ke ~200 baris).
+  - Hitungan string dipastikan: 328 nama di `values` dan `values-en`, jumlahnya sama (angka 307
+    di catatan M14/M15 meleset; isi commit blok itu sebenarnya 316).
+  - CHANGELOG: dua heading `Diperbaiki` dalam satu blok dan satu butir Lockfile yang ketempelan
+    ekor butir situs (sisa merge lama) dibetulkan lewat PR #40; branch rilis disinkronkan lagi
+    ke main (`94bd71a`), semua cek hijau termasuk APK dan CodeQL.

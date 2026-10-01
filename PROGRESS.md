@@ -198,3 +198,42 @@ Next:
   - CHANGELOG: dua heading `Diperbaiki` dalam satu blok dan satu butir Lockfile yang ketempelan
     ekor butir situs (sisa merge lama) dibetulkan lewat PR #40; branch rilis disinkronkan lagi
     ke main (`94bd71a`), semua cek hijau termasuk APK dan CodeQL.
+
+## 2026-10-01 — hari kerja ke-3
+
+- Pertanyaan kall: "rekaman channel tu kek mana?" dan "story HD tanpa kompres pastikan untuk
+  pribadi di chat sendiri, bukan di grup". Dua-duanya dijawab di kode, bukan cuma diomongin.
+- Story: penonton dipindah ke modul murni `bot-js/src/story.mjs` (+6 uji) supaya aturannya
+  kelihatan dan nggak bisa "nyasar" lewat jalur lain:
+  - `.story` = cuma nomor di kolom **Nomor penonton story** app.
+  - `.storygrup` = nomor itu + anggota grup, dan HANYA kalau Penjaga grup nyala; kalau
+    penjaganya mati perintahnya turun jadi `.story` (dulu tetap nembak anggota grup yang
+    tersimpan di state walau penjaganya nggak jalan — itu yang bikin kesan "kok ke grup").
+  - Bot selalu balas jumlah penontonnya secara terbuka: berapa pribadi, berapa dari grup.
+  - Media tetap dikirim byte aslinya (tanpa re-encode). Diverifikasi di sumber Baileys
+    6.7.24: `prepareWAMessageMedia` cuma bikin thumbnail kecil (`jpegThumbnail`) dan
+    mengunggah `uploadData.media` apa adanya — jadi klaim HD tanpa kompres itu benar di sisi
+    library; kompresi (kalau ada) cuma dari WhatsApp waktu dibuka.
+- Rekam channel (buat fitur WA yang belum didukung Baileys, mis. Pertanyaan di channel).
+  Catatan penting: perekamnya SUDAH ada sejak commit `e5fc229` — tapi cuma lewat CLI
+  (`npm run rekam -- --tunggu 120`, didokumentasikan di `cli/README.md`), jadi kall harus
+  buka komputer/Termux dulu. Itu sebabnya pertanyaannya "kek mana": alatnya ada, jalannya
+  nggak kelihatan dari app. Sekarang dua-duanya ada, dan modul lama tetap utuh supaya CLI +
+  uji unit-nya nggak rusak (rencananya sempat ketimpa; dicek ulang lewat git status sebelum commit):
+  - Modul baru `bot-js/src/rekam-mentah.mjs` (murni, +7 uji): pilih stanza `CB:notification` bertipe
+    newsletter yang benar-benar postingan (`<message>` + `<plaintext>`), simpan BYTE MENTAH
+    base64. Sengaja byte mentah: proto 6.7.24 cuma tahu pembungkusnya
+    (`Message.questionMessage` = FutureProofMessage), field isinya dibuang saat decode —
+    hasil decode bakal kosong dan nggak ada gunanya.
+  - `bot-js/src/mesin/rekam-channel.mjs`: hook `sock.ws.on('CB:notification')` di mode jaga
+    (jalur yang sama dipakai Baileys buat notifikasi newsletter; kita cuma nebeng baca).
+    File `rekaman-channel.json` di folder data app: maksimal 10 postingan / 8 MB.
+  - Perintah baru `.rekam on | off | kirim | kosong` — `.rekam kirim` menaruh file JSON-nya
+    ke chat sendiri (dokumen) supaya bisa diteruskan ke developer. Nggak ada pengiriman
+    otomatis ke mana pun.
+  - `susunEntri` di perekam CLI lama ikut menyimpan byte mentah (di bawah 256 KB) supaya
+    hasil `npm run rekam` pun nggak kehilangan field yang belum dikenal.
+  - Butuh **Perintah pribadi** nyala (koneksinya nebeng mode jaga) — ditulis di
+    `docs/PANDUAN-BOT-WA.md`.
+- Uji murni lokal: story 6/6, rekam 7/7, pesan 11/11, berkala 7/7. Engine & unit tetap
+  CI-only (butuh `node_modules`; `unit.test.mjs` gugur lokal karena Baileys nggak ada).

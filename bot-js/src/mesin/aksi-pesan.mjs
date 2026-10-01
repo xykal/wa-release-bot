@@ -37,11 +37,12 @@ export function mediaPesan(m) {
  *   unduhMedia: (sock: object, m: object) => Promise<Buffer>,
  *   adminDi: (jidGrup: string, pengirim: string) => Promise<boolean>,
  *   papan: object,
- *   media: { mintaStiker: Function, kirimStory: Function }
+ *   media: { mintaStiker: Function, kirimStory: Function },
+ *   rekam?: { nyalakan: Function, matikan: Function, kosongkan: Function, kirimKe: Function, ringkas: Function }
  * }} alat
  */
 export function buatAksiPesan(ctx, alat) {
-  const { log, saveState, emitStatus, jawab, adminDi, papan, media } = alat;
+  const { log, saveState, emitStatus, jawab, adminDi, papan, media, rekam } = alat;
 
   const aktifModerasi = () => Boolean(ctx.cfg?.jaga?.moderasi);
   const aktifPerintah = () => Boolean(ctx.cfg?.jaga?.perintah);
@@ -139,6 +140,39 @@ export function buatAksiPesan(ctx, alat) {
       case 'storygrup':
         await media.kirimStory(sock, m, { tagGrup: p.nama === 'storygrup' });
         break;
+
+      case 'rekam': {
+        if (!rekam) {
+          await jawab(sock, 'Fitur rekam channel nggak kepasang di engine ini.');
+          break;
+        }
+        const arg = String(p.arg || '').toLowerCase().split(/\s+/)[0] || '';
+        if (arg === 'on' || arg === 'nyala') {
+          rekam.nyalakan();
+          await jawab(sock, [
+            'Rekam channel NYALA.',
+            'Sekarang kirim/posting yang mau direkam di channel (mis. Pertanyaan),',
+            'terus ketik .rekam kirim buat ngirimin file rekamannya ke chat ini.',
+          ].join('\n'));
+        } else if (arg === 'off' || arg === 'mati') {
+          rekam.matikan();
+          await jawab(sock, 'Rekam channel mati.');
+        } else if (arg === 'kirim' || arg === 'unduh') {
+          const hasil = await rekam.kirimKe(sock);
+          if (!hasil.ok) await jawab(sock, `Rekaman nggak terkirim: ${hasil.alasan}`);
+        } else if (arg === 'kosong' || arg === 'hapus') {
+          rekam.kosongkan();
+          await jawab(sock, 'Rekaman channel dikosongkan.');
+        } else {
+          const r = rekam.ringkas();
+          await jawab(sock, [
+            `Rekam channel: ${r.aktif ? 'NYALA' : 'mati'} — ${r.jumlah} postingan tersimpan` +
+              (r.terakhir ? `, terakhir ${new Date(r.terakhir).toLocaleString('id-ID')}` : '') + '.',
+            'Pakai: .rekam on | .rekam off | .rekam kirim | .rekam kosong',
+          ].join('\n'));
+        }
+        break;
+      }
 
       case 'grup': {
         const g = ctx.state.grup || {};

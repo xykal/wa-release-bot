@@ -756,6 +756,9 @@ test('rekam: node <message><plaintext> -> jenis + JSON ringkas; string panjang d
   assert.equal(entri[0].jenis, 'questionMessage>extendedTextMessage');
   assert.equal(entri[0].attrs.server_id, '7');
   assert.match(entri[0].pesan.questionMessage.message.extendedTextMessage.text, /…\[\+300\]$/);
+  // Byte mentah ikut: yang penting justru field yang nggak dikenal proto ini.
+  assert.equal(entri[0].byte, bytes.length);
+  assert.deepEqual(Buffer.from(entri[0].b64, 'base64'), Buffer.from(bytes));
   assert.equal(entri[0].pesan.messageContextInfo.messageSecret, '[bytes 32]');
   assert.deepEqual(entri[1].tanpaPlaintext, ['reactions']);
   assert.equal(jenisPesan({ conversation: 'x' }), 'conversation');

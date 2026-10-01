@@ -5,11 +5,20 @@
  * belum mendukungnya, jadi satu-satunya cara tahu bentuk aslinya adalah merekam
  * post Pertanyaan yang dibuat manual dari HP, lalu meniru strukturnya.
  * Hasil rekaman = protobuf pesan yang sudah di-decode jadi JSON (tanpa media,
- * string panjang dipotong) supaya aman dibagikan.
+ * string panjang dipotong) supaya aman dibagikan — plus `b64` byte mentahnya
+ * kalau postingannya kecil, supaya field yang belum dikenal proto versi ini
+ * masih bisa dibaca ulang nanti.
+ *
+ * Kalau yang dibutuhkan justru byte aslinya (field yang belum dikenal versi
+ * proto ini dibuang waktu decode), lihat ./rekam-mentah.mjs + mesin/rekam-channel.mjs
+ * yang dipanggil dari chat sendiri dengan `.rekam on` → `.rekam kirim`.
  */
 import { proto } from '@whiskeysockets/baileys';
 
 const MAKS_STRING = 200;
+// Byte mentah ikut disimpan (biar field yang belum dikenal proto ini nggak
+// hilang), tapi cuma buat postingan kecil. Yang besar dikasih penanda saja.
+const MAKS_MENTAH = 256 * 1024;
 
 /** Potong string panjang & buang byte media biar file rekaman kecil dan nggak bocorin isi. */
 export function ringkas(nilai, dalam = 0) {
@@ -63,6 +72,12 @@ export function susunEntri(node) {
   const anak = Array.isArray(node.content) ? node.content : [];
   const plain = anak.find((n) => n?.tag === 'plaintext');
   if (plain && plain.content instanceof Uint8Array) {
+    entri.byte = plain.content.length;
+    if (plain.content.length <= MAKS_MENTAH) {
+      entri.b64 = Buffer.from(plain.content).toString('base64');
+    } else {
+      entri.mentahDilewati = `payload ${plain.content.length} byte (di atas ${MAKS_MENTAH})`;
+    }
     try {
       const obj = decodePesan(plain.content);
       entri.jenis = jenisPesan(obj);

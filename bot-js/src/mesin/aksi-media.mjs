@@ -6,8 +6,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { identitas } from '../grup.mjs';
 import { jidSendiri } from '../wa.mjs';
+import { penontonStory as hitungPenonton, keteranganPenonton } from '../story.mjs';
 import { mediaPesan } from './aksi-pesan.mjs';
 
 /**
@@ -107,13 +107,16 @@ export function buatAksiMedia(ctx, alat) {
 
   // -------------------------------- story ----------------------------------
 
-  /** Penonton story: nomor yang didaftarkan di app + anggota grup yang dipantau. */
+  /** Penonton story: lihat ../story.mjs (pribadi dulu, grup cuma kalau diminta). */
   function penontonStory({ tagGrup } = {}) {
-    const set = new Set(ctx.cfg?.jaga?.storyKe || []);
-    if (tagGrup) {
-      for (const p of ctx.state.grup?.anggota || []) for (const i of identitas(p)) set.add(i);
-    }
-    return [...set];
+    return hitungPenonton(
+      {
+        storyKe: ctx.cfg?.jaga?.storyKe || [],
+        anggota: ctx.state.grup?.anggota || [],
+        grupAktif: Boolean(ctx.cfg?.grup?.aktif && ctx.cfg?.grup?.target),
+      },
+      { tagGrup }
+    );
   }
 
   async function kirimStory(sock, m, { tagGrup } = {}) {
@@ -122,22 +125,31 @@ export function buatAksiMedia(ctx, alat) {
       await jawab(sock, 'Kirim FOTO/VIDEO dengan keterangan .story (atau .storygrup buat tag grup).');
       return;
     }
-    const daftar = penontonStory({ tagGrup });
+    const grupAktif = Boolean(ctx.cfg?.grup?.aktif && ctx.cfg?.grup?.target);
+    // `.storygrup` cuma ngikutkan grup kalau Penjaga grup memang nyala; kalau
+    // nggak, turun jadi `.story` (jangan kirim ke grup yang belum dicek).
+    const daftar = penontonStory({ tagGrup: Boolean(tagGrup) && grupAktif });
+    const pribadi = (ctx.cfg?.jaga?.storyKe || []).length;
     if (!daftar.length) {
-      await jawab(sock, 'Belum ada penonton: nyalain penjaga grup dulu atau isi daftar nomor story di app.');
+      await jawab(sock, 'Belum ada penonton: isi daftar nomor story di app (tab Fitur, kartu Bot WA umum).');
       return;
     }
     try {
       const buf = await unduhMedia(sock, m);
       // Tanpa re-encode: yang dikirim byte aslinya, jadi kualitasnya tetap
-      // seperti di HP (WA sendiri yang ngecilin waktu orang buka).
+      // seperti di HP. Baileys cuma bikin thumbnail kecil buat preview; file
+      // yang diunggah tetap utuh (lihat prepareWAMessageMedia di messages.ts).
       const isi = media.jenis === 'gambar'
         ? { image: buf, caption: '' }
         : { video: buf, caption: '', mimetype: media.isi?.mimetype || 'video/mp4' };
       await sock.sendMessage('status@broadcast', isi, { statusJidList: daftar });
       papan.story += 1;
-      log(`📸 Story terkirim ke ${daftar.length} penonton${tagGrup ? ' (termasuk anggota grup)' : ''}.`);
-      await jawab(sock, `Story terkirim ke ${daftar.length} penonton.`);
+      const ket = keteranganPenonton(pribadi, daftar.length, {
+        tagGrup: Boolean(tagGrup),
+        grupAktif,
+      });
+      log(`📸 Story terkirim ke ${ket}.`);
+      await jawab(sock, `Story terkirim ke ${ket}.`);
       emitStatus();
     } catch (e) {
       log(`⚠️ Story gagal: ${e.message}`);

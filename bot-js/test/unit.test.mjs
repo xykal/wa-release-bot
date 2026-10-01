@@ -372,7 +372,7 @@ test('perintah .rekam on memakai recorder yang diinjeksi ke aksi pesan', async (
       nyalakan: () => dipanggil.push('nyalakan'),
       matikan() {},
       kosongkan() {},
-      kirimKe: async () => ({ ok: true }),
+      kirimKe: async () => ({ ok: true, lokasi: 'Android/media/com.xykals.warelease/rekaman/rekaman-channel.json' }),
       ringkas: () => ({ aktif: false, jumlah: 0 }),
     },
   });
@@ -381,6 +381,9 @@ test('perintah .rekam on memakai recorder yang diinjeksi ke aksi pesan', async (
   assert.deepEqual(dipanggil, ['nyalakan']);
   assert.equal(balasan.some((teks) => teks.includes('Fitur rekam channel nggak kepasang')), false);
   assert.equal(balasan.some((teks) => teks.includes('Rekam channel NYALA')), true);
+
+  await aksi.tanganiPerintah({}, { key: {} }, '.rekam kirim');
+  assert.equal(balasan.some((teks) => teks.includes('Android/media/com.xykals.warelease/rekaman/rekaman-channel.json')), true);
 });
 
 test('sendPertanyaan: channel → questionMessage, grup → teks biasa', async () => {

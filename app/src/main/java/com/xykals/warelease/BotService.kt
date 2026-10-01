@@ -108,11 +108,15 @@ class BotService : Service() {
         }
 
         if (bundleOk) {
-            val env = mapOf(
+            val env = mutableMapOf(
                 "WR_DATA_DIR" to dataDir.absolutePath,
                 "WR_WS_PORT" to "18790",
                 "NODE_ENV" to "production"
             )
+            // Folder media app dipilih karena rekaman harus langsung terlihat di Android/media tanpa dialog izin.
+            folderEksporRekam(getExternalMediaDirs())?.let { folder ->
+                env["WR_REKAM_EXPORT_DIR"] = folder.absolutePath
+            }
             NodeBridge.start(File(dataDir, "bundle.cjs").absolutePath, env)
             ws = WsClient("ws://127.0.0.1:18790", scope).also { it.connect() }
             appendLog("Proses Node dinyalakan (bundle.cjs).")

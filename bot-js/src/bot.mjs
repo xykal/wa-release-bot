@@ -148,6 +148,7 @@ async function main() {
 
   const ctx = {
     dataDir, cfgFile, stateFile, sessionDir, dirLaguTmp,
+    rekamExportDir: process.env.WR_REKAM_EXPORT_DIR || null,
     state: {
       lastTag: null, channelJid: null, channelName: null, postCount: 0, lastPostedAt: null,
       rilisEtag: null, // ETag jawaban GitHub terakhir -> cek berikutnya conditional (304 gratis)

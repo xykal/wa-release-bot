@@ -55,12 +55,15 @@ diunggah tetap byte aslinya.
 
 **Rekam postingan channel.** Ada fitur WhatsApp (mis. **Pertanyaan** di channel)
 yang bentuk kabelnya belum ada di Baileys 6.7.24, jadi belum bisa dikirim bot.
-Buat itu: `.rekam on` → posting yang mau direkam di channel → `.rekam kirim`
-(file JSON-nya masuk ke chat sendiri) → kirim file itu ke developer. Yang
-direkam byte mentah postingannya (base64), bukan hasil terjemahan library, jadi
-field yang belum dikenal pun ikut tersimpan. Butuh **Perintah pribadi** nyala
-(koneksinya nebeng mode jaga) dan engine jalan. `.rekam kosong` ngehapus isi
-file; rekaman nggak pernah dikirim ke mana pun kecuali `.rekam kirim`.
+Nyalakan **Perintah pribadi**, lalu `.rekam on` dan publikasikan postingan baru.
+Byte mentah postingan (base64) otomatis disimpan ke
+`Android/media/com.xykals.warelease/rekaman/rekaman-channel.json`; salinan internal
+app tetap dipakai sebagai sumber utama. `.rekam kirim` menampilkan lokasi file,
+tidak mengirim dokumen lewat WA, supaya file nggak mentok di pesan “menunggu”.
+File ini bisa dibuka dari file manager dan diunggah ke developer tanpa diedit.
+`.rekam kosong` menghapus salinan internal dan ekspor Android. Data mentah bisa
+terbaca lewat file manager, jadi unggah file itu hanya kalau kall memang mau
+membagikan postingan channel tersebut.
 
 **Moderasi grup** (nyalain saklarnya, grup harus sama dengan **Penjaga grup**):
 

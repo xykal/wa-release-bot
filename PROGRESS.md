@@ -328,6 +328,13 @@ Next:
 - Log kall setelah merge #51 (02:47–03:02): mode jaga tersambung dan `.rekam on` sukses, tetapi
   tidak ada log tersimpan/dilewatkan setelah posting Pertanyaan. Source Baileys 6.7.24 juga
   menerima posting channel sebagai node `CB:message` langsung; recorder lama cuma memasang
-  `CB:notification` dan parser hanya menerima bentuk bersarang. Cabang `fix/rekam-channel-message-node`
-  sekarang menambah penangkapan kedua bentuk dengan uji regresi. Hipotesis ini belum terverifikasi
-  di HP; menunggu CI PR dan tes kall pada APK baru.
+  `CB:notification` dan parser hanya menerima bentuk bersarang. PR #52 menambah penangkapan
+  kedua bentuk dengan uji regresi; 18/18 checks PR dan 19/19 checks main lulus. Log HP berikutnya
+  membuktikan satu posting tersimpan, tetapi file yang dikirim lewat WA tampil sebagai "waiting
+  for this message" di chat kall. Status log `dikirim` hanya menunjukkan Baileys menerima kiriman,
+  bukan bukti HP berhasil mendekripsinya.
+- Permintaan kall: simpan rekaman otomatis di `Android/media/<applicationId>/rekaman` agar tidak
+  bergantung pada kirim dokumen ke chat sendiri. Cabang `fix/rekam-auto-export` menyalin atomik
+  setiap perubahan dari salinan internal app ke `getExternalMediaDirs()/rekaman`; `.rekam kirim`
+  akan menunjukkan path lokal di Android. Tes engine dan Kotlin menutup ekspor, sinkronisasi data
+  lama, penghapusan kedua salinan, dan kondisi media tidak tersedia. Menunggu CI PR; belum diuji di HP.

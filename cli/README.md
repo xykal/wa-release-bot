@@ -159,6 +159,12 @@ npm run rekam -- --tunggu 120   # bot nyambung, nunggu 2 menit
 Kirim file itu ke dev. Tanpa `--tunggu` perekam cuma narik `--jumlah` (default
 10) pesan terakhir dari server.
 
+Di app nggak perlu komputer buat ini: nyalain **Perintah pribadi** → ketik
+`.rekam on` di chat sendiri → bikin post-nya → `.rekam kirim` (file masuk ke
+chat sendiri sebagai dokumen). Cara itu merekam **byte mentah** postingannya,
+jadi field yang belum dikenal proto versi ini nggak hilang (di jalur CLI pun
+sekarang ikut disimpan buat postingan di bawah 256 KB).
+
 ## Biar HP-nya nggak "neror" (biar bot nggak dibunuh Android)
 
 1. **Charge HP-nya terus** (pasang di charger, layar boleh mati). Bot butuh HP hidup.

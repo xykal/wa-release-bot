@@ -57,6 +57,7 @@ export function buatJagaPesan(ctx) {
     adminDi,
     papan,
     media,
+    rekam: ctx.fitur?.rekam || null,
   });
 
   /** Grup yang dimoderasi = grup yang sama dengan Penjaga grup. */
@@ -91,6 +92,8 @@ export function buatJagaPesan(ctx) {
   async function satuSesi() {
     const { sock, close } = await sambung({ onStatus: (m) => log(m) });
     sockAktif = sock;
+    // Rekam postingan channel (kalau diminta `.rekam on`) nempel di socket ini.
+    try { ctx.fitur?.rekam?.pasang(sock); } catch (e) { log(`⚠️ Rekam channel nggak kepasang: ${e.message}`); }
     const jidSaya = jidSendiri(sock);
     log(
       `👀 Mode jaga pesan nyala (perintah: ${aksi.aktifPerintah() ? 'ya' : 'tidak'}, ` +

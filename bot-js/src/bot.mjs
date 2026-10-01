@@ -25,6 +25,7 @@ import { buatHosting } from './hosting.mjs';
 import { buatRilis } from './mesin/rilis.mjs';
 import { buatLaguMood } from './mesin/lagu-mood.mjs';
 import { buatPenjagaGrup } from './mesin/penjaga-grup.mjs';
+import { buatRekamChannel } from './mesin/rekam-channel.mjs';
 import { buatTautan } from './mesin/tautan.mjs';
 import { buatPerintah } from './mesin/perintah.mjs';
 import { buatJagaPesan } from './mesin/jaga-pesan.mjs';
@@ -266,6 +267,9 @@ async function main() {
       berkalaLastAt: ctx.state.berkala?.lastAt || null,
       berkalaTerakhir: ctx.state.berkala?.terakhir || null,
       nextBerkalaAt: ctx.nextBerkalaAt || null,
+      // rekam postingan channel (buat fitur WA yang belum didukung Baileys)
+      rekamChannelAktif: Boolean(ctx.fitur?.rekam?.sedangRekam?.()),
+      rekamChannelJumlah: ctx.fitur?.rekam?.ringkas?.().jumlah || 0,
     });
   }
 
@@ -371,7 +375,7 @@ async function main() {
   const tautan = buatTautan(ctx, { rilis, grup });
   const jaga = buatJagaPesan(ctx);
   const perintah = buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga, berkala });
-  ctx.fitur = { rilis, lagu, grup, tautan, perintah, jaga, berkala };
+  ctx.fitur = { rilis, lagu, grup, tautan, perintah, jaga, berkala, rekam: buatRekamChannel(ctx) };
 
   // ----------------------------- init ---------------------------------------
   log('🦴 wa-release-bot engine siap (node ' + process.version + '). Menunggu perintah dari app.');

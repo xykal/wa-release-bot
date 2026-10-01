@@ -27,7 +27,8 @@ kirim `.menu` buat lihat daftarnya. Yang ada sekarang:
 | `.status` | repo, rilis terakhir, penjaga grup, hitungan moderasi |
 | `.stiker` | kirim/rebalas **foto** dengan keterangan `.stiker` → jadi stiker WA |
 | `.story` | kirim/rebalas **foto/video** dengan keterangan `.story` → status/story HD |
-| `.storygrup` | sama, tapi penontonnya ditambah anggota grup yang dipantau |
+| `.storygrup` | sama, tapi penontonnya ditambah anggota grup yang dipantau (cuma kalau Penjaga grup nyala) |
+| `.rekam` | rekam postingan channel: `on`, `off`, `kirim`, `kosong` |
 | `.grup` | info grup yang dipantau: nama, jumlah anggota, daftar hitam |
 | `.bersih` | kosongkan hitungan moderasi hari ini |
 
@@ -40,8 +41,26 @@ nggak kebaca, bot balas pesan gagal (nggak diem-dieman). Karena butuh Android,
 (di atas 6 MB) juga ditolak dengan pesan — kirim sebagai foto biasa saja.
 
 **Story/status** dikirim apa adanya (tanpa re-encode), jadi kualitasnya tetap
-seperti di HP. Penontonnya: nomor yang lo isi di kolom **Nomor penonton story**
-(ditambah anggota grup kalau pakai `.storygrup`).
+seperti di HP — Baileys cuma bikin thumbnail kecil buat preview, file yang
+diunggah tetap byte aslinya.
+
+**Penontonnya urusan pribadi, bukan grup** (dipertegas 2026-10-01):
+
+- `.story` → cuma nomor yang lo isi di kolom **Nomor penonton story**.
+- `.storygrup` → nomor itu ditambah anggota grup yang dipantau, dan itu pun
+  cuma kalau **Penjaga grup nyala**. Kalau penjaganya mati, perintahnya turun
+  jadi `.story` biasa (bot nggak nembak grup yang belum dicek).
+- Tiap kiriman, bot balas jumlah penontonnya secara terbuka: berapa nomor
+  pribadi dan berapa dari anggota grup, jadi kelihatan story-nya lari ke mana.
+
+**Rekam postingan channel.** Ada fitur WhatsApp (mis. **Pertanyaan** di channel)
+yang bentuk kabelnya belum ada di Baileys 6.7.24, jadi belum bisa dikirim bot.
+Buat itu: `.rekam on` → posting yang mau direkam di channel → `.rekam kirim`
+(file JSON-nya masuk ke chat sendiri) → kirim file itu ke developer. Yang
+direkam byte mentah postingannya (base64), bukan hasil terjemahan library, jadi
+field yang belum dikenal pun ikut tersimpan. Butuh **Perintah pribadi** nyala
+(koneksinya nebeng mode jaga) dan engine jalan. `.rekam kosong` ngehapus isi
+file; rekaman nggak pernah dikirim ke mana pun kecuali `.rekam kirim`.
 
 **Moderasi grup** (nyalain saklarnya, grup harus sama dengan **Penjaga grup**):
 

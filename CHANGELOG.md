@@ -46,6 +46,19 @@ tetap menerima update.
   (beda dari mode jaga pesan yang nyambung terus). Isi pesannya disusun `bot-js/src/berkala.mjs`
   (murni, 7 unit test), pengirimnya `bot-js/src/mesin/pesan-berkala.mjs`. Tombol **Kirim sekarang**
   di app mengirim tanpa nunggu jadwal.
+- **Rekam postingan channel bisa langsung dari chat** (`.rekam on|off|kirim|kosong`).
+  Perekam lama (CLI `npm run rekam`, untuk nangkep format **Pertanyaan** channel) butuh
+  komputer/Termux; sekarang jalan dari chat sendiri tanpa alat tambahan. Bedanya juga:
+  jalur chat menyimpan **byte proto mentah** (base64) karena proto 6.7.24 cuma tahu
+  pembungkusnya (`Message.questionMessage` = FutureProofMessage) dan field isi yang belum
+  dikenal dibuang saat decode. `bot-js/src/rekam-mentah.mjs` (murni, 7 uji) menyeleksi stanza
+  `CB:notification` bertipe newsletter; hook nempel di `sock.ws` mode jaga
+  (`mesin/rekam-channel.mjs`), berkasnya `rekaman-channel.json` di folder data app (paling
+  banyak 10 postingan / 8 MB) dan dikirim ke chat sendiri sebagai dokumen lewat `.rekam kirim`.
+  Jalur CLI (`bot-js/src/rekam.mjs`) ikut menyimpan byte mentah untuk postingan di bawah 256 KB.
+- Penonton story dipisah jadi fungsi murni `bot-js/src/story.mjs` + 6 uji: `.story` cuma
+  nomor di kolom Story, `.storygrup` menambah anggota grup **hanya kalau Penjaga grup
+  nyala**, dan tiap kiriman dibalas keterangan jumlah penonton (berapa pribadi, berapa grup).
 - **Screenshot app otomatis**: workflow `screenshot-app.yml` membangun APK release x86_64,
   menjalankannya di emulator Android 14 (GitHub Actions) dan menangkap tiap layar
   (`scripts-dev/screenshot_emulator.sh`); hasilnya dibingkai `scripts-dev/bingkai_screenshot.py`
@@ -138,6 +151,11 @@ tetap menerima update.
   dibuang dari yang paling lama dipakai, jadi penyimpanan tidak naik terus.
 
 #### Diubah
+- Perintah `.story` dan `.storygrup` dijelaskan ulang di menu dan docs: story itu urusan
+  pribadi, dan `.storygrup` sekarang turun jadi `.story` kalau Penjaga grup mati (sebelumnya
+  tetap menembak anggota grup yang tersimpan di state, padahal penjaganya nggak jalan).
+- Ringkasan status engine menambah `rekamChannelAktif` dan `rekamChannelJumlah`; daftar
+  perintah di `.menu` ikut menyebut `.rekam`.
 - App: tombol **Simpan** di layar utama tidak lagi nongol terus — muncul cuma kalau ada yang
   diubah (saklar dipencet, kotak isian diketik, tabel repo diubah) dan sembunyi lagi setelah
   setting terkirim ke engine. Di tab Log tetap nggak ada tombol itu.

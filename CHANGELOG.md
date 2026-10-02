@@ -28,9 +28,16 @@ Semua perubahan penting proyek ini. Format mengikuti
   (`mesin/rekam-channel.mjs`), berkasnya `rekaman-channel.json` di folder data app (paling
   banyak 10 postingan / 8 MB) dan dikirim ke chat sendiri sebagai dokumen lewat `.rekam kirim`.
   Jalur CLI (`bot-js/src/rekam.mjs`) ikut menyimpan byte mentah untuk postingan di bawah 256 KB.
-- Penonton story dipisah jadi fungsi murni `bot-js/src/story.mjs` + 6 uji: `.story` cuma
-  nomor di kolom Story, `.storygrup` menambah anggota grup **hanya kalau Penjaga grup
-  nyala**, dan tiap kiriman dibalas keterangan jumlah penonton (berapa pribadi, berapa grup).
+- Audience Status dipisah jadi fungsi murni `bot-js/src/story.mjs` + 5 uji: `.story` mengirim
+  byte media asli ke nomor di kolom Story. `.storygrup` sekarang fail-closed; `statusJidList`
+  cuma menyaring penonton, bukan mention grup native. Menunggu implementasi dan CI terpisah
+  sebelum fitur itu diaktifkan.
+- `.brat <teks>` merender stiker WebP hijau secara lokal di Android (Canvas) dan mengirimkannya
+  kembali lewat private self-chat; batas 48 code point dan input dinormalisasi sebelum melintasi bridge.
+- `.welcome on/off` menyimpan opt-in untuk sambutan anggota baru, dibatasi ke grup pantauan yang
+  JID-nya cocok dengan target aktif. Default mati; menu perintah kini dikelompokkan.
+- Semua kiriman teks informasi memakai footer `— SukiBot` sekali saja, termasuk jawaban Pertanyaan
+  channel dan laporan ke chat sendiri; caption dokumen rekaman ikut membawa tagline.
 - **Screenshot app otomatis**: workflow `screenshot-app.yml` membangun APK release x86_64,
   menjalankannya di emulator Android 14 (GitHub Actions) dan menangkap tiap layar
   (`scripts-dev/screenshot_emulator.sh`); hasilnya dibingkai `scripts-dev/bingkai_screenshot.py`
@@ -103,10 +110,10 @@ Semua perubahan penting proyek ini. Format mengikuti
   512 px + kompres WebP bertahap sampai muat → cmd `stiker-jadi` → stiker dikirim ke chat
   sendiri. Berkas sementaranya dihapus di dua sisi, dan sisa dari sesi sebelumnya dibuang
   waktu engine nyala. Di CLI perintahnya dijawab jujur: konversi WebP butuh app Android.
-- **Story/status HD + tag grup (M15)**: foto/video dengan keterangan `.story` dikirim ke
-  `status@broadcast` **tanpa di-re-encode** (jadi tetap kualitas asli, bukan versi WA yang
-  dikompres ulang), penontonnya daftar nomor di kartu Bot WA umum; `.storygrup` menambah semua
-  anggota grup yang dipantau ke daftar penonton.
+- **Status media (M15)**: foto/video dengan keterangan `.story` dikirim ke `status@broadcast`
+  tanpa re-encode app-side; WhatsApp tetap bisa mengubah kualitas saat upload. Audience memakai
+  nomor yang dipilih di kartu Bot WA umum. `.storygrup` fail-closed karena `statusJidList` hanya
+  audience, bukan native group mention.
 - **Spek HP dipakai engine**: perintah `perangkat` dari app dicatat engine dan tampil di kartu
   status; jadi kalau HP pas-pasan, engine tahu tanpa harus nebak. Bukti: unit test
   `bot-js/test/pesan.test.mjs` (11 kasus: link Telegram, domain izin/terlarang, kata judi/promo,

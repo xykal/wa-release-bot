@@ -21,6 +21,8 @@ Format: apa — kenapa penting buat pengguna nyata — dampak/usaha (S/M/L). Dip
 - Counter Worker lagu yang tepat (Durable Object SQLite) kalau suatu saat kuota AI beneran jadi
   masalah; sekarang burst limiter + KV cukup buat penyalahgunaan kasual — M.
 - Pantau nodejs-mobile untuk build 16 KB; kalau ada, jalur Play Store terbuka — L (upstream).
+- Audit port terpisah dari nodejs-mobile 18.20.4 ke Node 22 LTS: ABI armeabi-v7a/arm64, NDK/toolchain, OpenSSL, addon/native bridge, ukuran APK, CI; jangan ganti runtime sebelum bukti hijau — L.
+- Audit native WhatsApp Status group mention pada library/fork yang kompatibel; uji protocol, supply-chain, Node minimum, dan perilaku di HP sebelum `.storygrup` diaktifkan — L.
 
 ## Pertumbuhan
 - README bagian English 20 baris di atas + GIF demo asli dari app — S.

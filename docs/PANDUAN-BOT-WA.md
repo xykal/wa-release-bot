@@ -25,9 +25,11 @@ kirim `.menu` buat lihat daftarnya. Yang ada sekarang:
 | `.menu` / `.bantu` | daftar perintah |
 | `.ping` | cek bot hidup |
 | `.status` | repo, rilis terakhir, penjaga grup, hitungan moderasi |
+| `.brat <teks>` | render stiker teks gaya Brat lokal di Android, lalu kirim ke chat sendiri |
 | `.stiker` | kirim/rebalas **foto** dengan keterangan `.stiker` → jadi stiker WA |
-| `.story` | kirim/rebalas **foto/video** dengan keterangan `.story` → status/story HD |
-| `.storygrup` | sama, tapi penontonnya ditambah anggota grup yang dipantau (cuma kalau Penjaga grup nyala) |
+| `.story` | kirim/rebalas **foto/video** dengan keterangan `.story` → unggah byte media asli (WhatsApp tetap dapat mengubah kualitas) |
+| `.storygrup` | nonaktif sementara; native mention grup di Status belum didukung runtime terpasang |
+| `.welcome on/off` | opt-in sambutan anggota baru, hanya untuk grup yang dipantau |
 | `.rekam` | rekam postingan channel: `on`, `off`, `kirim`, `kosong` |
 | `.grup` | info grup yang dipantau: nama, jumlah anggota, daftar hitam |
 | `.bersih` | kosongkan hitungan moderasi hari ini |
@@ -40,18 +42,16 @@ nggak kebaca, bot balas pesan gagal (nggak diem-dieman). Karena butuh Android,
 `.stiker` di CLI dijawab: pakai app buat fitur ini. Foto sebagai **dokumen**
 (di atas 6 MB) juga ditolak dengan pesan — kirim sebagai foto biasa saja.
 
-**Story/status** dikirim apa adanya (tanpa re-encode), jadi kualitasnya tetap
-seperti di HP — Baileys cuma bikin thumbnail kecil buat preview, file yang
-diunggah tetap byte aslinya.
+**Story/status** dikirim tanpa re-encode app-side; engine memberikan byte media
+asli ke WhatsApp, tetapi itu **tidak menjamin** WhatsApp mempertahankan kualitas
+HD setelah upload.
 
-**Penontonnya urusan pribadi, bukan grup** (dipertegas 2026-10-01):
-
-- `.story` → cuma nomor yang lo isi di kolom **Nomor penonton story**.
-- `.storygrup` → nomor itu ditambah anggota grup yang dipantau, dan itu pun
-  cuma kalau **Penjaga grup nyala**. Kalau penjaganya mati, perintahnya turun
-  jadi `.story` biasa (bot nggak nembak grup yang belum dicek).
-- Tiap kiriman, bot balas jumlah penontonnya secara terbuka: berapa nomor
-  pribadi dan berapa dari anggota grup, jadi kelihatan story-nya lari ke mana.
+**Penonton `.story`** tetap nomor yang diisi di kolom **Nomor penonton story**.
+`.storygrup` sengaja fail-closed: pada Baileys yang dipin sekarang,
+`statusJidList` hanya menentukan audience, bukan mention grup native. Engine
+menolak perintah itu alih-alih mengirim audience list sambil mengaku men-tag grup.
+Aktifkan lagi hanya setelah implementasi native mention lolos audit kompatibilitas,
+CI, dan uji nyata di WhatsApp.
 
 **Rekam postingan channel.** Ada fitur WhatsApp (mis. **Pertanyaan** di channel)
 yang bentuk kabelnya belum ada di Baileys 6.7.24, jadi belum bisa dikirim bot.

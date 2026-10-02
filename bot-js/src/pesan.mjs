@@ -10,6 +10,8 @@
 //   - admin dan pemilik grup TIDAK pernah disentuh.
 //     Aturannya bisa diubah lewat config (kata kunci tambahan).
 
+import { NAMA_BOT } from './config/brand.mjs';
+
 /** Domain yang dianggap wajar dikirim di grup (undangan grup, link WA sendiri). */
 export const DOMAIN_DIIZINKAN = [
   'chat.whatsapp.com',
@@ -134,25 +136,39 @@ export const PERINTAH = {
   menu: 'Daftar perintah ini',
   ping: 'Cek bot hidup (dijawab cepat)',
   status: 'Ringkasan status: engine, rilis terakhir, penjaga grup, lagu',
+  brat: 'Buat stiker teks gaya Brat: .brat <teks>',
   stiker: 'Balas/kirim foto dengan keterangan .stiker → jadi stiker WA',
-  story: 'Kirim foto/video dengan keterangan .story → naik ke story kamu (HD, byte asli); penonton = nomor di kolom Story',
-  storygrup: 'Sama seperti .story + anggota grup yang dipantau (cuma kalau Penjaga grup nyala)',
-  berkala: 'Lihat isi pesan berkala (daftar hitam); tambah "kirim" buat kirim sekarang',
-  rekam: 'Rekam postingan channel (buat fitur WA yang belum didukung): on/off/kirim/kosong',
-  grup: 'Info grup yang dipantau: nama, jumlah anggota, mode moderasi',
-  bersih: 'Kosongkan hitungan moderasi hari ini (pesan dihapus & kick)',
-  bantu: 'Sama seperti .menu, ditulis lengkap',
+  story: 'Kirim foto/video dengan keterangan .story → Status memakai byte media asli; penonton = daftar Story',
+  storygrup: 'Native mention grup di Status — belum aktif pada runtime yang dipakai saat ini',
+  welcome: 'Sambutan anggota baru di grup dipantau: .welcome on/off',
+  berkala: 'Lihat pesan berkala; tambah "kirim" buat kirim sekarang',
+  rekam: 'Rekam postingan channel: on/off/kirim/kosong',
+  grup: 'Info grup dipantau: anggota, moderasi, dan status penjagaan',
+  bersih: 'Kosongkan hitungan moderasi hari ini',
+  bantu: 'Alias .menu',
 };
 
-/** Teks menu (dipakai jawaban `.menu`; dikirim ke chat sendiri, bukan grup). */
+const KELOMPOK_MENU = [
+  ['MEDIA & STATUS', ['brat', 'stiker', 'story', 'storygrup']],
+  ['BOT & INFO', ['menu', 'ping', 'status', 'bantu']],
+  ['GRUP & CHANNEL', ['welcome', 'grup', 'berkala', 'rekam', 'bersih']],
+];
+
+/** Teks menu ringkas dan terkelompok; perintah tetap khusus chat pribadi. */
 export function menuTeks(namaBot = 'WA Release Bot') {
-  const baris = Object.entries(PERINTAH).map(([k, v]) => `• .${k} — ${v}`);
+  const baris = KELOMPOK_MENU.flatMap(([judul, nama]) => [
+    `\n*${judul}*`,
+    ...nama.map((k) => `• .${k} — ${PERINTAH[k]}`),
+  ]);
   return [
-    `*${namaBot}* — perintah pribadi (chat ini saja):`,
+    `*${namaBot}*`,
+    'Perintah pribadi · chat ini saja',
     ...baris,
     '',
-    'Tulis perintahnya di chat ini (pesan ke diri sendiri). Untuk .stiker dan .story,',
-    'kirim/perbalas media dengan keterangan perintahnya.',
+    'Kirim media dengan caption `.stiker` atau `.story`; `.storygrup` menunggu dukungan native mention.',
+    'Buat stiker teks: `.brat <teks>` · Sambutan grup: `.welcome on/off`.',
+    '',
+    `— ${NAMA_BOT}`,
   ].join('\n');
 }
 

@@ -1,4 +1,4 @@
-// Aksi yang butuh media: foto jadi stiker, story/status HD + tag grup.
+// Aksi media: foto jadi stiker, Status dari byte asli, dan gerbang mention grup.
 //
 // Dipisah dari aksi-pesan.mjs supaya tiap berkas tetap di bawah ~250 baris.
 // Yang nempel ke WhatsApp cuma `sock.sendMessage`; semua keputusan ada di sini.
@@ -77,6 +77,31 @@ export function buatAksiMedia(ctx, alat) {
     }
   }
 
+  /** Render teks lokal di Android; app kirim balik WebP lewat alur `stiker-jadi`. */
+  async function buatBrat(sock, teksMasuk) {
+    const teks = String(teksMasuk || '').trim().replace(/\s+/g, ' ');
+    if (!teks) {
+      await jawab(sock, 'Formatnya `.brat <teks>` — tulis teks pendek yang mau dijadikan stiker.');
+      return;
+    }
+    if ([...teks].length > 48) {
+      await jawab(sock, 'Teks Brat maksimal 48 karakter biar muat di stikernya.');
+      return;
+    }
+    if (typeof ctx.bridge?.send !== 'function') {
+      await jawab(sock, 'Stiker Brat perlu app Android yang tersambung.');
+      return;
+    }
+    const id = randomBytes(16).toString('hex');
+    try {
+      ctx.bridge.send({ type: 'buat_brat', id, teks });
+      await jawab(sock, 'Stiker Brat lagi dibuat...');
+    } catch (e) {
+      log(`⚠️ Gagal minta stiker Brat: ${e.message}`);
+      await jawab(sock, 'Stiker Brat gagal dimulai. Coba lagi ya.');
+    }
+  }
+
   /**
    * Dipanggil perintah.mjs waktu app selesai konversi (cmd `stiker-jadi`):
    * app nulis hasil WebP-nya di dataDir, engine tinggal ngirim. Berkas masuk
@@ -113,47 +138,36 @@ export function buatAksiMedia(ctx, alat) {
 
   // -------------------------------- story ----------------------------------
 
-  /** Penonton story: lihat ../story.mjs (pribadi dulu, grup cuma kalau diminta). */
-  function penontonStory({ tagGrup } = {}) {
-    return hitungPenonton(
-      {
-        storyKe: ctx.cfg?.jaga?.storyKe || [],
-        anggota: ctx.state.grup?.anggota || [],
-        grupAktif: Boolean(ctx.cfg?.grup?.aktif && ctx.cfg?.grup?.target),
-      },
-      { tagGrup }
-    );
+  /** Audience `statusJidList`; tidak punya semantik native group mention. */
+  function penontonStory() {
+    return hitungPenonton({ storyKe: ctx.cfg?.jaga?.storyKe || [] });
   }
 
   async function kirimStory(sock, m, { tagGrup } = {}) {
-    const media = mediaPesan(m);
-    if (!media) {
-      await jawab(sock, 'Kirim FOTO/VIDEO dengan keterangan .story (atau .storygrup buat tag grup).');
+    if (tagGrup) {
+      // statusJidList is an audience filter, not WhatsApp's native group mention.
+      await jawab(sock, '.storygrup belum aktif: engine ini belum mendukung mention grup native di Status.');
       return;
     }
-    const grupAktif = Boolean(ctx.cfg?.grup?.aktif && ctx.cfg?.grup?.target);
-    // `.storygrup` cuma ngikutkan grup kalau Penjaga grup memang nyala; kalau
-    // nggak, turun jadi `.story` (jangan kirim ke grup yang belum dicek).
-    const daftar = penontonStory({ tagGrup: Boolean(tagGrup) && grupAktif });
-    const pribadi = (ctx.cfg?.jaga?.storyKe || []).length;
+    const media = mediaPesan(m);
+    if (!media) {
+      await jawab(sock, 'Kirim FOTO/VIDEO dengan keterangan .story. .storygrup belum aktif di engine ini.');
+      return;
+    }
+    const daftar = penontonStory();
     if (!daftar.length) {
       await jawab(sock, 'Belum ada penonton: isi daftar nomor story di app (tab Fitur, kartu Bot WA umum).');
       return;
     }
     try {
       const buf = await unduhMedia(sock, m);
-      // Tanpa re-encode: yang dikirim byte aslinya, jadi kualitasnya tetap
-      // seperti di HP. Baileys cuma bikin thumbnail kecil buat preview; file
-      // yang diunggah tetap utuh (lihat prepareWAMessageMedia di messages.ts).
+      // Hindari transcode tambahan di app; WhatsApp masih bisa mengubah kualitas saat upload.
       const isi = media.jenis === 'gambar'
         ? { image: buf, caption: '' }
         : { video: buf, caption: '', mimetype: media.isi?.mimetype || 'video/mp4' };
       await sock.sendMessage('status@broadcast', isi, { statusJidList: daftar });
       papan.story += 1;
-      const ket = keteranganPenonton(pribadi, daftar.length, {
-        tagGrup: Boolean(tagGrup),
-        grupAktif,
-      });
+      const ket = keteranganPenonton(daftar.length);
       log(`📸 Story terkirim ke ${ket}.`);
       await jawab(sock, `Story terkirim ke ${ket}.`);
       emitStatus();
@@ -163,5 +177,5 @@ export function buatAksiMedia(ctx, alat) {
     }
   }
 
-  return { mintaStiker, kirimStikerJadi, kirimStory, penontonStory };
+  return { mintaStiker, buatBrat, kirimStikerJadi, kirimStory, penontonStory };
 }

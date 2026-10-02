@@ -134,9 +134,34 @@ export function buatAksiPesan(ctx, alat) {
         break;
       }
 
+      case 'brat':
+        await media.buatBrat(sock, p.arg);
+        break;
+
       case 'stiker':
         await media.mintaStiker(sock, m);
         break;
+
+      case 'welcome': {
+        const mode = String(p.arg || '').toLowerCase().split(/\s+/)[0] || '';
+        ctx.state = ctx.state || {};
+        if (mode === 'on' || mode === 'nyala') {
+          if (!ctx.cfg?.grup?.aktif || !ctx.cfg?.grup?.target) {
+            await jawab(sock, 'Nyalain dan pilih Grup yang dipantau dulu di pengaturan.');
+            break;
+          }
+          ctx.state.welcomeAktif = true;
+          await saveState();
+          await jawab(sock, 'Pesan sambutan NYALA hanya di grup yang dipantau.');
+        } else if (mode === 'off' || mode === 'mati') {
+          ctx.state.welcomeAktif = false;
+          await saveState();
+          await jawab(sock, 'Pesan sambutan mati.');
+        } else {
+          await jawab(sock, `Pesan sambutan ${ctx.state.welcomeAktif ? 'NYALA' : 'mati'}; pakai .welcome on/off.`);
+        }
+        break;
+      }
 
       case 'story':
       case 'storygrup':

@@ -423,6 +423,14 @@ class BotService : Service() {
                 }
             }
 
+            "buat_brat" -> {
+                val id = e.optString("id")
+                val teks = e.optString("teks")
+                if (id.matches(Regex("^[a-fA-F0-9]{32}$")) && teks.isNotBlank()) {
+                    scope.launch { buatStikerBrat(id, teks) }
+                }
+            }
+
             "pairing_code" -> BotBus.publish { pairingCode = e.optString("code", "").orNull() }
 
             "setup_start" -> BotBus.publish {
@@ -519,11 +527,33 @@ class BotService : Service() {
      * /data/data/... yang nggak bisa dibuka siapa-siapa tanpa root. Percuma
      * buat debugging di HP — itu sebabnya LogRecorder dipakai.
      */
+    /** Canvas Android menulis WebP lokal tanpa menambah encoder ke bundle Node. */
+    private fun buatStikerBrat(id: String, teks: String) {
+        val hasil = try { Stiker.brat(teks) } catch (e: Throwable) {
+            LogRecorder.galat("Brat", "render gagal", e)
+            null
+        }
+        if (hasil == null) {
+            appendLog("Stiker Brat gagal dibuat.")
+            sendCmd(mapOf("type" to "stiker-jadi", "id" to id, "gagal" to "render"))
+            return
+        }
+        val dir = File(dataDir, "stiker").apply { mkdirs() }
+        val keluar = File(dir, "keluar-$id.webp")
+        try {
+            if (!keluar.createNewFile()) throw IllegalStateException("berkas sementara sudah ada")
+            keluar.writeBytes(hasil.data)
+            sendCmd(mapOf("type" to "stiker-jadi", "id" to id, "file" to "stiker/${keluar.name}", "kb" to hasil.kb))
+            appendLog("Stiker Brat dibuat (${hasil.lebar}x${hasil.tinggi}, ${hasil.kb} KB).")
+        } catch (e: Throwable) {
+            LogRecorder.galat("Brat", "tulis stiker gagal", e)
+            sendCmd(mapOf("type" to "stiker-jadi", "id" to id, "gagal" to "tulis"))
+        }
+    }
+
     /**
-     * Foto (berkas di dataDir, dari engine) -> stiker WebP (berkas juga).
-     * Nama berkas dari engine selalu `stiker/...`; di sini cuma nama filenya
-     * yang dipakai dan digabung ulang ke folder stiker, jadi path aneh dari
-     * luar nggak bisa nyasar ke berkas lain.
+     * Engine cuma kirim `stiker/...`; basename dirakit ulang di sini supaya
+     * perintah bridge yang rusak nggak bisa menunjuk file di luar folder stiker.
      */
     private fun buatStiker(id: String, berkasMasuk: String) {
         val dir = File(dataDir, "stiker").apply { mkdirs() }

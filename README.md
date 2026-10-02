@@ -85,7 +85,7 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`): CLI meng-import modul `bot-
 - **Tautkan sekali seumur hidup** — pakai **pairing code** (8 huruf, tanpa HP kedua) atau QR
 - **Penjaga grup** — auto-approve permintaan join, tolak yang dulu udah keluar/dikeluarin
 - **Moderasi grup** — link phishing/promo/judi dihapus, peringatan, strike terakhir dikeluarkan; admin aman
-- **Bot WA umum** — perintah pribadi di chat sendiri: `.menu`, `.ping`, `.status`, `.stiker` (foto jadi stiker), `.story` (story HD + tag grup)
+- **Bot WA umum** — perintah pribadi di chat sendiri: `.menu`, `.ping`, `.status`, `.brat <teks>`, `.welcome on/off`, `.stiker`, `.story` (byte asli; kualitas akhir ditentukan WhatsApp); `.storygrup` menunggu dukungan native mention
 - **Post ke channel WA** (tempel link channel-nya) — atau ke **grup WA** kalau lebih gampang
 - **Bikin channel dari app** — belum punya channel? bot yang bikinin, sekali klik
 - **Watchdog** — WorkManager + boot receiver: service ke-bunuh Android → nyala lagi

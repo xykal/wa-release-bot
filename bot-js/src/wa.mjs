@@ -15,6 +15,7 @@ import path from 'node:path';
 import { resolveTarget } from './channel.mjs';
 import { normalisasiNomor } from './nomor.mjs';
 import { errorAmbigu } from './rilis.mjs';
+import { NAMA_BOT } from './config/brand.mjs';
 import {
   makeWASocket,
   useMultiFileAuthState,
@@ -275,8 +276,17 @@ export async function resolveChannel(sock, target, log) {
   return resolveTarget(sock, target, log);
 }
 
-export async function sendText(sock, jid, text) {
-  await sock.sendMessage(jid, { text });
+export const TAGLINE_BOT = `— ${NAMA_BOT}`;
+
+/** Semua teks yang dikirim bot diberi identitas singkat; jangan gandakan footer. */
+export function teksDenganTagline(text) {
+  const isi = String(text ?? '').trimEnd();
+  if (!isi || isi === TAGLINE_BOT || isi.endsWith(`\n${TAGLINE_BOT}`)) return isi;
+  return `${isi}\n\n${TAGLINE_BOT}`;
+}
+
+export async function sendText(sock, jid, text, opsi = {}) {
+  await sock.sendMessage(jid, { ...opsi, text: teksDenganTagline(text) });
 }
 
 /**
@@ -295,7 +305,7 @@ export async function sendPertanyaan(sock, jid, text) {
   if (!String(jid).endsWith('@newsletter')) return sendText(sock, jid, text);
   const pesan = proto.Message.fromObject({
     messageContextInfo: { messageSecret: randomBytes(32) },
-    questionMessage: { message: { extendedTextMessage: { text } } },
+    questionMessage: { message: { extendedTextMessage: { text: teksDenganTagline(text) } } },
   });
   await sock.relayMessage(jid, pesan, {});
 }
@@ -345,7 +355,7 @@ export async function laporKeDiri(sock, teks, log = () => {}) {
   const jid = jidSendiri(sock);
   if (!jid) { log('Lapor ke diri sendiri dilewati: JID akun tidak diketahui.'); return false; }
   try {
-    await sock.sendMessage(jid, { text: teks });
+    await sendText(sock, jid, teks);
     log('Laporan kegagalan dikirim ke chat diri sendiri.');
     return true;
   } catch (e) {

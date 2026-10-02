@@ -367,3 +367,16 @@ Belum diverifikasi:
 Next:
 - Tunggu review/keputusan merge kall; jangan merge otomatis meski Actions hijau.
 - Audit terpisah untuk port Node 22 dan kompatibilitas native Status group mention; runtime tetap v18.20.4.
+
+Sesi 2 (audit menyeluruh setelah PR #56 di-merge 2026-10-02T10:59Z sebagai `ec2d9fd`):
+
+Done:
+- Koreksi catatan di atas: PR #56 sudah di-merge; post-merge main `ec2d9fd` 4/4 Actions sukses.
+- Audit menyeluruh di `docs/AUDIT-2026-10-02.md` bagian Sesi 2 (1 CRIT, 2 HIGH, 2 MED, 5 LOW).
+- [CRIT] WS bridge 127.0.0.1 wajib token per proses + tolak handshake ber-Origin; proving test JS + Kotlin di branch `fix/ws-bridge-auth`.
+
+Blocked:
+- Keputusan kall: hosting tanpa isolasi, fitur lagu mood (hak cipta / ToS SoundCloud).
+
+Next:
+- Verifikasi Actions PR; uji perangkat nyata (perintah via WS, fallback file bridge).

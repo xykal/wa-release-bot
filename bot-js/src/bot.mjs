@@ -196,9 +196,14 @@ async function main() {
     } catch { /* bridge belum siap — log tetap ke console */ }
   }
 
+  // Token dibaca lalu dihapus dari env: bot hosting jalan di worker dengan env
+  // turunan process.env, jadi token jangan sampai ikut diwariskan ke sana.
+  const wsToken = process.env.WR_WS_TOKEN || '';
+  delete process.env.WR_WS_TOKEN;
   bridge = createBridge({
     dataDir,
     wsPort: Number(process.env.WR_WS_PORT || 18790),
+    wsToken,
     log,
     onCommand: (cmd) => {
       ctx.fitur.perintah.handleCommand(cmd).catch((e) => log('⚠️ Perintah ' + cmd?.type + ' gagal: ' + e.message));

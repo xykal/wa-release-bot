@@ -17,6 +17,7 @@ import java.util.concurrent.TimeUnit
  */
 class WsClient(
     private val url: String,
+    private val token: String,
     private val scope: CoroutineScope
 ) {
     @Volatile
@@ -33,7 +34,7 @@ class WsClient(
     private var ws: WebSocket? = null
 
     fun connect() {
-        val request = Request.Builder().url(url).build()
+        val request = Request.Builder().url(url).header("X-WR-Token", token).build()
         scope.launch {
             while (isActive) {
                 try {

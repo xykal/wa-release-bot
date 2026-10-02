@@ -354,10 +354,16 @@ Done:
 - Branch `feat/sukibot-brat-welcome`: `.brat` Android Canvas WebP, `.welcome` opt-in terbatas grup pantauan, tagline `SukiBot`, menu berkelompok; tambah tes regresi dan audit 2026-10-02.
 - `.storygrup` sekarang fail-closed karena `statusJidList` bukan native group mention; docs dan roadmap dikoreksi.
 
-Blocked / belum diverifikasi:
-- PR feature belum dibuat; tidak ada test suite atau build lokal, sesuai aturan CI-only.
+Verified via GitHub Actions pada PR #56, commit `47e0e8bf5c8d90204173731fb19f11a20dd45e25`:
+- Code quality: https://github.com/xykal/wa-release-bot/actions/runs/36995381626
+- CodeQL: https://github.com/xykal/wa-release-bot/actions/runs/36995381595
+- Security: https://github.com/xykal/wa-release-bot/actions/runs/36995381596
+- Build APK (termasuk testDebugUnitTest): https://github.com/xykal/wa-release-bot/actions/runs/36995381657
+
+Belum diverifikasi:
 - Kualitas Status setelah upload WhatsApp dan self-chat “Waiting for this message” tetap perlu uji perangkat nyata.
+- PR belum di-merge; APK/artifact PR sengaja dipertahankan untuk uji kall.
 
 Next:
-- Review diff, push PR, jalankan seluruh verifikasi lewat GitHub Actions; jangan hapus artifact yang masih dipakai build.
+- Tunggu review/keputusan merge kall; jangan merge otomatis meski Actions hijau.
 - Audit terpisah untuk port Node 22 dan kompatibilitas native Status group mention; runtime tetap v18.20.4.

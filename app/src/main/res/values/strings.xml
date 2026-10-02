@@ -278,6 +278,7 @@
     <string name="k_hapus_project_2">Hapus project?</string>
     <string name="k_bot_di_stop_semua_file">Bot di-stop, semua file project (termasuk sesi WA bot itu &amp; node_modules) dihapus dari HP.</string>
     <string name="k_hapus_2">Hapus</string>
+    <string name="k_hosting_sumber_gagal">Sidik jari project gagal disimpan.</string>
     <string name="k_folder_data_nggak_ada">folder data nggak ada</string>
     <string name="k_file_zip_nggak_kebaca">file ZIP nggak kebaca</string>
     <string name="k_file_zip_lebih_dari_100_mb">File ZIP lebih dari 100 MB. Buang node_modules/cache dari arsip dan coba lagi.</string>

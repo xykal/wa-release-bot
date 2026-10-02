@@ -104,6 +104,10 @@ dari build internal tetap diterima Android.
   dan environment app lain tidak diteruskan. Setiap ZIP disalin ke storage privat sambil
   dihitung SHA-256 (maksimal 100 MB), lalu arsip yang sama membutuhkan persetujuan
   risiko eksplisit sebelum dipasang. Worker thread tetap bukan sandbox filesystem.
+- Gerbang persetujuan ditegakkan juga oleh mesin: project hosting (termasuk jalan otomatis
+  setelah boot) menolak jalan sebelum persetujuan untuk sidik SHA-256 ZIP yang terpasang
+  tercatat; upload ZIP baru menggugurkan persetujuan lama. Project yang terpasang sebelum
+  fitur ini perlu di-upload ulang sekali sebelum bisa jalan lagi.
 - `BootReceiver` sekarang `exported=false` dan hanya menerima `BOOT_COMPLETED` serta
   `MY_PACKAGE_REPLACED`; action QUICKBOOT nonstandar yang dapat dipalsukan app lain dihapus.
 - WS bridge `127.0.0.1:18790` sekarang wajib token acak per proses (header `X-WR-Token`).

@@ -263,6 +263,10 @@ menampilkan risikonya, dan meminta persetujuan untuk setiap ZIP baru.
 - **Worker thread bukan sandbox keamanan.** Kode project tetap dapat membaca
   filesystem privat app, termasuk sesi WhatsApp dan setting. Hanya jalankan
   project yang seluruh kodenya sudah lo audit.
+- Persetujuan dicek ulang oleh mesin: project (termasuk jalan otomatis setelah
+  boot) menolak jalan sampai persetujuan untuk sidik ZIP yang terpasang
+  tercatat. Upload ZIP baru menggugurkan persetujuan lama — dialog muncul lagi.
+  Project yang dipasang sebelum fitur ini perlu di-upload ulang sekali.
 - Ganti ZIP mempertahankan file lama yang tidak ada di ZIP baru, termasuk sesi,
   `.env`, dan `node_modules`; file tersebut tidak tercakup hash ZIP baru.
 - Bot punya restart otomatis, konsol, dan stdin. Node yang dipakai adalah

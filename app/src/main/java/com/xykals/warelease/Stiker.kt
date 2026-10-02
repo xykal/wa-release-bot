@@ -2,8 +2,13 @@ package com.xykals.warelease
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.os.Build
 import java.io.ByteArrayOutputStream
+import java.util.Locale
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -19,6 +24,13 @@ import kotlin.math.roundToInt
  * Aturan stiker WA: sisi terpanjang 512 px, latar transparan boleh, ukuran
  * aman di bawah 100 KB.
  */
+internal fun teksBratTerbatas(teks: String): String? {
+    val mentah = teks.trim().replace(Regex("\\s+"), " ").lowercase(Locale.ROOT)
+    if (mentah.isBlank()) return null
+    val akhir = mentah.offsetByCodePoints(0, minOf(48, mentah.codePointCount(0, mentah.length)))
+    return mentah.substring(0, akhir)
+}
+
 internal object Stiker {
 
     const val SISI_MAKS = 512
@@ -26,6 +38,51 @@ internal object Stiker {
 
     class Hasil(val data: ByteArray, val lebar: Int, val tinggi: Int) {
         val kb: Int get() = (data.size + 1023) / 1024
+    }
+
+    /** Render kartu teks hijau gaya Brat secara lokal; tak perlu unduh font/aset. */
+    fun brat(teks: String): Hasil? {
+        val isi = teksBratTerbatas(teks) ?: return null
+        val bmp = Bitmap.createBitmap(SISI_MAKS, SISI_MAKS, Bitmap.Config.ARGB_8888)
+        return try {
+            val canvas = Canvas(bmp)
+            canvas.drawColor(Color.rgb(138, 206, 0))
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.BLACK
+                textAlign = Paint.Align.CENTER
+                typeface = Typeface.create("sans-serif-condensed", Typeface.BOLD)
+                textSize = 72f
+                setShadowLayer(1.5f, 0f, 0f, 0x55000000)
+            }
+            val kata = isi.split(' ')
+            while (kata.any { paint.measureText(it) > 432f } && paint.textSize > 14f) {
+                paint.textSize -= 4f
+            }
+            val baris = mutableListOf<String>()
+            var aktif = ""
+            for (bagian in kata) {
+                val calon = if (aktif.isEmpty()) bagian else "$aktif $bagian"
+                if (aktif.isNotEmpty() && paint.measureText(calon) > 432f) {
+                    baris += aktif
+                    aktif = bagian
+                } else aktif = calon
+            }
+            if (aktif.isNotEmpty()) baris += aktif
+            val metrik = paint.fontMetrics
+            val jarak = (metrik.descent - metrik.ascent) * 0.88f
+            val tinggi = jarak * baris.size
+            var y = (SISI_MAKS - tinggi) / 2f - metrik.ascent
+            baris.forEach { barisTeks ->
+                canvas.drawText(barisTeks, SISI_MAKS / 2f, y, paint)
+                y += jarak
+            }
+            Hasil(encode(bmp, 90), SISI_MAKS, SISI_MAKS)
+        } catch (e: Throwable) {
+            LogRecorder.galat("Brat", "render stiker gagal", e)
+            null
+        } finally {
+            if (!bmp.isRecycled) bmp.recycle()
+        }
     }
 
     /** @return null kalau gambarnya nggak kebaca. */

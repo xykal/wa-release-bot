@@ -1,6 +1,7 @@
 // Satu-satunya sumber string brand di engine. Sisi Android membaca
 // res/values/brand.xml dengan nilai yang sama; jangan ubah salah satu saja.
 export const NAMA_APP = 'WA Release Bot';
+export const NAMA_BOT = 'SukiBot';
 export const NAMA_PAKET = 'wa-release-bot';
 export const BRAND = 'XyVerse Technology Global';
 export const POWERED_BY = `Powered by ${BRAND}`;

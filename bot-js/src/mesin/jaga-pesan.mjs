@@ -16,6 +16,7 @@ import { downloadMediaMessage } from '@whiskeysockets/baileys';
 import { tungguSocketJaga } from '../wa-socket-share.mjs';
 import { menuTeks } from '../pesan.mjs';
 import { sendText, jidSendiri } from '../wa.mjs';
+import { NAMA_BOT } from '../config/brand.mjs';
 import { identitas, identitasSama } from '../grup.mjs';
 import { bacaTarget, JENIS } from '../channel.mjs';
 import { buatAksiPesan, teksPesan } from './aksi-pesan.mjs';
@@ -79,6 +80,29 @@ export function buatJagaPesan(ctx, { rekam = null } = {}) {
     return t.jenis === JENIS.GRUP ? t.nilai : null;
   }
 
+  /** Sambut anggota baru hanya di grup terpilih; perintah kontrol tetap privat. */
+  function pasangSambutan(sock) {
+    sock.ev.on('group-participants.update', async (perubahan) => {
+      if (!ctx.state?.welcomeAktif || perubahan?.action !== 'add') return;
+      if (!ctx.cfg?.grup?.aktif) return;
+      const grup = ctx.state.grup || {};
+      const targetCfg = String(ctx.cfg.grup.target || '').trim();
+      if (grup.target !== targetCfg) return; // state lama tidak boleh menyambut grup yang sudah diganti
+      const target = String(grup.jid || grupDipantau() || '');
+      const jidGrup = String(perubahan.id || '');
+      if (!target || jidGrup !== target) return;
+      const peserta = Array.isArray(perubahan.participants) ? perubahan.participants : [];
+      if (!peserta.some((jid) => !identitasSama(jid, sock.user))) return;
+      const nama = String(ctx.state.grup?.nama || 'grup ini').trim();
+      try {
+        await sendText(sock, jidGrup, `Selamat datang di ${nama}! Cek deskripsi grup untuk aturan dan info ya.`);
+        log(`Sambutan ${NAMA_BOT} dikirim ke grup "${nama}".`);
+      } catch (e) {
+        log(`Sambutan ${NAMA_BOT} gagal dikirim: ${e.message}`);
+      }
+    });
+  }
+
   /** Cek admin, di-cache per (grup, orang) biar metadata nggak ditarik tiap pesan. */
   const adminCache = new Map();
   async function adminDi(jidGrup, pengirim) {
@@ -121,6 +145,7 @@ export function buatJagaPesan(ctx, { rekam = null } = {}) {
   async function satuSesi() {
     const { sock, close } = await sambung({ onStatus: (m) => log(m), lewatiSocketJaga: true });
     sockAktif = sock;
+    pasangSambutan(sock);
     // Rekam postingan channel (kalau diminta `.rekam on`) nempel di socket ini.
     try { ctx.fitur?.rekam?.pasang(sock); } catch (e) { log(`⚠️ Rekam channel nggak kepasang: ${e.message}`); }
     log(

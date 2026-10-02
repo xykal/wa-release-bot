@@ -11,6 +11,7 @@ import path from 'node:path';
 
 import { entriRekaman, tambahEntri, ringkasRekaman, cariAnak, MAKS_ENTRI } from '../rekam-mentah.mjs';
 import { jidSendiri } from '../wa.mjs';
+import { NAMA_BOT } from '../config/brand.mjs';
 
 /** Batas total file rekaman; postingan paling lama dibuang kalau lewat. */
 export const MAKS_TOTAL_BYTE = 8 * 1024 * 1024;
@@ -192,7 +193,7 @@ export function buatRekamChannel(ctx) {
       document: data,
       fileName: namaBerkas,
       mimetype: 'application/json',
-      caption: 'Rekaman postingan channel. Kirim file ini ke developer (upload), jangan diedit.',
+      caption: `Rekaman postingan channel. Kirim file ini ke developer (upload), jangan diedit.\n\n— ${NAMA_BOT}`,
     });
     log(`Rekaman channel dikirim ke chat sendiri (${data.length} byte).`);
     return { ok: true, byte: data.length };

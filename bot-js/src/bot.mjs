@@ -153,6 +153,7 @@ async function main() {
       lastTag: null, channelJid: null, channelName: null, postCount: 0, lastPostedAt: null,
       rilisEtag: null, // ETag jawaban GitHub terakhir -> cek berikutnya conditional (304 gratis)
       pending: null,   // { tag, percobaan, mulai } ditulis SEBELUM kirim, dihapus setelah sukses
+      welcomeAktif: false, // opt-in agar grup nggak menerima sambutan tanpa persetujuan admin
       grup: null, // { target, jid, nama, anggota: [[id...]], hitam: [id...], disetujui, ditolak, lastCekAt }
       lagu: null, // { terkirim: [id...], count, lastAt, lastJudul }
     },

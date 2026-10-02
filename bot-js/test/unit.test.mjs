@@ -16,17 +16,75 @@ import { parseRepo, fetchLatestRelease } from '../src/github.mjs';
 import { bacaTarget, JENIS, pesanCaraIsiChannel, linkChannel } from '../src/channel.mjs';
 import { formatReleasePost, formatTestMessage, formatTesGrup, AJAKAN_BALAS, mdKeWa, potongAman, formatTanggal, formatLaporGagal, formatUkuran } from '../src/format.mjs';
 import { putuskanRilis, pendingBerikut, errorAmbigu, tagKeSemver, MAKS_PERCOBAAN } from '../src/rilis.mjs';
-import { kirimKeChannel, jidSendiri, laporKeDiri, pakaiPertanyaan, sendPertanyaan } from '../src/wa.mjs';
+import { kirimKeChannel, jidSendiri, laporKeDiri, pakaiPertanyaan, sendPertanyaan, sendText, teksDenganTagline } from '../src/wa.mjs';
 import { proto } from '@whiskeysockets/baileys';
 import { kumpulkanNodeMessage, susunEntri, jenisPesan } from '../src/rekam.mjs';
 import { BRAND, TANDA_TANGAN } from '../src/config/brand.mjs';
 import { kelompokHitam, bukaBlokir, labelOrang } from '../src/grup.mjs';
 import { createBridge } from '../src/bridge.mjs';
 import { buatAksiPesan } from '../src/mesin/aksi-pesan.mjs';
+import { buatAksiMedia } from '../src/mesin/aksi-media.mjs';
 import { normalisasiNomor } from '../src/nomor.mjs';
 import {
   rapikanJid, identitas, identitasSama, cariYangKeluar, catatAnggota, putuskan, daftarHitamManual, namaOrang,
 } from '../src/grup.mjs';
+
+test('tagline SukiBot: teks WhatsApp diberi footer sekali saja', async () => {
+  assert.equal(teksDenganTagline('Info rilis'), 'Info rilis\n\n— SukiBot');
+  assert.equal(teksDenganTagline('Info\n\n— SukiBot'), 'Info\n\n— SukiBot');
+  const terkirim = [];
+  await sendText({ sendMessage: async (...args) => terkirim.push(args) }, '1@s.whatsapp.net', 'Hai');
+  assert.deepEqual(terkirim, [['1@s.whatsapp.net', { text: 'Hai\n\n— SukiBot' }]]);
+});
+
+test('.brat: bridge request bounded, result sent as WebP sticker to private self-chat', async () => {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sukibot-brat-'));
+  const events = [];
+  const balasan = [];
+  const keluar = [];
+  const ctx = { dataDir, bridge: { send: (obj) => events.push(obj) }, tungguStiker: new Set() };
+  const sock = {
+    user: { id: '628111:3@s.whatsapp.net' },
+    sendMessage: async (jid, isi) => keluar.push({ jid, isi }),
+  };
+  const aksi = buatAksiMedia(ctx, {
+    log() {}, jawab: async (_sock, teks) => balasan.push(teks), unduhMedia: async () => Buffer.alloc(0),
+    papan: { stiker: 0 }, emitStatus() {},
+  });
+  try {
+    await aksi.buatBrat(sock, '  halo\n dunia  ');
+    assert.equal(events.length, 1);
+    assert.equal(events[0].type, 'buat_brat');
+    assert.equal(events[0].teks, 'halo dunia');
+    await aksi.buatBrat(sock, '😀'.repeat(49));
+    assert.equal(events.length, 1, 'teks lebih dari 48 code point ditolak');
+
+    const id = events[0].id;
+    const dirStiker = path.join(dataDir, 'stiker');
+    fs.mkdirSync(dirStiker, { recursive: true });
+    fs.writeFileSync(path.join(dirStiker, `keluar-${id}.webp`), Buffer.from('webp'));
+    await aksi.kirimStikerJadi({ id, file: `stiker/keluar-${id}.webp` }, sock);
+    assert.equal(keluar.length, 1);
+    assert.equal(keluar[0].jid, '628111@s.whatsapp.net');
+    assert.equal(keluar[0].isi.mimetype, 'image/webp');
+    assert.equal(ctx.tungguStiker.size, 0);
+  } finally {
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  }
+});
+
+test('.storygrup: fail closed instead of misusing statusJidList as native mention', async () => {
+  const balasan = [];
+  let unduh = 0;
+  const aksi = buatAksiMedia({ cfg: {}, dataDir: os.tmpdir() }, {
+    log() {}, jawab: async (_sock, teks) => balasan.push(teks),
+    unduhMedia: async () => { unduh += 1; return Buffer.from('media'); },
+    papan: { story: 0 }, emitStatus() {},
+  });
+  await aksi.kirimStory({}, { message: { imageMessage: {} } }, { tagGrup: true });
+  assert.equal(unduh, 0);
+  assert.match(balasan[0], /native/);
+});
 
 // ---------------------------------------------------------------- parseRepo
 test('parseRepo: format valid diterima', () => {
@@ -386,6 +444,31 @@ test('perintah .rekam on memakai recorder yang diinjeksi ke aksi pesan', async (
   assert.equal(balasan.some((teks) => teks.includes('Android/media/com.xykals.warelease/rekaman/rekaman-channel.json')), true);
 });
 
+test('perintah Brat dan welcome tetap dikendalikan dari chat pribadi', async () => {
+  const stiker = [];
+  const balasan = [];
+  let simpan = 0;
+  const ctx = { cfg: { jaga: { perintah: true }, grup: { aktif: true, target: 'https://chat.whatsapp.com/x' } }, state: {} };
+  const aksi = buatAksiPesan(ctx, {
+    log() {},
+    saveState() { simpan += 1; },
+    emitStatus() {},
+    jawab: async (_sock, teks) => balasan.push(teks),
+    adminDi: async () => false,
+    papan: { perintah: 0 },
+    media: { buatBrat: async (_sock, teks) => stiker.push(teks), mintaStiker: async () => {}, kirimStory: async () => {} },
+  });
+
+  await aksi.tanganiPerintah({}, { key: {} }, '.brat halo dunia');
+  assert.deepEqual(stiker, ['halo dunia']);
+  await aksi.tanganiPerintah({}, { key: {} }, '.welcome on');
+  assert.equal(ctx.state.welcomeAktif, true);
+  await aksi.tanganiPerintah({}, { key: {} }, '.welcome off');
+  assert.equal(ctx.state.welcomeAktif, false);
+  assert.equal(simpan, 2);
+  assert.ok(balasan.some((teks) => teks.includes('hanya di grup yang dipantau')));
+});
+
 test('sendPertanyaan: channel → questionMessage, grup → teks biasa', async () => {
   // Baileys butuh WebCrypto global; Node 18 belum punya (di app ada polyfill-nya).
   if (!globalThis.crypto) globalThis.crypto = (await import('node:crypto')).webcrypto;
@@ -398,8 +481,8 @@ test('sendPertanyaan: channel → questionMessage, grup → teks biasa', async (
   await sendPertanyaan(sock, '123@newsletter', 'halo');
   await sendPertanyaan(sock, '456@g.us', 'halo');
   assert.equal(kirim[0][0], 'relay');
-  assert.equal(kirim[0][2].questionMessage.message.extendedTextMessage.text, 'halo');
-  assert.deepEqual(kirim[1], ['send', '456@g.us', { text: 'halo' }]);
+  assert.equal(kirim[0][2].questionMessage.message.extendedTextMessage.text, 'halo\n\n— SukiBot');
+  assert.deepEqual(kirim[1], ['send', '456@g.us', { text: 'halo\n\n— SukiBot' }]);
 });
 
 test('daftar hitam manual: nomor pakai spasi nggak pecah', () => {
@@ -689,7 +772,7 @@ test('sendPertanyaan: payload questionMessage + messageSecret 32 byte (tebakan, 
   const sock = { relayMessage: async (jid, pesan) => { terkirim = { jid, pesan }; } };
   await sendPertanyaan(sock, '1@newsletter', 'halo');
   assert.equal(terkirim.jid, '1@newsletter');
-  assert.equal(terkirim.pesan.questionMessage.message.extendedTextMessage.text, 'halo');
+  assert.equal(terkirim.pesan.questionMessage.message.extendedTextMessage.text, 'halo\n\n— SukiBot');
   assert.equal(terkirim.pesan.messageContextInfo.messageSecret.length, 32);
 });
 
@@ -753,7 +836,7 @@ test('laporKeDiri: kirim ke JID sendiri, tidak pernah melempar', async () => {
   const terkirim = [];
   const sock = { user: { id: '628111:3@s.whatsapp.net' }, sendMessage: async (jid, isi) => { terkirim.push([jid, isi.text]); } };
   assert.equal(await laporKeDiri(sock, 'halo', () => {}), true);
-  assert.deepEqual(terkirim, [['628111@s.whatsapp.net', 'halo']]);
+  assert.deepEqual(terkirim, [['628111@s.whatsapp.net', 'halo\n\n— SukiBot']]);
 
   const catatan = [];
   const rusak = { user: { id: '628111@s.whatsapp.net' }, sendMessage: async () => { throw new Error('putus'); } };

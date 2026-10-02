@@ -79,6 +79,8 @@ test('bacaPerintah: titik dan garis miring, argumen dipisah', () => {
   assert.deepEqual(bacaPerintah('  .stiker  '), { nama: 'stiker', arg: '', dikenal: true });
   assert.deepEqual(bacaPerintah('/menu'), { nama: 'menu', arg: '', dikenal: true });
   assert.deepEqual(bacaPerintah('.storygrup halo'), { nama: 'storygrup', arg: 'halo', dikenal: true });
+  assert.deepEqual(bacaPerintah('.brat halo dunia'), { nama: 'brat', arg: 'halo dunia', dikenal: true });
+  assert.deepEqual(bacaPerintah('.welcome on'), { nama: 'welcome', arg: 'on', dikenal: true });
   assert.equal(bacaPerintah('halo semua'), null);
   assert.equal(bacaPerintah('.'), null);
   assert.equal(bacaPerintah('.ngawur').dikenal, false);
@@ -90,6 +92,8 @@ test('menuTeks: semua perintah yang dikenal disebut', () => {
     assert.ok(teks.includes(`.${nama}`), `menu harus menyebut .${nama}`);
   }
   assert.ok(teks.includes('chat ini saja'), 'menu menegaskan perintah cuma buat chat sendiri');
+  assert.ok(teks.includes('*MEDIA & STATUS*'));
+  assert.ok(teks.includes('— SukiBot'), 'menu menyertakan tagline bot');
 });
 
 test('hukumanModerasi: peringatan dulu, strike kedua keluar', () => {

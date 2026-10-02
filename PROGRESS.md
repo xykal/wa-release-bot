@@ -345,3 +345,19 @@ Next:
   warning; jadi routing PN belum membuktikan/fikskan dekripsi, akar sesi/E2EE masih terbuka.
   JSON rekaman kall (2026-10-01 19:24:58Z) menunjukkan payload 24 byte, outer `type=text`, proto
   field 101 `questionMessage`; JID disamarkan di tes golden baru yang sedang disiapkan di branch.
+
+
+## 2026-10-02 — hari kerja ke-4
+
+Done:
+- Konfirmasi 4/4 post-merge Actions PR #55 sukses (Code quality, CodeQL, Security, Build APK).
+- Branch `feat/sukibot-brat-welcome`: `.brat` Android Canvas WebP, `.welcome` opt-in terbatas grup pantauan, tagline `SukiBot`, menu berkelompok; tambah tes regresi dan audit 2026-10-02.
+- `.storygrup` sekarang fail-closed karena `statusJidList` bukan native group mention; docs dan roadmap dikoreksi.
+
+Blocked / belum diverifikasi:
+- PR feature belum dibuat; tidak ada test suite atau build lokal, sesuai aturan CI-only.
+- Kualitas Status setelah upload WhatsApp dan self-chat “Waiting for this message” tetap perlu uji perangkat nyata.
+
+Next:
+- Review diff, push PR, jalankan seluruh verifikasi lewat GitHub Actions; jangan hapus artifact yang masih dipakai build.
+- Audit terpisah untuk port Node 22 dan kompatibilitas native Status group mention; runtime tetap v18.20.4.

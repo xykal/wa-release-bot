@@ -7,6 +7,11 @@ Semua perubahan penting proyek ini. Format mengikuti
 ## [Unreleased]
 
 ### Keamanan
+- Hosting bot: sebelum project jalan pertama kali, app menampilkan peringatan risiko (bot
+  hosting bisa membaca sesi WA dan token GitHub) plus sidik jari SHA-256 ZIP. Mesin menolak
+  menjalankan project, termasuk jalan otomatis setelah boot, sebelum persetujuan untuk sidik
+  itu tercatat; upload ZIP baru menggugurkan persetujuan lama. Project yang sudah terpasang
+  sebelum update ini perlu disetujui sekali sebelum jalan lagi.
 - WS bridge `127.0.0.1:18790` sekarang wajib token acak per proses (header `X-WR-Token`).
   Sebelumnya app lain di HP bisa connect tanpa izin lalu mengubah setting, memutus WA,
   memicu kirim pesan, dan menerima event QR/pairing code. Handshake ber-`Origin` (dari

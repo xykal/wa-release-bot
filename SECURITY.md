@@ -103,6 +103,9 @@ dia masuk **draft release** yang cuma bisa diunduh pemilik repo.
   Android 15+ / Play Store). Batasan upstream, nggak bisa diperbaiki dari sini.
 - Bot di tab Hosting jalan di proses dan sandbox app yang sama (worker_threads,
   Node 18 belum punya permission model). Kode bot itu bisa membaca session WA dan
-  setting app. Jalankan hanya project yang kode-nya kamu percaya.
+  setting app. Jalankan hanya project yang kode-nya kamu percaya. Sebelum project
+  jalan pertama kali, app menampilkan peringatan + sidik jari SHA-256 ZIP dan mesin
+  menolak jalan tanpa persetujuan itu; ZIP baru wajib disetujui ulang. Ini persetujuan
+  berbasis informasi, bukan isolasi.
 
 Detail lengkap + status tiap temuan: [docs/SECURITY-AUDIT.md](docs/SECURITY-AUDIT.md).

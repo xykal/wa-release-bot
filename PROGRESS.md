@@ -373,10 +373,16 @@ Sesi 2 (audit menyeluruh setelah PR #56 di-merge 2026-10-02T10:59Z sebagai `ec2d
 Done:
 - Koreksi catatan di atas: PR #56 sudah di-merge; post-merge main `ec2d9fd` 4/4 Actions sukses.
 - Audit menyeluruh di `docs/AUDIT-2026-10-02.md` bagian Sesi 2 (1 CRIT, 2 HIGH, 2 MED, 5 LOW).
-- [CRIT] WS bridge 127.0.0.1 wajib token per proses + tolak handshake ber-Origin; proving test JS + Kotlin di branch `fix/ws-bridge-auth`.
+- [CRIT] WS bridge 127.0.0.1 wajib token per proses + tolak handshake ber-Origin; proving test JS + Kotlin
+  (PR #57). Di-merge ke main sebagai `bd873c3`; Actions main 4/4 sukses: Code quality
+  https://github.com/xykal/wa-release-bot/actions/runs/37040254674 , Build APK
+  https://github.com/xykal/wa-release-bot/actions/runs/37040254819
+- [HIGH] hosting: gerbang persetujuan per sidik SHA-256 ZIP (ditegakkan mesin + dialog app), branch
+  `feat/hosting-persetujuan`.
 
 Blocked:
-- Keputusan kall: hosting tanpa isolasi, fitur lagu mood (hak cipta / ToS SoundCloud).
+- Keputusan kall: fitur lagu mood (hak cipta / ToS SoundCloud).
 
 Next:
-- Verifikasi Actions PR; uji perangkat nyata (perintah via WS, fallback file bridge).
+- Uji perangkat nyata: perintah via WS (log "wajib token"), fallback file bridge, dialog persetujuan
+  hosting muncul sekali per ZIP.

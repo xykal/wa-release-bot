@@ -30,6 +30,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import org.json.JSONObject
 import java.util.zip.ZipInputStream
 
 /**
@@ -193,8 +194,15 @@ class HostingActivity : AppCompatActivity() {
         kStatus.addView(btnUpload, LinearLayout.LayoutParams(-1, dp(52)).apply { topMargin = dp(14) })
 
         btnJalan = tombol(getString(R.string.k_jalankan), R.style.TombolGaris, R.drawable.ic_play) {
-            val st = statusTerakhir?.status
-            kirim(mapOf("type" to if (st == "jalan" || st == "install") "hosting-stop" else "hosting-mulai"))
+            val h = statusTerakhir
+            when {
+                h?.status == "jalan" || h?.status == "install" -> kirim(mapOf("type" to "hosting-stop"))
+                h != null && !h.setuju -> DialogPersetujuanHosting.tampilkan(this, h.sha256) {
+                    kirim(mapOf("type" to "hosting-setuju", "sha256" to (h.sha256 ?: "lama")))
+                    kirim(mapOf("type" to "hosting-mulai"))
+                }
+                else -> kirim(mapOf("type" to "hosting-mulai"))
+            }
         }
         btnPasang = tombol(getString(R.string.k_pasang_modul), R.style.TombolLembut, R.drawable.ic_tambah) {
             kirim(mapOf("type" to "hosting-pasang"))
@@ -432,31 +440,33 @@ class HostingActivity : AppCompatActivity() {
         var jumlah = 0
         var total = 0L
 
-        contentResolver.openInputStream(uri).use { ins ->
+        val sidik = contentResolver.openInputStream(uri).use { ins ->
             if (ins == null) throw IllegalStateException(getString(R.string.k_file_zip_nggak_kebaca))
-            ZipInputStream(ins.buffered()).use { zip ->
-                while (true) {
-                    val e = zip.nextEntry ?: break
-                    val n = e.name.replace('\\', '/')
-                    if (n.startsWith("__MACOSX/") || n.endsWith(".DS_Store")) continue
-                    val target = File(baru, n)
-                    // cegah "zip slip" (../../ keluar folder)
-                    if (!target.canonicalPath.startsWith(akarBaru)) continue
-                    if (e.isDirectory) { target.mkdirs(); continue }
-                    target.parentFile?.mkdirs()
-                    target.outputStream().use { out ->
-                        val buf = ByteArray(64 * 1024)
-                        while (true) {
-                            val r = zip.read(buf)
-                            if (r < 0) break
-                            out.write(buf, 0, r)
-                            total += r
-                            if (total > 700L * 1024 * 1024) throw IllegalStateException(getString(R.string.k_isi_zip_kegedean_700_mb))
+            SidikZip.bacaDenganSidik(ins) { s ->
+                ZipInputStream(s.buffered()).use { zip ->
+                    while (true) {
+                        val e = zip.nextEntry ?: break
+                        val n = e.name.replace('\\', '/')
+                        if (n.startsWith("__MACOSX/") || n.endsWith(".DS_Store")) continue
+                        val target = File(baru, n)
+                        // cegah "zip slip" (../../ keluar folder)
+                        if (!target.canonicalPath.startsWith(akarBaru)) continue
+                        if (e.isDirectory) { target.mkdirs(); continue }
+                        target.parentFile?.mkdirs()
+                        target.outputStream().use { out ->
+                            val buf = ByteArray(64 * 1024)
+                            while (true) {
+                                val r = zip.read(buf)
+                                if (r < 0) break
+                                out.write(buf, 0, r)
+                                total += r
+                                if (total > 700L * 1024 * 1024) throw IllegalStateException(getString(R.string.k_isi_zip_kegedean_700_mb))
+                            }
                         }
+                        jumlah++
                     }
-                    jumlah++
                 }
-            }
+            }.second
         }
         if (jumlah == 0) throw IllegalStateException(getString(R.string.k_zip_nya_kosong))
 
@@ -468,6 +478,11 @@ class HostingActivity : AppCompatActivity() {
             baru.deleteRecursively()
             throw IllegalStateException(getString(R.string.k_package_json_nggak_ketemu_di))
         }
+
+        // Persetujuan lama gugur sebelum isi project diganti: kalau proses mati di
+        // tengah jalan, project baru tidak boleh lolos pakai persetujuan project lama.
+        File(induk, "persetujuan.json").delete()
+        File(induk, "sumber.json").delete()
 
         // bawa isi lama yang nggak ada di ZIP baru (sesi, .env, node_modules)
         var dibawa = 0
@@ -482,7 +497,15 @@ class HostingActivity : AppCompatActivity() {
             sumber.copyRecursively(dirProyek, overwrite = true)
         }
         baru.deleteRecursively()
+        tulisSumber(induk, sidik)
         return getString(R.string.k_project_masuk_file, jumlah) + (if (dibawa > 0) getString(R.string.k_file_folder_lama_dipertahankan, dibawa) else "") + "."
+    }
+
+    /** Ditulis atomik (tmp lalu rename) supaya mesin tidak pernah membaca sumber.json setengah jadi. */
+    private fun tulisSumber(induk: File, sidik: String) {
+        val tmp = File(induk, "sumber.json.tmp")
+        tmp.writeText(JSONObject().put("sha256", sidik).put("waktu", System.currentTimeMillis()).toString())
+        if (!tmp.renameTo(File(induk, "sumber.json"))) throw IllegalStateException(getString(R.string.k_hosting_sumber_gagal))
     }
 
     private fun kirim(cmd: Map<String, Any>) {

@@ -17,8 +17,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Worker } from 'node:worker_threads';
 import { pasangModul } from './pasang-modul.mjs';
+import { SIDIK_LAMA, buatPersetujuan } from './hosting-setuju.mjs';
 
 const MAKS_BARIS = 400;
+const PESAN_BUTUH_SETUJU = 'Belum disetujui: tekan Jalankan, baca peringatan risikonya, lalu setujui.';
 const ANSI = /\x1b\[[0-9;?]*[ -/]*[@-~]/g; // eslint-disable-line no-control-regex
 
 /** Cari file yang dijalanin, persis urutan yang biasanya dipakai orang. */
@@ -76,6 +78,7 @@ export function buatHosting({ dataDir, log: _log, kirim }) {
   const fileKonsol = path.join(akar, 'konsol.log');
   const fileState = path.join(akar, 'state.json');
   fs.mkdirSync(akar, { recursive: true });
+  const persetujuan = buatPersetujuan(akar);
 
   let status = 'kosong'; // kosong | siap | install | jalan | mati | error
   let pesan = '';
@@ -118,7 +121,10 @@ export function buatHosting({ dataDir, log: _log, kirim }) {
 
   function info() {
     const { file, pkg } = fs.existsSync(dirProyek) ? cariFileUtama(dirProyek) : { file: null, pkg: null };
+    const sidik = persetujuan.sidik();
     return {
+      sha256: sidik === SIDIK_LAMA ? null : sidik,
+      setuju: persetujuan.sudah(),
       ada: fs.existsSync(dirProyek) && fs.readdirSync(dirProyek).length > 0,
       nama: pkg?.name || null,
       versi: pkg?.version || null,
@@ -147,6 +153,7 @@ export function buatHosting({ dataDir, log: _log, kirim }) {
     const i = info();
     if (!i.ada) return setStatus('kosong', 'Belum ada project. Upload ZIP project bot lo.');
     if (!i.file) return setStatus('error', 'File utama nggak ketemu (isi "main" di package.json, atau bikin index.js).');
+    if (!i.setuju) return setStatus('siap', PESAN_BUTUH_SETUJU);
     if (i.jumlahDep && !i.punyaModul) return setStatus('siap', 'node_modules belum ada — tekan Pasang modul (atau langsung Jalankan).');
     return setStatus('siap', `Siap dijalanin: ${i.file}`);
   }
@@ -184,6 +191,13 @@ export function buatHosting({ dataDir, log: _log, kirim }) {
     clearTimeout(timerRestart);
     const i = info();
     if (!i.ada || !i.file) { statusDasar(); return; }
+    if (!i.setuju) {
+      sys(otomatis ? 'Jalan otomatis ditahan: project ini belum disetujui.' : 'Ditolak: project ini belum disetujui.');
+      st.autoJalan = false;
+      simpan();
+      setStatus('siap', PESAN_BUTUH_SETUJU);
+      return;
+    }
     if (i.jumlahDep && !i.punyaModul) {
       sys('node_modules belum ada — dipasang dulu otomatis.');
       await pasang();
@@ -266,9 +280,24 @@ export function buatHosting({ dataDir, log: _log, kirim }) {
     try { worker.stdin.write(String(teks) + '\n'); } catch (e) { sys('Gagal kirim input: ' + e.message); }
   }
 
+  function setuju({ sha256 }) {
+    try {
+      if (!persetujuan.catat(sha256)) {
+        sys('Persetujuan ditolak: sidik jari project tidak cocok (ZIP berubah?). Baca ulang peringatannya.');
+        emit();
+        return;
+      }
+      sys('Persetujuan dicatat untuk project ini.');
+    } catch (e) {
+      sys('Gagal menyimpan persetujuan: ' + e.message);
+    }
+    statusDasar();
+  }
+
   async function hapus() {
     await stop();
     fs.rmSync(dirProyek, { recursive: true, force: true });
+    persetujuan.lupakan();
     try { fs.writeFileSync(fileKonsol, ''); } catch { /* ignore */ }
     baris.length = 0;
     sys('Project dihapus.');
@@ -306,6 +335,7 @@ export function buatHosting({ dataDir, log: _log, kirim }) {
       case 'hosting-input': input(cmd.teks || ''); break;
       case 'hosting-hapus': await hapus(); break;
       case 'hosting-atur': atur(cmd); break;
+      case 'hosting-setuju': setuju(cmd); break;
       default: return false;
     }
     return true;

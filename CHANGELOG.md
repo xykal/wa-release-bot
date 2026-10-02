@@ -6,6 +6,12 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+### Keamanan
+- WS bridge `127.0.0.1:18790` sekarang wajib token acak per proses (header `X-WR-Token`).
+  Sebelumnya app lain di HP bisa connect tanpa izin lalu mengubah setting, memutus WA,
+  memicu kirim pesan, dan menerima event QR/pairing code. Handshake ber-`Origin` (dari
+  halaman web) ditolak; tanpa token WS tidak dinyalakan dan app tetap jalan lewat file bridge.
+
 ### Ditambah
 - Tab Log sekarang punya saklar rekam logcat Android, tombol salin untuk log yang terlihat,
   dan unduh ZIP berisi `app.log`, `mesin.log`, `logcat.log`, `crash.log` serta rotasinya.

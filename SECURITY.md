@@ -49,6 +49,7 @@ Yang **dilindungi**:
 | Session WhatsApp (linked device) | storage privat app, `allowBackup=false`, nggak pernah keluar dari HP |
 | Token GitHub (buat naikin rate limit) | SharedPreferences privat; kalau pakai CLI, di `config.json` yang di-gitignore |
 | Keystore signing | cuma di GitHub Secrets + runner sementara, nggak pernah ke repo |
+| Jalur perintah WS `127.0.0.1:18790` (app -> engine) | token acak per proses (`X-WR-Token`, dibandingkan timing-safe), handshake ber-`Origin` ditolak 403, WS mati kalau token tidak ada; dibuktikan `bot-js/test/bridge-auth.test.mjs` |
 
 Yang **bukan** tanggung jawab proyek ini:
 
@@ -100,7 +101,8 @@ dia masuk **draft release** yang cuma bisa diunduh pemilik repo.
 
 - `libnode.so` dari nodejs-mobile masih align 4 KB, belum 16 KB (syarat
   Android 15+ / Play Store). Batasan upstream, nggak bisa diperbaiki dari sini.
-- `usesCleartextTraffic="true"` masih aktif (dipakai WebSocket `127.0.0.1`).
-  Rencananya diganti `network_security_config` yang cuma mengizinkan loopback.
+- Bot di tab Hosting jalan di proses dan sandbox app yang sama (worker_threads,
+  Node 18 belum punya permission model). Kode bot itu bisa membaca session WA dan
+  setting app. Jalankan hanya project yang kode-nya kamu percaya.
 
 Detail lengkap + status tiap temuan: [docs/SECURITY-AUDIT.md](docs/SECURITY-AUDIT.md).

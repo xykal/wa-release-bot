@@ -255,6 +255,9 @@ Punya project bot Node.js sendiri? Buka **Hosting bot** di app → upload ZIP.
 - Bot jalan di **worker thread** terpisah: `process.exit()` atau crash di bot
   itu nggak matiin app. Ada restart otomatis, konsol, dan kolom input (stdin)
   buat bot yang nanya nomor WA.
+- Sebelum project jalan pertama kali (dan tiap ganti ZIP), app nampilin peringatan
+  plus sidik jari SHA-256 ZIP-nya. Bot hosting bisa baca sesi WA dan token GitHub
+  app ini, jadi jalankan cuma kode yang lo percaya.
 - Ganti ZIP → file lama yang nggak ada di ZIP baru (sesi WA, `.env`,
   `node_modules`) tetap dipertahankan.
 - Node-nya **Node 18** bawaan app. Versinya cuma bisa naik lewat update APK.

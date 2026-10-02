@@ -28,6 +28,8 @@ data class HostingUi(
     val punyaModul: Boolean = false,
     val autoRestart: Boolean = true,
     val mulaiPada: Long? = null,
+    val sha256: String? = null,
+    val setuju: Boolean = false,
 )
 
 data class BotUi(

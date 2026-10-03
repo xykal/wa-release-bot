@@ -48,16 +48,16 @@
     <string name="u_tes_kirim">Tes kirim</string>
     <string name="u_daftar_hitam">Daftar hitam</string>
     <string name="u_kosongin">Kosongin</string>
-    <string name="u_lagu_mood">Lagu mood</string>
-    <string name="u_sesekali_bot_ngirim_potongan_lagu">Sesekali bot ngirim potongan lagu lama (~60 dtk) + kata-kata ke channel. Jadwalnya diacak kayak orang lagi mood — nggak tiap jam, nggak spam. Cloudflare yang nyariin lagunya; HP cuma download potongan ±1 MB, kirim, terus file-nya langsung dihapus.</string>
+    <string name="u_lagu_mood">Lagu mood · eksperimental</string>
+    <string name="u_sesekali_bot_ngirim_potongan_lagu">Fitur opt-in, default mati. Hanya nyalakan untuk audio yang hak penggunaannya lo punya; potongan lagu di channel publik tetap bisa kena klaim hak cipta atau aturan penyedia. Cloudflare mencari audio, HP mengirim potongan ~60 detik lalu menghapus filenya.</string>
     <string name="u_nyalain_lagu_mood">Nyalain lagu mood</string>
     <string name="u_dikirim_ke_channel_yang_sama">Dikirim ke channel yang sama kayak rilis</string>
     <string name="u_rata_rata_berapa_kali_sehari">Rata-rata berapa kali sehari (1–8)</string>
     <string name="u_mulai_jam">Mulai jam</string>
     <string name="u_sampai_jam">Sampai jam</string>
     <string name="u_kirim_satu_lagu_sekarang">Kirim satu lagu sekarang</string>
-    <string name="u_hosting_bot_lo_sendiri">Hosting bot lo sendiri</string>
-    <string name="u_punya_project_bot_node_js">Punya project bot Node.js? Upload ZIP-nya, app ini yang jalanin di HP — lengkap sama konsol, input, restart otomatis.</string>
+    <string name="u_hosting_bot_lo_sendiri">Hosting bot · eksperimental</string>
+    <string name="u_punya_project_bot_node_js">Hanya untuk kode yang lo percaya. Project berjalan di sandbox app yang sama dan bisa membaca sesi WA serta setting privat. Setiap ZIP ditampilkan SHA-256-nya dan wajib disetujui sebelum dipasang.</string>
     <string name="u_buka_hosting">Buka hosting</string>
     <string name="u_batre_nyala_otomatis">Batre &amp; nyala otomatis</string>
     <string name="u_bot_nya_tidur_hampir_sepanjang">Bot-nya tidur hampir sepanjang waktu, cuma bangun sebentar pas jadwal cek. Biar nggak dibunuh sistem (apalagi di Xiaomi), izinkan dua hal di bawah.</string>
@@ -262,6 +262,7 @@
     <string name="k_hapus_2">Hapus</string>
     <string name="k_folder_data_nggak_ada">folder data nggak ada</string>
     <string name="k_file_zip_nggak_kebaca">file ZIP nggak kebaca</string>
+    <string name="k_file_zip_lebih_dari_100_mb">File ZIP lebih dari 100 MB. Buang node_modules/cache dari arsip dan coba lagi.</string>
     <string name="k_isi_zip_kegedean_700_mb">isi ZIP kegedean (&gt;700 MB)</string>
     <string name="k_zip_nya_kosong">ZIP-nya kosong</string>
     <string name="k_package_json_nggak_ketemu_di">package.json nggak ketemu di ZIP</string>
@@ -286,6 +287,10 @@
     <string name="k_ob_hosting_judul">HP lo jadi hosting bot</string>
     <string name="k_ob_hosting_isi">Punya project bot sendiri? Upload ZIP-nya, app ini yang jalanin. Log, input, restart — semua dari HP.</string>
     <string name="k_hosting_nyala_durasi">nyala %1$s</string>
+    <string name="k_menghitung_sha256_project">Menghitung SHA-256 project…</string>
+    <string name="k_hosting_eksperimental">Hosting eksperimental — tinjau risikonya</string>
+    <string name="k_hosting_risiko_project">Kode di ZIP berjalan dalam sandbox yang sama dengan WA Release Bot. Kode berbahaya dapat membaca sesi WhatsApp, token GitHub, setting, dan file privat app. Jalankan hanya project yang sudah lo audit.\n\nSHA-256 ZIP:\n%1$s\n\nHash hanya mengidentifikasi arsip yang dipilih; .env, sesi, dan node_modules lama yang dipertahankan tidak tercakup.</string>
+    <string name="k_saya_paham_lanjut_upload">Saya paham — lanjut upload</string>
 
     <!-- bar navigasi bawah (NavBawah.kt) -->
     <string name="u_nav_beranda">Beranda</string>
@@ -308,8 +313,9 @@
     <string name="k_perangkat_ada_peringatan">Perangkat di bawah spek ideal: %1$s peringatan. Detailnya di kartu Cek perangkat.</string>
     <string name="k_hasil_cek_perangkat_masuk_log">Hasil cek perangkat masuk log.</string>
     <!-- kartu Bot WA umum (M14/M15) -->
-    <string name="u_bot_wa_umum">Bot WA umum</string>
-    <string name="u_ket_bot_wa_umum">Moderasi grup dan perintah pribadi di chat sendiri. Dua-duanya bikin WA harus tersambung terus, jadi lebih boros batre.</string>
+    <string name="u_fitur_tambahan_opt_in">Fitur inti ada di tab Repo. Semua fitur tambahan di bawah bersifat opt-in dan mati pada instalasi baru. Fitur bertanda eksperimental belum menjadi janji stabil rilis publik.</string>
+    <string name="u_bot_wa_umum">Bot WA umum · eksperimental</string>
+    <string name="u_ket_bot_wa_umum">Default mati. Moderasi grup dan perintah pribadi membuat WhatsApp tersambung terus, lebih boros batre, dan masih butuh validasi perangkat nyata.</string>
     <string name="u_moderasi_grup">Moderasi grup</string>
     <string name="u_ket_moderasi_grup">Hapus link/phishing/promo, peringatan, lalu dikeluarkan di strike terakhir. Admin dan bot sendiri nggak pernah disentuh.</string>
     <string name="u_perintah_pribadi">Perintah pribadi di chat sendiri</string>

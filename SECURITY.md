@@ -50,6 +50,8 @@ Yang **dilindungi**:
 | Token GitHub (buat naikin rate limit) | SharedPreferences privat; kalau pakai CLI, di `config.json` yang di-gitignore |
 | Keystore signing | cuma di GitHub Secrets + runner sementara, nggak pernah ke repo |
 | Jalur perintah WS `127.0.0.1:18790` (app -> engine) | token acak per proses (`X-WR-Token`, dibandingkan timing-safe), handshake ber-`Origin` ditolak 403, WS mati kalau token tidak ada; dibuktikan `bot-js/test/bridge-auth.test.mjs` |
+| Environment engine | worker hosting hanya menerima allowlist runtime + `.env` project; `WR_*` internal dan token engine tidak diwariskan |
+| Auto-start Android | `BootReceiver` tidak diekspor dan hanya menerima `BOOT_COMPLETED` / `MY_PACKAGE_REPLACED` standar |
 
 Yang **bukan** tanggung jawab proyek ini:
 
@@ -101,8 +103,12 @@ dia masuk **draft release** yang cuma bisa diunduh pemilik repo.
 
 - `libnode.so` dari nodejs-mobile masih align 4 KB, belum 16 KB (syarat
   Android 15+ / Play Store). Batasan upstream, nggak bisa diperbaiki dari sini.
-- Bot di tab Hosting jalan di proses dan sandbox app yang sama (worker_threads,
-  Node 18 belum punya permission model). Kode bot itu bisa membaca session WA dan
-  setting app. Jalankan hanya project yang kode-nya kamu percaya.
+- Bot di tab Hosting jalan di proses dan sandbox app yang sama (`worker_threads`;
+  Node 18 belum punya permission model). Allowlist environment mencegah secret
+  diwariskan lewat `process.env`, tetapi tidak membatasi akses filesystem. Kode
+  project masih bisa membaca session WA dan setting app. Setiap ZIP menampilkan
+  SHA-256 dan meminta persetujuan; tetap jalankan hanya kode yang sudah diaudit.
+- Runtime APK adalah Node 18.20.4 yang sudah EOL. CI menguji versi persis ini,
+  tetapi tidak dapat memberikan patch runtime yang tidak dirilis upstream.
 
 Detail lengkap + status tiap temuan: [docs/SECURITY-AUDIT.md](docs/SECURITY-AUDIT.md).

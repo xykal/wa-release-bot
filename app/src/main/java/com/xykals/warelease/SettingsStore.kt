@@ -8,6 +8,20 @@ class SettingsStore(ctx: Context) {
 
     private val p = ctx.getSharedPreferences("wa_release_bot", Context.MODE_PRIVATE)
 
+    init {
+        // Build internal lama menyalakan Perintah pribadi dan logcat secara
+        // bawaan. Nilai `true` di prefs tidak membuktikan user pernah opt-in,
+        // jadi hardening pertama mematikannya sekali. Setelah itu pilihan user
+        // dihormati dan tidak disentuh lagi pada startup berikutnya.
+        if (!p.getBoolean("hardeningOptInV1", false)) {
+            p.edit()
+                .putBoolean("perintahPribadi", PengaturanBawaan.PERINTAH_PRIBADI)
+                .putBoolean("rekamLogcat", PengaturanBawaan.REKAM_LOGCAT)
+                .putBoolean("hardeningOptInV1", true)
+                .apply()
+        }
+    }
+
     var repo: String
         get() = p.getString("repo", "") ?: ""
         set(v) = p.edit().putString("repo", v.trim()).apply()
@@ -52,7 +66,7 @@ class SettingsStore(ctx: Context) {
 
     // ---- penjaga grup ----
     var grupAktif: Boolean
-        get() = p.getBoolean("grupAktif", false)
+        get() = p.getBoolean("grupAktif", PengaturanBawaan.PENJAGA_GRUP)
         set(v) = p.edit().putBoolean("grupAktif", v).apply()
 
     var grupTarget: String
@@ -70,7 +84,7 @@ class SettingsStore(ctx: Context) {
 
     // ---- lagu mood ----
     var laguAktif: Boolean
-        get() = p.getBoolean("laguAktif", false)
+        get() = p.getBoolean("laguAktif", PengaturanBawaan.LAGU)
         set(v) = p.edit().putBoolean("laguAktif", v).apply()
 
     /** Rata-rata berapa kali sehari (jadwal persisnya diacak engine). */
@@ -99,12 +113,12 @@ class SettingsStore(ctx: Context) {
     // ---- bot WA umum: moderasi grup + perintah pribadi ----
     /** Moderasi grup: hapus link/phishing/promo, peringatan, strike kedua keluar. */
     var moderasiAktif: Boolean
-        get() = p.getBoolean("moderasiAktif", false)
+        get() = p.getBoolean("moderasiAktif", PengaturanBawaan.MODERASI)
         set(v) = p.edit().putBoolean("moderasiAktif", v).apply()
 
     /** Perintah pribadi (.menu, .stiker, .story) HANYA di chat sendiri. */
     var perintahPribadi: Boolean
-        get() = p.getBoolean("perintahPribadi", true)
+        get() = p.getBoolean("perintahPribadi", PengaturanBawaan.PERINTAH_PRIBADI)
         set(v) = p.edit().putBoolean("perintahPribadi", v).apply()
 
     /** Berapa kali boleh melanggar sebelum dikeluarkan. */
@@ -135,7 +149,7 @@ class SettingsStore(ctx: Context) {
     // ---- pesan berkala ke grup ----
     /** Kirim pesan berkala (mis. daftar hitam) ke grup yang dipantau. */
     var berkalaAktif: Boolean
-        get() = p.getBoolean("berkalaAktif", false)
+        get() = p.getBoolean("berkalaAktif", PengaturanBawaan.PESAN_BERKALA)
         set(v) = p.edit().putBoolean("berkalaAktif", v).apply()
 
     /** Jarak antar pesan dalam jam (1-168; di luar itu dijepit engine). */
@@ -170,7 +184,7 @@ class SettingsStore(ctx: Context) {
 
     // ---- batre ----
     var rekamLogcat: Boolean
-        get() = p.getBoolean("rekamLogcat", true)
+        get() = p.getBoolean("rekamLogcat", PengaturanBawaan.REKAM_LOGCAT)
         set(v) = p.edit().putBoolean("rekamLogcat", v).apply()
 
     /**

@@ -61,7 +61,7 @@ class HostingActivity : AppCompatActivity() {
     private val dirProyek by lazy { File(filesDir, "wa_release_bot/hosting/proyek") }
 
     private val pilihZip = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) pasangZip(uri)
+        if (uri != null) konfirmasiPasangZip(uri)
     }
 
     private val busListener: (BotUi) -> Unit = { ui -> handler.post { render(ui) } }
@@ -73,6 +73,9 @@ class HostingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         LogRecorder.init(this)
         LogRecorder.tulis("Activity", "Hosting dibuka")
+        // Proses bisa mati ketika dialog persetujuan terbuka. Arsip sementara
+        // dari sesi lama tidak boleh tertinggal tanpa batas di storage privat.
+        File(filesDir, "wa_release_bot/hosting/upload-pending.zip").delete()
         setContentView(bangunLayar())
         Denyut.pasangSemua(window.decorView)
     }
@@ -397,11 +400,80 @@ class HostingActivity : AppCompatActivity() {
     }
 
     /**
+     * Project custom tidak punya sandbox terpisah dari app utama. Sebelum satu
+     * byte pun dipasang, tampilkan identitas SHA-256 arsip dan minta persetujuan
+     * eksplisit. Dialog ini muncul lagi untuk setiap ZIP pengganti.
+     */
+    private fun konfirmasiPasangZip(uri: Uri) {
+        scope.launch {
+            banner(getString(R.string.k_menghitung_sha256_project))
+            // Salin ke berkas privat sambil hashing. Ekstraksi nanti membaca
+            // berkas yang sama, bukan membuka URI provider untuk kedua kalinya:
+            // provider yang berubah tidak bisa menukar isi setelah disetujui.
+            val induk = dirProyek.parentFile
+            if (induk == null) {
+                banner(getString(R.string.k_gagal_2, getString(R.string.k_folder_data_nggak_ada)))
+                return@launch
+            }
+            val arsip = File(induk, "upload-pending.zip")
+            val hash = try {
+                withContext(Dispatchers.IO) {
+                    arsip.parentFile?.mkdirs()
+                    arsip.delete()
+                    contentResolver.openInputStream(uri).use { input ->
+                        if (input == null) throw IllegalStateException(getString(R.string.k_file_zip_nggak_kebaca))
+                        arsip.outputStream().use { output ->
+                            HostingSecurity.salinDanSha256(input, output, 100L * 1024 * 1024)
+                        }
+                    }
+                }
+            } catch (_: HostingSecurity.ArsipTerlaluBesar) {
+                arsip.delete()
+                banner(getString(R.string.k_file_zip_lebih_dari_100_mb))
+                return@launch
+            } catch (e: Throwable) {
+                arsip.delete()
+                LogRecorder.galat("Hosting", "salin + hitung SHA-256 ZIP gagal", e)
+                banner(getString(R.string.k_gagal_2, e.message))
+                return@launch
+            }
+
+            var disetujui = false
+            val d = android.app.Dialog(this@HostingActivity, R.style.Lembar)
+            val v = layoutInflater.inflate(R.layout.lembar, null)
+            v.findViewById<TextView>(R.id.lbJudul).text = getString(R.string.k_hosting_eksperimental)
+            v.findViewById<TextView>(R.id.lbPesan).text = getString(R.string.k_hosting_risiko_project, hash)
+            v.findViewById<View>(R.id.lbIsi).visibility = View.GONE
+            val wadah = v.findViewById<LinearLayout>(R.id.lbTombol)
+            val lanjut = TextView(this@HostingActivity, null, 0, R.style.TombolBahaya).apply {
+                text = getString(R.string.k_saya_paham_lanjut_upload)
+                setOnClickListener {
+                    disetujui = true
+                    LogRecorder.tulis("Hosting", "Project disetujui user; SHA-256 ZIP=$hash")
+                    d.dismiss()
+                    pasangZip(arsip)
+                }
+            }
+            val batal = TextView(this@HostingActivity, null, 0, R.style.TombolLembut).apply {
+                text = getString(R.string.k_batal)
+                setOnClickListener { d.dismiss() }
+            }
+            wadah.addView(lanjut, LinearLayout.LayoutParams(-1, dp(50)))
+            wadah.addView(batal, LinearLayout.LayoutParams(-1, dp(50)).apply { topMargin = dp(8) })
+            Denyut.pasangSemua(v)
+            d.setContentView(v)
+            d.setOnDismissListener { if (!disetujui) arsip.delete() }
+            d.show()
+            d.window?.setLayout((resources.displayMetrics.widthPixels * 0.92).toInt(), -2)
+        }
+    }
+
+    /**
      * Bongkar ZIP ke folder project. Folder lama nggak langsung dibuang:
      * isi yang NGGAK ada di ZIP baru (sesi WA bot, .env, node_modules) dibawa
      * pindah — jadi update project nggak bikin bot-nya harus ditautin ulang.
      */
-    private fun pasangZip(uri: Uri) {
+    private fun pasangZip(arsip: File) {
         lagiUpload = true
         render(BotBus.ui)
         banner(getString(R.string.k_membongkar_zip))
@@ -411,11 +483,12 @@ class HostingActivity : AppCompatActivity() {
                     kirim(mapOf("type" to "hosting-stop"))
                     delay(2500)
                 }
-                withContext(Dispatchers.IO) { bongkar(uri) }
+                withContext(Dispatchers.IO) { bongkar(arsip) }
             } catch (e: Throwable) {
                 LogRecorder.galat("Hosting", "bongkar ZIP gagal", e)
                 getString(R.string.k_gagal_2, e.message)
             }
+            arsip.delete()
             lagiUpload = false
             SettingsStore(this@HostingActivity).hostingDipakai = true
             banner(hasil)
@@ -424,7 +497,7 @@ class HostingActivity : AppCompatActivity() {
         }
     }
 
-    private fun bongkar(uri: Uri): String {
+    private fun bongkar(arsip: File): String {
         val induk = dirProyek.parentFile ?: throw IllegalStateException(getString(R.string.k_folder_data_nggak_ada))
         induk.mkdirs()
         val baru = File(induk, "proyek.baru").apply { deleteRecursively(); mkdirs() }
@@ -432,8 +505,7 @@ class HostingActivity : AppCompatActivity() {
         var jumlah = 0
         var total = 0L
 
-        contentResolver.openInputStream(uri).use { ins ->
-            if (ins == null) throw IllegalStateException(getString(R.string.k_file_zip_nggak_kebaca))
+        arsip.inputStream().use { ins ->
             ZipInputStream(ins.buffered()).use { zip ->
                 while (true) {
                     val e = zip.nextEntry ?: break

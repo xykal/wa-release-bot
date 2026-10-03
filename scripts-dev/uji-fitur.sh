@@ -19,7 +19,7 @@ source "$(dirname "$0")/ui-uji.sh"
 
 gulir_ke rowModerasi bot-umum 320
 dump="$(dump_ui)"
-if [[ "$dump" == *"id/rowModerasi"* && "$dump" == *"id/rowPerintahPribadi"* && "$dump" == *"Bot WA umum"* ]]; then
+if [[ "$dump" == *"id/rowModerasi"* && "$dump" == *"id/rowPerintahPribadi"* && ( "$dump" == *"Bot WA umum"* || "$dump" == *"WhatsApp features"* ) ]]; then
   echo "uji bot-umum: kartu + saklar moderasi + saklar perintah kelihatan OK"
 else
   echo "uji bot-umum: kartu Bot WA umum tidak lengkap di dump UI"; tangkap_gagal bot-umum-gagal; exit 1
@@ -166,7 +166,7 @@ set -- $kotak
 adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
 sleep 0.8
 dump="$(dump_ui)"
-if [[ "$dump" == *"chat sendiri"* ]]; then
+if [[ "$dump" == *"chat sendiri"* || "$dump" == *"your own chat"* ]]; then
   echo "uji bot-umum: tombol kirim menu ngasih umpan balik OK"
 else
   echo "uji bot-umum: tombol kirim menu diam saja"; tangkap_gagal bot-umum-gagal; exit 1

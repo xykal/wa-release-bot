@@ -4,8 +4,8 @@
 
 **Bot WhatsApp yang nggak nyala 24 jam. Dia tidur.**
 
-Bangun tiap N menit → cek GitHub → ada release baru? posting ke channel WA → tidur lagi.
-Nggak ada update? 0% CPU, 0% data.
+Dalam mode inti: bangun tiap N menit → cek GitHub → ada release baru? posting ke channel WA → tidur lagi.
+Nggak ada update? koneksi WA tetap mati; fitur yang butuh koneksi persisten bersifat opt-in.
 
 [![Build APK](https://github.com/xykal/wa-release-bot/actions/workflows/build-apk.yml/badge.svg)](https://github.com/xykal/wa-release-bot/actions/workflows/build-apk.yml)
 [![Code quality](https://github.com/xykal/wa-release-bot/actions/workflows/code-quality.yml/badge.svg)](https://github.com/xykal/wa-release-bot/actions/workflows/code-quality.yml)
@@ -26,12 +26,12 @@ Nggak ada update? 0% CPU, 0% data.
 
 WA Release Bot watches one or more GitHub repositories and posts every new release to a
 WhatsApp channel (or group) from your own phone, no server needed. It runs a real Node.js 18
-engine inside an Android app (nodejs-mobile) and only connects to WhatsApp for the few
-seconds it takes to post; between checks it sleeps. A CLI for Termux/PC shares the
-exact same engine. Release checks use conditional requests (ETag), so an unchanged
-repo costs 0 bytes and no API quota. Extras: group gatekeeper (auto-approve joins,
-reject members who left), optional "mood song" voice notes, and hosting for your own
-small Node.js bot. Source-available under a personal-use license; see LICENSE.
+engine inside an Android app (nodejs-mobile). In the default core mode it connects to
+WhatsApp only for the few seconds needed to post, then sleeps between checks. A CLI for
+Termux/PC shares the same engine. Conditional requests (ETag) make unchanged checks
+body-free. Group tools are optional; persistent WhatsApp commands, mood-song delivery,
+and custom bot hosting are experimental, off by default, and outside the stable core
+promise. Source-available under a personal-use license; see LICENSE.
 The app UI follows the phone language (Indonesian by default, English when the system
 language is English); the bot's WhatsApp messages and the log are Indonesian only.
 Built by xykal — XyVerse Technology Global.
@@ -80,20 +80,30 @@ Keduanya pakai **engine bot yang sama** (`bot-js/`): CLI meng-import modul `bot-
 
 ## Fitur
 
-- **Host di HP sendiri** — aplikasi Android native, tanpa Termux, tanpa VPS
-- **Tidur-bangun beneran** — WhatsApp baru terhubung pas mau posting
-- **Tautkan sekali seumur hidup** — pakai **pairing code** (8 huruf, tanpa HP kedua) atau QR
-- **Penjaga grup** — auto-approve permintaan join, tolak yang dulu udah keluar/dikeluarin
-- **Moderasi grup** — link phishing/promo/judi dihapus, peringatan, strike terakhir dikeluarkan; admin aman
-- **Bot WA umum** — perintah pribadi di chat sendiri: `.menu`, `.ping`, `.status`, `.brat <teks>`, `.welcome on/off`, `.stiker`, `.story` (byte asli; kualitas akhir ditentukan WhatsApp); `.storygrup` menunggu dukungan native mention
-- **Post ke channel WA** (tempel link channel-nya) — atau ke **grup WA** kalau lebih gampang
-- **Bikin channel dari app** — belum punya channel? bot yang bikinin, sekali klik
-- **Watchdog** — WorkManager + boot receiver: service ke-bunuh Android → nyala lagi
-- **UI status real-time** — log, tag terakhir, hitungan mundur, dialog QR
-- **Semua setting bisa diubah dari UI** — repo, interval, token, prerelease, dll.
-- **Banyak repo sekaligus** — isi kolom repo pakai koma (`a/x, b/y`); tiap repo punya baseline sendiri
-- **Notifikasi kalau gagal kirim** — percobaan ke-3 gagal → notifikasi Android + laporan ke chat diri sendiri
-- **Zero secret di repo** — token cuma hidup di HP lo / GitHub Secrets
+### Inti rilis publik
+
+- **Host di HP sendiri** — aplikasi Android native, tanpa Termux dan tanpa VPS
+- **Tidur-bangun beneran** — pada bawaan instalasi baru, WhatsApp hanya terhubung saat perlu mengirim
+- **Pairing code atau QR** — pairing code tidak membutuhkan HP kedua
+- **Post ke channel atau grup WA** — termasuk bikin channel langsung dari app
+- **Multi-repo** — tiap repo punya baseline, ETag, pending state, dan boleh memakai channel khusus
+- **Anti-duplikat dan retry terbatas** — rollback tidak diposting; kegagalan terakhir memunculkan notifikasi
+- **Watchdog dan log diagnostik** — pulih setelah reboot, status real-time, ekspor ZIP log
+
+### Tambahan opt-in
+
+Penjaga grup dan pesan berkala mati pada instalasi baru. Moderasi, perintah pribadi,
+stiker/Brat/Status, rekam channel, lagu mood, dan hosting project Node.js berstatus
+**eksperimental**. Fitur yang mempertahankan socket WhatsApp juga mati secara bawaan,
+jadi tidak mengubah janji hemat jalur inti.
+
+Hosting hanya untuk kode tepercaya: worker project berbagi sandbox filesystem dengan app.
+Setiap ZIP menampilkan SHA-256 dan meminta persetujuan sebelum dipasang. Lagu mood hanya
+boleh dinyalakan untuk audio yang hak penggunaannya dimiliki pengguna. `.storygrup` tetap
+fail-closed sampai native group mention didukung dan lolos uji nyata.
+
+Matriks status dan gerbang rilis: [PRD](docs/PRD.md) dan
+[checklist pre-launch](docs/CHECKLIST-PRELAUNCH.md).
 
 ---
 
@@ -210,9 +220,11 @@ atau tautan, jadi cek sebelum dibagikan. Detail: [docs/TROUBLESHOOTING.md](docs/
 ## Keamanan
 
 - Session WA tersimpan di **storage privat app** (`/data/data/.../wa_release_bot/session`)
-  — nggak bisa diakses app lain
+  — nggak bisa diakses app lain. Pengecualian: project Hosting berjalan dengan UID app yang
+  sama, sehingga hanya boleh memakai kode yang benar-benar tepercaya
 - Cleartext (HTTP polos) di sisi app **cuma diizinkan ke 127.0.0.1** lewat
-  `network_security_config.xml` — itu jalur WebSocket app ↔ engine. Ke host lain wajib TLS
+  `network_security_config.xml`; WebSocket loopback wajib token acak per proses dan menolak
+  Origin browser. Ke host lain wajib TLS
 - Cek release pakai **ETag** (`If-None-Match`): repo yang nggak berubah dijawab `304` tanpa
   body dan nggak makan rate limit GitHub. Tiap request punya timeout 20 detik
 - Posting punya catatan **pending** yang ditulis sebelum kirim: kalau gagal, dicoba lagi
@@ -224,6 +236,8 @@ atau tautan, jadi cek sebelum dibagikan. Detail: [docs/TROUBLESHOOTING.md](docs/
 - **Jangan pernah commit** keystore / token ke repo
   (`.gitignore` + [gitleaks](.github/workflows/security.yml) sudah jaga, tapi tetap hati-hati)
 - Token di CI taruh di **GitHub Secrets**, jangan di file
+- Runtime APK Node 18.20.4 sudah EOL dan `libnode.so` belum mendukung page size 16 KB;
+  ini batas upstream yang memblokir target Play Store, bukan klaim yang disembunyikan
 
 Laporan kerentanan: lihat [SECURITY.md](SECURITY.md).
 

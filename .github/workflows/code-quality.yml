@@ -180,6 +180,46 @@ jobs:
           sys.exit(1 if rusak else 0)
           PY
 
+      - name: Bawaan hemat + receiver boot tidak bisa dipicu app lain
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          ns = '{http://schemas.android.com/apk/res/android}'
+          root = ET.parse('app/src/main/AndroidManifest.xml').getroot()
+          receivers = [r for r in root.findall('./application/receiver')
+                       if r.get(ns + 'name') == '.BootReceiver']
+          assert len(receivers) == 1, 'BootReceiver harus tepat satu'
+          receiver = receivers[0]
+          assert receiver.get(ns + 'exported') == 'false', 'BootReceiver wajib exported=false'
+          actions = {a.get(ns + 'name') for a in receiver.findall('./intent-filter/action')}
+          assert actions == {
+              'android.intent.action.BOOT_COMPLETED',
+              'android.intent.action.MY_PACKAGE_REPLACED',
+          }, f'action BootReceiver tidak aman/asing: {sorted(actions)}'
+
+          teks = open('app/src/main/java/com/xykals/warelease/PengaturanBawaan.kt', encoding='utf-8').read()
+          for nama in ('PERINTAH_PRIBADI', 'MODERASI', 'LAGU', 'PENJAGA_GRUP', 'PESAN_BERKALA', 'REKAM_LOGCAT'):
+              assert f'const val {nama} = false' in teks, f'{nama} harus opt-in/default false'
+          store = open('app/src/main/java/com/xykals/warelease/SettingsStore.kt', encoding='utf-8').read()
+          assert 'hardeningOptInV1' in store, 'migrasi build internal default-nyala hilang'
+          print('receiver boot privat, migrasi ada, dan semua fitur tambahan default mati')
+          PY
+
+      - name: Nama string Indonesia dan Inggris harus sama
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          def nama(path):
+              return {e.get('name') for e in ET.parse(path).getroot() if e.get('name')}
+          indonesia = nama('app/src/main/res/values/strings.xml')
+          inggris = nama('app/src/main/res/values-en/strings.xml')
+          assert indonesia == inggris, (
+              f'hanya Indonesia: {sorted(indonesia - inggris)}; '
+              f'hanya Inggris: {sorted(inggris - indonesia)}'
+          )
+          print(f'{len(indonesia)} nama string sinkron')
+          PY
+
   # ---------------------------------------------------------------- audit
   audit:
     name: Audit dependensi

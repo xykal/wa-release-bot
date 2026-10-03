@@ -25,10 +25,13 @@ dia posting ke channel atau grup WhatsApp — tanpa server, tanpa langganan.
   berubah = 0 byte, tidak makan kuota API), tersambung ke WhatsApp hanya beberapa detik
   saat perlu posting.
 - **Banyak repo, satu app**: tiap repo boleh punya channel tujuan sendiri.
-- **Penjaga grup**: permintaan join di-approve otomatis, yang pernah keluar atau
-  dikeluarkan ditolak, ada daftar hitam manual.
-- **Ekstra**: voice note "lagu mood" terjadwal ke channel, hosting project bot Node.js
-  sendiri dari ZIP, CLI Termux/PC dengan engine yang sama.
+- **Penjaga grup opt-in**: permintaan join di-approve otomatis, yang pernah keluar
+  atau dikeluarkan ditolak, ada daftar hitam manual.
+- **Bawaan hemat**: seluruh fitur tambahan yang membuka socket atau mengirim konten
+  lain mati pada instalasi baru.
+- CLI Termux/PC memakai engine release yang sama. Lagu mood, moderasi/perintah
+  persisten, dan hosting project custom tetap tersedia sebagai eksperimen opt-in,
+  bukan bagian dari janji stabil produk.
 
 ## Untuk siapa
 
@@ -53,7 +56,10 @@ cukup dari satu HP. Baileys 6.7.x stabil untuk newsletter (channel) dan grup.
 
 - Bergantung pada Baileys (protokol tidak resmi). Perubahan di sisi WhatsApp bisa
   mematikan fitur sampai library diperbarui.
-- Node 18 di dalam APK; naik versi hanya lewat update APK.
+- Node 18.20.4 di dalam APK sudah EOL; migrasinya membutuhkan port native
+  nodejs-mobile dan validasi ABI, bukan sekadar menaikkan package npm.
+- `libnode.so` belum mendukung page size 16 KB, jadi Play Store belum menjadi target.
+- Hosting custom berbagi sandbox filesystem dengan app; hanya untuk kode tepercaya.
 - Vendor Android agresif (Xiaomi, Vivo, Oppo) butuh izin batre dan Autostart manual.
 - Lisensi pemakaian pribadi (source-available), bukan open source bebas.
 

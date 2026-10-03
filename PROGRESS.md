@@ -376,7 +376,22 @@ Done:
 - [CRIT] WS bridge 127.0.0.1 wajib token per proses + tolak handshake ber-Origin; proving test JS + Kotlin di branch `fix/ws-bridge-auth`.
 
 Blocked:
-- Keputusan kall: hosting tanpa isolasi, fitur lagu mood (hak cipta / ToS SoundCloud).
+- Hosting tidak dapat menjadi sandbox filesystem di Node 18; mitigasi hanya env allowlist,
+  hash/persetujuan, dan peringatan. Fitur lagu mood tetap punya risiko hak cipta / ToS.
 
 Next:
 - Verifikasi Actions PR; uji perangkat nyata (perintah via WS, fallback file bridge).
+
+## 2026-10-03 — hardening pre-launch
+
+- Fokus produk dikembalikan ke GitHub Release → WhatsApp. Onboarding hanya
+  mempromosikan release dan penjaga grup; fitur tambahan tetap ada tetapi opt-in.
+- Perintah pribadi dan logcat detail di app berubah dari default nyala menjadi default
+  mati. Migrasi satu kali mematikan nilai default lama dari build internal; pilihan user
+  setelah migrasi tetap dihormati. Semua fitur tambahan dijaga unit/static test.
+- Hosting custom: worker memakai environment allowlist, `WR_*` internal tidak diwariskan,
+  setiap ZIP dihitung SHA-256 dan membutuhkan persetujuan eksplisit. Batas filesystem
+  tetap dijelaskan sebagai risiko; worker thread bukan sandbox keamanan.
+- BootReceiver dibuat privat (`exported=false`) dan QUICKBOOT nonstandar dihapus.
+- PRD/roadmap/README/panduan/security/architecture disinkronkan; checklist soak test
+  arm64 + v7a 24–48 jam ditambahkan sebagai gerbang manual rilis.

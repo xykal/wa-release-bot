@@ -377,6 +377,15 @@
                 android:id="@+id/tabFitur"
                 style="@style/WadahTab"
                 android:visibility="gone">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_ubin"
+                android:padding="12dp"
+                android:text="@string/u_fitur_tambahan_opt_in"
+                android:textColor="@color/wr_teks2"
+                android:textSize="13sp" />
             <!-- ================= PENJAGA GRUP ================= -->
             <LinearLayout style="@style/Kartu">
             <TextView

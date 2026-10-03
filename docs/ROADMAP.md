@@ -1,97 +1,103 @@
 # Roadmap
 
-Status per 2026-09-30. Ukuran effort: S (< 1 hari kerja), M (1-3 hari), L (> 3 hari).
-Semua item di sini menunggu "gas" dari kall kecuali ditandai *sedang jalan*.
+Status per 2026-10-03. Fokus saat ini adalah kestabilan calon rilis publik
+1.0.0, bukan penambahan fitur.
 
-## Launching publik — Minggu 2026-10-11 19.00 WIB (12.00 UTC)
+## Prinsip prioritas
 
-Keputusan kall (2026-09-29; 2026-09-30 sempat dimajukan ke 4 Okt lalu diundur ke 11 Okt karena
-scope 1.0.0 ditambah: bottom navbar + pecah layar, splash baru + voice over, fitur bot WA umum,
-cek perangkat): versi rilis publik pertama adalah **1.0.0**; versi internal
-1.7.x/1.8.x tetap ada sebagai release **draft** (hanya kolaborator yang lihat, aset tidak bisa
-diunduh publik). Situs: <https://wabot.projectkal.my.id> — halaman unduh
-menampilkan hitung mundur sampai `LAUNCH_ISO` (`web/js/teks.js`), lalu otomatis membaca
-`releases/latest` (draft tidak ikut) dan mengisi kartu APK.
+1. Jalur **GitHub Release ke WhatsApp** adalah produk inti.
+2. Fitur tambahan tidak boleh mengubah bawaan hemat baterai.
+3. Fitur yang belum terbukti di perangkat nyata tetap opt-in/eksperimental.
+4. Temuan keamanan dan risiko kehilangan pesan lebih penting daripada kosmetik.
 
-Checklist PR launching (`chore/rilis-1.0.0`, dibuat H-1):
+## P0 — gerbang rilis publik 1.0.0
 
-| Langkah | Catatan |
-|---|---|
-| Bump `versionName` 1.0.0 di `app/build.gradle`, 3 `package.json` + lockfile, CHANGELOG `[1.0.0]` | isi changelog = gabungan 1.1–1.8 dalam bahasa pengguna |
-| `versionCode` di CI: `1_000_000 + major*10000 + minor*100 + patch` = **1010000** | tanpa offset, 1.0.0 = 10000 < 10800 (v1.8.0) dan HP penguji menolak update; offset hanya diubah di PR ini |
-| Hapus draft v1.7.0/v1.8.0, draft `internal-*`, **dan** tag-nya sebelum push tag `v1.0.0` | `releases/latest` memilih berdasarkan tanggal dibuat; tag lama tidak boleh tersisa |
-| Tag `v1.0.0` tepat sebelum 19.00 WIB | job `release` butuh ~5 menit; halaman unduh cek tiap 60 detik |
-| Setelah tayang: uji `curl https://api.github.com/repos/xykal/wa-release-bot/releases/latest` tanpa token | harus 200 dengan 3 `.apk` + 3 `.sha256` |
+Target yang direncanakan: Minggu, 11 Oktober 2026 pukul 19.00 WIB
+(12.00 UTC). Target boleh ditunda; checklist keamanan dan uji perangkat tidak
+boleh dipotong demi tanggal.
 
-Jadwal hari H (butuh aba-aba kall di chat; tidak ada penjadwal otomatis):
-
-| Kapan (WIB) | Apa |
-|---|---|
-| Sabtu 2026-10-10 | merge PR #18 (squash), tunggu CI `main` hijau, hapus draft + tag v1.7.0/v1.8.0 |
-| Minggu 2026-10-11 18.45 | push tag `v1.0.0` dari `main`; job `release` ~5 menit |
-| Minggu 2026-10-11 19.00 | popup unduh hilang sendiri; cek `releases/latest` 200 dan 6 aset; deploy situs tidak perlu |
-
-## Menuju 1.0.0 (M11-M15, setelah launching diundur ke Minggu 2026-10-11)
-
-| Milestone | Rencana | Status |
+| Item | Status 2026-10-03 | Syarat selesai |
 |---|---|---|
-| M11 bottom navbar + layar dipecah lima tab | 2026-09-30 | selesai 2026-09-30 (branch `feat/nav-bawah-pecah-layar`) |
-| M12 splash baru: animasi lebih halus + partikel (`PartikelView.kt`), voice over "XyVerse Technology Global" sekali setelah pasang (saklar di tab Pengaturan, mode senyap dihormati) | 2026-09-30 | selesai 2026-09-30 (branch `feat/splash-epik-vo`) |
-| M13 Cek perangkat: RAM, ABI, versi Android, optimasi batre; badge peringatan di bawah spek minimum (tanpa blokir) | 2026-10-03 | selesai 2026-09-30 (branch `feat/m13-m15-fitur-bot`) |
-| M14 fitur bot WA umum: foto jadi stiker, moderasi anti-phishing/promo kecuali admin, menu perintah | 2026-10-04 s/d 10-06 | fitur dasar selesai; Brat, welcome opt-in, tagline, dan menu grup sedang diuji di PR berikutnya |
-| M15 posting Status tanpa re-encode app-side + native group mention | 2026-10-07/08 | `.story` mengirim byte asli; `.storygrup` fail-closed sambil menunggu audit dukungan native mention |
-| Jeda: tangkapan layar ulang, situs bagian fitur, dokumen | 2026-10-09 | belum |
-| Merge PR launching #18 + hapus draft/tag lama, tag `v1.0.0` | 2026-10-10 s/d 10-11 | belum |
+| Semua fitur tambahan default mati | dikerjakan di hardening pre-launch | unit test + APK compile |
+| Hosting: env allowlist, SHA-256, persetujuan risiko | dikerjakan di hardening pre-launch | test JS/Kotlin + dialog terlihat di APK |
+| Boot receiver tidak dapat dipicu app lain | dikerjakan di hardening pre-launch | `exported=false`, hanya broadcast sistem standar |
+| Sinkronkan PRD, roadmap, README, panduan, keamanan | dikerjakan di hardening pre-launch | review dokumen + pemeriksaan CI |
+| Uji 24–48 jam arm64 | menunggu perangkat nyata | semua skenario checklist lulus |
+| Uji 24–48 jam armeabi-v7a | menunggu perangkat nyata | semua skenario checklist lulus |
+| Selidiki self-chat "Waiting for this message" | terbuka | tidak memblokir core release jika fitur terkait tetap eksperimental |
+| Tangkapan layar dan situs sesuai UI kandidat | menunggu kandidat APK | screenshot CI + pemeriksaan manual |
+| Seluruh workflow kandidat hijau | menunggu PR/commit kandidat | Build APK, Quality, CodeQL, Security sukses |
 
-Catatan risiko M14/M15: stiker WebP dibuat oleh Android Canvas; moderasi butuh bot jadi admin
-grup (dan admin harus dikecualikan). Pengiriman byte asli `.story` tidak menjamin WhatsApp
-mempertahankan HD setelah upload. Baileys 6.7.24 belum menunjukkan dukungan native Status
-group mention; `statusJidList` hanya audience. `.storygrup` tetap nonaktif sampai ada
-implementasi yang lolos audit kompatibilitas, CI, dan uji nyata di WhatsApp.
+Checklist operasional lengkap: [CHECKLIST-PRELAUNCH.md](CHECKLIST-PRELAUNCH.md).
 
-## Sekarang (v1.6.x, sedang jalan)
+## Paket rilis 1.0.0
 
-| Item | Status | Catatan |
-|---|---|---|
-| Audit 2026-09-29 + perbaikan [HIGH]/[MED] | di CI | lihat `docs/AUDIT-2026-09-29.md` |
-| Tes di HP: APK dari CI + CLI di Termux | menunggu kall | baru tag `v1.7.0` setelah lolos |
-| Deploy Worker lagu (burst + harian) | selesai 2026-09-29 | `scripts-dev/deploy_worker_lagu.py`; bukti: `scripts-dev/cek-batas-worker.sh` |
+### Janji stabil
 
-## Berikutnya (v1.7)
+- pairing WhatsApp;
+- multi-repo GitHub dan channel per repo;
+- ETag, baseline, rollback guard, pending state, dan retry;
+- notifikasi kegagalan;
+- CLI yang memakai engine sama;
+- log dan ekspor diagnostik.
 
-| Item | Effort | Kenapa |
-|---|---|---|
-| Pecah `bot.mjs` (~1100 baris) jadi modul per fitur | selesai 2026-09-29 (`bot-js/src/mesin/*`, uji `test/engine.test.mjs`) | file > 250 baris susah di-review; test per modul jadi mungkin |
-| Pecah `MainActivity.kt` (1285 baris) per tanggung jawab | selesai 2026-09-29 (`FormPengaturan`, `PanelStatus`, `DialogTautan`, `LembarHitam`, `AksiSistem`, `SplashUtama`, `Lembar`) | alasan sama; sekarang satu file pegang UI, service, dan bridge |
-| i18n Android tahap 1: layar utama (layout + Kotlin) ke `strings.xml` + `values-en` | selesai 2026-09-29 (`u_*` 75 dari layout, `k_*` 126 dari Kotlin; alat `scripts-dev/i18n_layout.py`, `i18n_kotlin.py`) | app cuma bisa Bahasa Indonesia; brand sudah dipisah ke `brand.xml` |
-| i18n Android tahap 2: Onboarding, Repo, Hosting, notifikasi `BotService` | selesai 2026-09-29 (84 entri `k_*` tambahan, total 274) | seluruh UI app dua bahasa; pesan bot di WA tetap Indonesia |
-| CLI: `--json` untuk `--dry-run` | S | gampang dipakai skrip / cron alert |
-| Test integrasi CLI di CI (`--version`, `--dry-run` dengan `fetch` palsu) | S | sekarang CLI cuma `node --check` |
+### Tambahan opt-in
 
-## Nanti (v2, butuh keputusan produk)
+Penjaga grup dan pesan berkala tetap tersedia tetapi bukan alasan utama produk.
+Moderasi, perintah pribadi, stiker, Brat, welcome, Status, rekam channel, lagu,
+dan hosting diberi status eksperimental. `.storygrup` tetap fail-closed.
 
-| Item | Effort | Kenapa / syarat |
-|---|---|---|
-| Play Store / 16 KB page size | L | butuh libnode.so build ulang dengan alignment 16 KB (upstream nodejs-mobile) |
-| Multi-repo per channel | M | permintaan wajar kalau ada pengguna; sekarang 1 repo per instalasi |
-| Sumber selain GitHub Releases (GitLab, tag saja, RSS) | M | abstraksi `sumber/*.mjs` di atas `rilis.mjs` |
-| Counter Worker pakai Durable Object (SQLite, free plan) | M | hanya kalau butuh angka tepat: Rate Limiting binding permisif dan KV eventually consistent, keduanya bisa bocor 2-3x saat burst |
+## Prosedur rilis 1.0.0
 
-## Tidak akan dikerjakan
+Build internal saat ini memakai versi 1.8.0. Karena 1.0.0 memiliki versionCode
+lebih rendah jika memakai rumus lama, PR rilis harus memakai offset permanen:
 
-- Bot "online 24 jam" atau auto-reply chat umum: bertentangan dengan ide dasar (bot tidur).
-- Fitur yang butuh server berbayar di sisi proyek. Satu-satunya komponen cloud adalah
-  Worker lagu di free tier, dan itu opsional.
-- Konten promosi (video TikTok) di repo produk: dipindah keluar, lihat `docs/KONTEN-TIKTOK.md`.
-  Setelah launching: bikin ulang Eps 2 versi lengkap (TikTok kini mengizinkan sampai 10 menit) di repo
-  konten, bukan di sini.
+`1_000_000 + major*10000 + minor*100 + patch`
 
-## Arah produk
+Untuk 1.0.0 hasilnya `1010000`.
 
-Dipakai sementara (kall menjawab "gas aja" 2026-09-29 tanpa memilih; bisa diubah kapan saja):
-**portofolio + donasi** — repo tetap seperti sekarang, `FUNDING.yml` aktif, tidak ada fitur
-berbayar, tidak ada pengumpulan data pengguna. Alternatif yang tidak dipilih: open-core
-(engine source-available, "hosting bot sendiri" + dukungan berbayar; butuh pemisahan modul
-hosting, lisensi ganda, halaman produk).
+Urutan hari rilis:
+
+1. Bekukan fitur dan pilih commit kandidat.
+2. Jalankan checklist perangkat nyata pada APK yang berasal dari commit itu.
+3. Bump `versionName` seluruh package ke 1.0.0 dan `versionCode` ke 1010000.
+4. Pastikan CHANGELOG hanya memuat klaim yang telah dibuktikan.
+5. Merge melalui PR dan tunggu seluruh workflow `main` hijau.
+6. Hapus draft/tag internal lama sesuai kebijakan release pemilik.
+7. Push tag `v1.0.0`.
+8. Verifikasi `releases/latest` mengembalikan APK arm64, v7a, universal, dan
+   checksum yang cocok.
+9. Pasang APK publik di perangkat bersih sebelum mengumumkan tautan.
+
+Tidak ada penjadwal otomatis untuk langkah destruktif atau publikasi tag; semua
+membutuhkan konfirmasi pemilik.
+
+## P1 — setelah rilis stabil
+
+| Item | Effort | Catatan |
+|---|---:|---|
+| Investigasi E2EE self-chat | M/L | butuh log dan reproduksi perangkat nyata |
+| CLI `--json` untuk dry-run | S | mempermudah otomasi tanpa memengaruhi APK |
+| Rapikan API sumber release | M | persiapan GitLab/RSS tanpa menambah UI dulu |
+| Telemetri lokal kesehatan scheduler | M | lokal saja, tanpa mengirim data pengguna |
+| Audit akses filesystem hosting | L | worker_threads bukan boundary keamanan |
+
+## P2 — membutuhkan keputusan arsitektur
+
+| Item | Effort | Gerbang |
+|---|---:|---|
+| Runtime Node yang didukung | L | port/build nodejs-mobile baru untuk seluruh ABI |
+| Android page size 16 KB / Play Store | L | `libnode.so` harus dibangun ulang |
+| Native Status group mention | M/L | dukungan protokol, CI, dan uji akun nyata |
+| Sumber GitLab, tag, atau RSS | M | abstraksi sumber stabil + desain migrasi state |
+| Sumber audio berlisensi | M | mengganti alur SoundCloud sebelum lagu dipromosikan |
+
+## Tidak dikerjakan sebelum P0 selesai
+
+- fitur bot baru;
+- redesain besar;
+- klaim kualitas Status/HD tanpa bukti;
+- memindahkan tanggal launch dengan mengurangi pengujian;
+- membuat bot inti online 24 jam.
 
 Built by xykal — XyVerse Technology Global

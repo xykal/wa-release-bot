@@ -6,6 +6,12 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-10-03
+
+Rilis publik pertama. Build bernomor 1.0.0–1.8.0 sebelumnya adalah build internal;
+nomor publik dimulai kembali dari 1.0.0 dengan `versionCode` 1010000 agar update
+dari build internal tetap diterima Android.
+
 ### Keamanan
 - Hosting custom tidak lagi mewarisi seluruh environment engine. Worker hanya menerima
   allowlist runtime + `.env` project; namespace internal `WR_*`, token bridge, token GitHub,
@@ -1069,11 +1075,11 @@ kritikal di dependency.
   syarat halaman 16 KB Android 15+. Ini batasan upstream — lihat
   [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#-batasan-yang-diketahui).
 
-## [1.0.0] — 2026-09-24
+## Internal 1.0.0 — 2026-09-24
 
-Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
+Versi awal internal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.8.0...HEAD
+[Unreleased]: ../../compare/v1.0.0...HEAD
 [1.8.0]: ../../compare/v1.7.0...v1.8.0
 [1.7.0]: ../../compare/v1.6.7...v1.7.0
 [1.6.7]: ../../compare/v1.6.6...v1.6.7

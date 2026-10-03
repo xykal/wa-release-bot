@@ -4,6 +4,10 @@ Dokumen ini adalah gerbang manual. CI membuktikan kode dapat dibangun dan diuji
 dalam lingkungan otomatis; CI tidak membuktikan perilaku WhatsApp, vendor Android,
 radio seluler, atau dekripsi end-to-end di HP asli.
 
+Pada 3 Oktober 2026 pemilik menginstruksikan publikasi 1.0.0 sebelum checklist
+perangkat nyata ini selesai. Semua kotak yang belum dicentang tetap berstatus
+**TIDAK DIUJI** dan harus diselesaikan sebagai validasi pascarilis prioritas tinggi.
+
 Isi untuk setiap perangkat:
 
 - Model HP:

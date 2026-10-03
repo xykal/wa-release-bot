@@ -205,6 +205,35 @@ jobs:
           print('receiver boot privat, migrasi ada, dan semua fitur tambahan default mati')
           PY
 
+      - name: Versi paket dan versionCode publik harus sinkron
+        run: |
+          python3 - <<'PY'
+          import json, re
+          from pathlib import Path
+
+          manifests = ['package.json', 'bot-js/package.json', 'cli/package.json']
+          versions = {p: json.loads(Path(p).read_text(encoding='utf-8'))['version'] for p in manifests}
+          assert len(set(versions.values())) == 1, f'versi package tidak sinkron: {versions}'
+          version = next(iter(versions.values()))
+          match = re.fullmatch(r'(\d+)\.(\d+)\.(\d+)', version)
+          assert match, f'versi kandidat bukan semver tiga angka: {version}'
+
+          gradle = Path('app/build.gradle').read_text(encoding='utf-8')
+          app_version = re.search(r"findProperty\('versionName'\) \?: '([^']+)'", gradle)
+          app_code = re.search(r"findProperty\('versionCode'\) \?: '(\d+)'", gradle)
+          assert app_version and app_version.group(1) == version, (
+              f'versionName Android tidak sinkron dengan package: {app_version.group(1) if app_version else None} != {version}'
+          )
+          expected = 1_000_000 + int(match.group(1)) * 10_000 + int(match.group(2)) * 100 + int(match.group(3))
+          assert app_code and int(app_code.group(1)) == expected, (
+              f'versionCode Android salah: {app_code.group(1) if app_code else None} != {expected}'
+          )
+
+          workflow = Path('.github/workflows/build-apk.yml').read_text(encoding='utf-8')
+          assert 'KODE=$(( 1000000 +' in workflow, 'offset versionCode tag 1.000.000 hilang dari workflow release'
+          print(f'versi sinkron: {version} / versionCode {expected}')
+          PY
+
       - name: Nama string Indonesia dan Inggris harus sama
         run: |
           python3 - <<'PY'

@@ -12,9 +12,11 @@ Status per 2026-10-03. Fokus saat ini adalah kestabilan calon rilis publik
 
 ## P0 — gerbang rilis publik 1.0.0
 
-Target yang direncanakan: Minggu, 11 Oktober 2026 pukul 19.00 WIB
-(12.00 UTC). Target boleh ditunda; checklist keamanan dan uji perangkat tidak
-boleh dipotong demi tanggal.
+Target awal yang direncanakan: Minggu, 11 Oktober 2026 pukul 19.00 WIB
+(12.00 UTC). Pada 3 Oktober 2026 pemilik menginstruksikan merge dan publikasi
+lebih awal setelah seluruh gerbang otomatis PR lulus. Soak test perangkat nyata
+arm64 dan armeabi-v7a tetap belum dicentang; publikasi ini tidak boleh dianggap
+sebagai bukti bahwa dua gerbang manual tersebut telah selesai.
 
 | Item | Status 2026-10-03 | Syarat selesai |
 |---|---|---|

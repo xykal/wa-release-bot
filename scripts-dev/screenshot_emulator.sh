@@ -97,8 +97,8 @@ read -r W H < <(adb shell wm size | sed -n 's/.*: *\([0-9]*\)x\([0-9]*\).*/\1 \2
 echo "layar ${W}x${H}"
 X=$((W / 2))
 
-# --ez tahan_splash true: cuma buat CI, splash ditahan 6 dtk supaya jepretan dan
-# cek dump UI keburu kejadian (di pemakaian normal splash nutup di 1,6 dtk).
+# --ez tahan_splash true: cuma buat CI, splash ditahan 20 dtk supaya jepretan dan
+# cek hierarki keburu kejadian (di pemakaian normal splash nutup di 1,6 dtk).
 adb shell am start -W -n "$PKG/$ACT" --ez tahan_splash true >/dev/null
 sleep 1
 
@@ -108,8 +108,8 @@ echo "menangkap:"
 echo "  sambutan.png"
 
 # Splash epik (M12): di CI splash ditahan 20 dtk (--ez tahan_splash true di atas),
-# jadi jepretan dua kali + dump UI keburu kejadian. Buktinya tiga lapis:
-#   1. overlay splash + blok brand ada di dump UI,
+# jadi jepretan dua kali + cek hierarki keburu kejadian. Buktinya tiga lapis:
+#   1. overlay splash + blok brand ada di hierarki View proses app,
 #   2. dua jepretan berurutan beda isinya (partikelnya benar-benar bergerak),
 #   3. jepretan disimpan buat mata manusia.
 tangkap splash
@@ -119,11 +119,14 @@ if cmp -s "$OUT/splash.png" "$OUT/splash-gerak.png"; then
   echo "uji splash: dua jepretan identik, animasi latar tidak jalan"; exit 1
 fi
 echo "uji splash: latar bergerak (dua jepretan berbeda) OK"
-dump="$(dump_ui)"
-if [[ "$dump" == *"id/splash"* && "$dump" == *"id/tvBrandSplash"* ]]; then
+# Jangan pakai uiautomator dump saat splash masih bergerak: UIAutomator menunggu
+# UI idle, sehingga dump baru selesai sesudah splash 20 detik ini sudah menutup.
+# dumpsys activity top membaca hierarki View langsung tanpa menunggu animasi idle.
+hierarki="$(adb shell dumpsys activity top 2>/dev/null | tr -d '\r' || true)"
+if [[ "$hierarki" == *"id/splash"* && "$hierarki" == *"id/tvBrandSplash"* ]]; then
   echo "uji splash: overlay + brand kelihatan OK"
 else
-  echo "uji splash: overlay splash tidak ketemu di dump UI"; tangkap splash-gagal; exit 1
+  echo "uji splash: overlay splash tidak ketemu di hierarki View"; tangkap splash-gagal; exit 1
 fi
 # sisa masa tahan: tunggu splash nutup sendiri (20 dtk dari app dibuka)
 sleep 16

@@ -18,19 +18,31 @@ set -euo pipefail
 source "$(dirname "$0")/ui-uji.sh"
 
 gulir_ke rowModerasi bot-umum 320
-dump="$(dump_ui)"
-if [[ "$dump" == *"id/rowModerasi"* && "$dump" == *"id/rowPerintahPribadi"* && ( "$dump" == *"Bot WA umum"* || "$dump" == *"WhatsApp features"* ) ]]; then
-  echo "uji bot-umum: kartu + saklar moderasi + saklar perintah kelihatan OK"
+dump_moderasi="$(dump_ui)"
+if [[ "$dump_moderasi" == *"id/rowModerasi"* && ( "$dump_moderasi" == *"Bot WA umum"* || "$dump_moderasi" == *"WhatsApp features"* ) ]]; then
+  echo "uji bot-umum: kartu + saklar moderasi kelihatan OK"
 else
-  echo "uji bot-umum: kartu Bot WA umum tidak lengkap di dump UI"; tangkap_gagal bot-umum-gagal; exit 1
+  echo "uji bot-umum: kartu atau saklar moderasi tidak lengkap di dump UI"; tangkap_gagal bot-umum-gagal; exit 1
+fi
+
+# Catatan risiko opt-in membuat kartu lebih tinggi, jadi dua saklar tidak selalu
+# muat dalam satu viewport emulator. Cari saklar perintah secara terpisah lalu
+# kembali ke moderasi sebelum mengetuknya; jangan mengandalkan tinggi layar.
+gulir_ke rowPerintahPribadi bot-umum-perintah 520
+dump_perintah="$(dump_ui)"
+if [[ "$dump_perintah" == *"id/rowPerintahPribadi"* ]]; then
+  echo "uji bot-umum: saklar perintah pribadi kelihatan OK"
+else
+  echo "uji bot-umum: saklar perintah pribadi tidak ketemu di dump UI"; tangkap_gagal bot-umum-gagal; exit 1
 fi
 
 # M16: bar Simpan harus MULAI dari sembunyi (belum ada perubahan).
-if [[ "$dump" == *"id/barSimpan"* ]]; then
+if [[ "$dump_moderasi$dump_perintah" == *"id/barSimpan"* ]]; then
   echo "uji simpan: bar Simpan kelihatan padahal belum ada perubahan"; tangkap_gagal simpan-gagal; exit 1
 fi
 echo "uji simpan: bar Simpan sembunyi waktu belum ada perubahan OK"
 
+gulir_ke rowModerasi bot-umum-moderasi 320
 ketuk_id rowModerasi "saklar moderasi"
 baris="$(dump_ui | grep -F "id/rowModerasi" | head -n 1 || true)"
 if [[ "$baris" == *'selected="true"'* ]]; then

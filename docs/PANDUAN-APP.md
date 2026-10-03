@@ -37,7 +37,7 @@ Layar utama dipecah jadi lima tab; pindahnya lewat bar navigasi bawah:
 |---|---|
 | Beranda | status WhatsApp/engine/rilis/penjaga grup, jadwal berikutnya, tombol Mulai dan Cek sekarang, kartu Tautkan WhatsApp |
 | Repo | kartu Rilis GitHub → Channel: daftar repo, link channel, token, interval, saklar kirim, tes kirim, bikin channel |
-| Fitur | Penjaga grup, Lagu mood, Hosting bot |
+| Fitur | Penjaga grup dan fitur tambahan opt-in; eksperimen ditandai di kartu |
 | Log | catatan kerja bot, rekam log detail, salin tampilan, unduh/bagikan log internal, matikan service |
 | Pengaturan | Batre & nyala otomatis, Tentang |
 
@@ -99,9 +99,10 @@ anggota yang berubah antar-cek, jadi:
 
 ## Bot WA umum, moderasi, dan pesan berkala
 
-Fitur yang jalan di sisi WhatsApp (perintah pribadi, moderasi grup, stiker,
-story, pesan berkala ke grup) dipindah ke dokumen sendiri supaya halaman ini
-tetap fokus ke kartu-kartu di app: [PANDUAN-BOT-WA.md](PANDUAN-BOT-WA.md).
+Tab Fitur dimulai dengan pengingat bahwa produk inti ada di tab Repo. Seluruh
+fitur tambahan mati pada instalasi baru; Bot WA umum diberi label eksperimental.
+Fitur sisi WhatsApp (perintah pribadi, moderasi grup, stiker, story, pesan berkala)
+dijelaskan di [PANDUAN-BOT-WA.md](PANDUAN-BOT-WA.md).
 
 ## Tombol Simpan muncul kalau ada perubahan
 
@@ -240,21 +241,29 @@ Worker-nya: `python3 scripts-dev/deploy_worker_lagu.py` (butuh env `CF_API_TOKEN
 `CF_ACCOUNT_ID`, `CF_KV_LAGU`, opsional `GROQ_API_KEY`). Kode Worker:
 [`lagu/worker/worker.js`](../lagu/worker/worker.js).
 
-> **Catatan.** Lagunya punya orang. Yang dikirim cuma potongan, tapi channel publik
-> tetap bisa kena laporan hak cipta — pakai secukupnya.
+> **Eksperimental dan default mati.** Nyalakan hanya untuk audio yang hak
+> penggunaannya memang lo punya. Potongan pendek bukan izin otomatis; channel
+> publik tetap dapat menerima klaim hak cipta atau melanggar ketentuan penyedia.
 
 ## Hosting bot custom
 
-Punya project bot Node.js sendiri? Buka **Hosting bot** di app → upload ZIP.
+Hosting berstatus **eksperimental**. Punya project Node.js sendiri? Buka
+**Hosting bot** di app dan pilih ZIP. Sebelum dipasang, app menghitung SHA-256,
+menampilkan risikonya, dan meminta persetujuan untuk setiap ZIP baru.
 
-- ZIP isinya `package.json` + file utama (`scripts.start`, `main`, atau `index.js`).
-- `node_modules` boleh ikut atau nggak. Kalau nggak ada, app masang sendiri dari
-  npm (modul JS murni aja — paket native kayak `sharp` nggak jalan di HP).
-- `.env` ikut dibaca. Path relatif (`./session`) jalan, karena folder kerjanya
-  folder project.
-- Bot jalan di **worker thread** terpisah: `process.exit()` atau crash di bot
-  itu nggak matiin app. Ada restart otomatis, konsol, dan kolom input (stdin)
-  buat bot yang nanya nomor WA.
-- Ganti ZIP → file lama yang nggak ada di ZIP baru (sesi WA, `.env`,
-  `node_modules`) tetap dipertahankan.
-- Node-nya **Node 18** bawaan app. Versinya cuma bisa naik lewat update APK.
+- ZIP berisi `package.json` + file utama (`scripts.start`, `main`, atau `index.js`).
+- Cocokkan hash di dialog dengan `sha256sum nama.zip` jika arsip dikirim dari
+  perangkat lain. Hash hanya mencakup ZIP yang dipilih.
+- ZIP dibatasi 100 MB sebelum dipasang dan hasil ekstraksi dibatasi 700 MB.
+  Sebaiknya jangan sertakan `node_modules`; app dapat memasang dependency dari
+  npm. Paket native seperti `sharp` umumnya tidak bekerja di runtime Android ini.
+- `.env` project ikut dibaca. Worker hanya mewarisi environment runtime yang
+  diizinkan; `WR_DATA_DIR`, token bridge, dan environment engine lain tidak
+  diteruskan.
+- **Worker thread bukan sandbox keamanan.** Kode project tetap dapat membaca
+  filesystem privat app, termasuk sesi WhatsApp dan setting. Hanya jalankan
+  project yang seluruh kodenya sudah lo audit.
+- Ganti ZIP mempertahankan file lama yang tidak ada di ZIP baru, termasuk sesi,
+  `.env`, dan `node_modules`; file tersebut tidak tercakup hash ZIP baru.
+- Bot punya restart otomatis, konsol, dan stdin. Node yang dipakai adalah
+  **18.20.4 (EOL)** bawaan APK dan hanya bisa berubah lewat update APK.

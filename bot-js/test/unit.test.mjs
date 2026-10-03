@@ -552,7 +552,7 @@ test('formatKataLagu: kata-kata + judul tebal', () => {
 
 // ------------------------------------------------------------ hosting
 import { bacaSpek, cocokPlatform } from '../src/pasang-modul.mjs';
-import { cariFileUtama, bacaEnv } from '../src/hosting.mjs';
+import { cariFileUtama, bacaEnv, envHostingAman } from '../src/hosting.mjs';
 import { bacaTar, jalurAman } from '../src/tar.mjs';
 
 test('bacaSpek: registry, alias, github, lokal', () => {
@@ -577,6 +577,24 @@ test('bacaEnv: kutip, komentar, export', () => {
   assert.deepEqual(bacaEnv('A=1\n# x\nexport B="dua # bukan komen" # komen\nC=tiga # komen\n'), {
     A: '1', B: 'dua # bukan komen', C: 'tiga',
   });
+});
+
+test('envHostingAman: hanya wariskan runtime aman + .env milik project', () => {
+  const hasil = envHostingAman({
+    PATH: '/system/bin', HOME: '/data/user/0/app', TMPDIR: '/data/tmp',
+    WR_DATA_DIR: '/data/user/0/app/session-rahasia', WR_WS_TOKEN: 'token-rahasia',
+    GITHUB_TOKEN: 'token-github', CF_API_TOKEN: 'token-cloudflare', ACAK: 'jangan diwariskan',
+  }, {
+    TOKEN_BOT_SENDIRI: 'boleh', MODE: 'produksi', WR_DATA_DIR: '/coba-timpa',
+    WR_HOSTING: '0',
+  });
+  assert.deepEqual(hasil, {
+    HOME: '/data/user/0/app', PATH: '/system/bin', TMPDIR: '/data/tmp',
+    TOKEN_BOT_SENDIRI: 'boleh', MODE: 'produksi', WR_HOSTING: '1',
+  });
+  assert.equal(hasil.WR_WS_TOKEN, undefined);
+  assert.equal(hasil.GITHUB_TOKEN, undefined);
+  assert.equal(hasil.CF_API_TOKEN, undefined);
 });
 
 test('cariFileUtama: script start > main > index.js', () => {

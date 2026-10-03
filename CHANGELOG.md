@@ -6,13 +6,31 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-10-03
+
+Rilis publik pertama. Build bernomor 1.0.0–1.8.0 sebelumnya adalah build internal;
+nomor publik dimulai kembali dari 1.0.0 dengan `versionCode` 1010000 agar update
+dari build internal tetap diterima Android.
+
 ### Keamanan
+- Hosting custom tidak lagi mewarisi seluruh environment engine. Worker hanya menerima
+  allowlist runtime + `.env` project; namespace internal `WR_*`, token bridge, token GitHub,
+  dan environment app lain tidak diteruskan. Setiap ZIP disalin ke storage privat sambil
+  dihitung SHA-256 (maksimal 100 MB), lalu arsip yang sama membutuhkan persetujuan
+  risiko eksplisit sebelum dipasang. Worker thread tetap bukan sandbox filesystem.
+- `BootReceiver` sekarang `exported=false` dan hanya menerima `BOOT_COMPLETED` serta
+  `MY_PACKAGE_REPLACED`; action QUICKBOOT nonstandar yang dapat dipalsukan app lain dihapus.
 - WS bridge `127.0.0.1:18790` sekarang wajib token acak per proses (header `X-WR-Token`).
   Sebelumnya app lain di HP bisa connect tanpa izin lalu mengubah setting, memutus WA,
   memicu kirim pesan, dan menerima event QR/pairing code. Handshake ber-`Origin` (dari
   halaman web) ditolak; tanpa token WS tidak dinyalakan dan app tetap jalan lewat file bridge.
 
 ### Ditambah
+- `docs/CHECKLIST-PRELAUNCH.md`: gerbang uji 24–48 jam untuk arm64 dan armeabi-v7a,
+  termasuk pairing, multi-repo, retry, anti-duplikat, layar mati, reboot, privasi log,
+  dan validasi fitur eksperimental.
+- Pengujian bawaan hemat, allowlist environment hosting, SHA-256 ZIP, sinkronisasi nama
+  string id/en, serta kontrak BootReceiver privat.
 - Tab Log sekarang punya saklar rekam logcat Android, tombol salin untuk log yang terlihat,
   dan unduh ZIP berisi `app.log`, `mesin.log`, `logcat.log`, `crash.log` serta rotasinya.
   Log app/engine tetap direkam otomatis; ekspor memakai pemilih dokumen Android, tanpa izin
@@ -141,6 +159,14 @@ Semua perubahan penting proyek ini. Format mengikuti
   dibuang dari yang paling lama dipakai, jadi penyimpanan tidak naik terus.
 
 ### Diubah
+- Instalasi baru kembali ke mode inti hemat: **Perintah pribadi** dan logcat detail sekarang
+  default mati, sama seperti moderasi, lagu, penjaga grup, dan pesan berkala. Migrasi satu
+  kali juga mematikan dua nilai default lama pada build internal; pengguna dapat opt-in lagi.
+  Log app/engine tetap direkam. Onboarding hanya menonjolkan
+  release dan penjaga grup; tab Fitur menjelaskan bahwa tambahan bersifat opt-in dan beberapa
+  masih eksperimental.
+- PRD, roadmap, pitch, README, panduan, arsitektur, dan dokumen keamanan disinkronkan dengan
+  status multi-repo serta batas Node 18 EOL, 16 KB, self-chat, lagu, dan hosting.
 - Workflow **Screenshot app** ikut jalan kalau `scripts-dev/uji-fitur.sh` atau `ui-uji.sh` berubah.
   Sebelumnya daftar pemicunya cuma dua berkas lain, jadi perubahan skrip uji UI nggak keuji
   sama sekali di PR.
@@ -1049,11 +1075,11 @@ kritikal di dependency.
   syarat halaman 16 KB Android 15+. Ini batasan upstream — lihat
   [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#-batasan-yang-diketahui).
 
-## [1.0.0] — 2026-09-24
+## Internal 1.0.0 — 2026-09-24
 
-Versi awal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
+Versi awal internal: aplikasi Android (Kotlin + nodejs-mobile + Baileys) dan versi CLI Termux.
 
-[Unreleased]: ../../compare/v1.8.0...HEAD
+[Unreleased]: ../../compare/v1.0.0...HEAD
 [1.8.0]: ../../compare/v1.7.0...v1.8.0
 [1.7.0]: ../../compare/v1.6.7...v1.7.0
 [1.6.7]: ../../compare/v1.6.6...v1.6.7

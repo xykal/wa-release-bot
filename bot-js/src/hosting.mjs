@@ -56,6 +56,29 @@ export function bacaEnv(teks) {
   return hasil;
 }
 
+// Worker project custom tidak boleh mewarisi seluruh process.env milik app.
+// Selain path runtime biasa, variabel harus datang dari .env project itu
+// sendiri. Ini mencegah WR_DATA_DIR, token bridge, token CI/debug, dan secret
+// app lain ikut terbaca hanya karena project memanggil process.env.
+const ENV_WARISAN_AMAN = new Set([
+  'HOME', 'PATH', 'TMPDIR', 'TMP', 'TEMP', 'LANG', 'LC_ALL', 'TZ', 'NODE_PATH',
+  'SSL_CERT_FILE', 'SSL_CERT_DIR',
+]);
+
+export function envHostingAman(envProses = {}, envProyek = {}) {
+  const hasil = {};
+  for (const nama of ENV_WARISAN_AMAN) {
+    if (typeof envProses[nama] === 'string') hasil[nama] = envProses[nama];
+  }
+  for (const [nama, nilai] of Object.entries(envProyek)) {
+    // WR_* adalah namespace internal WA Release Bot. Project custom memakai
+    // nama biasa di .env; kunci internal tidak boleh ditimpa atau dipalsukan.
+    if (!/^WR_/i.test(nama)) hasil[nama] = String(nilai);
+  }
+  hasil.WR_HOSTING = '1';
+  return hasil;
+}
+
 // Dijalanin di dalam worker sebelum kode bot orang. `Module.runMain` itu
 // cara Node sendiri ngejalanin file utama → ESM & CommonJS sama-sama jalan,
 // dan `require.main === module` di bot orang tetap bener.
@@ -206,7 +229,7 @@ export function buatHosting({ dataDir, log: _log, kirim }) {
         stdin: true,
         stdout: true,
         stderr: true,
-        env: { ...process.env, ...envFile, WR_HOSTING: '1' },
+        env: envHostingAman(process.env, envFile),
         resourceLimits: { maxOldGenerationSizeMb: 320 },
       });
     } catch (e) {

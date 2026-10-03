@@ -6,7 +6,7 @@ import android.content.Intent
 
 /**
  * Nyalain service otomatis:
- *  - HP selesai boot (BOOT_COMPLETED; beberapa ROM kirim QUICKBOOT_POWERON)
+ *  - HP selesai boot (BOOT_COMPLETED)
  *  - app barusan di-update (MY_PACKAGE_REPLACED) — biar habis update nggak
  *    perlu buka app lagi.
  *
@@ -20,9 +20,7 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
         val aksi = intent.action ?: return
         val dikenal = aksi == Intent.ACTION_BOOT_COMPLETED ||
-                aksi == Intent.ACTION_MY_PACKAGE_REPLACED ||
-                aksi == "android.intent.action.QUICKBOOT_POWERON" ||
-                aksi == "com.htc.intent.action.QUICKBOOT_POWERON"
+                aksi == Intent.ACTION_MY_PACKAGE_REPLACED
         if (!dikenal) return
 
         LogRecorder.init(ctx)

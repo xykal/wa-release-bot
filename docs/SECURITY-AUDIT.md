@@ -138,14 +138,10 @@ Node 18 nggak punya `globalThis.crypto`. Polyfill kita pasang
 `require('node:crypto').webcrypto` ke `globalThis`. Ini API yang sama, cuma
 dipindah tempatnya — nggak ada implementasi crypto buatan sendiri.
 
-### `usesCleartextTraffic="true"`
+### Cleartext loopback — DIPERBAIKI SETELAH AUDIT AWAL
 
-Di-set di `AndroidManifest.xml`. Dipakai buat WebSocket `127.0.0.1:18790`
-antara app dan engine Node (jalur cepat perintah). Konsekuensinya, app juga
-mengizinkan HTTP polos ke host lain. Engine sendiri cuma menghubungi
-`api.github.com` (HTTPS) dan server WhatsApp (WSS/HTTPS).
-
-Batasannya: WebSocket ke `localhost` **juga** sudah dikecualikan dari
-kebijakan cleartext sejak Android 9, jadi sebenarnya `usesCleartextTraffic`
-bisa dimatikan dan diganti `network_security_config` yang cuma mengizinkan
-`127.0.0.1`. **Belum dikerjakan** — dicatat sebagai TODO.
+Manifest sekarang memakai `network_security_config.xml`: HTTP polos hanya
+diizinkan ke `127.0.0.1` untuk jalur app ke engine; host lain wajib TLS.
+WebSocket loopback juga membutuhkan token acak per proses dan menolak
+handshake ber-`Origin`. Detail status terbaru ada di
+[`AUDIT-2026-10-02.md`](AUDIT-2026-10-02.md) dan [`SECURITY.md`](../SECURITY.md).

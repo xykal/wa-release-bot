@@ -79,9 +79,12 @@ dibatalin (socket-nya ditutup) lalu diganti. Habis nautin baru, koneksi
 **ditahan** sampai WA selesai ngirim notifikasi yang ketunda + ±12 dtk (maks
 60 dtk) — HP butuh perangkat barunya tetap online buat nyelesaiin tautan.
 
-**WebSocket** — cuma buat mempercepat perintah (nggak nunggu 250 ms). Kalau
-gagal bind/gagal connect, `WsClient.send()` balikin `false` dan pemanggilnya
-fallback ke file bridge secara otomatis. Jadi WebSocket boleh mati kapan saja.
+**WebSocket** — cuma buat mempercepat perintah (nggak nunggu 250 ms). Setiap
+proses app membuat token acak 32 byte; app mengirimnya lewat header
+`X-WR-Token`, engine membandingkannya secara timing-safe, dan handshake dengan
+header `Origin` ditolak. Tanpa token, server WS tidak dibuka. Kalau gagal bind
+atau connect, `WsClient.send()` mengembalikan `false` dan pemanggil fallback ke
+file bridge. Jadi WebSocket boleh mati kapan saja.
 
 ## Susunan kode engine (`bot-js/src/`)
 
@@ -108,6 +111,24 @@ antar modul eksplisit di argumen kedua (`lagu` butuh `rilis.cariTarget`,
 GitHub palsu (`WR_GITHUB_API`) dan memastikan rangkaian
 configure -> start -> cek -> stop tetap nyambung lintas modul; jalur yang butuh
 WhatsApp sungguhan tidak tercakup.
+
+### Batas keamanan hosting custom
+
+Project custom dijalankan di `worker_threads`, jadi crash dan `process.exit()`
+tidak langsung menghentikan engine. Itu isolasi lifecycle, **bukan sandbox
+keamanan**: worker masih berada dalam UID dan filesystem privat app yang sama.
+
+Mitigasi yang ada:
+
+- setiap ZIP dihitung SHA-256 dan membutuhkan persetujuan eksplisit di app;
+- worker tidak mewarisi seluruh `process.env`; hanya `HOME`, `PATH`, direktori
+  temporer, locale/timezone, path sertifikat/Node, dan `.env` milik project;
+- namespace `WR_*` internal tidak boleh diisi project;
+- memori V8 dibatasi dan crash berulang berhenti setelah lima kali dalam sepuluh menit.
+
+Mitigasi tersebut tidak mencegah project membaca `session/` atau `config.json`
+lewat filesystem. Karena Node 18 tidak punya permission model yang bisa dipakai
+di runtime ini, hanya kode yang sudah diaudit yang boleh dijalankan.
 
 ## Susunan layar utama (`app/src/main/java/com/xykals/warelease/`)
 

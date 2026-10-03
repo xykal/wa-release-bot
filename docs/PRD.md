@@ -1,76 +1,116 @@
 # PRD — WA Release Bot
 
-Ditulis 2026-09-29 untuk produk yang sudah ada (v1.6.7), bukan rencana dari nol.
-Fungsinya: satu tempat yang menjelaskan apa yang dijanjikan produk ini, supaya
-perubahan berikutnya bisa diuji terhadap janji itu.
+Diperbarui 2026-10-03 untuk calon rilis publik 1.0.0. Versi 1.8.0 adalah build
+internal dan bukan nomor rilis publik.
 
 ## 1. Masalah
 
-Pemilik channel WhatsApp yang mengikuti sebuah repo GitHub harus mengecek sendiri
-halaman Releases lalu menyalin catatan rilis ke channel. Bot WA yang ada umumnya
-butuh server/VPS yang nyala 24 jam, sedangkan pekerjaannya cuma beberapa detik
-per hari.
+Pemilik channel atau grup WhatsApp yang mengikuti proyek GitHub harus membuka
+halaman Releases, menyalin catatan rilis, lalu mengirimkannya sendiri. Bot yang
+ada biasanya membutuhkan VPS yang hidup 24 jam, padahal tugas ini hanya perlu
+beberapa detik setiap ada rilis.
 
 ## 2. Pengguna
 
-- **Utama**: pemilik/admin channel atau grup WA yang mengumumkan rilis proyeknya
-  sendiri, punya HP Android, tidak mau bayar server. Contoh: kall sendiri.
-- **Sekunder**: pengguna Termux/PC yang lebih suka cron daripada aplikasi.
-- **Bukan target**: tim besar yang butuh banyak repo, banyak channel, SLA.
+- **Utama:** developer indie atau admin komunitas yang mengumumkan rilis
+  proyeknya sendiri, memiliki HP Android, dan tidak ingin mengelola VPS.
+- **Sekunder:** pengguna Termux/PC yang lebih nyaman dengan cron.
+- **Bukan target:** tim yang membutuhkan SLA, banyak operator, audit enterprise,
+  atau dukungan resmi WhatsApp/Meta.
 
-## 3. Janji produk
+## 3. Janji inti produk
 
-1. Setiap release baru (bukan draft; prerelease opsional) muncul di channel
-   paling lambat N menit setelah dipublikasikan (N = interval cek, default 15).
-2. Tidak ada rilis yang diumumkan dua kali, dan rollback tag tidak diumumkan ulang.
-3. Antara dua cek, bot tidak memakai CPU/data. Repo yang tidak berubah = 0 byte body (ETag 304).
-4. Sesi WA hanya tersimpan di perangkat pengguna. Tidak ada server milik proyek
-   yang melihat pesan, nomor, atau token GitHub.
-5. APK dan CLI memakai engine yang sama (`bot-js/src`), jadi perilakunya identik.
+Satu kalimat produk:
 
-## 4. Fitur (status sekarang)
+> Rilis GitHub ke WhatsApp langsung dari HP Android, tanpa VPS.
+
+Janji rilis publik:
+
+1. Satu atau beberapa repo GitHub dapat dipantau; setiap repo boleh memakai
+   channel tujuan sendiri.
+2. Release baru yang bukan draft diumumkan paling lambat satu interval cek
+   setelah dipublikasikan; prerelease bersifat opt-in.
+3. Release tidak diumumkan dua kali dan rollback tag tidak diumumkan ulang.
+4. Di antara pengecekan, jalur inti tidak mempertahankan koneksi WhatsApp.
+   Pengecekan repo yang tidak berubah memakai ETag/304 tanpa body.
+5. Session WhatsApp dan token GitHub hanya disimpan di perangkat pengguna.
+6. APK dan CLI memakai engine yang sama dari `bot-js/src`.
+
+Klaim "bot tidur" hanya berlaku saat fitur yang mempertahankan socket
+(**Perintah pribadi** atau **Moderasi grup**) dimatikan. Keduanya mati pada
+instalasi baru.
+
+## 4. Tingkat kematangan fitur
+
+### Inti rilis publik
+
+| Fitur | Status | Gerbang rilis |
+|---|---|---|
+| Pantau GitHub Releases dan kirim ke channel/grup | stabil | uji multi-repo, ETag, retry, dan perangkat nyata |
+| Multi-repo dan channel per repo | stabil | migrasi state + rollback/anti-duplikat lulus |
+| Pairing code/QR dan penyimpanan sesi lokal | stabil | pairing ulang di HP nyata |
+| Retry maksimum tiga kali + notifikasi kegagalan | stabil | skenario jaringan putus |
+| CLI `--once` untuk cron | stabil | integrasi GitHub palsu di CI |
+| Log dan ekspor diagnostik | stabil | ZIP dapat dibuka dan ditinjau |
+
+### Tambahan opt-in
 
 | Fitur | Status | Catatan |
 |---|---|---|
-| Pantau `/releases/latest`, posting ke channel/grup | ada | `rilis.mjs` memutuskan baru/rollback/tidur |
-| Tautkan WA lewat QR atau pairing code | ada | `wa.mjs`, Baileys 6.7.24 |
-| Format pesan: teks atau "pertanyaan" (ajak balas) | ada | `format.mjs` |
-| Penjaga grup: auto-terima, tolak yang pernah keluar | ada | `grup.mjs` |
-| Lagu mood (voice note, Cloudflare Worker + Groq) | ada, opsional | satu-satunya komponen cloud, free tier |
-| Hosting bot Node.js sendiri dari ZIP | ada | `pasang-modul.mjs`, `hosting.mjs` |
-| CLI Termux/PC dengan mode `--once` untuk cron | ada | `cli/src/cli.mjs` |
-| Multi-repo, sumber selain GitHub, Play Store | belum | lihat `docs/ROADMAP.md` |
+| Penjaga grup dan pesan berkala | tambahan | mati secara bawaan; perlu akun admin grup |
+| Moderasi dan perintah pribadi | eksperimental | mati secara bawaan; menjaga socket WA tetap hidup |
+| Stiker, Brat, welcome, rekam channel, `.story` | eksperimental | tidak menjadi janji stabil 1.0.0 |
+| `.storygrup` | diblokir | fail-closed sampai native group mention didukung dan diuji |
+| Format channel "Pertanyaan" | eksperimental | default teks; protokol belum terverifikasi |
+| Lagu mood | eksperimental | default mati; hanya untuk audio yang hak penggunaannya dimiliki pengguna |
+| Hosting project Node.js | eksperimental | kode custom berbagi sandbox app; hanya project tepercaya |
+
+Fitur eksperimental tidak dihapus, tetapi tidak dipasarkan sebagai alur utama,
+selalu opt-in, dan harus menjelaskan risikonya sebelum dipakai.
 
 ## 5. Batasan yang disengaja
 
-- Satu repo per instalasi. Menyederhanakan state dan UI.
-- Tidak ada server relay: kalau HP mati, bot mati. Itu bagian dari janji nomor 4.
-- Node 18 di dalam APK (nodejs-mobile) meski Baileys minta Node 20: ditutup polyfill
-  WebCrypto dan diuji di CI dengan Node 18.
-- Emoji di UI dan pesan bot adalah gaya produk yang dipilih pemilik; dokumen
-  teknis (docs/, CI, kode) tanpa emoji.
+- Tidak ada relay server untuk jalur inti. Kalau HP mati, bot ikut mati.
+- WhatsApp diakses lewat Baileys, bukan API resmi Meta. Risiko akun dibatasi dan
+  perubahan protokol adalah risiko nyata.
+- APK memakai nodejs-mobile Node 18.20.4 yang sudah EOL. Migrasi runtime harus
+  menjadi proyek native Android terpisah, bukan perubahan dependency biasa.
+- `libnode.so` belum siap page size 16 KB, sehingga distribusi Play Store belum
+  menjadi target.
+- Aplikasi bersifat personal-use/source-available, bukan layanan komersial.
 
 ## 6. Kualitas dan keamanan
 
-- Semua perubahan lewat GitHub Actions: lint, unit test (Node 18 dan 20), audit
-  dependensi, CodeQL, build APK. Tidak ada build lokal yang dianggap bukti.
-- Actions dipin ke SHA penuh; `permissions` minimal; `timeout-minutes` di tiap job.
-- Cleartext di sisi Android hanya ke 127.0.0.1 (WebSocket app <-> engine).
-- Endpoint publik Worker lagu dibatasi per perangkat, per IP, dan global.
-- Pelaporan kerentanan: `SECURITY.md`.
+- Pull request wajib melewati lint/test Node 18/20/22, build APK, unit test
+  Kotlin, CodeQL, dependency review, gitleaks, dan audit dependency.
+- Cleartext Android hanya diizinkan ke loopback; WebSocket loopback memakai
+  token acak per proses dan menolak Origin browser.
+- Project hosting tidak mewarisi seluruh environment engine. Hanya environment
+  runtime yang diizinkan dan `.env` project sendiri yang diberikan ke worker.
+- Setiap ZIP hosting menampilkan SHA-256 dan membutuhkan persetujuan eksplisit.
+  Ini bukan sandbox filesystem: kode project tetap dapat membaca file privat app.
+- Fitur tambahan yang membuka socket atau mengirim konten mati pada instalasi baru.
 
-## 7. Metrik keberhasilan
+## 7. Gerbang rilis publik 1.0.0
 
-Produk ini portofolio + dipakai sendiri; metriknya sederhana:
+Rilis hanya dilanjutkan jika:
 
-- CI hijau di `main` setiap saat.
-- Nol laporan "rilis diumumkan dobel" atau "rilis kelewat" dari kall selama satu bulan pemakaian.
-- Waktu dari `git clone` sampai pesan tes masuk channel di Termux < 10 menit mengikuti README.
+1. Seluruh CI pada commit kandidat hijau.
+2. Checklist `docs/CHECKLIST-PRELAUNCH.md` lulus pada HP arm64 dan HP uji
+   armeabi-v7a selama sekurangnya 24 jam; target ideal 48 jam.
+3. Pairing, reboot, layar mati, jaringan putus, release baru, retry, dan ekspor
+   log telah diuji.
+4. Tidak ada klaim bahwa self-chat "Waiting for this message", Status HD,
+   Pertanyaan channel, atau native group mention sudah selesai tanpa bukti HP.
+5. Dokumentasi, situs, versi, checksum APK, dan `releases/latest` cocok.
 
-## 8. Arah produk
+## 8. Metrik keberhasilan
 
-Sementara: portofolio + donasi (lihat `docs/ROADMAP.md`). Tidak ada fitur berbayar dan
-tidak ada pengumpulan data pengguna. Satu-satunya data yang sampai ke server proyek adalah
-id acak per instalasi (`X-Pemasang`) ke Worker lagu, itu pun hanya kalau fitur lagu dinyalakan.
+- Tidak ada release terlewat atau terkirim dua kali selama satu bulan pemakaian.
+- Setup dari APK sampai pesan tes berhasil dalam kurang dari 10 menit mengikuti
+  README.
+- Jalur inti dapat berjalan 24–48 jam dengan layar mati tanpa socket WA persisten.
+- Tidak ada crash baru, kebocoran secret, atau temuan high/critical yang terbuka
+  pada commit rilis.
 
 Built by xykal — XyVerse Technology Global

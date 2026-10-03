@@ -48,16 +48,16 @@
     <string name="u_tes_kirim">Test send</string>
     <string name="u_daftar_hitam">Blacklist</string>
     <string name="u_kosongin">Clear</string>
-    <string name="u_lagu_mood">Mood songs</string>
-    <string name="u_sesekali_bot_ngirim_potongan_lagu">Now and then the bot sends a snippet of an old song (~60 s) plus a caption to the channel. The schedule is randomized like a real mood — not hourly, not spam. Cloudflare finds the song; the phone only downloads a ±1 MB snippet, sends it, and deletes the file right away.</string>
+    <string name="u_lagu_mood">Mood songs · experimental</string>
+    <string name="u_sesekali_bot_ngirim_potongan_lagu">Opt-in and off by default. Enable only for audio you have the right to use; public-channel snippets can still trigger copyright claims or provider-policy issues. Cloudflare finds audio, the phone sends a ~60-second snippet, then deletes it.</string>
     <string name="u_nyalain_lagu_mood">Turn on mood songs</string>
     <string name="u_dikirim_ke_channel_yang_sama">Sent to the same channel as releases</string>
     <string name="u_rata_rata_berapa_kali_sehari">Average times per day (1–8)</string>
     <string name="u_mulai_jam">From hour</string>
     <string name="u_sampai_jam">Until hour</string>
     <string name="u_kirim_satu_lagu_sekarang">Send one song now</string>
-    <string name="u_hosting_bot_lo_sendiri">Host your own bot</string>
-    <string name="u_punya_project_bot_node_js">Got a Node.js bot project? Upload its ZIP and this app runs it on the phone — with console, input, and auto restart.</string>
+    <string name="u_hosting_bot_lo_sendiri">Bot hosting · experimental</string>
+    <string name="u_punya_project_bot_node_js">Trusted code only. Projects run inside the same app sandbox and can read the WhatsApp session and private settings. Every ZIP shows its SHA-256 and requires confirmation before installation.</string>
     <string name="u_buka_hosting">Open hosting</string>
     <string name="u_batre_nyala_otomatis">Battery &amp; autostart</string>
     <string name="u_bot_nya_tidur_hampir_sepanjang">The bot sleeps most of the time and only wakes briefly on schedule. To keep the system (especially Xiaomi) from killing it, allow the two things below.</string>
@@ -262,6 +262,7 @@
     <string name="k_hapus_2">Delete</string>
     <string name="k_folder_data_nggak_ada">data folder is missing</string>
     <string name="k_file_zip_nggak_kebaca">can\'t read the ZIP file</string>
+    <string name="k_file_zip_lebih_dari_100_mb">The ZIP is larger than 100 MB. Remove node_modules/cache from the archive and try again.</string>
     <string name="k_isi_zip_kegedean_700_mb">ZIP contents too large (&gt;700 MB)</string>
     <string name="k_zip_nya_kosong">the ZIP is empty</string>
     <string name="k_package_json_nggak_ketemu_di">package.json not found in the ZIP</string>
@@ -286,6 +287,10 @@
     <string name="k_ob_hosting_judul">Your phone as bot hosting</string>
     <string name="k_ob_hosting_isi">Have your own bot project? Upload the ZIP and this app runs it. Logs, input, restart — all from the phone.</string>
     <string name="k_hosting_nyala_durasi">up %1$s</string>
+    <string name="k_menghitung_sha256_project">Calculating project SHA-256…</string>
+    <string name="k_hosting_eksperimental">Experimental hosting — review the risk</string>
+    <string name="k_hosting_risiko_project">ZIP code runs inside the same sandbox as WA Release Bot. Malicious code can read the WhatsApp session, GitHub token, settings, and private app files. Run only projects you have audited.\n\nZIP SHA-256:\n%1$s\n\nThe hash identifies only the selected archive; retained .env, session, and node_modules files are not covered.</string>
+    <string name="k_saya_paham_lanjut_upload">I understand — continue upload</string>
 
     <!-- bar navigasi bawah (NavBawah.kt) -->
     <string name="u_nav_beranda">Home</string>
@@ -308,8 +313,9 @@
     <string name="k_perangkat_ada_peringatan">Device below ideal spec: %1$s warning(s). Details in the Device check card.</string>
     <string name="k_hasil_cek_perangkat_masuk_log">Device check written to the log.</string>
     <!-- kartu Bot WA umum (M14/M15) -->
-    <string name="u_bot_wa_umum">WhatsApp features</string>
-    <string name="u_ket_bot_wa_umum">Group moderation and personal commands in your own chat. Both keep WhatsApp connected, so they use more battery.</string>
+    <string name="u_fitur_tambahan_opt_in">The core feature lives in the Repo tab. Every extra below is opt-in and off on a fresh install. Features marked experimental are not yet part of the stable public-release promise.</string>
+    <string name="u_bot_wa_umum">WhatsApp features · experimental</string>
+    <string name="u_ket_bot_wa_umum">Off by default. Group moderation and personal commands keep WhatsApp connected, use more battery, and still require real-device validation.</string>
     <string name="u_moderasi_grup">Group moderation</string>
     <string name="u_ket_moderasi_grup">Delete links/phishing/ads, warn, then remove on the last strike. Admins and the bot itself are never touched.</string>
     <string name="u_perintah_pribadi">Personal commands in your own chat</string>

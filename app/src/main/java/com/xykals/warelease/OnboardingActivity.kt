@@ -22,9 +22,10 @@ import androidx.core.content.ContextCompat
 import kotlin.math.abs
 
 /**
- * Layar sambutan: 4 halaman, ilustrasi 3D (dibikin AI, bukan emoji), elemen
- * yang melayang dengan paralaks, transisi mantul, titik indikator yang
- * memanjang, tombol yang "bernapas". Bisa digeser (swipe) atau pencet Lanjut.
+ * Layar sambutan berfokus pada janji inti (rilis) dan satu fitur pendamping
+ * yang stabil (penjaga grup). Lagu dan hosting tetap tersedia sebagai fitur
+ * opt-in/eksperimental, tetapi tidak dipasarkan sebagai alur utama pengguna
+ * baru. Bisa digeser (swipe) atau pencet Lanjut.
  */
 class OnboardingActivity : AppCompatActivity() {
 
@@ -42,16 +43,6 @@ class OnboardingActivity : AppCompatActivity() {
             R.drawable.ilus_grup,
             R.string.k_ob_grup_judul,
             R.string.k_ob_grup_isi
-        ),
-        Halaman(
-            R.drawable.ilus_lagu,
-            R.string.k_ob_lagu_judul,
-            R.string.k_ob_lagu_isi
-        ),
-        Halaman(
-            R.drawable.ilus_hosting,
-            R.string.k_ob_hosting_judul,
-            R.string.k_ob_hosting_isi
         ),
     )
 

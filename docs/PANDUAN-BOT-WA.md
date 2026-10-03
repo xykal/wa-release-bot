@@ -12,10 +12,11 @@ dan pesan berkala. Kartu-kartunya ada di tab **Fitur** app.
 
 ## Bot WA umum (moderasi + perintah di chat sendiri)
 
+Bagian ini berstatus **eksperimental** dan bukan janji stabil jalur release.
 Kartu **Bot WA umum** di tab Fitur punya dua saklar. Dua-duanya bikin WhatsApp
-**tetap tersambung** selama engine jalan — beda dari fitur lain yang cuma
-nyambung sebentar tiap jadwal. Karena itu saklarnya terpisah: moderasi
-bawaannya **mati**, perintah pribadi **nyala**.
+**tetap tersambung** selama engine jalan — beda dari fitur inti yang cuma
+nyambung sebentar saat mengirim. Moderasi dan perintah pribadi sama-sama
+**mati pada instalasi baru** dan harus dinyalakan secara sadar.
 
 **Perintah pribadi** (cuma jalan di **chat diri sendiri** — bukan di grup):
 kirim `.menu` buat lihat daftarnya. Yang ada sekarang:
@@ -126,8 +127,9 @@ Urutan cek (dari yang paling sering):
 1. **Engine jalan?** Kalau dijeda, nggak ada yang dengerin pesan. Tab Beranda → Mulai.
 2. **WA ditautkan?** Kalau belum, tekan **Tautkan WA** di app.
 3. **Perintah di chat sendiri** (`.menu`, `.berkala`, …) butuh saklar **Perintah pribadi**
-   nyala (kartu Bot WA umum). Kalau mati, bot bakal bales sekali: "saklar perintah pribadi
-   masih mati" — bukan diem.
+   nyala (kartu Bot WA umum). Jika Moderasi juga mati, tidak ada socket yang mendengar
+   pesan sehingga app memang tidak dapat membalas. Jika Moderasi masih menjaga socket,
+   bot dapat mengingatkan sekali bahwa saklar perintah pribadi mati.
 4. **Tombol "Kirim menu ke chat"** nggak butuh saklar itu: bot nyambung sekali pakai, kirim,
    terus putus. Hasilnya muncul sebagai banner di layar (berhasil / alasannya kenapa gagal),
    bukan cuma di tab Log.

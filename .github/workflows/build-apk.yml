@@ -331,17 +331,17 @@ jobs:
 
       - name: Build APK (${{ steps.vars.outputs.task }})
         run: |
-          # Versi ikut TAG: v1.7.0 -> versionName 1.7.0, versionCode 10700
-          # (major*10000 + minor*100 + patch). Android cuma mau update kalau
-          # versionCode naik; 24 (rilis manual terakhir) -> 10700 aman, dan
-          # tag berikutnya otomatis lebih besar tanpa edit gradle. Build dari
-          # branch/PR memakai default gradle (dulu versionName-nya nama branch).
+          # Versi ikut TAG. Rilis publik memakai offset permanen 1.000.000:
+          # v1.0.0 -> versionName 1.0.0, versionCode 1010000. Offset diperlukan
+          # supaya rilis publik 1.0.0 dapat meng-update build internal 1.8.0
+          # (versionCode 10800), dan semua tag berikutnya tetap naik otomatis.
+          # Build branch/PR memakai default dari app/build.gradle.
           ARGS=()
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             VERSI="${GITHUB_REF_NAME#v}"
             ARGS+=("-PversionName=$VERSI")
             if [[ "$VERSI" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
-              KODE=$(( 10#${BASH_REMATCH[1]} * 10000 + 10#${BASH_REMATCH[2]} * 100 + 10#${BASH_REMATCH[3]} ))
+              KODE=$(( 1000000 + 10#${BASH_REMATCH[1]} * 10000 + 10#${BASH_REMATCH[2]} * 100 + 10#${BASH_REMATCH[3]} ))
               ARGS+=("-PversionCode=$KODE")
             fi
           fi

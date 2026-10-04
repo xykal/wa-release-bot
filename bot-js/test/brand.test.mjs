@@ -1,3 +1,7 @@
+// Polyfill WebCrypto HARUS paling atas (pola yang sama kayak unit.test.mjs):
+// wa.mjs memuat Baileys yang membaca globalThis.crypto.subtle saat dievaluasi;
+// di Node 18 global itu belum ada. Di Node 20+ tidak berefek.
+import '../polyfills/webcrypto.cjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { NAMA_BOT, NAMA_BOT_BAWAAN, aturNamaBot } from '../src/config/brand.mjs';

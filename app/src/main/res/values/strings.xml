@@ -55,6 +55,9 @@
     <string name="u_pertanyaan_mood">Pertanyaan mood · ngejoks</string>
     <string name="u_ket_pertanyaan_mood">Fitur opt-in, default mati. Sesekali bot nanya hal absurd yang muter di kepala, dikirim sebagai postingan "Pertanyaan" di channel: follower bisa jawab dan jawabannya cuma kebaca admin. Isinya dari bank pertanyaan lokal di HP — anti cringe, anti garing, tanpa manggil AI.</string>
     <string name="u_nyalain_pertanyaan_mood">Nyalain pertanyaan mood</string>
+    <string name="u_nyalain_pesan_perpisahan">Kirim pesan perpisahan</string>
+    <string name="u_ket_pesan_perpisahan">Pas ada yang keluar grup, bot ngirim pesan ini — orangnya pasti ke-mention</string>
+    <string name="u_ket_placeholder_perpisahan">Tulis {tag} buat manggil orangnya (kalau lupa nulis tetap disisipin otomatis), {nama} buat nama WA-nya, {grup} buat nama grup. Kosongin aja buat teks bawaan.</string>
     <string name="u_kirim_satu_pertanyaan_sekarang">Kirim satu pertanyaan sekarang</string>
     <string name="u_rata_rata_berapa_kali_sehari">Rata-rata berapa kali sehari (1–8)</string>
     <string name="u_mulai_jam">Mulai jam</string>

@@ -8,6 +8,7 @@ dan pesan berkala. Kartu-kartunya ada di tab **Fitur** app.
 
 - [Bot WA umum (moderasi + perintah di chat sendiri)](#bot-wa-umum-moderasi--perintah-di-chat-sendiri)
 - [Pesan berkala ke grup](#pesan-berkala-ke-grup)
+- [Pesan perpisahan (yang keluar grup)](#pesan-perpisahan-yang-keluar-grup)
 - [Batre & koneksi](#batre--koneksi)
 
 ## Bot WA umum (moderasi + perintah di chat sendiri)
@@ -148,6 +149,23 @@ acak (berapa kali sehari, jam efektifnya aturannya sama kayak lagu).
 
 Keduanya butuh kolom **Channel WA** terisi, dan tombol "Kirim sekarang" di masing-masing
 kartu buat ngetes tanpa nunggu jadwal.
+
+## Pesan perpisahan (yang keluar grup)
+
+Kalau saklarnya nyala, bot ngirim satu pesan ke grup tiap ada anggota yang
+keluar — mau keluar sendiri atau dikeluarin admin, sama aja (bot deteksinya
+waktu cek rutin tiap N menit, jadi maksimal selambat itu).
+
+- **Kirim pesan perpisahan** — saklarnya di kartu Penjaga grup, jadi butuh
+  Penjaga grup nyala dulu.
+- **Teksnya kustom** — kolom di bawahnya. Placeholder yang didukung:
+  - `{tag}` = mention orangnya (kalau lo lupa nulis, bot nyisipin otomatis,
+    jadi orangnya PASTI ke-tag),
+  - `{nama}` = nama WA-nya kalau kebaca, kalau nggak ya tetap mention,
+  - `{grup}` = nama grup.
+  Kosongin kolomnya = pakai teks bawaan ("udah keluar dari … hati-hati ya").
+- Kalau sekali putaran banyak yang keluar: maksimal 3 pesan satu-satu, sisanya
+  digabung satu pesan (tapi semua tetap ke-mention) biar grup nggak banjir.
 
 ## Kalau tombol/perintah nggak ada balasan
 

@@ -55,6 +55,9 @@
     <string name="u_pertanyaan_mood">Mood questions · absurd jokes</string>
     <string name="u_ket_pertanyaan_mood">Opt-in, off by default. Every so often the bot asks an absurd mind-bending question, posted as a channel "Question": followers can answer and only admins can read the answers. The questions come from a local on-device bank — no cringe, no AI calls.</string>
     <string name="u_nyalain_pertanyaan_mood">Enable mood questions</string>
+    <string name="u_nyalain_pesan_perpisahan">Send a farewell message</string>
+    <string name="u_ket_pesan_perpisahan">When someone leaves the group the bot sends this message — the leaver is always mentioned</string>
+    <string name="u_ket_placeholder_perpisahan">Write {tag} to mention the leaver (auto-inserted even if you forget), {nama} for their WA name, {grup} for the group name. Leave empty for the built-in text.</string>
     <string name="u_kirim_satu_pertanyaan_sekarang">Send one question now</string>
     <string name="u_rata_rata_berapa_kali_sehari">Average times per day (1–8)</string>
     <string name="u_mulai_jam">From hour</string>

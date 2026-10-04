@@ -7,6 +7,13 @@ Semua perubahan penting proyek ini. Format mengikuti
 ## [Unreleased]
 
 ### Ditambahkan (ronda 3)
+- **Pesan perpisahan yang keluar grup** (opt-in, kartu Penjaga grup): tiap ada
+  anggota yang keluar/dikeluarkan, bot kirim pesan ke grup dengan teks yang
+  bisa dikustom (placeholder `{tag}`, `{nama}`, `{grup}`). Orangnya dipastikan
+  ke-mention — `{tag}` disisipkan otomatis kalau lupa ditulis; kalau ramai-ramai
+  keluar sekaligus, maksimal 3 pesan satu-satu lalu sisanya digabung dengan
+  semua tetap ke-mention. Grup tidak disepam karena pengiriman nebeng cek
+  rutin penjaga grup (socket yang sama).
 - **Pertanyaan mood (ngejoks)**: fitur baru — beberapa kali sehari bot ngirim satu
   pertanyaan absurd "plenger" dari bank lokal (`bot-js/src/lawak.mjs`) ke channel sebagai
   postingan **Pertanyaan** (pakai mekanisme `isQuestion` yang sudah dipakai rilis, dengan

@@ -28,6 +28,7 @@ internal class FormPengaturan(
     private lateinit var etInterval: EditText
     private lateinit var etGrupInterval: EditText
     private lateinit var etGrupHitam: EditText
+    private lateinit var etPerpisahanTeks: EditText
     private lateinit var etLaguPerHari: EditText
     private lateinit var etLaguJamMulai: EditText
     private lateinit var etLaguJamSelesai: EditText
@@ -39,6 +40,7 @@ internal class FormPengaturan(
     private lateinit var rowTestMsg: View
     private lateinit var rowFormatTanya: View
     private lateinit var rowGrupAktif: View
+    private lateinit var rowPerpisahanAktif: View
     private lateinit var rowBoot: View
     private lateinit var rowLogcat: View
     private lateinit var rowLaguAktif: View
@@ -112,12 +114,14 @@ internal class FormPengaturan(
         etGrup = a.findViewById(R.id.etGrup)
         etGrupInterval = a.findViewById(R.id.etGrupInterval)
         etGrupHitam = a.findViewById(R.id.etGrupHitam)
+        etPerpisahanTeks = a.findViewById(R.id.etPerpisahanTeks)
 
         rowPrerelease = saklar(R.id.rowPrerelease)
         rowPostFirst = saklar(R.id.rowPostFirst)
         rowTestMsg = saklar(R.id.rowTestMsg)
         rowFormatTanya = saklar(R.id.rowFormatTanya)
         rowGrupAktif = saklar(R.id.rowGrupAktif)
+        rowPerpisahanAktif = saklar(R.id.rowPerpisahanAktif)
         rowBoot = saklar(R.id.rowBoot)
         rowLogcat = saklar(R.id.rowLogcat)
         rowLaguAktif = saklar(R.id.rowLaguAktif)
@@ -173,6 +177,8 @@ internal class FormPengaturan(
         etGrup.setText(settings.grupTarget)
         etGrupInterval.setText(settings.grupInterval.toString())
         etGrupHitam.setText(settings.grupHitam)
+        rowPerpisahanAktif.isSelected = settings.grupPerpisahanAktif
+        etPerpisahanTeks.setText(settings.grupPerpisahanTeks)
         rowPrerelease.isSelected = settings.includePrereleases
         rowPostFirst.isSelected = settings.postOnFirstRun
         rowTestMsg.isSelected = settings.testMessageOnSetup
@@ -214,6 +220,8 @@ internal class FormPengaturan(
         settings.grupTarget = etGrup.text.toString()
         settings.grupInterval = etGrupInterval.text.toString().toIntOrNull() ?: 5
         settings.grupHitam = etGrupHitam.text.toString()
+        settings.grupPerpisahanAktif = rowPerpisahanAktif.isSelected
+        settings.grupPerpisahanTeks = etPerpisahanTeks.text.toString()
         settings.autoStartOnBoot = rowBoot.isSelected
         settings.laguAktif = rowLaguAktif.isSelected
         settings.laguPerHari = etLaguPerHari.text.toString().toIntOrNull() ?: 2

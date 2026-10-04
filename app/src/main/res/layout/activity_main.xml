@@ -442,6 +442,41 @@
                 style="@style/KetKartu"
                 android:layout_marginTop="6dp"
                 android:text="@string/u_yang_keluar_sebelum_fitur_ini" />
+            <LinearLayout android:id="@+id/rowPerpisahanAktif" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/u_nyalain_pesan_perpisahan"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/u_ket_pesan_perpisahan"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+            <EditText
+                android:id="@+id/etPerpisahanTeks"
+                style="@style/Isian"
+                android:hint="👋 {tag} udah keluar dari {grup}. Hati-hati ya!"
+                android:gravity="top"
+                android:importantForAutofill="no"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:singleLine="false" />
+            <TextView
+                style="@style/KetKartu"
+                android:layout_marginTop="6dp"
+                android:text="@string/u_ket_placeholder_perpisahan" />
             <TextView
                 android:id="@+id/tvGrupStat"
                 android:layout_width="match_parent"

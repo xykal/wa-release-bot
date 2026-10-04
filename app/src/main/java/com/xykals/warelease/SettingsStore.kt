@@ -82,6 +82,20 @@ class SettingsStore(ctx: Context) {
         get() = p.getString("grupHitam", "") ?: ""
         set(v) = p.edit().putString("grupHitam", v).apply()
 
+    // ---- pesan perpisahan (opt-in) ----
+    /** Kirim pesan ke grup tiap ada yang keluar; orangnya pasti ke-tag. */
+    var grupPerpisahanAktif: Boolean
+        get() = p.getBoolean("grupPerpisahanAktif", false)
+        set(v) = p.edit().putBoolean("grupPerpisahanAktif", v).apply()
+
+    /**
+     * Teks kustom perpisahan. Placeholder: {tag} (mention wajib), {nama},
+     * {grup}. Kosong → engine pakai bawaan; tanpa {tag} pun tag tetap disisipkan.
+     */
+    var grupPerpisahanTeks: String
+        get() = p.getString("grupPerpisahanTeks", "") ?: ""
+        set(v) = p.edit().putString("grupPerpisahanTeks", v).apply()
+
     // ---- lagu mood ----
     var laguAktif: Boolean
         get() = p.getBoolean("laguAktif", PengaturanBawaan.LAGU)
@@ -233,6 +247,8 @@ class SettingsStore(ctx: Context) {
         "grupTarget" to grupTarget,
         "grupInterval" to grupInterval,
         "grupHitam" to grupHitam,
+        "grupPerpisahanAktif" to grupPerpisahanAktif,
+        "grupPerpisahanTeks" to grupPerpisahanTeks,
         "moderasiAktif" to moderasiAktif,
         "perintahPribadi" to perintahPribadi,
         "moderasiStrike" to moderasiStrike,
@@ -275,6 +291,12 @@ class SettingsStore(ctx: Context) {
                 .put("target", grupTarget)
                 .put("intervalMinutes", grupInterval)
                 .put("daftarHitam", grupHitam)
+                .put(
+                    "perpisahan",
+                    JSONObject()
+                        .put("aktif", grupPerpisahanAktif)
+                        .put("teks", grupPerpisahanTeks)
+                )
         )
         .put(
             "jaga",

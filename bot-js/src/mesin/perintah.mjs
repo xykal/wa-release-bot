@@ -54,6 +54,12 @@ export function buatPerintah(ctx, { rilis, lagu, lawak, grup, tautan, jaga, berk
             target: String(cmd.grupTarget || '').trim(),
             intervalMinutes: Number(cmd.grupInterval) || 5,
             daftarHitam: String(cmd.grupHitam || ''),
+            perpisahan: {
+              // Pesan per pisahan opt-in: teks kustom dukung {tag} {nama} {grup};
+              // kosong → bawaan (TEKS_PERPISAHAN_BAWAAN) di sisi pengirim.
+              aktif: Boolean(cmd.grupPerpisahanAktif),
+              teks: String(cmd.grupPerpisahanTeks || '').trim(),
+            },
           },
           jaga: {
             // Moderasi grup + perintah pribadi (chat sendiri). Saklarnya

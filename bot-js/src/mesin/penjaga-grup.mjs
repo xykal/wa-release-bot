@@ -15,6 +15,7 @@ import {
   kelompokHitam,
   bukaBlokir,
   kunciNama,
+  susunKirimanPerpisahan,
 } from '../grup.mjs';
 
 /** @param {object} ctx konteks engine (lihat bot.mjs) */
@@ -86,15 +87,34 @@ export function buatPenjagaGrup(ctx) {
     const lamaJumlah = g.anggota.length;
     const hitam = new Set(g.hitam);
     let hitamInfo = Array.isArray(g.hitamInfo) ? g.hitamInfo : [];
+    const perpisahan = ctx.cfg.grup.perpisahan || {};
     if (sekarang.length === 0 || (lamaJumlah > 6 && sekarang.length < lamaJumlah / 2)) {
       // Jaga-jaga kalau WA balikin daftar anggota yang nggak lengkap: jangan
       // sampai separuh grup masuk daftar hitam gara-gara glitch.
       log(`⚠️ Daftar anggota "${g.nama}" aneh (${lamaJumlah} → ${sekarang.length}). Putaran ini nggak nyatet yang keluar.`);
     } else {
-      for (const orang of cariYangKeluar(g.anggota, sekarang, saya)) {
+      const keluar = cariYangKeluar(g.anggota, sekarang, saya);
+      for (const orang of keluar) {
         orang.forEach((i) => hitam.add(i));
         hitamInfo.push({ ids: orang, sejak: Date.now() });
         log(`🚪 ${namaOrang(orang)} keluar/dikeluarin dari "${g.nama}" → masuk daftar hitam.`);
+      }
+      // Pesan perpisahan (opt-in): orangnya PASTI ke-tag (lihat grup.mjs).
+      // Kegagalan kirim cuma dicatat — orangnya tetap masuk daftar hitam.
+      if (perpisahan.aktif && keluar.length) {
+        const { daftar } = susunKirimanPerpisahan(keluar, {
+          template: perpisahan.teks, namaGrup: g.nama, peta: g.namaPeta || {},
+        });
+        let terkirim = 0;
+        for (const p of daftar) {
+          try {
+            await sendText(sock, jid, p.teks, { mentions: p.mentions });
+            terkirim += 1;
+          } catch (e) {
+            log(`⚠️ Pesan perpisahan nggak keluar-kirim: ${e.message}`);
+          }
+        }
+        if (terkirim) log(`💌 Pesan perpisahan dikirim (${keluar.length} orang, ${daftar.length} pesan).`);
       }
     }
     // Yang sekarang ada di grup (mis. dimasukin lagi manual sama admin) =

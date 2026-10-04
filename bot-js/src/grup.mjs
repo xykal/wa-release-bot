@@ -15,8 +15,11 @@
 //  nomor HP (@s.whatsapp.net). Satu orang bisa muncul dengan dua-duanya,
 //  jadi tiap orang dicatat pakai SEMUA identitas yang ketahuan.
 //
-//  File ini SENGAJA nggak import apa-apa → bisa dites tanpa Baileys.
+//  Satu-satunya import = format pesan murni (tanpa Baileys) — tetap bisa dites
+//  tanpa WA.
 // ============================================================================
+
+import { pesanRapi } from './format.mjs';
 
 /** "628xx:12@s.whatsapp.net" → "628xx@s.whatsapp.net" (buang nomor device). */
 export function rapikanJid(jid) {
@@ -175,6 +178,86 @@ export function kelompokHitam(hitam = [], info = [], peta = {}) {
   return hasil;
 }
 
+
+// ---------------------------------------------------------------------------
+//  Pesan perpisahan: dikirim ke grup tiap ada anggota yang keluar, teksnya
+//  kustom, dan orangnya PASTI ke-tag (kall 2026-10-04: "pesan nya bisa kustom
+//  dan pasti ngetag yg keluar").
+//
+//  Tag-ability: yang dimention harus berupa JID asli (nomor HP diprioritaskan;
+//  LID icuma dipakai kalau nomor nggak pernah ketahuan). Token "@" di teks
+//  pakai digit JID yang sama — di HP, "@62812…" jadi tag biru beneran.
+// ---------------------------------------------------------------------------
+
+/** Teks bawaan kalau kolomnya dibiarkan kosong. */
+export const TEKS_PERPISAHAN_BAWAAN = '👋 {tag} udah keluar dari {grup}. Hati-hati ya!';
+
+/** Maksimal pesan farewell satu-satu per putaran; sisanya digabung. */
+export const MAKS_PISAH_SATUAN = 3;
+
+/**
+ * Identitas pilihan buat di-mention: nomor HP dulu, kalau nggak ada baru LID.
+ * @returns {{ jid: string, teks: string }} teks = token "@" yang nongol di bubble
+ */
+export function tagOrang(ids) {
+  const pn = (ids || []).find((i) => i.endsWith('@s.whatsapp.net'));
+  if (pn) return { jid: pn, teks: '@' + pn.split('@')[0].split(':')[0] };
+  const lid = (ids || []).find((i) => i.endsWith('@lid'));
+  if (lid) return { jid: lid, teks: '@' + lid.split('@')[0].split(':')[0] };
+  return { jid: null, teks: labelOrang(ids) };
+}
+
+/**
+ * Isi template kustom. Placeholder:
+ *   {tag}  → token mention (@628…)
+ *   {nama} → nama WA kalau kebaca; kalau nggak, jatuh ke token mention
+ *   {grup} → nama grup
+ * Pasti-ngetag dijamin di sini: kalau templatenya nggak pakai {tag}, token
+ * mention DIAPPEND otomatis — jadi template salah kustom pun tetap ngetag.
+ */
+export function renderPerpisahan(template, { tag, nama, namaGrup } = {}) {
+  const tagTeks = tag?.teks || '';
+  let t = String(template || TEKS_PERPISAHAN_BAWAAN).trim();
+  t = t.replace(/\{tag\}/g, tagTeks)
+    .replace(/\{grup\}/g, namaGrup || 'grup ini')
+    .replace(/\{nama\}/g, nama || tagTeks);
+  if (tagTeks && !t.includes(tagTeks)) t = `${t} ${tagTeks}`;
+  return t.trim();
+}
+
+/**
+ * Susun pesan siap kirim. Satu pesan per orang selama jumlahnya sedikit;
+ * kalau rame-rame keluar sekaligus (> MAKS_PISAH_SATUAN), yang ke-4 dst
+ * digabung satu pesan dengan tag masing-masing (biar grup nggak kebanjiran,
+ * tapi SEMUA yang keluar tetap ke-tag).
+ *
+ * @param {string[][]} keluar hasil cariYangKeluar (array identitas per orang)
+ * @returns {{ daftar: Array<{ teks: string, mentions: string[] }> }}
+ */
+export function susunKirimanPerpisahan(keluar = [], { template, namaGrup, peta } = {}) {
+  const perOrang = (ids) => {
+    const tag = tagOrang(ids);
+    const isi = renderPerpisahan(template, { tag, nama: namaDariPeta(ids, peta), namaGrup });
+    return {
+      teks: pesanRapi('PERPISAHAN', isi),
+      mentions: tag.jid ? [tag.jid] : [],
+      tagTeks: tag.teks,
+      jid: tag.jid,
+    };
+  };
+  const daftar = [];
+  const item = (keluar || []).map(perOrang);
+  for (const p of item.slice(0, MAKS_PISAH_SATUAN)) daftar.push({ teks: p.teks, mentions: p.mentions });
+  const sisa = item.slice(MAKS_PISAH_SATUAN);
+  if (sisa.length) {
+    const gabung = `…dan ${sisa.length} orang ini juga keluar: ${sisa.map((p) => p.tagTeks).join(', ')}`;
+    daftar.push({
+      teks: pesanRapi('PERPISAHAN', gabung),
+      mentions: sisa.map((p) => p.jid).filter(Boolean),
+    });
+  }
+  return { daftar };
+}
 /**
  * Buka blokir satu orang. `kunci` boleh identitas lengkap (628xx@s.whatsapp.net
  * / xxx@lid) atau nomor HP (0812… / +62812…) — dicocokin ke semua identitasnya.

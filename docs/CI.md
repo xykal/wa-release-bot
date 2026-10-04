@@ -256,9 +256,9 @@ actions, artifacts, cache"):
    tiap build, jejak Actions praktis kosong. Run yang masih berjalan memang tidak
    bisa dihapus API; cache ≤1 jam sengaja tidak disentuh supaya workflow lain yang
    belum selesai (security/code-quality) tidak rusak — sisanya disapu sapuan harian.
-2. **Harian 20.00 UTC (03.00 WIB): profil lembut.** Riwayat > 2 hari dibuang,
-   artifact > 1 hari, cache > 2 hari — termasuk run sapuan kemarin, jadi jejak
-   tidak pernah lebih tua dari sehari.
+2. **Harian 20.00 UTC (03.00 WIB).** Riwayat run dan artifact yang lebih tua
+   dari 12 jam dibuang — termasuk run sapuan kemarin, jadi jejak tidak pernah
+   lebih tua dari sehari; cache dibuang kalau 24 jam tidak dipakai.
 
 Manual (`workflow_dispatch`) tetap ada dan umurnya bisa diisi sendiri.
 
@@ -269,9 +269,9 @@ memegang PAT-nya. Anggota publik tidak bisa menjalankan Actions di repo ini.
 
 | Yang dibersihkan | Bawaan | Env |
 |---|---|---|
-| riwayat run (log + artifact-nya ikut hilang) | lebih tua dari 2 hari (full wipe: 0) | `HARI_RUN` (run termuda `SIMPAN_RUN` selalu disimpan: harian 15, full wipe 1) |
-| artifact | lebih tua dari 1 hari (full wipe: 0, atau sudah `expired`) | `HARI_ARTIFACT` (artifact milik `SIMPAN_RUN` run termuda **selalu** disimpan) |
-| cache (Gradle, npm, nodejs-mobile) | tidak dipakai lebih dari 2 hari (full wipe: ±1 jam) | `HARI_CACHE` |
+| riwayat run (log + artifact-nya ikut hilang) | lebih tua dari 12 jam (full wipe: 0) | `HARI_RUN` (run termuda `SIMPAN_RUN` selalu disimpan: harian 5, full wipe 1) |
+| artifact | lebih tua dari 12 jam (full wipe: 0, atau sudah `expired`) | `HARI_ARTIFACT` (artifact milik `SIMPAN_RUN` run termuda **selalu** disimpan) |
+| cache (Gradle, npm, nodejs-mobile) | tidak dipakai lebih dari 24 jam (full wipe: ±1 jam) | `HARI_CACHE` |
 | cache, kalau totalnya masih di atas batas | 1500 MB (full wipe: 400 MB) | `BATAS_CACHE_MB` (yang paling lama dipakai dibuang dulu) |
 
 Jebakan yang sudah kena (2026-10-01): sapuan yang dijalankan **sambil build jalan**

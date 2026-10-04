@@ -276,13 +276,17 @@ export async function resolveChannel(sock, target, log) {
   return resolveTarget(sock, target, log);
 }
 
+/** Tagline dibikin per panggilan — nama bot bisa diganti dari app saat jalan. */
+export function taglineBot() { return `— ${NAMA_BOT}`; }
+// Snapshot lawas (dipakai tes lama); pesan SELALU lewat taglineBot().
 export const TAGLINE_BOT = `— ${NAMA_BOT}`;
 
 /** Semua teks yang dikirim bot diberi identitas singkat; jangan gandakan footer. */
 export function teksDenganTagline(text) {
+  const tagline = taglineBot();
   const isi = String(text ?? '').trimEnd();
-  if (!isi || isi === TAGLINE_BOT || isi.endsWith(`\n${TAGLINE_BOT}`)) return isi;
-  return `${isi}\n\n${TAGLINE_BOT}`;
+  if (!isi || isi === tagline || isi.endsWith(`\n${tagline}`)) return isi;
+  return `${isi}\n\n${tagline}`;
 }
 
 export async function sendText(sock, jid, text, opsi = {}) {

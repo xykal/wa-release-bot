@@ -26,9 +26,11 @@ internal class FormPengaturan(
     private lateinit var tvRepoRingkas: TextView
     private lateinit var etToken: EditText
     private lateinit var etInterval: EditText
+    private lateinit var etNamaBot: EditText
     private lateinit var etGrupInterval: EditText
     private lateinit var etGrupHitam: EditText
     private lateinit var etPerpisahanTeks: EditText
+    private lateinit var etPerpisahanJudul: EditText
     private lateinit var etLaguPerHari: EditText
     private lateinit var etLaguJamMulai: EditText
     private lateinit var etLaguJamSelesai: EditText
@@ -111,10 +113,12 @@ internal class FormPengaturan(
         etChannel = a.findViewById(R.id.etChannel)
         etToken = a.findViewById(R.id.etToken)
         etInterval = a.findViewById(R.id.etInterval)
+        etNamaBot = a.findViewById(R.id.etNamaBot)
         etGrup = a.findViewById(R.id.etGrup)
         etGrupInterval = a.findViewById(R.id.etGrupInterval)
         etGrupHitam = a.findViewById(R.id.etGrupHitam)
         etPerpisahanTeks = a.findViewById(R.id.etPerpisahanTeks)
+        etPerpisahanJudul = a.findViewById(R.id.etPerpisahanJudul)
 
         rowPrerelease = saklar(R.id.rowPrerelease)
         rowPostFirst = saklar(R.id.rowPostFirst)
@@ -174,11 +178,13 @@ internal class FormPengaturan(
         etChannel.setText(settings.channel)
         etToken.setText(settings.token)
         etInterval.setText(settings.intervalMinutes.toString())
+        etNamaBot.setText(settings.namaBot)
         etGrup.setText(settings.grupTarget)
         etGrupInterval.setText(settings.grupInterval.toString())
         etGrupHitam.setText(settings.grupHitam)
         rowPerpisahanAktif.isSelected = settings.grupPerpisahanAktif
         etPerpisahanTeks.setText(settings.grupPerpisahanTeks)
+        etPerpisahanJudul.setText(settings.grupPerpisahanJudul)
         rowPrerelease.isSelected = settings.includePrereleases
         rowPostFirst.isSelected = settings.postOnFirstRun
         rowTestMsg.isSelected = settings.testMessageOnSetup
@@ -212,6 +218,7 @@ internal class FormPengaturan(
         settings.channel = etChannel.text.toString()
         settings.token = etToken.text.toString()
         settings.intervalMinutes = etInterval.text.toString().toIntOrNull() ?: 15
+        settings.namaBot = etNamaBot.text.toString()
         settings.includePrereleases = rowPrerelease.isSelected
         settings.postOnFirstRun = rowPostFirst.isSelected
         settings.testMessageOnSetup = rowTestMsg.isSelected
@@ -222,6 +229,7 @@ internal class FormPengaturan(
         settings.grupHitam = etGrupHitam.text.toString()
         settings.grupPerpisahanAktif = rowPerpisahanAktif.isSelected
         settings.grupPerpisahanTeks = etPerpisahanTeks.text.toString()
+        settings.grupPerpisahanJudul = etPerpisahanJudul.text.toString()
         settings.autoStartOnBoot = rowBoot.isSelected
         settings.laguAktif = rowLaguAktif.isSelected
         settings.laguPerHari = etLaguPerHari.text.toString().toIntOrNull() ?: 2

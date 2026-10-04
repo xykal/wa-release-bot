@@ -260,6 +260,18 @@
                 android:hint="15"
                 android:importantForAutofill="no"
                 android:inputType="number" />
+            <TextView style="@style/Label" android:text="@string/u_nama_bot_di_pesan" />
+            <EditText
+                android:id="@+id/etNamaBot"
+                style="@style/Isian"
+                android:hint="SukiBot"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:maxLength="24" />
+            <TextView
+                style="@style/KetKartu"
+                android:layout_marginTop="2dp"
+                android:text="@string/u_ket_nama_bot" />
             <LinearLayout android:id="@+id/rowPrerelease" style="@style/BarisSaklar">
                 <LinearLayout
                     android:layout_width="0dp"
@@ -464,6 +476,14 @@
                 </LinearLayout>
                 <ImageView style="@style/Saklar" />
             </LinearLayout>
+            <TextView style="@style/Label" android:text="@string/u_judul_pesan_perpisahan" />
+            <EditText
+                android:id="@+id/etPerpisahanJudul"
+                style="@style/Isian"
+                android:hint="@string/u_hint_judul_perpisahan"
+                android:importantForAutofill="no"
+                android:inputType="text"
+                android:maxLength="40" />
             <EditText
                 android:id="@+id/etPerpisahanTeks"
                 style="@style/Isian"

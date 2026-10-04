@@ -8,15 +8,16 @@ const MAX_BODY = 1800;
 // di layar sempit strip itu kepotong/melahap dua baris dan malah kelihatan
 // berantakan. Sekarang satu baris bold rapi: "SUKIBOT · JUDUL", lalu baris
 // kosong, baru isi. Ringkas, konsisten, nggak ada yang wrap aneh.
-export const KEPALA = `*🦴 ${NAMA_BOT.toUpperCase()}*`;
 /**
  * Susun pesan baku: kepala SukiBot+judul di atas → baris kosong → isi…
+ * Nama bot dibaca PER PANGGILAN (bukan const module-level) karena bisa diganti
+ * dari app pas engine jalan — lihat aturNamaBot() di config/brand.mjs.
  * @param {string} judul baris judul (digabung ke kepala, tanpa bold tambahan)
  * @param {string[]} isi baris-baris isi
  */
 export function pesanRapi(judul, ...isi) {
   const tajuk = String(judul || '').trim();
-  const kepala = tajuk ? `*🦴 ${NAMA_BOT.toUpperCase()} · ${tajuk}*` : KEPALA;
+  const kepala = tajuk ? `*🦴 ${NAMA_BOT.toUpperCase()} · ${tajuk}*` : `*🦴 ${NAMA_BOT.toUpperCase()}*`;
   return [kepala, '', ...isi].flat().join('\n').replace(/\n{3,}/g, '\n\n').trimEnd();
 }
 

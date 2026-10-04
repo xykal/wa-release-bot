@@ -38,6 +38,15 @@ class SettingsStore(ctx: Context) {
         get() = p.getInt("interval", 15)
         set(v) = p.edit().putInt("interval", v.coerceIn(1, 720)).apply()
 
+    /**
+     * Nama bot yang nongol di kepala + tanda tangan SEMUA pesan WA
+     * (kall 2026-10-04: "nama bot serta judul bisa diedit dari dashboard").
+     * Kosong → "SukiBot" bawaan engine.
+     */
+    var namaBot: String
+        get() = p.getString("namaBot", "SukiBot") ?: "SukiBot"
+        set(v) = p.edit().putString("namaBot", v).apply()
+
     var includePrereleases: Boolean
         get() = p.getBoolean("prereleases", false)
         set(v) = p.edit().putBoolean("prereleases", v).apply()
@@ -75,7 +84,7 @@ class SettingsStore(ctx: Context) {
 
     var grupInterval: Int
         get() = p.getInt("grupInterval", 5)
-        set(v) = p.edit().putInt("grupInterval", v.coerceIn(2, 720)).apply()
+        set(v) = p.edit().putInt("grupInterval", v.coerceIn(1, 720)).apply()
 
     /** Nomor yang selalu ditolak (dipisah koma / baris). */
     var grupHitam: String
@@ -95,6 +104,11 @@ class SettingsStore(ctx: Context) {
     var grupPerpisahanTeks: String
         get() = p.getString("grupPerpisahanTeks", "") ?: ""
         set(v) = p.edit().putString("grupPerpisahanTeks", v).apply()
+
+    /** Judul (kepala) pesan perpisahan; kosong → "PERPISAHAN" bawaan engine. */
+    var grupPerpisahanJudul: String
+        get() = p.getString("grupPerpisahanJudul", "") ?: ""
+        set(v) = p.edit().putString("grupPerpisahanJudul", v).apply()
 
     // ---- lagu mood ----
     var laguAktif: Boolean
@@ -240,6 +254,7 @@ class SettingsStore(ctx: Context) {
         "formatChannel" to (if (formatPertanyaan) "pertanyaan" else "teks"),
         "token" to token,
         "intervalMinutes" to intervalMinutes,
+        "namaBot" to namaBot,
         "includePrereleases" to includePrereleases,
         "postOnFirstRun" to postOnFirstRun,
         "testMessageOnSetup" to testMessageOnSetup,
@@ -249,6 +264,7 @@ class SettingsStore(ctx: Context) {
         "grupHitam" to grupHitam,
         "grupPerpisahanAktif" to grupPerpisahanAktif,
         "grupPerpisahanTeks" to grupPerpisahanTeks,
+        "grupPerpisahanJudul" to grupPerpisahanJudul,
         "moderasiAktif" to moderasiAktif,
         "perintahPribadi" to perintahPribadi,
         "moderasiStrike" to moderasiStrike,
@@ -295,6 +311,7 @@ class SettingsStore(ctx: Context) {
                     "perpisahan",
                     JSONObject()
                         .put("aktif", grupPerpisahanAktif)
+                        .put("judul", grupPerpisahanJudul)
                         .put("teks", grupPerpisahanTeks)
                 )
         )
@@ -346,5 +363,6 @@ class SettingsStore(ctx: Context) {
                 .put("checkIntervalMinutes", intervalMinutes)
                 .put("postOnFirstRun", postOnFirstRun)
                 .put("testMessageOnSetup", testMessageOnSetup)
+                .put("namaBot", namaBot)
         )
 }

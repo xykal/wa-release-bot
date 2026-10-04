@@ -17,14 +17,14 @@ import { tungguSocketJaga } from '../wa-socket-share.mjs';
 import { menuTeks } from '../pesan.mjs';
 import { sendText, jidSendiri } from '../wa.mjs';
 import { NAMA_BOT } from '../config/brand.mjs';
-import { identitas, identitasSama } from '../grup.mjs';
+import { identitas, identitasSama, susunKirimanPerpisahan, tandaiDisalam } from '../grup.mjs';
 import { bacaTarget, JENIS } from '../channel.mjs';
 import { buatAksiPesan, teksPesan } from './aksi-pesan.mjs';
 import { buatAksiMedia } from './aksi-media.mjs';
 import { pesanRapi } from '../format.mjs';
 
 export function buatJagaPesan(ctx, { rekam = null } = {}) {
-  const { log, emitStatus, sambung } = ctx;
+  const { log, emitStatus, sambung, saveState } = ctx;
 
   let jalan = false;      // loop lagi hidup
   let berhenti = false;   // diminta berhenti (engine stop / saklar dimatiin)
@@ -149,11 +149,69 @@ export function buatJagaPesan(ctx, { rekam = null } = {}) {
     log('ℹ️ Ada perintah masuk, tapi saklar perintah pribadi mati — dikasih arahan.');
   }
 
+
+  /**
+   * Salam perpisahan REAL-TIME: event WA langsung dikirimi (detik, bukan
+   * nunggu cek rutin N menit — kall 2026-10-04: "pastikan cepet responsnya").
+   * Jalan hanya kalau mode jaga nyala; polling (penjaga-grup) menangguk yang
+   * terlewat (mode jaga mati / socket lagi daur ulang), dibantu tanda
+   * `pisahTerkirim` supaya salam nggak dobel.
+   */
+  function pasangPerpisahanCepat(sock) {
+    sock.ev.on('group-participants.update', async (perubahan) => {
+      const action = String(perubahan?.action || '');
+      if (action !== 'remove' && action !== 'leave') return;
+      const pCfg = ctx.cfg?.grup?.perpisahan;
+      if (!ctx.cfg?.grup?.aktif || !pCfg?.aktif) return;
+      const grup = ctx.state.grup || {};
+      const targetCfg = String(ctx.cfg.grup.target || '').trim();
+      if (grup.target !== targetCfg) return; // grup sudah diganti — state lama nggak relevan
+      const target = String(grup.jid || grupDipantau() || '');
+      const jidGrup = String(perubahan.id || '');
+      if (!target || jidGrup !== target) return;
+      const peserta = (Array.isArray(perubahan.participants) ? perubahan.participants : [])
+        .map(String)
+        .filter((jid) => !identitasSama(jid, sock.user));
+      if (!peserta.length) return;
+
+      const g = ctx.state.grup;
+      const keluar = peserta.map((j) => identitas({ id: j })).filter((ids) => ids.length);
+      // Catat keluar SEKARANG juga (nggak nunggu polling): daftar hitam sinkron
+      // dan catatan anggota disapu, jadi polling nggak ngitung ulang.
+      const hitam = new Set(Array.isArray(g.hitam) ? g.hitam : []);
+      const info = Array.isArray(g.hitamInfo) ? g.hitamInfo : [];
+      const semuaId = new Set();
+      for (const ids of keluar) {
+        ids.forEach((i) => { semuaId.add(i); hitam.add(i); });
+        info.push({ ids, sejak: Date.now() });
+      }
+      g.hitam = [...hitam];
+      g.hitamInfo = info;
+      if (Array.isArray(g.anggota) && g.anggota.length) {
+        g.anggota = g.anggota.filter((ids) => !(ids || []).some((i) => semuaId.has(i)));
+      }
+      g.pisahTerkirim = tandaiDisalam(g.pisahTerkirim || {}, keluar);
+      saveState?.();
+
+      try {
+        const { daftar } = susunKirimanPerpisahan(keluar, {
+          template: pCfg.teks, namaGrup: g.nama, peta: g.namaPeta || {}, judul: pCfg.judul,
+        });
+        for (const p of daftar) await sendText(sock, jidGrup, p.teks, { mentions: p.mentions });
+        log(`💌 Salam perpisahan LANGSUNG dikirim (${keluar.length} orang) ke "${g.nama || 'grup'}".`);
+      } catch (e) {
+        // Polling berikutnya tidak mengulang salam yang dicoba (tandanya sudah
+        // disimpan); kalau mau, nyalain log ini aja buat investigasi.
+        log(`⚠️ Salam perpisahan cepat gagal terkirim: ${e.message}`);
+      }
+    });
+  }
   /** Satu koneksi WA yang dipakai terus sampai putus / diminta berhenti. */
   async function satuSesi() {
     const { sock, close } = await sambung({ onStatus: (m) => log(m), lewatiSocketJaga: true });
     sockAktif = sock;
     pasangSambutan(sock);
+    pasangPerpisahanCepat(sock);
     // Rekam postingan channel (kalau diminta `.rekam on`) nempel di socket ini.
     try { ctx.fitur?.rekam?.pasang(sock); } catch (e) { log(`⚠️ Rekam channel nggak kepasang: ${e.message}`); }
     log(

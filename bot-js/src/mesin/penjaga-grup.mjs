@@ -16,6 +16,8 @@ import {
   bukaBlokir,
   kunciNama,
   susunKirimanPerpisahan,
+  sudahDisalam,
+  tandaiDisalam,
 } from '../grup.mjs';
 
 /** @param {object} ctx konteks engine (lihat bot.mjs) */
@@ -100,21 +102,30 @@ export function buatPenjagaGrup(ctx) {
         log(`🚪 ${namaOrang(orang)} keluar/dikeluarin dari "${g.nama}" → masuk daftar hitam.`);
       }
       // Pesan perpisahan (opt-in): orangnya PASTI ke-tag (lihat grup.mjs).
-      // Kegagalan kirim cuma dicatat — orangnya tetap masuk daftar hitam.
+      // Yang sudah disalam jalur real-time (mode jaga) Nggak disalam ulang —
+      // g.pisahTerkirim menandainya (digit identitas → waktu kirim).
       if (perpisahan.aktif && keluar.length) {
-        const { daftar } = susunKirimanPerpisahan(keluar, {
-          template: perpisahan.teks, namaGrup: g.nama, peta: g.namaPeta || {},
-        });
-        let terkirim = 0;
-        for (const p of daftar) {
-          try {
-            await sendText(sock, jid, p.teks, { mentions: p.mentions });
-            terkirim += 1;
-          } catch (e) {
-            log(`⚠️ Pesan perpisahan nggak keluar-kirim: ${e.message}`);
-          }
+        const tanda = g.pisahTerkirim || {};
+        const belumSalam = keluar.filter((orang) => !sudahDisalam(tanda, orang));
+        if (keluar.length > belumSalam.length) {
+          log(`💌 ${keluar.length - belumSalam.length} orang sudah dapat salam real-time — polling nggak ngirim ulang.`);
         }
-        if (terkirim) log(`💌 Pesan perpisahan dikirim (${keluar.length} orang, ${daftar.length} pesan).`);
+        if (belumSalam.length) {
+          const { daftar } = susunKirimanPerpisahan(belumSalam, {
+            template: perpisahan.teks, namaGrup: g.nama, peta: g.namaPeta || {}, judul: perpisahan.judul,
+          });
+          let terkirim = 0;
+          for (const p of daftar) {
+            try {
+              await sendText(sock, jid, p.teks, { mentions: p.mentions });
+              terkirim += 1;
+            } catch (e) {
+              log(`⚠️ Pesan perpisahan nggak keluar-kirim: ${e.message}`);
+            }
+          }
+          if (terkirim) log(`💌 Pesan perpisahan dikirim (${belumSalam.length} orang, ${daftar.length} pesan).`);
+          g.pisahTerkirim = tandaiDisalam(tanda, belumSalam);
+        }
       }
     }
     // Yang sekarang ada di grup (mis. dimasukin lagi manual sama admin) =

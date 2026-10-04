@@ -4,6 +4,8 @@ import {
   tagOrang,
   renderPerpisahan,
   susunKirimanPerpisahan,
+  tandaiDisalam,
+  sudahDisalam,
   TEKS_PERPISAHAN_BAWAAN,
   MAKS_PISAH_SATUAN,
 } from '../src/grup.mjs';
@@ -59,4 +61,23 @@ test('susunKirimanPerpisahan: rame-rame keluar → maks N satu-satu, sisanya gab
   for (const m of gabungan.mentions) {
     assert.ok(gabungan.teks.includes('@' + m.split('@')[0]), `token ${m} ada di teks gabungan`);
   }
+});
+
+test('susunKirimanPerpisahan: JUDUL kustom dipakai, kosong → PERPISAHAN bawaan', () => {
+  const satu = [['6281234567890@s.whatsapp.net']];
+  const kustom = susunKirimanPerpisahan(satu, { template: 'x {tag}', namaGrup: 'G', peta: {}, judul: 'SELAMAT TINGGAL' });
+  assert.ok(kustom.daftar[0].teks.startsWith('*🦴 SUKIBOT · SELAMAT TINGGAL*'));
+  const bawaan = susunKirimanPerpisahan(satu, { template: 'x {tag}', namaGrup: 'G', peta: {}, judul: '   ' });
+  assert.ok(bawaan.daftar[0].teks.startsWith('*🦴 SUKIBOT · PERPISAHAN*'));
+});
+
+test('tanda salam: sudahDisalam mencegah dobel salam antar jalur (real-time vs polling)', () => {
+  const orang1 = ['6281234567890@s.whatsapp.net', '777000@lid'];
+  let tanda = tandaiDisalam({}, [orang1], 1000);
+  assert.ok(sudahDisalam(tanda, orang1), 'sudah ditandai → polling skip');
+  assert.ok(!sudahDisalam(tanda, ['999999@s.whatsapp.net']), 'orang lain tetap disalam');
+  assert.equal(Object.keys(tanda).length, 2, 'kedua identitasnya ditandai');
+  // Tanda basi (lebih dari 7 hari) dibersihkan
+  tanda = tandaiDisalam(tanda, [['111@s.whatsapp.net']], 1000 + 8 * 24 * 3_600_000);
+  assert.ok(!sudahDisalam(tanda, orang1), 'tanda kedaluwarsa dibersihkan');
 });

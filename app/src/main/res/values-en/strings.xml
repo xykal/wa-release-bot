@@ -41,7 +41,9 @@
     <string name="u_nyalain_penjaga_grup">Turn on group guard</string>
     <string name="u_cek_permintaan_join_secara_berkala">Checks join requests periodically</string>
     <string name="u_link_undangan_grup">Group invite link</string>
-    <string name="u_cek_tiap_menit_minimal_2">Check every (minutes, min 2)</string>
+    <string name="u_cek_tiap_menit_minimal_2">Check every (minutes, min 1)</string>
+    <string name="u_nama_bot_di_pesan">Bot name in messages</string>
+    <string name="u_ket_nama_bot">Shown in the header and signature of every WhatsApp message. Clear it to return to SukiBot.</string>
     <string name="u_selalu_tolak_nomor_ini_opsional">Always reject these numbers (optional)</string>
     <string name="u_pisahin_pakai_koma_baris_baru">separate with commas / new lines</string>
     <string name="u_yang_keluar_sebelum_fitur_ini">People who left BEFORE this feature was on are unknown to the bot — add their numbers here.</string>
@@ -57,6 +59,8 @@
     <string name="u_nyalain_pertanyaan_mood">Enable mood questions</string>
     <string name="u_nyalain_pesan_perpisahan">Send a farewell message</string>
     <string name="u_ket_pesan_perpisahan">When someone leaves the group the bot sends this message — the leaver is always mentioned</string>
+    <string name="u_judul_pesan_perpisahan">Message title (header)</string>
+    <string name="u_hint_judul_perpisahan">FAREWELL</string>
     <string name="u_ket_placeholder_perpisahan">Write {tag} to mention the leaver (auto-inserted even if you forget), {nama} for their WA name, {grup} for the group name. Leave empty for the built-in text.</string>
     <string name="u_kirim_satu_pertanyaan_sekarang">Send one question now</string>
     <string name="u_rata_rata_berapa_kali_sehari">Average times per day (1–8)</string>

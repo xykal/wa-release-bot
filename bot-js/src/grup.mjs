@@ -192,8 +192,37 @@ export function kelompokHitam(hitam = [], info = [], peta = {}) {
 /** Teks bawaan kalau kolomnya dibiarkan kosong. */
 export const TEKS_PERPISAHAN_BAWAAN = '👋 {tag} udah keluar dari {grup}. Hati-hati ya!';
 
+/** Judul kepala pesan bawaan; bisa diganti dari app (grup.perpisahan.judul). */
+export const JUDUL_PERPISAHAN_BAWAAN = 'PERPISAHAN';
+
 /** Maksimal pesan farewell satu-satu per putaran; sisanya digabung. */
 export const MAKS_PISAH_SATUAN = 3;
+
+// ---- tanda "sudah disalam": digit identitas -> timestamp. Disimpan di
+// state.grup.pisahTerkirim supaya salam dari jalur real-time (event WA saat
+// mode jaga nyala) nggak dikirim ulang oleh cek polling, dan sebaliknya.
+const SALAM_UMUR_MS = 7 * 24 * 3_600_000;
+
+/** Buang tanda yang basi / berlebihan (maks 300 entri, umur 7 hari). */
+export function rapikanTandaSalam(peta = {}, sekarang = Date.now()) {
+  const entri = Object.entries(peta || {}).filter(([, ts]) => sekarang - Number(ts || 0) < SALAM_UMUR_MS);
+  entri.sort((a, b) => Number(b[1] || 0) - Number(a[1] || 0));
+  return Object.fromEntries(entri.slice(0, 300));
+}
+
+/** Apakah orang (sekumpulan identitas) sudah dikirimi salam perpisahan? */
+export function sudahDisalam(peta = {}, ids = []) {
+  return (ids || []).some((i) => peta[kunciNama(i)]);
+}
+
+/** Tandai sekelompok orang sudah disalam; balikin peta hasil prune. */
+export function tandaiDisalam(peta = {}, keluar = [], sekarang = Date.now()) {
+  const baru = { ...(peta || {}) };
+  for (const ids of keluar || []) {
+    for (const i of ids || []) baru[kunciNama(i)] = sekarang;
+  }
+  return rapikanTandaSalam(baru, sekarang);
+}
 
 /**
  * Identitas pilihan buat di-mention: nomor HP dulu, kalau nggak ada baru LID.
@@ -234,12 +263,13 @@ export function renderPerpisahan(template, { tag, nama, namaGrup } = {}) {
  * @param {string[][]} keluar hasil cariYangKeluar (array identitas per orang)
  * @returns {{ daftar: Array<{ teks: string, mentions: string[] }> }}
  */
-export function susunKirimanPerpisahan(keluar = [], { template, namaGrup, peta } = {}) {
+export function susunKirimanPerpisahan(keluar = [], { template, namaGrup, peta, judul } = {}) {
+  const kepalaTajuk = String(judul || '').trim() || JUDUL_PERPISAHAN_BAWAAN;
   const perOrang = (ids) => {
     const tag = tagOrang(ids);
     const isi = renderPerpisahan(template, { tag, nama: namaDariPeta(ids, peta), namaGrup });
     return {
-      teks: pesanRapi('PERPISAHAN', isi),
+      teks: pesanRapi(kepalaTajuk, isi),
       mentions: tag.jid ? [tag.jid] : [],
       tagTeks: tag.teks,
       jid: tag.jid,
@@ -252,7 +282,7 @@ export function susunKirimanPerpisahan(keluar = [], { template, namaGrup, peta }
   if (sisa.length) {
     const gabung = `…dan ${sisa.length} orang ini juga keluar: ${sisa.map((p) => p.tagTeks).join(', ')}`;
     daftar.push({
-      teks: pesanRapi('PERPISAHAN', gabung),
+      teks: pesanRapi(kepalaTajuk, gabung),
       mentions: sisa.map((p) => p.jid).filter(Boolean),
     });
   }

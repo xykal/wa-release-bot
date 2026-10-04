@@ -156,8 +156,18 @@ Kalau saklarnya nyala, bot ngirim satu pesan ke grup tiap ada anggota yang
 keluar — mau keluar sendiri atau dikeluarin admin, sama aja (bot deteksinya
 waktu cek rutin tiap N menit, jadi maksimal selambat itu).
 
+- **Responsnya**: kalau saklar **Bot WA umum** (moderasi/perintah pribadi)
+  nyala, salam dikirim LANGSUNG begitu ada yang keluar (detik, lewat event
+  WhatsApp), dan yang bersangkutan masuk daftar hitam di saat itu juga. Kalau
+  mode itu mati, salam dikirim pas cek rutin Penjaga grup (boleh turunin
+  intervalnya sampai 1 menit). Dua jalur itu dijamin nggak dobel — tanda
+  "sudah disalam" dibagi antar keduanya.
 - **Kirim pesan perpisahan** — saklarnya di kartu Penjaga grup, jadi butuh
   Penjaga grup nyala dulu.
+- **Judul pesan** — kolom tersendiri di atas kolom teks; pengepala pesannya
+  jadi JUDULMU sendiri (kosongin = PERPISAHAN).
+- **Nama bot** — kolom "Nama bot di pesan" di kartu atas (setup): mengganti
+  merek di kepala dan tanda tangan SEMUA pesan bot (kosongin = SukiBot).
 - **Teksnya kustom** — kolom di bawahnya. Placeholder yang didukung:
   - `{tag}` = mention orangnya (kalau lo lupa nulis, bot nyisipin otomatis,
     jadi orangnya PASTI ke-tag),

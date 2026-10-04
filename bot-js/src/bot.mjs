@@ -20,6 +20,7 @@ import { createBridge } from './bridge.mjs';
 import { pcmKeOgg } from './opus.mjs';
 import { MPEGDecoder } from 'mpg123-decoder';
 import { connectToWhatsApp, statusSesi } from './wa.mjs';
+import { aturNamaBot } from './config/brand.mjs';
 import { sambungDenganSocketJaga } from './wa-socket-share.mjs';
 import { daftarRepo, teksRepo, sinkronState, ringkasTag, pendingAktif } from './repo.mjs';
 import { buatHosting } from './hosting.mjs';
@@ -183,6 +184,8 @@ async function main() {
   if (fs.existsSync(cfgFile)) {
     try { ctx.cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8')); } catch { /* abaikan */ }
   }
+  // Nama bot kustom (dari app) langsung berlaku sejak engine nyala.
+  aturNamaBot(ctx.cfg?.bot?.namaBot);
 
   let timer = null;
   let timerGrup = null;

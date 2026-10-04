@@ -41,7 +41,9 @@
     <string name="u_nyalain_penjaga_grup">Nyalain penjaga grup</string>
     <string name="u_cek_permintaan_join_secara_berkala">Cek permintaan join secara berkala</string>
     <string name="u_link_undangan_grup">Link undangan grup</string>
-    <string name="u_cek_tiap_menit_minimal_2">Cek tiap (menit, minimal 2)</string>
+    <string name="u_cek_tiap_menit_minimal_2">Cek tiap (menit, minimal 1)</string>
+    <string name="u_nama_bot_di_pesan">Nama bot di pesan</string>
+    <string name="u_ket_nama_bot">Tampil di kepala dan tanda tangan semua pesan WhatsApp. Kosongin buat balik ke SukiBot.</string>
     <string name="u_selalu_tolak_nomor_ini_opsional">Selalu tolak nomor ini (opsional)</string>
     <string name="u_pisahin_pakai_koma_baris_baru">pisahin pakai koma / baris baru</string>
     <string name="u_yang_keluar_sebelum_fitur_ini">Yang keluar SEBELUM fitur ini nyala nggak ketahuan sama bot — masukin nomornya di sini.</string>
@@ -57,6 +59,8 @@
     <string name="u_nyalain_pertanyaan_mood">Nyalain pertanyaan mood</string>
     <string name="u_nyalain_pesan_perpisahan">Kirim pesan perpisahan</string>
     <string name="u_ket_pesan_perpisahan">Pas ada yang keluar grup, bot ngirim pesan ini — orangnya pasti ke-mention</string>
+    <string name="u_judul_pesan_perpisahan">Judul pesan (kepala)</string>
+    <string name="u_hint_judul_perpisahan">PERPISAHAN</string>
     <string name="u_ket_placeholder_perpisahan">Tulis {tag} buat manggil orangnya (kalau lupa nulis tetap disisipin otomatis), {nama} buat nama WA-nya, {grup} buat nama grup. Kosongin aja buat teks bawaan.</string>
     <string name="u_kirim_satu_pertanyaan_sekarang">Kirim satu pertanyaan sekarang</string>
     <string name="u_rata_rata_berapa_kali_sehari">Rata-rata berapa kali sehari (1–8)</string>

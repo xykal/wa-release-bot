@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import { repoTidakValid, teksEntri, daftarRepo, sinkronState } from '../repo.mjs';
 import { SUMBER_BAWAAN } from '../lagu.mjs';
+import { aturNamaBot } from '../config/brand.mjs';
 
 /**
  * @param {object} ctx konteks engine (lihat bot.mjs)
@@ -48,16 +49,20 @@ export function buatPerintah(ctx, { rilis, lagu, lawak, grup, tautan, jaga, berk
             checkIntervalMinutes: Number(cmd.intervalMinutes) || 15,
             postOnFirstRun: Boolean(cmd.postOnFirstRun),
             testMessageOnSetup: cmd.testMessageOnSetup !== false,
+            // Nama bot di semua pesan (kepala SUKIBOT + tagline); kosong → bawaan.
+            namaBot: String(cmd.namaBot || '').trim(),
           },
           grup: {
             aktif: Boolean(cmd.grupAktif),
             target: String(cmd.grupTarget || '').trim(),
-            intervalMinutes: Number(cmd.grupInterval) || 5,
+            // Minimal 1 menit (kall minta respons cepat); maks 12 jam.
+            intervalMinutes: Math.min(Math.max(Number(cmd.grupInterval) || 5, 1), 720),
             daftarHitam: String(cmd.grupHitam || ''),
             perpisahan: {
               // Pesan per pisahan opt-in: teks kustom dukung {tag} {nama} {grup};
               // kosong → bawaan (TEKS_PERPISAHAN_BAWAAN) di sisi pengirim.
               aktif: Boolean(cmd.grupPerpisahanAktif),
+              judul: String(cmd.grupPerpisahanJudul || '').trim(),
               teks: String(cmd.grupPerpisahanTeks || '').trim(),
             },
           },
@@ -122,6 +127,7 @@ export function buatPerintah(ctx, { rilis, lagu, lawak, grup, tautan, jaga, berk
           reset: Boolean(ctx.cfg?.github?.includePrereleases) !== next.github.includePrereleases,
         });
         ctx.cfg = next;
+        aturNamaBot(next.bot.namaBot);
         fs.writeFileSync(cfgFile, JSON.stringify(ctx.cfg, null, 2));
         saveState();
         log(`⚙️ Setting diperbarui: repo=${next.github.repo || '-'}, channel=${next.whatsapp.channel || '-'}, ` +

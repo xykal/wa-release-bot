@@ -7,6 +7,13 @@ Semua perubahan penting proyek ini. Format mengikuti
 ## [Unreleased]
 
 ### Ditambahkan (ronda 3)
+- **Respons perpisahan real-time**: dengan mode jaga (moderasi/perintah) nyala,
+  salam + pencatatan daftar hitam terjadi begitu event keluar datang dari
+  WhatsApp — tidak menunggu cek rutin. Tanda "sudah disalam" mencegah kiriman
+  ganda dari jalur polling. Interval cek grup kini boleh serendah 1 menit.
+- **Nama bot & judul pesan bisa diganti dari app**: kolom "Nama bot di pesan"
+  mengganti merek di kepala dan tanda tangan semua pesan; kolom "Judul pesan"
+  di kartu Penjaga grup mengganti kepala pesan perpisahan.
 - **Pesan perpisahan yang keluar grup** (opt-in, kartu Penjaga grup): tiap ada
   anggota yang keluar/dikeluarkan, bot kirim pesan ke grup dengan teks yang
   bisa dikustom (placeholder `{tag}`, `{nama}`, `{grup}`). Orangnya dipastikan

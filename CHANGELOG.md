@@ -14,7 +14,7 @@ Semua perubahan penting proyek ini. Format mengikuti
   membersihkan sisa jejak (termasuk run sapuan kemarin).
 
 ### Diubah
-- Gaya semua pesan WA dirapikan dan diseragamkan: kepala `*🦴 SUKIBOT*` selalu di baris
+- Gaya semua pesan WA dirapikan dan diseragamkan: kepala `*SUKIBOT*` (dengan emoji tulang di pesan aslinya) selalu di baris
   pertama (postingan rilis, pesan tes, lapor gagal, peringatan/kick moderasi, sambutan,
   daftar hitam berkala, `.menu`), diikuti judul, isi, lalu footer tanda tangan.
 - Postingan rilis: seksi **Changelog (apa yang baru)** berlabel jelas + link rilis lengkap,

@@ -111,13 +111,14 @@ samaran (LID) di belakang dan ditulis UTUH, nggak disamarkan; kalau nama WA-nya 
 namanya ditulis di depan nomornya. Kalau lebih dari 30 orang, sisanya diringkas jadi
 "…dan N orang lainnya" (hitungannya tetap jumlah orang sebenarnya).
 
-Contoh isi daftar hitam:
+Contoh isi daftar hitam (pesan aslinya berisi emoji tulang di kepala SukiBot
+dan tanda larangan di judul — sengaja tidak ditulis di dokumen ini):
 
 ```
-*🦴 SUKIBOT*
+*SUKIBOT*
 ─────────────────
 
-*Daftar hitam Alumni SMK 🚫*
+*Daftar hitam Alumni SMK*
 
 *2 orang* yang nggak boleh masuk lagi:
 

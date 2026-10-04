@@ -6,9 +6,16 @@ name: Bersihkan jejak Actions
 # dia bukan artifact — dia ada di draft release (job `release-internal` di
 # build-apk.yml).
 #
-# Jalan otomatis:
-#   - tiap hari 20.00 UTC (03.00 WIB);
-#   - tiap kali workflow "Build APK" untuk `main` selesai (jadi tiap update).
+# Dua profil (permintaan kall 2026-10-04: "setelah build release draft, hapus
+# jejak actions, artifacts, cache"):
+#   - workflow_run (tiap kali "Build APK" di main selesai) → FULL WIPE: semua
+#     run selesai (beserta log + artifact-nya) dihapus; yang tersisa cuma run
+#     sapuan ini sendiri. Cache dibuang dari yang lebih tua dari ±1 jam (yang
+#     lebih muda dari itu mungkin masih dipakai workflow lain yang belum
+#     selesai — dibuang besoknya lewat sapuan harian).
+#   - schedule harian 20.00 UTC (03.00 WIB) → profil lembut (run > 2 hari,
+#     artifact > 1 hari, cache > 2 hari) + sisanya yang kelewat dari full wipe
+#     (termasuk run sapuan kemarin).
 # Bisa juga dipanggil manual dengan umur yang lebih pendek kalau mau lebih agresif.
 on:
   schedule:
@@ -60,12 +67,18 @@ jobs:
       - name: Bersihkan
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HARI_RUN: ${{ inputs.hari-run || '2' }}
-          HARI_ARTIFACT: ${{ inputs.hari-artifact || '1' }}
-          HARI_CACHE: ${{ inputs.hari-cache || '2' }}
-          BATAS_CACHE_MB: ${{ inputs.batas-cache-mb || '1500' }}
-          # run yang lagi jalan (termasuk yang barusan memicu workflow ini) jangan diutak-atik
-          SIMPAN_RUN: '15'
+          # Profil: manual pakai inputnya; workflow_run (seusai Build APK main)
+          # FULL WIPE; sisanya (harian) profil lembut bawaan.
+          HARI_RUN: ${{ inputs.hari-run || (github.event_name == 'workflow_run' && '0' || '2') }}
+          HARI_ARTIFACT: ${{ inputs.hari-artifact || (github.event_name == 'workflow_run' && '0' || '1') }}
+          # Cache: 0,05 hari (±1 jam) — jangan sentuh cache yang mungkin masih
+          # dipakai workflow lain yang belum selesai (security/code-quality).
+          HARI_CACHE: ${{ inputs.hari-cache || (github.event_name == 'workflow_run' && '0.05' || '2') }}
+          BATAS_CACHE_MB: ${{ inputs.batas-cache-mb || (github.event_name == 'workflow_run' && '400' || '1500') }}
+          # Full wipe = sisakan cuma 1 (run sapuan ini sendiri; run build yang
+          # memicu ikut dihapus — logistiknya sudah pindah ke draft release).
+          # Profil harian = 15. Run yang LAGI jalan memang nggak bisa dihapus API.
+          SIMPAN_RUN: ${{ github.event_name == 'workflow_run' && '1' || '15' }}
         run: python3 scripts-dev/bersihkan_actions.py
 
       - name: Sisa pakai

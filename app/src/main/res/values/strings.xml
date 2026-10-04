@@ -324,7 +324,7 @@
     <string name="u_ket_izinkan_link_biasa">Kalau nyala, link selain daftar domain terlarang nggak dihapus.</string>
     <string name="u_batas_strike">BATAS STRIKE SEBELUM DIKELUARKAN</string>
     <string name="u_kata_tambahan_spam">KATA TAMBAHAN YANG DIANGGAP SPAM</string>
-    <string name="u_contoh_kata_pisah_koma">mis. judi, pinjol, sewa akun (pisah pakai koma/baris)</string>
+    <string name="u_contoh_kata_pisah_koma">Tambahan di luar daftar bawaan — mis. unsur jualan: open po, ready stock, bisa cod, dm harga, order via wa, link shopee (pisah pakai koma/baris)</string>
     <string name="u_domain_phishing">DOMAIN YANG LANGSUNG DIANGGAP PHISHING</string>
     <string name="u_penonton_story">NOMOR PENONTON STORY (SELAIN ANGGOTA GRUP)</string>
     <string name="u_contoh_62812">mis. 628123456789, 628987654321</string>

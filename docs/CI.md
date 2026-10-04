@@ -247,16 +247,32 @@ Tiap push bikin lima workflow jalan. Log, artifact, dan cache-nya menumpuk terus
 cukup beberapa hari sampai beberapa GB. Workflow ini yang nyapu, dan APK-nya tidak
 ikut hilang karena bukan artifact (lihat bagian berikutnya).
 
-Jalan **tiap hari 20.00 UTC (03.00 WIB)**, **tiap kali `build-apk.yml` selesai di
-`main`** (`workflow_run`), dan bisa dipanggil manual (`workflow_dispatch`) dengan
-umur yang lebih pendek kalau mau lebih agresif.
+Dua profil (permintaan kall 2026-10-04: "setelah build release draft, hapus jejak
+actions, artifacts, cache"):
+
+1. **`workflow_run` — tiap kali `build-apk.yml` selesai di `main`: FULL WIPE.**
+   Semua run selesai dihapus (log + artifact-nya ikut), semua cache yang lebih tua
+   dari ±1 jam dibuang. Yang tersisa cuma run sapuan itu sendiri — jadi setelah
+   tiap build, jejak Actions praktis kosong. Run yang masih berjalan memang tidak
+   bisa dihapus API; cache ≤1 jam sengaja tidak disentuh supaya workflow lain yang
+   belum selesai (security/code-quality) tidak rusak — sisanya disapu sapuan harian.
+2. **Harian 20.00 UTC (03.00 WIB): profil lembut.** Riwayat > 2 hari dibuang,
+   artifact > 1 hari, cache > 2 hari — termasuk run sapuan kemarin, jadi jejak
+   tidak pernah lebih tua dari sehari.
+
+Manual (`workflow_dispatch`) tetap ada dan umurnya bisa diisi sendiri.
+
+Siapa yang bisa menjalankannya: repo ini personal dan pemiliknya satu-satunya
+kolaborator (cek 2026-10-04: cuma `xykal`, admin), jadi `workflow_dispatch`,
+push, dan `workflow_run` hanya bisa dipicu pemilik repo — atau siapa pun yang
+memegang PAT-nya. Anggota publik tidak bisa menjalankan Actions di repo ini.
 
 | Yang dibersihkan | Bawaan | Env |
 |---|---|---|
-| riwayat run (log + artifact-nya ikut hilang) | lebih tua dari 2 hari | `HARI_RUN` (run termuda `SIMPAN_RUN=15` selalu disimpan) |
-| artifact | lebih tua dari 1 hari (atau sudah `expired`) | `HARI_ARTIFACT` (artifact milik `SIMPAN_RUN` run termuda **selalu** disimpan) |
-| cache (Gradle, npm, nodejs-mobile) | tidak dipakai lebih dari 2 hari | `HARI_CACHE` |
-| cache, kalau totalnya masih di atas batas | 1500 MB | `BATAS_CACHE_MB` (yang paling lama dipakai dibuang dulu) |
+| riwayat run (log + artifact-nya ikut hilang) | lebih tua dari 2 hari (full wipe: 0) | `HARI_RUN` (run termuda `SIMPAN_RUN` selalu disimpan: harian 15, full wipe 1) |
+| artifact | lebih tua dari 1 hari (full wipe: 0, atau sudah `expired`) | `HARI_ARTIFACT` (artifact milik `SIMPAN_RUN` run termuda **selalu** disimpan) |
+| cache (Gradle, npm, nodejs-mobile) | tidak dipakai lebih dari 2 hari (full wipe: ±1 jam) | `HARI_CACHE` |
+| cache, kalau totalnya masih di atas batas | 1500 MB (full wipe: 400 MB) | `BATAS_CACHE_MB` (yang paling lama dipakai dibuang dulu) |
 
 Jebakan yang sudah kena (2026-10-01): sapuan yang dijalankan **sambil build jalan**
 menghapus artifact APK run yang sedang berjalan, jadi job `release-internal` mendapati
@@ -264,7 +280,8 @@ artifact kosong dan draft internalnya gagal diperbarui ("ls: cannot access 'dist
 Sekarang ada dua penjaga: (1) sapuan tidak pernah menghapus artifact milik `SIMPAN_RUN`
 run termuda, dan (2) job draft mencoba unduh dua kali lalu gagal dengan pesan yang
 menyebut sebabnya. **Kalau tetap mau agresif, jangan pakai `HARI_ARTIFACT=0` selagi
-build jalan** — nol hari berarti "semua artifact", termasuk yang barusan diunggah.
+build jalan** — full wipe aman justru karena dia jalan LEWAT `workflow_run`, artinya
+build-nya sudah selesai duluan (dan APK-nya sudah mendarat di draft release).
 
 Logikanya di `scripts-dev/bersihkan_actions.py`; bisa dites dari lokal tanpa menghapus
 apa pun:

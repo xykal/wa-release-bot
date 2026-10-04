@@ -324,7 +324,7 @@
     <string name="u_ket_izinkan_link_biasa">When on, links other than the blocked domains are not deleted.</string>
     <string name="u_batas_strike">STRIKES BEFORE REMOVAL</string>
     <string name="u_kata_tambahan_spam">EXTRA SPAM KEYWORDS</string>
-    <string name="u_contoh_kata_pisah_koma">e.g. gambling, loan, account rental (comma or newline)</string>
+    <string name="u_contoh_kata_pisah_koma">Added on top of the built-in list — e.g. selling terms: pre-order, ready stock, COD, DM for price, order via WA (comma or newline)</string>
     <string name="u_domain_phishing">DOMAINS TREATED AS PHISHING</string>
     <string name="u_penonton_story">STORY AUDIENCE NUMBERS (BESIDES GROUP MEMBERS)</string>
     <string name="u_contoh_62812">e.g. 628123456789, 628987654321</string>

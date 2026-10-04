@@ -20,19 +20,21 @@ export const DOMAIN_DIIZINKAN = [
   'whatsapp.com',
 ];
 
-/** Pola judi/pinjol/promosi yang hampir selalu spam di grup. */
+/**
+ * Pola judi/pinjol/promosi yang hampir selalu spam di grup.
+ *
+ * CATATAN (kall 2026-10-04): kata kunci JUALAN sengaja TIDAK dimasukkan bawaan
+ * — terlalu agresif ("order via wa", "bisa cod", "dm harga", "link shopee"
+ * kena ke orang yang memang lagi jualan wajar). Yang mau grupnya bersih dari
+ * jualan, tambahkan sendiri pola-pola itu di kolom "Kata terlarang" di app
+ * (contohnya sudah tertera di placeholder kolomnya).
+ */
 export const KATA_TERLARANG = [
   'slot', 'gacor', 'judi', 'togel', 'casino', 'kasino', 'betting', 'taruhan',
   'pinjol', 'pinjam uang', 'dana cepat', 'kredit tanpa', 'paylater cair',
   'promo', 'diskon', 'obat kuat', 'viagra', 'bokep', 'open bo',
   'crypto gratis', 'airdrop', 'investasi profit', 'profit pasti',
   'join sekarang', 'daftar sekarang', 'minat dm', 'cek dm', 'hub wa',
-  // Jualan / promosi dagang (kall 2026-10-04: "kalau ada unsur jualan juga
-  // bisa dihapus"). Admin tetap kebal — mereka boleh promoin apa aja.
-  'open po', 'pre order', 'pre-order', 'preorder', 'ready stock', 'jual rugi',
-  'harga spesial', 'murah banget', 'bisa cod', 'bayar ditempat', 'bayar di tempat',
-  'dm for price', 'dm harga', 'minat? dm', 'order sekarang', 'order via wa',
-  'chat aja kak', 'wa aja kak', 'tokped', 'link shopee', 'link tokopedia',
 ];
 
 /** Pola link phishing: domain mirip + parameter aneh yang umum di scam. */

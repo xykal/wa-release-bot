@@ -6,6 +6,13 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+### Keamanan (CI)
+- `bersihkan.yml` kini punya profil **full wipe**: tiap kali build `main` selesai
+  (`workflow_run`), semua run Actions yang selesai — beserta log dan artifact-nya —
+  dan semua cache di atas ±1 jam dihapus; yang tersisa hanya run sapuan itu sendiri.
+  Artefak resmi tetap aman di draft release (bukan artifact Actions). Sapuan harian
+  membersihkan sisa jejak (termasuk run sapuan kemarin).
+
 ### Diubah
 - Gaya semua pesan WA dirapikan dan diseragamkan: kepala `*🦴 SUKIBOT*` selalu di baris
   pertama (postingan rilis, pesan tes, lapor gagal, peringatan/kick moderasi, sambutan,
@@ -21,10 +28,11 @@ Semua perubahan penting proyek ini. Format mengikuti
   penyebutan "ID samaran …1234" dihapus. Pushname WA yang kebaca (dicatat dari anggota
   grup dan pesan masuk, disimpan di `g.namaPeta`) kini tampil di depan nomornya:
   "Nama (+62812…)" — di lembar app maupun pesan berkala.
-- Moderasi grup: kiriman berisi link luar/promosi/jualan/kata terlarang langsung dihapus,
+- Moderasi grup: kiriman berisi link luar/promosi/kata terlarang langsung dihapus,
   lalu pelakunya menerima tepat 1 peringatan yang me-mention orangnya; strike terakhir =
-  dikeluarkan. Daftar kata kunci jualan ditambah (open PO, preorder, ready stock,
-  bisa COD, order via WA, dm harga, link shopee/tokped, dst).
+  dikeluarkan. Unsur jualan sengaja tidak dijadikan bawaan (terlalu agresif) — polanya
+  bisa ditambah sendiri lewat kolom **Kata terlarang** di app (contoh pola jualan sudah
+  tertera di placeholder-nya).
 
 ### Diperbaiki
 - Splash: pivot animasi "pop" gelembung chat dulu di tepi atas (`pivotY = 0`), jadi tiap

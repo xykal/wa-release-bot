@@ -34,6 +34,7 @@ internal class PanelStatus(
     private lateinit var tvWaStatus: TextView
     private lateinit var tvGrupStat: TextView
     private lateinit var tvLaguStat: TextView
+    private lateinit var tvPertanyaanStat: TextView
     private lateinit var tvHostingStat: TextView
     private lateinit var tvModerasiStat: TextView
     private lateinit var tvBerkalaStat: TextView
@@ -53,6 +54,7 @@ internal class PanelStatus(
         tvWaStatus = a.findViewById(R.id.tvWaStatus)
         tvGrupStat = a.findViewById(R.id.tvGrupStat)
         tvLaguStat = a.findViewById(R.id.tvLaguStat)
+        tvPertanyaanStat = a.findViewById(R.id.tvPertanyaanStat)
         tvHostingStat = a.findViewById(R.id.tvHostingStat)
         tvModerasiStat = a.findViewById(R.id.tvModerasiStat)
         tvBerkalaStat = a.findViewById(R.id.tvBerkalaStat)
@@ -99,7 +101,8 @@ internal class PanelStatus(
         tvNext.text = listOfNotNull(
             ui.nextCheckAt?.let { a.getString(R.string.k_cek_rilis_lagi, Durasi.human(it - sekarang)) },
             ui.nextGrupAt?.let { a.getString(R.string.k_cek_grup_lagi, Durasi.human(it - sekarang)) },
-            ui.nextLaguAt?.let { a.getString(R.string.k_lagu_lagi, Durasi.human(it - sekarang)) }
+            ui.nextLaguAt?.let { a.getString(R.string.k_lagu_lagi, Durasi.human(it - sekarang)) },
+            ui.nextTanyaAt?.let { a.getString(R.string.k_tanya_lagi, Durasi.human(it - sekarang)) }
         ).joinToString("  ·  ")
         tvNext.visibility = if (tvNext.text.isNullOrEmpty()) View.GONE else View.VISIBLE
 
@@ -111,6 +114,15 @@ internal class PanelStatus(
                 a.getString(R.string.k_lagu_udah_dikirim, ui.laguCount),
                 ui.laguJudul?.let { a.getString(R.string.k_terakhir, it) },
                 ui.laguJatah?.let { a.getString(R.string.k_jatah_hari_ini_dari_server, it) }
+            ).joinToString("\n")
+        }
+        tvPertanyaanStat.text = when {
+            !ui.lawakAktif -> a.getString(R.string.k_mati_nyalain_saklarnya_terus_simpan)
+            else -> listOfNotNull(
+                ui.nextTanyaAt?.let { a.getString(R.string.k_tanya_berikutnya_kira_kira_lagi, Durasi.human(it - sekarang)) }
+                    ?: a.getString(R.string.k_nunggu_bot_jalan),
+                a.getString(R.string.k_tanya_udah_dikirim, ui.lawakCount),
+                ui.lawakTanya?.let { a.getString(R.string.k_terakhir, it) }
             ).joinToString("\n")
         }
         val h = ui.hosting

@@ -31,6 +31,7 @@ internal class FormPengaturan(
     private lateinit var etLaguPerHari: EditText
     private lateinit var etLaguJamMulai: EditText
     private lateinit var etLaguJamSelesai: EditText
+    private lateinit var etPertanyaanPerHari: EditText
 
     // saklar = baris yang di-`isSelected` (nggak pakai Switch Material)
     private lateinit var rowPrerelease: View
@@ -41,6 +42,7 @@ internal class FormPengaturan(
     private lateinit var rowBoot: View
     private lateinit var rowLogcat: View
     private lateinit var rowLaguAktif: View
+    private lateinit var rowPertanyaanAktif: View
     private lateinit var rowSuaraSplash: View
     private lateinit var rowModerasi: View
     private lateinit var rowPerintahPribadi: View
@@ -119,6 +121,7 @@ internal class FormPengaturan(
         rowBoot = saklar(R.id.rowBoot)
         rowLogcat = saklar(R.id.rowLogcat)
         rowLaguAktif = saklar(R.id.rowLaguAktif)
+        rowPertanyaanAktif = saklar(R.id.rowPertanyaanAktif)
 
         // Bukan lewat saklar(): nyalain baris ini artinya "boleh bunyi lagi",
         // jadi bendera voSudahMain dikosongin (lihat SuaraSplash.kt).
@@ -133,6 +136,7 @@ internal class FormPengaturan(
         etLaguPerHari = a.findViewById(R.id.etLaguPerHari)
         etLaguJamMulai = a.findViewById(R.id.etLaguJamMulai)
         etLaguJamSelesai = a.findViewById(R.id.etLaguJamSelesai)
+        etPertanyaanPerHari = a.findViewById(R.id.etPertanyaanPerHari)
 
         rowModerasi = saklar(R.id.rowModerasi)
         rowPerintahPribadi = saklar(R.id.rowPerintahPribadi)
@@ -177,6 +181,7 @@ internal class FormPengaturan(
         rowBoot.isSelected = settings.autoStartOnBoot
         rowLogcat.isSelected = settings.rekamLogcat
         rowLaguAktif.isSelected = settings.laguAktif
+        rowPertanyaanAktif.isSelected = settings.pertanyaanAktif
         rowSuaraSplash.isSelected = settings.suaraSplash
         rowModerasi.isSelected = settings.moderasiAktif
         rowPerintahPribadi.isSelected = settings.perintahPribadi
@@ -192,6 +197,7 @@ internal class FormPengaturan(
         etLaguPerHari.setText(settings.laguPerHari.toString())
         etLaguJamMulai.setText(settings.laguJamMulai.toString())
         etLaguJamSelesai.setText(settings.laguJamSelesai.toString())
+        etPertanyaanPerHari.setText(settings.pertanyaanPerHari.toString())
     }
 
     /** view -> prefs (angka kosong/aneh jatuh ke bawaan) */
@@ -213,6 +219,8 @@ internal class FormPengaturan(
         settings.laguPerHari = etLaguPerHari.text.toString().toIntOrNull() ?: 2
         settings.laguJamMulai = etLaguJamMulai.text.toString().toIntOrNull() ?: 9
         settings.laguJamSelesai = etLaguJamSelesai.text.toString().toIntOrNull() ?: 22
+        settings.pertanyaanAktif = rowPertanyaanAktif.isSelected
+        settings.pertanyaanPerHari = etPertanyaanPerHari.text.toString().toIntOrNull() ?: 2
         settings.suaraSplash = rowSuaraSplash.isSelected
         settings.moderasiAktif = rowModerasi.isSelected
         settings.perintahPribadi = rowPerintahPribadi.isSelected

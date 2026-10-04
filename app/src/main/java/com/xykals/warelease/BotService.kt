@@ -337,6 +337,10 @@ class BotService : Service() {
                 laguJudul = e.optString("laguJudul", "").orNull()
                 laguJatah = e.optString("laguJatah", "").orNull()
                 nextLaguAt = e.optLong("nextLaguAt", 0L).takeIf { it > 0 }
+                lawakAktif = e.optBoolean("lawakAktif")
+                lawakCount = e.optInt("lawakCount", 0)
+                lawakTanya = e.optString("lawakTanya", "").orNull()
+                nextTanyaAt = e.optLong("nextTanyaAt", 0L).takeIf { it > 0 }
                 // bot WA umum (M14/M15)
                 jagaAktif = e.optBoolean("jagaAktif")
                 moderasiAktif = e.optBoolean("moderasiAktif")
@@ -387,6 +391,8 @@ class BotService : Service() {
             }
 
             "lagu_terkirim" -> updateNotif("Lagu terkirim ke channel: " + e.optString("judul"))
+
+            "tanya_terkirim" -> updateNotif("Pertanyaan mood dikirim ke channel.")
 
             "qr" -> BotBus.publish { qr = e.optString("qr", "").orNull() }
 

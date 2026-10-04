@@ -9,6 +9,8 @@ internal object PengaturanBawaan {
     const val PERINTAH_PRIBADI = false
     const val MODERASI = false
     const val LAGU = false
+    // Pertanyaan mood (ngejoks) — opt-in juga, isi banknya lokal di HP.
+    const val LAWAK = false
     const val PENJAGA_GRUP = false
     const val PESAN_BERKALA = false
     const val REKAM_LOGCAT = false

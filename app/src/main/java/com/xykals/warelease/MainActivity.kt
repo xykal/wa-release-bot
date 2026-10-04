@@ -325,6 +325,18 @@ class MainActivity : AppCompatActivity() {
             withService { sendCmd(mapOf("type" to "lagu-sekarang")) }
             banner(getString(R.string.k_ngambil_lagu_dari_antrian_ngirim))
         }
+        pasang(R.id.btnTanyaSekarang, "Kirim pertanyaan sekarang") {
+            form.ambil()
+            if (settings.channel.isBlank()) {
+                nav.pindah(Tab.REPO)
+                banner(getString(R.string.k_isi_channel_wa_dulu_tanyanya))
+                form.etChannel.requestFocus()
+                return@pasang
+            }
+            if (!simpanDiamDiam()) return@pasang
+            withService { sendCmd(mapOf("type" to "tanya-sekarang")) }
+            banner(getString(R.string.k_ngambil_pertanyaan_dari_bank_ngirim))
+        }
         pasang(R.id.btnKirimMenu, "Kirim menu ke chat") {
             withService { sendCmd(mapOf("type" to "menu-sekarang")) }
             // Hasil sebenarnya datang dari engine (banner "Menu sudah dikirim…"

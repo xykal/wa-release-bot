@@ -3,18 +3,21 @@ import { BRAND, NAMA_BOT, NAMA_PAKET, TANDA_TANGAN } from './config/brand.mjs';
 
 const MAX_BODY = 1800;
 
-// Kepala pesan: SukiBot SEKARANG selalu di atas (permintaan kall 2026-10-04:
-// "SukiBot harus di atas"). Satu baris judul bold + garis tipis di bawahnya,
-// konsisten di semua pesan bot biar follower langsung kenal.
-const GARIS = '─────────────────';
-export const KEPALA = `*🦴 ${NAMA_BOT.toUpperCase()}*\n${GARIS}`;
+// Kepala pesan: SukiBot SEKARANG selalu di atas (permintaan kall 2026-10-04).
+// Revisi ronda 3 (kall: "pesan kurang rapi"): garis strip panjang dibuang —
+// di layar sempit strip itu kepotong/melahap dua baris dan malah kelihatan
+// berantakan. Sekarang satu baris bold rapi: "SUKIBOT · JUDUL", lalu baris
+// kosong, baru isi. Ringkas, konsisten, nggak ada yang wrap aneh.
+export const KEPALA = `*🦴 ${NAMA_BOT.toUpperCase()}*`;
 /**
- * Susun pesan baku: kepala SukiBot di atas → judul → pemisah → isi… → footer.
- * @param {string} judul baris judul (tanpa bold, diboldkan di sini kalau diisi)
+ * Susun pesan baku: kepala SukiBot+judul di atas → baris kosong → isi…
+ * @param {string} judul baris judul (digabung ke kepala, tanpa bold tambahan)
  * @param {string[]} isi baris-baris isi
  */
 export function pesanRapi(judul, ...isi) {
-  return [KEPALA, judul ? `\n*${judul}*\n` : '', ...isi].flat().join('\n').replace(/\n{3,}/g, '\n\n').trimEnd();
+  const tajuk = String(judul || '').trim();
+  const kepala = tajuk ? `*🦴 ${NAMA_BOT.toUpperCase()} · ${tajuk}*` : KEPALA;
+  return [kepala, '', ...isi].flat().join('\n').replace(/\n{3,}/g, '\n\n').trimEnd();
 }
 
 // Penutup buat format "pertanyaan" di channel: follower bisa bales pesan ini

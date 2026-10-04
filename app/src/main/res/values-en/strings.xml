@@ -52,6 +52,10 @@
     <string name="u_sesekali_bot_ngirim_potongan_lagu">Opt-in and off by default. Enable only for audio you have the right to use; public-channel snippets can still trigger copyright claims or provider-policy issues. Cloudflare finds audio, the phone sends a ~60-second snippet, then deletes it.</string>
     <string name="u_nyalain_lagu_mood">Turn on mood songs</string>
     <string name="u_dikirim_ke_channel_yang_sama">Sent to the same channel as releases</string>
+    <string name="u_pertanyaan_mood">Mood questions · absurd jokes</string>
+    <string name="u_ket_pertanyaan_mood">Opt-in, off by default. Every so often the bot asks an absurd mind-bending question, posted as a channel "Question": followers can answer and only admins can read the answers. The questions come from a local on-device bank — no cringe, no AI calls.</string>
+    <string name="u_nyalain_pertanyaan_mood">Enable mood questions</string>
+    <string name="u_kirim_satu_pertanyaan_sekarang">Send one question now</string>
     <string name="u_rata_rata_berapa_kali_sehari">Average times per day (1–8)</string>
     <string name="u_mulai_jam">From hour</string>
     <string name="u_sampai_jam">Until hour</string>
@@ -150,6 +154,11 @@
     <string name="k_cek_rilis_lagi">release check in %1$s</string>
     <string name="k_cek_grup_lagi">group check in %1$s</string>
     <string name="k_lagu_lagi">song in %1$s</string>
+    <string name="k_tanya_lagi">question in %1$s</string>
+    <string name="k_tanya_berikutnya_kira_kira_lagi">Next question in about %1$s (time is randomized)</string>
+    <string name="k_tanya_udah_dikirim">%1$d questions sent</string>
+    <string name="k_isi_channel_wa_dulu_tanyanya">Fill in the WA channel first — questions are sent there.</string>
+    <string name="k_ngambil_pertanyaan_dari_bank_ngirim">Picking one question from the local bank, sending…</string>
     <string name="k_mati_nyalain_saklarnya_terus_simpan">Off. Turn on the switch, then Save.</string>
     <string name="k_lagu_berikutnya_kira_kira_lagi">Next song in about %1$s (time is randomized)</string>
     <string name="k_nunggu_bot_jalan">Waiting for the bot to run…</string>

@@ -107,7 +107,7 @@ Kartu **Pesan berkala ke grup** ngirim pesan berulang ke grup yang sama dengan
 Nomor yang lo daftarin sendiri boleh ditulis bebas (`0812-3456-7890`, `+62 813 …`,
 `813999888777`) — semuanya dinormalkan ke `+62…`, duplikat sama daftar otomatis digabung jadi
 satu baris, dan baris yang bukan nomor dibuang. Urutannya dari nomor kecil ke besar, ID
-samaran (LID) di belakang dan ditulis UTUH, nggak disamarkan; kalau nama WA-nya kebaca bot,
+LID di belakang dan ditulis UTUH polos (format `ID 100987654`), nggak disamarkan; kalau nama WA-nya kebaca bot,
 namanya ditulis di depan nomornya. Kalau lebih dari 30 orang, sisanya diringkas jadi
 "…dan N orang lainnya" (hitungannya tetap jumlah orang sebenarnya).
 
@@ -132,6 +132,23 @@ _Admin grup bisa minta buka blokir lewat app._
 Kalau daftar hitamnya kosong, pesannya bukan daftar hampa tapi keterangan
 "masih kosong" — biar jelas, bukan kayak bot yang error.
 
+## Lagu mood & pertanyaan mood
+
+Dua fitur pengisi channel yang jalan terpisah dari rilis, sama-sama pakai jadwal
+acak (berapa kali sehari, jam efektifnya aturannya sama kayak lagu).
+
+- **Lagu mood** — potongan lagu (voice note ~60 detik) + kata-kata. Pilihan lagunya ±75%
+  yang lagi viral di TikTok/FYP Indonesia (chart harian Spotify ID disaring AI + benih
+  TikTok yang dikurasi di Worker), sisanya lagu lawas dari `lagu/daftar.txt`.
+- **Pertanyaan mood (ngejoks)** — satu pertanyaan absurd "plenger" tiap jadwal, dikirim
+  sebagai postingan **Pertanyaan** di channel, jadi follower bisa jawab dan jawabannya
+  cuma kebaca admin. Isinya dari bank lokal di HP (`bot-js/src/lawak.mjs`) — anti cringe,
+  anti garing, dan nggak manggil AI sama sekali. Saklar + jumlah per hari ada di kartu
+  "Pertanyaan mood · ngejoks"; jam efektif bawaannya 10–21.
+
+Keduanya butuh kolom **Channel WA** terisi, dan tombol "Kirim sekarang" di masing-masing
+kartu buat ngetes tanpa nunggu jadwal.
+
 ## Kalau tombol/perintah nggak ada balasan
 
 Urutan cek (dari yang paling sering):
@@ -151,7 +168,7 @@ Urutan cek (dari yang paling sering):
 - Perintah di chat sendiri (`.menu`, `.rekam`, `.berkala`, …) dijawab di **jalur cepat**:
   moderasi grup yang berat (tarik metadata, hapus pesan, tendang orang) jalan di antrean
   sendiri, jadi perintah nggak nunggu di belakangnya.
-- Kiriman yang bikin **koneksi baru** (rilis, lagu, pesan berkala) sebelumnya selalu minta
+- Kiriman yang bikin **koneksi baru** (rilis, lagu, pertanyaan, pesan berkala) sebelumnya selalu minta
   versi protokol WA terbaru tiap nyambung; sekarang hasilnya di-cache 6 jam, jadi satu
   round-trip lebih cepat tiap kirim.
 - Yang tetap kerasa lambat: apa pun yang naikin media (stiker, `.rekam kirim`, story) — itu
@@ -167,6 +184,6 @@ Dua hal di halaman ini harganya beda, dan bedanya penting:
   kirimannya gagal (misal WA putus), dia nyoba lagi 10 menit kemudian — bukan
   nunggu 12 jam.
 
-Fitur lain (rilis, penjaga grup, lagu) tetap nyambung sebentar tiap jadwal, jadi
+Fitur lain (rilis, penjaga grup, lagu, pertanyaan) tetap nyambung sebentar tiap jadwal, jadi
 nggak terpengaruh dua di atas. Mau batre lebih awet? Matikan saklar moderasi
 waktu grup lagi sepi, dan biarkan pesan berkala yang jaga ketertiban grup.

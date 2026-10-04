@@ -25,6 +25,7 @@ import { daftarRepo, teksRepo, sinkronState, ringkasTag, pendingAktif } from './
 import { buatHosting } from './hosting.mjs';
 import { buatRilis } from './mesin/rilis.mjs';
 import { buatLaguMood } from './mesin/lagu-mood.mjs';
+import { buatLawakMood } from './mesin/lawak-mood.mjs';
 import { buatPenjagaGrup } from './mesin/penjaga-grup.mjs';
 import { buatRekamChannel } from './mesin/rekam-channel.mjs';
 import { buatTautan } from './mesin/tautan.mjs';
@@ -156,6 +157,7 @@ async function main() {
       welcomeAktif: false, // opt-in agar grup nggak menerima sambutan tanpa persetujuan admin
       grup: null, // { target, jid, nama, anggota: [[id...]], hitam: [id...], disetujui, ditolak, lastCekAt }
       lagu: null, // { terkirim: [id...], count, lastAt, lastJudul }
+      lawak: null, // { count, lastAt, lastTanya, terbaru: […pertanyaan terakhir] }
     },
     cfg: null,
     running: false,
@@ -166,9 +168,11 @@ async function main() {
     nextGrupAt: null,
     nextLaguAt: null,
     timerLagu: null,
+    nextTanyaAt: null,
+    timerTanya: null,
     bridge: null,
     hosting: null,
-    fitur: null, // { rilis, lagu, grup, tautan, perintah } — diisi setelah modul dibuat
+    fitur: null, // { rilis, lagu, lawak, grup, tautan, perintah } — diisi setelah modul dibuat
   };
   if (fs.existsSync(stateFile)) {
     try { ctx.state = { ...ctx.state, ...JSON.parse(fs.readFileSync(stateFile, 'utf8')) }; } catch { /* abaikan */ }
@@ -225,6 +229,7 @@ async function main() {
   if (ctx.cfg && sinkronState(ctx.state, repos())) saveState(); // pindahkan state era satu repo
   const grupAktif = () => Boolean(ctx.cfg?.grup?.aktif && ctx.cfg?.grup?.target);
   const laguAktif = () => Boolean(ctx.cfg?.lagu?.aktif);
+  const lawakAktif = () => Boolean(ctx.cfg?.lawak?.aktif);
 
   function emitStatus() {
     const { state, cfg } = ctx;
@@ -259,6 +264,11 @@ async function main() {
       laguJudul: state.lagu?.lastJudul || null,
       laguJatah: state.lagu?.jatah?.pemasang || null, // "n/12" hari ini, dari Worker
       nextLaguAt: ctx.nextLaguAt,
+      lawakAktif: lawakAktif(),
+      lawakCount: state.lawak?.count || 0,
+      lawakLastAt: state.lawak?.lastAt || null,
+      lawakTanya: state.lawak?.lastTanya || null,
+      nextTanyaAt: ctx.nextTanyaAt,
       // Moderasi & perintah pribadi (mesin/jaga-pesan.mjs)
       jagaAktif: Boolean(ctx.cfg?.jaga?.moderasi || ctx.cfg?.jaga?.perintah),
       moderasiAktif: Boolean(ctx.cfg?.jaga?.moderasi),
@@ -364,6 +374,7 @@ async function main() {
     if (repoAda()) bagian.push(`cek release tiap ${Math.round(intervalMs() / 60000)} mnt`);
     if (grupAktif()) bagian.push(`jaga grup tiap ${Math.round(intervalGrupMs() / 60000)} mnt`);
     if (laguAktif()) bagian.push(`lagu mood ±${ctx.cfg.lagu.perHari}x/hari`);
+    if (lawakAktif()) bagian.push(`pertanyaan mood ±${ctx.cfg.lawak.perHari}x/hari`);
     if (ctx.cfg.jaga?.moderasi) bagian.push('moderasi grup');
     if (ctx.cfg.berkala?.aktif) bagian.push(`pesan berkala tiap ${ctx.fitur.berkala.intervalJam()} jam`);
     if (ctx.cfg.jaga?.perintah) bagian.push('perintah pribadi di chat sendiri');
@@ -372,6 +383,7 @@ async function main() {
     scheduleNext(3000);
     jadwalGrup(8000);
     ctx.fitur.lagu.jadwalLagu();
+    ctx.fitur.lawak.jadwalTanya();
     ctx.fitur.berkala.jadwal(60_000);
     if (ctx.cfg.jaga?.moderasi || ctx.cfg.jaga?.perintah) void ctx.fitur.jaga.mulai();
   }
@@ -383,9 +395,11 @@ async function main() {
     clearTimeout(timer);
     clearTimeout(timerGrup);
     clearTimeout(ctx.timerLagu);
+    clearTimeout(ctx.timerTanya);
     ctx.nextCheckAt = null;
     ctx.nextGrupAt = null;
     ctx.nextLaguAt = null;
+    ctx.nextTanyaAt = null;
     log('⏸️ Engine jeda (istirahat). Tekan "Mulai" di app buat lanjut.');
     emitStatus();
   }
@@ -393,18 +407,19 @@ async function main() {
   // ----------------------------- modul fitur --------------------------------
   Object.assign(ctx, {
     log, saveState, emitStatus, pakaiWA, sambung,
-    repos, repoAda, grupAktif, laguAktif,
+    repos, repoAda, grupAktif, laguAktif, lawakAktif,
     scheduleNext, intervalMs, intervalGrupMs, jadwalGrup, startEngine, stopEngine,
   });
   const rilis = buatRilis(ctx);
   const lagu = buatLaguMood(ctx, { rilis });
+  const lawak = buatLawakMood(ctx, { rilis });
   const grup = buatPenjagaGrup(ctx);
   const berkala = buatPesanBerkala(ctx);
   const tautan = buatTautan(ctx, { rilis, grup });
   const rekam = buatRekamChannel(ctx);
   const jaga = buatJagaPesan(ctx, { rekam });
-  const perintah = buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga, berkala });
-  ctx.fitur = { rilis, lagu, grup, tautan, perintah, jaga, berkala, rekam };
+  const perintah = buatPerintah(ctx, { rilis, lagu, lawak, grup, tautan, jaga, berkala });
+  ctx.fitur = { rilis, lagu, lawak, grup, tautan, perintah, jaga, berkala, rekam };
 
   // ----------------------------- init ---------------------------------------
   log('🦴 wa-release-bot engine siap (node ' + process.version + '). Menunggu perintah dari app.');

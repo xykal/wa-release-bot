@@ -11,7 +11,7 @@
 //  Jadi yang keluar SEBELUM fitur ini nyala nggak ketahuan → buat mereka
 //  ada daftar hitam manual (nomor diketik di app).
 //
-//  WhatsApp sekarang kadang pakai "LID" (ID samaran, akhiran @lid) selain
+//  WhatsApp sekarang kadang pakai "LID" (akhiran @lid, digit acak panjang) selain
 //  nomor HP (@s.whatsapp.net). Satu orang bisa muncul dengan dua-duanya,
 //  jadi tiap orang dicatat pakai SEMUA identitas yang ketahuan.
 //
@@ -128,13 +128,14 @@ export function namaOrang(entri) {
 /**
  * Label satu orang: nomor penuh (+62812…) kalau ada; kalau cuma kebagian LID,
  * tampilkan digitnya UTUH (kall 2026-10-04: "daftar hitam nggak perlu ada
- * yang disamarkan") — bukan lagi "…1234".
+ * yang disamarkan"). Ronda 3: sebutan lama yang ada kata "samaran"-nya dibuang
+ * total — sekarang polos "ID 100987654".
  */
 export function labelOrang(ids) {
   const pn = ids.find((i) => i.endsWith('@s.whatsapp.net'));
   if (pn) return '+' + pn.split('@')[0];
   const id = (ids[0] || '?').split('@')[0];
-  return `ID samaran ${id}`;
+  return `ID ${id}`;
 }
 
 // ---------------------------------------------------------------------------

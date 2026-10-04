@@ -52,6 +52,10 @@
     <string name="u_sesekali_bot_ngirim_potongan_lagu">Fitur opt-in, default mati. Hanya nyalakan untuk audio yang hak penggunaannya lo punya; potongan lagu di channel publik tetap bisa kena klaim hak cipta atau aturan penyedia. Cloudflare mencari audio, HP mengirim potongan ~60 detik lalu menghapus filenya.</string>
     <string name="u_nyalain_lagu_mood">Nyalain lagu mood</string>
     <string name="u_dikirim_ke_channel_yang_sama">Dikirim ke channel yang sama kayak rilis</string>
+    <string name="u_pertanyaan_mood">Pertanyaan mood · ngejoks</string>
+    <string name="u_ket_pertanyaan_mood">Fitur opt-in, default mati. Sesekali bot nanya hal absurd yang muter di kepala, dikirim sebagai postingan "Pertanyaan" di channel: follower bisa jawab dan jawabannya cuma kebaca admin. Isinya dari bank pertanyaan lokal di HP — anti cringe, anti garing, tanpa manggil AI.</string>
+    <string name="u_nyalain_pertanyaan_mood">Nyalain pertanyaan mood</string>
+    <string name="u_kirim_satu_pertanyaan_sekarang">Kirim satu pertanyaan sekarang</string>
     <string name="u_rata_rata_berapa_kali_sehari">Rata-rata berapa kali sehari (1–8)</string>
     <string name="u_mulai_jam">Mulai jam</string>
     <string name="u_sampai_jam">Sampai jam</string>
@@ -150,6 +154,11 @@
     <string name="k_cek_rilis_lagi">cek rilis %1$s lagi</string>
     <string name="k_cek_grup_lagi">cek grup %1$s lagi</string>
     <string name="k_lagu_lagi">lagu %1$s lagi</string>
+    <string name="k_tanya_lagi">tanya %1$s lagi</string>
+    <string name="k_tanya_berikutnya_kira_kira_lagi">Pertanyaan berikutnya kira-kira %1$s lagi (jamnya diacak)</string>
+    <string name="k_tanya_udah_dikirim">%1$d pertanyaan udah dikirim</string>
+    <string name="k_isi_channel_wa_dulu_tanyanya">Isi Channel WA dulu — pertanyaannya dikirim ke sana.</string>
+    <string name="k_ngambil_pertanyaan_dari_bank_ngirim">Ngambil satu pertanyaan dari bank lokal, dikirim…</string>
     <string name="k_mati_nyalain_saklarnya_terus_simpan">Mati. Nyalain saklarnya, terus Simpan.</string>
     <string name="k_lagu_berikutnya_kira_kira_lagi">Lagu berikutnya kira-kira %1$s lagi (jamnya diacak)</string>
     <string name="k_nunggu_bot_jalan">Nunggu bot jalan…</string>

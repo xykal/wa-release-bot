@@ -109,7 +109,7 @@ internal class SplashUtama(
                 .withEndAction {
                     tvLabel.text = a.getString(label[i % label.size])
                     gelembung.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(260)
-                        .setInterpolator(OvershootInterpolator(2.2f)).start()
+                        .setInterpolator(OvershootInterpolator(1.6f)).start()
                 }.start()
         }
 

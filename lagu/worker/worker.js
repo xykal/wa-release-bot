@@ -2,9 +2,9 @@
 //  Cloudflare Worker "wa-release-bot-lagu" — pembantu kecil buat "lagu mood".
 //
 //  Pembagian kerja Cloudflare x HP:
-//    Worker (ini) : pilih lagu (50% daftar lawas, 50% yang lagi trend di
-//                   Indonesia — chart harian Spotify ID via kworb.net, disaring
-//                   AI biar cuma lagu Indo/Melayu), cari di SoundCloud, ambil link
+//    Worker (ini) : pilih lagu (±25% daftar lawas, ±75% yang lagi trend di
+//                   Indonesia — chart harian Spotify ID via kworb.net disaring AI,
+//                   ditambah benih viral TikTok di bawah), cari di SoundCloud, ambil link
 //                   stream-nya, bikin kata-kata pakai AI (key Groq disimpen di
 //                   sini sebagai secret, NGGAK ada di APK), tentuin mulai potong
 //    HP           : download CUMA potongan ~60 dtk (HTTP Range, ±1 MB), kirim
@@ -24,7 +24,55 @@
 
 const DAFTAR = __DAFTAR__;
 const AYAT = __AYAT__;
-const PELUANG_TREND = 0.5;
+// Revisi (kall 2026-10-04: lagu jangan lawas mulu) — trend digedein:
+const PELUANG_TREND = 0.75;
+// helper kecil biar nulis benih nggak pakai kutip berlapis
+const t = (s) => s;
+// ------------------------------------------------------------ benih viral TikTok
+// Lagu-lagu yang lagi/lebih dulu rame di FYP TikTok Indonesia (kurasi 2026-10).
+// Chart Spotify harian kadang telat nangkep lagu viral TikTok; benih ini
+// jaminan ada stok "lagu TikTok" tiap hari — digabung ke kolam trend, ditandai
+// trend:true, dan ikut saring() anti-pengulangan kayak entri chart.
+// Cukup rubah daftar ini (judul harus nama resmi biar ketemu di SoundCloud).
+const TIKTOK_SEED = [
+  { artis: t('Tulus'), judul: t('Teh Hijau'), trend: true },
+  { artis: t('Tulus'), judul: t('Jatuh Suka'), trend: true },
+  { artis: t('Tulus'), judul: t('Monokrom'), trend: true },
+  { artis: t('Tulus'), judul: t('Interaksi'), trend: true },
+  { artis: t('Nadhif Basalamah'), judul: t('Penjaga Hati'), trend: true },
+  { artis: t('Nadhif Basalamah'), judul: t('Bergema Sampai Selamanya'), trend: true },
+  { artis: t('Nadhif Basalamah'), judul: t('kota ini tak sama tanpamu'), trend: true },
+  { artis: t('Idgitaf'), judul: t('Sedia Aku Sebelum Hujan'), trend: true },
+  { artis: t('For Revenge'), judul: t('Serana'), trend: true },
+  { artis: t('For Revenge'), judul: t('Sadrah'), trend: true },
+  { artis: t('Juicy Luicy'), judul: t('Lantas'), trend: true },
+  { artis: t('Juicy Luicy'), judul: t('Sialan'), trend: true },
+  { artis: t('Juicy Luicy'), judul: t('Tanpa Tergesa'), trend: true },
+  { artis: t('Bernadya'), judul: t('Satu Bulan'), trend: true },
+  { artis: t('Bernadya'), judul: t('Apa Mungkin'), trend: true },
+  { artis: t('Bernadya'), judul: t('Untungnya, Hidup Harus Tetap Berjalan'), trend: true },
+  { artis: t('Adrian Khalif'), judul: t('Asumsi'), trend: true },
+  { artis: t('Hindia'), judul: t('Everything U Are'), trend: true },
+  { artis: t('Hindia'), judul: t('Evaluasi'), trend: true },
+  { artis: t('Hindia'), judul: t('Secukupnya'), trend: true },
+  { artis: t('Sal Priadi'), judul: t('Gala Bunga Matahari'), trend: true },
+  { artis: t('Sal Priadi'), judul: t('Foto Kita Blur'), trend: true },
+  { artis: t('Sal Priadi'), judul: t('Zuzuzaza'), trend: true },
+  { artis: t('Naykilla'), judul: t('MMG (My Mine Gue)'), trend: true },
+  { artis: t('Tenxi & Naykilla'), judul: t('Garam & Madu (Sakit Dadaku)'), trend: true },
+  { artis: t('Rizky Febian & Adrian Khalif'), judul: t('Alamak'), trend: true },
+  { artis: t('Suara Kayu'), judul: t('Miniatur'), trend: true },
+  { artis: t('Raim Laode'), judul: t('Komang'), trend: true },
+  { artis: t('Angga Yunanda & Shenina Cinnamon'), judul: t('Di Sana Menanti Di Sini Menunggu'), trend: true },
+  { artis: t('Mahalini'), judul: t('Sial'), trend: true },
+  { artis: t('Kunto Aji'), judul: t('Pilu Membiru'), trend: true },
+  { artis: t('Nadin Amizah'), judul: t('Rumpang'), trend: true },
+  { artis: t('Ifan Seventeen'), judul: t('Jangan Paksa Rindu (Beda)'), trend: true },
+  { artis: t('e\u0144au & Ari Lesmana'), judul: t('Sesi Potret'), trend: true },
+  { artis: t('overnight'), judul: t('Kita Lewati Berdua'), trend: true },
+  { artis: t('Mingse'), judul: t('Astaga Bercanda'), trend: true },
+  { artis: t('Happy Asmara'), judul: t('Jauh Ko Pergi'), trend: true },
+];
 const PELUANG_AYAT = 0.35;
 const PANJANG = 60;
 // Batas request, dua lapis. Dulu cuma satu angka global (80) yang dibagi semua
@@ -285,7 +333,7 @@ Format: {"kandidat":["..."],"terbaik":nomor_mulai_1}`,
 
 // ------------------------------------------------------------ kata-kata
 async function bikinKata(env, lagu, paksaGaya = null) {
-  const konteks = `Lagunya: "${lagu.judul}" – ${lagu.artis}` + (lagu.trend ? ' (lagi trend/viral di Indonesia sekarang).' : ' (lagu lawas).');
+  const konteks = `Lagunya: "${lagu.judul}" – ${lagu.artis}` + (lagu.trend ? ' (lagi viral di TikTok/FYP Indonesia sekarang).' : ' (lagu lawas).');
   const aturanUmum = `- Bahasa Indonesia gaul yang natural, kayak orang ngetik di HP: kalimat pendek-pendek, boleh 1 baris kosong buat jeda. Bukan baku, bukan iklan, bukan gaya AI (hindari "dalam hidup ini", "pada akhirnya", "perjalanan", tanda pisah panjang berlebihan).
 - JANGAN mengutip lirik lagunya, JANGAN sebut judul/artis (udah ditulis terpisah).
 - Kalau kamu beneran kenal lagunya, sesuaikan sama tema & suasananya. Kalau nggak yakin, jangan ngarang isi lagunya — main di perasaan umum aja.
@@ -408,8 +456,11 @@ async function laguBerikut(env, paksaGaya = null, siapa = {}) {
   };
   const lawas = saring(DAFTAR, Math.max(0, DAFTAR.length - 5));
   let trend = [];
-  try { trend = saring(await daftarTrend(env), 60); } catch { /* lawas aja */ }
-  // Selang-seling: mulai dari trend (50%) atau lawas, gantian kalau gagal nemu.
+  // Kolam trend = chart harian + benih viral TikTok; saring() anti-pengulangan
+  // jalan menganggap keduanya satu kolam (benih di-shuffle bareng chart).
+  try { trend = await daftarTrend(env); } catch { /* chart mati; benih tetap ada */ }
+  trend = saring([...trend, ...TIKTOK_SEED], 60);
+  // Selang-seling: mulai dari trend (PELUANG_TREND) atau lawas, gantian kalau gagal nemu.
   const mulaiTrend = trend.length && Math.random() < PELUANG_TREND;
   const urutan = [];
   for (let i = 0; i < 3; i++) {

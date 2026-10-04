@@ -812,6 +812,58 @@
                 android:text="@string/u_kirim_satu_lagu_sekarang" />
             </LinearLayout>
 
+            <!-- ================= PERTANYAAN MOOD (NGEJOKS) ================= -->
+            <LinearLayout style="@style/Kartu">
+            <TextView
+                style="@style/JudulKartu"
+                android:drawableStart="@drawable/ic_tanya"
+                android:text="@string/u_pertanyaan_mood" />
+            <TextView style="@style/KetKartu" android:text="@string/u_ket_pertanyaan_mood" />
+            <LinearLayout android:id="@+id/rowPertanyaanAktif" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/u_nyalain_pertanyaan_mood"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/u_dikirim_ke_channel_yang_sama"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
+            <TextView style="@style/Label" android:text="@string/u_rata_rata_berapa_kali_sehari" />
+            <EditText
+                android:id="@+id/etPertanyaanPerHari"
+                style="@style/Isian"
+                android:hint="2"
+                android:inputType="number" />
+            <TextView
+                android:id="@+id/tvPertanyaanStat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_ubin"
+                android:padding="12dp"
+                android:textColor="@color/wr_teks"
+                android:textSize="13sp" />
+            <TextView
+                android:id="@+id/btnTanyaSekarang"
+                style="@style/TombolGaris"
+                android:layout_marginTop="12dp"
+                android:drawableStart="@drawable/ic_tanya"
+                android:text="@string/u_kirim_satu_pertanyaan_sekarang" />
+            </LinearLayout>
+
             <!-- ================= HOSTING BOT ================= -->
             <LinearLayout style="@style/Kartu">
             <TextView
@@ -1255,6 +1307,8 @@
         android:layout_height="match_parent"
         android:background="@color/wr_latar"
         android:clickable="true"
+        android:clipChildren="false"
+        android:clipToPadding="false"
         android:elevation="24dp"
         android:focusable="true"
         android:visibility="gone">
@@ -1269,6 +1323,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginBottom="40dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:gravity="center_horizontal"
             android:orientation="vertical">
             <com.xykals.warelease.MorphView
@@ -1281,6 +1337,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="22dp"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:gravity="center_horizontal"
                 android:orientation="vertical">
                 <ImageView

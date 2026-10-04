@@ -7,12 +7,12 @@ import { SUMBER_BAWAAN } from '../lagu.mjs';
 
 /**
  * @param {object} ctx konteks engine (lihat bot.mjs)
- * @param {{ rilis: object, lagu: object, grup: object, tautan: object, jaga: object, berkala: object }} deps modul-modul fitur
+ * @param {{ rilis: object, lagu: object, lawak: object, grup: object, tautan: object, jaga: object, berkala: object }} deps modul-modul fitur
  */
-export function buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga, berkala }) {
+export function buatPerintah(ctx, { rilis, lagu, lawak, grup, tautan, jaga, berkala }) {
   const {
     log, saveState, emitStatus, bridge, cfgFile, hosting,
-    scheduleNext, intervalMs, repoAda, grupAktif, laguAktif, jadwalGrup, startEngine, stopEngine,
+    scheduleNext, intervalMs, repoAda, grupAktif, laguAktif, lawakAktif, jadwalGrup, startEngine, stopEngine,
   } = ctx;
 
   async function handleCommand(cmd) {
@@ -86,8 +86,17 @@ export function buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga, berkala }) 
             tzMenit: Number(cmd.tzMenit) || 0,
             sumber: String(cmd.laguSumber || '').trim() || SUMBER_BAWAAN,
           },
+          lawak: {
+            // Pertanyaan ngejoks harian ke channel (postingan "Pertanyaan").
+            // Teks lokal (lawak.mjs) — nggak butuh internet buat isi, cuma buat kirim.
+            aktif: Boolean(cmd.pertanyaanAktif),
+            perHari: Math.min(Math.max(Number(cmd.pertanyaanPerHari) || 2, 1), 8),
+            jamMulai: Number.isFinite(Number(cmd.pertanyaanJamMulai)) ? Number(cmd.pertanyaanJamMulai) : 10,
+            jamSelesai: Number.isFinite(Number(cmd.pertanyaanJamSelesai)) ? Number(cmd.pertanyaanJamSelesai) : 21,
+            tzMenit: Number(cmd.tzMenit) || 0,
+          },
         };
-        if (!next.github.repo && !next.grup.aktif && !next.lagu.aktif && !next.jaga.moderasi && !next.jaga.perintah) {
+        if (!next.github.repo && !next.grup.aktif && !next.lagu.aktif && !next.lawak.aktif && !next.jaga.moderasi && !next.jaga.perintah) {
           bridge.send({ type: 'cmd_error', msg: 'Isi repo GitHub, nyalain penjaga grup, lagu mood, moderasi grup, atau perintah pribadi — minimal salah satu.' });
           return;
         }
@@ -129,6 +138,9 @@ export function buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga, berkala }) 
           const laguLama = ctx.nextLaguAt;
           if (!laguAktif()) lagu.jadwalLagu();
           else if (!laguLama) lagu.jadwalLagu();
+          const lawakLama = ctx.nextTanyaAt;
+          if (!lawakAktif()) lawak.jadwalTanya();
+          else if (!lawakLama) lawak.jadwalTanya();
         }
         emitStatus();
         break;
@@ -235,6 +247,11 @@ export function buatPerintah(ctx, { rilis, lagu, grup, tautan, jaga, berkala }) 
       case 'lagu-sekarang':
         if (!perluCfg()) return;
         void lagu.runLagu('manual');
+        break;
+
+      case 'tanya-sekarang':
+        if (!perluCfg()) return;
+        void lawak.runTanya('manual');
         break;
 
       default:

@@ -6,6 +6,27 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+### Ditambahkan (ronda 3)
+- **Pertanyaan mood (ngejoks)**: fitur baru — beberapa kali sehari bot ngirim satu
+  pertanyaan absurd "plenger" dari bank lokal (`bot-js/src/lawak.mjs`) ke channel sebagai
+  postingan **Pertanyaan** (pakai mekanisme `isQuestion` yang sudah dipakai rilis, dengan
+  fallback aman ke teks biasa). Saklar + jumlah per hari ada di kartu baru "Pertanyaan
+  mood · ngejoks"; jam efektif bawaan 10–21; tombol "Kirim satu pertanyaan sekarang"
+  buat ngetes. Isi bank lokal di HP — tanpa AI, tanpa internet selain saat ngirim.
+
+### Diubah (ronda 3)
+- Kepala semua pesan disederhanakan lagi: garis strip panjang dibuang (di layar sempit
+  sering wrap dan kelihatan berantakan). Sekarang satu baris rapi
+  `*SUKIBOT · JUDUL*` (dengan emoji tulang di pesan aslinya).
+- Sebutan bermuatan kata "samaran" dihapus total dari label daftar hitam — kini polos `ID 100987654`.
+- Lagu mood: catatan lagu trend kini bilang "lagi rame di FYP TikTok minggu ini";
+  Worker lebih sering memilih lagu trend (±75%, dulu 50%) dan kolam trend ditambah
+  benih viral TikTok yang dikurasi (`TIKTOK_SEED` di `lagu/worker/worker.js`) — pantun
+  gaul juga diperbanyak. Setelah perubahan ini, deploy ulang Worker dengan
+  `scripts-dev/deploy_worker_lagu.py` supaya benih + bobot barunya kepakai.
+- Splash: gelembung chat tidak lagi kepotong saat "pop" (rantai parent dibuat
+  `clipChildren=false` dan mantulnya diredam).
+
 ### Keamanan (CI)
 - `bersihkan.yml` kini punya profil **full wipe**: tiap kali build `main` selesai
   (`workflow_run`), semua run Actions yang selesai — beserta log dan artifact-nya —

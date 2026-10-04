@@ -83,6 +83,11 @@ data class BotUi(
     // "n/12": lagu yang sudah diminta perangkat ini hari ini / jatah harian Worker
     var laguJatah: String? = null,
     var nextLaguAt: Long? = null,
+    // pertanyaan mood (ngejoks — postingan "Pertanyaan" di channel)
+    var lawakAktif: Boolean = false,
+    var lawakCount: Int = 0,
+    var lawakTanya: String? = null,
+    var nextTanyaAt: Long? = null,
     // bot WA umum (M14/M15): moderasi grup, perintah pribadi, stiker, story
     var jagaAktif: Boolean = false,
     var moderasiAktif: Boolean = false,

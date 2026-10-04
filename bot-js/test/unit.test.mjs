@@ -121,9 +121,8 @@ test('formatReleasePost: memuat tag, repo, author, link; SukiBot di atas', () =>
   assert.match(msg, /releases\/tag\/v1\.4\.0/);
   assert.match(msg, /Fitur A/);
   // SukiBot HARUS baris paling atas (kall 2026-10-04)
-  assert.ok(msg.startsWith('*🦴 SUKIBOT*'), 'kepala SukiBot di baris pertama');
+  assert.ok(msg.startsWith('*🦴 SUKIBOT · wa-release-bot v1.4.0 udah rilis! 🚀*'), 'kepala SukiBot · judul di baris pertama');
   // markdown WhatsApp: bold pakai *...*
-  assert.match(msg, /\*wa-release-bot v1\.4\.0 udah rilis! 🚀\*/);
   assert.match(msg, /\*📜 Changelog \(apa yang baru\):\*/);
   assert.match(msg, /Link changelog & rilis lengkap/);
   // bukan prerelease → nggak ada penanda
@@ -180,7 +179,7 @@ test('formatTestMessage: menyebut repo yang dipantau', () => {
   const msg = formatTestMessage('xykal/wa-release-bot');
   assert.match(msg, /xykal\/wa-release-bot/);
   assert.match(msg, /Setup sukses/);
-  assert.ok(msg.startsWith('*🦴 SUKIBOT*'), 'pesan tes juga berkepala SukiBot');
+  assert.ok(msg.startsWith('*🦴 SUKIBOT ·'), 'pesan tes juga berkepala SukiBot · judul');
 });
 
 // --------------------------------------------------------------- bacaTarget
@@ -405,7 +404,7 @@ test('daftar hitam: dikelompokin per orang & bisa dibuka blokirnya pakai nomor',
   const denganNama = kelompokHitam(hitam, info, { '6281234': 'Budi', '777000': 'Susi Tanpa Nomor' });
   assert.equal(denganNama[0].nama, 'Budi');
   assert.equal(denganNama[1].nama, 'Susi Tanpa Nomor');
-  assert.equal(k[1].label, 'ID samaran 777000');
+  assert.equal(k[1].label, 'ID 777000');
 
   const r = bukaBlokir(hitam, info, '081234', (x) => (x.replace(/\D/g, '').replace(/^0/, '62')) || null);
   assert.equal(r.dihapus.label, '+6281234');
@@ -415,7 +414,7 @@ test('daftar hitam: dikelompokin per orang & bisa dibuka blokirnya pakai nomor',
   const r2 = bukaBlokir(r.hitam, r.info, '777000@lid');
   assert.deepEqual(r2.hitam, []);
   assert.equal(bukaBlokir([], [], 'ngasal').dihapus, null);
-  assert.equal(labelOrang(['1@lid']), 'ID samaran 1');
+  assert.equal(labelOrang(['1@lid']), 'ID 1');
 });
 
 // ------------------------------------------------------ format pertanyaan
@@ -560,7 +559,7 @@ test('formatKataLagu: kata-kata + judul tebal', () => {
   assert.match(t, /^Kangen itu berat\./);
   assert.match(t, /🎧 \*Siapa Di Hatimu\* — Rahmat Ekamatra/);
   assert.doesNotMatch(t, /lagi rame/);
-  assert.match(formatKataLagu({ kata: 'x', judul: 'J', artis: 'A', jenis: 'trend' }), /\*J\* — A\n_lagi rame diputer/);
+  assert.match(formatKataLagu({ kata: 'x', judul: 'J', artis: 'A', jenis: 'trend' }), /\*J\* — A\n_lagi rame di FYP TikTok/);
   assert.doesNotMatch(formatKataLagu({ kata: 'x', judul: 'J', artis: 'A', jenis: 'lawas' }), /lagi rame/);
 });
 

@@ -68,7 +68,7 @@ test('susunDaftarHitam: satu orang dua kali tetap satu baris + dihitung sekali',
   assert.equal(baris[0], '+628120000001 — didaftarkan admin');
 });
 
-test('susunDaftarHitam: nomor HP dulu, ID samaran utuh di belakang, dari kecil ke besar', () => {
+test('susunDaftarHitam: nomor HP dulu, ID LID utuh polos di belakang, dari kecil ke besar', () => {
   const { baris } = susunDaftarHitam({
     hitam: [
       { ids: ['777@lid'], sejak: null },
@@ -76,7 +76,7 @@ test('susunDaftarHitam: nomor HP dulu, ID samaran utuh di belakang, dari kecil k
       { ids: ['628111111111@s.whatsapp.net'], sejak: null },
     ],
   });
-  assert.deepEqual(baris, ['+628111111111', '+628999999999', 'ID samaran 777']);
+  assert.deepEqual(baris, ['+628111111111', '+628999999999', 'ID 777']);
 });
 
 test('teksBerkala: daftar kepanjangan diringkas, nggak dicopot diam-diam', () => {

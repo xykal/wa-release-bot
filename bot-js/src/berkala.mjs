@@ -66,8 +66,8 @@ function orangDariMasukan(masukan) {
       const n = normalisasiNomor(angka) || angka;
       return { kunci: n, label: `+${n}` };
     }
-    // LID ditampilkan UTUH (kall 2026-10-04: "gaperlu ada yang disamarkan").
-    return { kunci: `lid:${angka}`, label: `ID samaran ${angka}` };
+    // LID ditampilkan UTUH polos tanpa label tambahan (kall 2026-10-04).
+    return { kunci: `lid:${angka}`, label: `ID ${angka}` };
   }
   const n = normalisasiNomor(t);
   if (n) return { kunci: n, label: `+${n}` };
@@ -77,7 +77,7 @@ function orangDariMasukan(masukan) {
 
 /**
  * Susun daftar hitam yang siap ditampilkan: normalisasi, buang duplikat
- * (otomatis vs manual), urutkan nomor kecil dulu, ID samaran di belakang.
+ * (otomatis vs manual), urutkan nomor HP dulu, ID LID di belakang.
  * Kalau nama WA-nya kebaca, ditulis di depan nomornya: "Nama (+62812…)".
  *
  * @param {{ hitam?: object[], manual?: (string|number)[] }} opsi
@@ -115,7 +115,7 @@ export function susunDaftarHitam({ hitam = [], manual = [] } = {}) {
   const urut = [...orang.entries()].sort((a, b) => {
     const lidA = a[0].startsWith('lid:');
     const lidB = b[0].startsWith('lid:');
-    if (lidA !== lidB) return lidA ? 1 : -1; // nomor HP dulu, ID samaran belakang
+    if (lidA !== lidB) return lidA ? 1 : -1; // nomor HP dulu, ID LID belakang
     return a[0].localeCompare(b[0], 'en', { numeric: true });
   });
 

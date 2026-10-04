@@ -100,6 +100,16 @@ class SettingsStore(ctx: Context) {
         get() = p.getInt("laguJamSelesai", 22)
         set(v) = p.edit().putInt("laguJamSelesai", v.coerceIn(1, 24)).apply()
 
+    // ---- pertanyaan mood (ngejoks) ----
+    var pertanyaanAktif: Boolean
+        get() = p.getBoolean("pertanyaanAktif", PengaturanBawaan.LAWAK)
+        set(v) = p.edit().putBoolean("pertanyaanAktif", v).apply()
+
+    /** Rata-rata berapa kali sehari (jam efektifnya dipatok engine: 10–21). */
+    var pertanyaanPerHari: Int
+        get() = p.getInt("pertanyaanPerHari", 2)
+        set(v) = p.edit().putInt("pertanyaanPerHari", v.coerceIn(1, 8)).apply()
+
     // ---- hosting & sambutan ----
     /** Pernah upload project bot custom → service boleh nyala sendiri pas boot. */
     var hostingDipakai: Boolean
@@ -201,7 +211,7 @@ class SettingsStore(ctx: Context) {
      */
     fun hasValidSettings(): Boolean =
         repo.isNotBlank() || (grupAktif && grupTarget.isNotBlank()) || laguAktif ||
-            moderasiAktif || perintahPribadi
+            pertanyaanAktif || moderasiAktif || perintahPribadi
 
     /** Offset zona waktu HP (menit) — engine Node di Android nggak tau zona waktu lokal. */
     private fun tzMenit(): Int =
@@ -238,6 +248,8 @@ class SettingsStore(ctx: Context) {
         "laguPerHari" to laguPerHari,
         "laguJamMulai" to laguJamMulai,
         "laguJamSelesai" to laguJamSelesai,
+        "pertanyaanAktif" to pertanyaanAktif,
+        "pertanyaanPerHari" to pertanyaanPerHari,
         "tzMenit" to tzMenit()
     )
 
@@ -294,6 +306,17 @@ class SettingsStore(ctx: Context) {
                 // "sumber" sengaja tidak dikirim: URL Worker cuma ada di
                 // bot-js/src/lagu.mjs (SUMBER_BAWAAN). Dulu ditulis dua kali dan
                 // yang di sini salah subdomain, fitur lagu mati diam-diam.
+        )
+        .put(
+            "lawak",
+            JSONObject()
+                .put("aktif", pertanyaanAktif)
+                .put("perHari", pertanyaanPerHari)
+                // Jam efektif pertanyaan sengaja diset dari sini (nggak ada UI):
+                // siang-sore biar bunyinya kerasa, bukan azan.
+                .put("jamMulai", 10)
+                .put("jamSelesai", 21)
+                .put("tzMenit", tzMenit())
         )
         .put(
             "bot",

@@ -64,7 +64,7 @@ export function formatKataLagu(lagu) {
   const baris = judul ? `🎧 *${judul}*${artis ? ` — ${artis}` : ''}` : artis ? `🎧 ${artis}` : '';
   // Worker ngasih `jenis: 'trend'|'lawas'`; `trend: true` buat kompatibilitas tes/format lama.
   const lagiTrend = lagu.trend === true || lagu.jenis === 'trend';
-  const trend = lagiTrend && baris ? '_lagi rame diputer di Indonesia minggu ini_' : '';
+  const trend = lagiTrend && baris ? '_lagi rame di FYP TikTok minggu ini_' : '';
   return [kata, [baris, trend].filter(Boolean).join('\n')].filter(Boolean).join('\n\n');
 }
 

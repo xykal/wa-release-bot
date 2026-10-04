@@ -90,7 +90,7 @@ test('sambutan SukiBot hanya muncul di grup pantauan setelah opt-in privat', asy
     await new Promise(setImmediate);
     assert.equal(terkirim.length, 2);
     assert.equal(terkirim[1].jid, '12345@g.us');
-    assert.match(terkirim[1].isi.text, /Selamat datang di Xyclous/);
+    assert.match(terkirim[1].isi.text, /Selamat datang di \*Xyclous\*/);
     assert.match(terkirim[1].isi.text, /SukiBot/);
 
     ev.emit('messages.upsert', {

@@ -83,17 +83,27 @@ internal class SplashUtama(
             .setInterpolator(OvershootInterpolator(1.7f))
             .start()
 
-        // 3. gelembung chat: ikut naik dari bawah, lalu "pop" tiap ganti bentuk
+        // 3. gelembung chat: ikut naik dari bawah, lalu "pop" tiap ganti bentuk.
+        //    Pivot HARUS di tengah: dulu pivotY = 0 (tepi atas), jadi waktu
+        //    "pop" (scale mengecil) gelembungnya kelihatan tenggelam/arwah
+        //    mengempis ke bawah — keluhan kall 2026-10-04.
         val gelembung = a.findViewById<View>(R.id.gelembungSplash)
-        gelembung.pivotY = 0f
         gelembung.alpha = 0f
         gelembung.translationY = 18f * d
         gelembung.animate().alpha(1f).translationY(0f)
             .setStartDelay(380).setDuration(420)
-            .setInterpolator(DecelerateInterpolator(2f)).start()
+            .setInterpolator(DecelerateInterpolator(2f))
+            .withStartAction {
+                gelembung.pivotX = gelembung.width / 2f
+                gelembung.pivotY = gelembung.height / 2f
+            }.start()
         morph.onGantiBentuk = { i ->
-            gelembung.animate().cancel()
+            // Set pivot di sini juga: di titik ini view pasti sudah ter-layout,
+            // jadi tengahnya selalu benar (jaga-jaga kalau withStartAction
+            // keburu jalan sebelum view punya ukuran).
             gelembung.pivotX = gelembung.width / 2f
+            gelembung.pivotY = gelembung.height / 2f
+            gelembung.animate().cancel()
             gelembung.animate().scaleX(0.86f).scaleY(0.86f).alpha(0.4f).setDuration(110)
                 .setInterpolator(AccelerateInterpolator())
                 .withEndAction {

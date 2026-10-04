@@ -29,8 +29,12 @@ function bentukRelease(rel, etag) {
     author: rel.author?.login || 'unknown',
     publishedAt: rel.published_at,
     isPrerelease: Boolean(rel.prerelease),
-    // Cuma yang dipakai di post: nama + ukuran. URL unduh nggak perlu, link release udah cukup.
-    assets: Array.isArray(rel.assets) ? rel.assets.map((a) => ({ name: a.name, size: a.size })) : [],
+    // Nama + ukuran + URL unduh langsung per file (permintaan kall 2026-10-04:
+    // "release harus ada link download masing-masing"). browser_download_url
+    // adalah link resmi dari GitHub — bukan tebakan URL dari nama file.
+    assets: Array.isArray(rel.assets)
+      ? rel.assets.map((a) => ({ name: a.name, size: a.size, url: a.browser_download_url || '' }))
+      : [],
     etag,
     notModified: false,
   };

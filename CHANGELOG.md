@@ -6,6 +6,31 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+### Diubah
+- Gaya semua pesan WA dirapikan dan diseragamkan: kepala `*🦴 SUKIBOT*` selalu di baris
+  pertama (postingan rilis, pesan tes, lapor gagal, peringatan/kick moderasi, sambutan,
+  daftar hitam berkala, `.menu`), diikuti judul, isi, lalu footer tanda tangan.
+- Postingan rilis: seksi **Changelog (apa yang baru)** berlabel jelas + link rilis lengkap,
+  dan seksi **Download** berisi link unduh langsung masing-masing file
+  (`browser_download_url` GitHub), maksimal 5 file dengan sisanya diringkas.
+- Format **Pertanyaan** channel diperbaiki: tidak lagi dibungkus `questionMessage`
+  (tidak pernah tampil benar di HP). Sekarang pesan teks ditandai `contextInfo.isQuestion`
+  + `messageSecret` — di HP yang sudah kenal formatnya muncul sebagai Pertanyaan asli, di
+  yang belum TETAP tampil sebagai teks biasa, tidak pernah kosong.
+- Daftar hitam tidak lagi ada yang disamarkan: nomor dan LID ditulis utuh, dan
+  penyebutan "ID samaran …1234" dihapus. Pushname WA yang kebaca (dicatat dari anggota
+  grup dan pesan masuk, disimpan di `g.namaPeta`) kini tampil di depan nomornya:
+  "Nama (+62812…)" — di lembar app maupun pesan berkala.
+- Moderasi grup: kiriman berisi link luar/promosi/jualan/kata terlarang langsung dihapus,
+  lalu pelakunya menerima tepat 1 peringatan yang me-mention orangnya; strike terakhir =
+  dikeluarkan. Daftar kata kunci jualan ditambah (open PO, preorder, ready stock,
+  bisa COD, order via WA, dm harga, link shopee/tokped, dst).
+
+### Diperbaiki
+- Splash: pivot animasi "pop" gelembung chat dulu di tepi atas (`pivotY = 0`), jadi tiap
+  logo ganti bentuk gelembungnya tampak mengempis/tenggelam ke bawah. Pivot kini di tengah,
+  pop-nya memantul di tempat.
+
 ## [1.0.0] — 2026-10-03
 
 Rilis publik pertama. Build bernomor 1.0.0–1.8.0 sebelumnya adalah build internal;

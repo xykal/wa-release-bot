@@ -49,7 +49,11 @@ internal class LembarHitam(
                 setPadding(a.dp(12), a.dp(10), a.dp(10), a.dp(10))
             }
             val kiri = LinearLayout(a).apply { orientation = LinearLayout.VERTICAL }
-            kiri.addView(teks(o.label, R.color.wr_teks, 15f))
+            // Baris 1: nama WA kalau kebaca, kalau nggak ya nomor penuhnya.
+            // Nomor TIDAK lagi disamarkan/dipotong (kall 2026-10-04).
+            val judulBaris = if (o.nama != null) "${i + 1}. ${o.nama}" else "${i + 1}. ${o.label}"
+            kiri.addView(teks(judulBaris, R.color.wr_teks, 15f).apply { setTypeface(typeface, android.graphics.Typeface.BOLD) })
+            if (o.nama != null) kiri.addView(teks(o.label, R.color.wr_teks2, 13f))
             kiri.addView(
                 teks(
                     o.sejak?.let { a.getString(R.string.k_keluar_dikeluarin, tgl.format(java.util.Date(it))) } ?: a.getString(R.string.k_dicatat_bot),

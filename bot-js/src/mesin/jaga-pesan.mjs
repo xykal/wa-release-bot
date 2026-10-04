@@ -21,6 +21,7 @@ import { identitas, identitasSama } from '../grup.mjs';
 import { bacaTarget, JENIS } from '../channel.mjs';
 import { buatAksiPesan, teksPesan } from './aksi-pesan.mjs';
 import { buatAksiMedia } from './aksi-media.mjs';
+import { pesanRapi } from '../format.mjs';
 
 export function buatJagaPesan(ctx, { rekam = null } = {}) {
   const { log, emitStatus, sambung } = ctx;
@@ -95,7 +96,14 @@ export function buatJagaPesan(ctx, { rekam = null } = {}) {
       if (!peserta.some((jid) => !identitasSama(jid, sock.user))) return;
       const nama = String(ctx.state.grup?.nama || 'grup ini').trim();
       try {
-        await sendText(sock, jidGrup, `Selamat datang di ${nama}! Cek deskripsi grup untuk aturan dan info ya.`);
+        await sendText(sock, jidGrup, pesanRapi(
+          'Selamat datang! 👋',
+          '',
+          `Halo! Selamat datang di *${nama}*.`,
+          'Cek deskripsi grup untuk aturan dan info ya.',
+          '',
+          `_Disambut otomatis oleh ${NAMA_BOT}._`
+        ));
         log(`Sambutan ${NAMA_BOT} dikirim ke grup "${nama}".`);
       } catch (e) {
         log(`Sambutan ${NAMA_BOT} gagal dikirim: ${e.message}`);

@@ -34,7 +34,7 @@
     <string name="u_kirim_pesan_tes_pas_setup">Kirim pesan tes pas setup</string>
     <string name="u_biar_ketahuan_channel_nya_bener">Biar ketahuan channel-nya bener</string>
     <string name="u_kirim_sebagai_pertanyaan">Kirim sebagai Pertanyaan</string>
-    <string name="u_eksperimental_format_pertanyaan_wa_belum">Eksperimental: format Pertanyaan WA belum terbuka protokolnya, jadi belum tentu tampil bener. Default mati = pesan rilis dikirim sebagai teks biasa yang pasti nyampe. Nyalain cuma buat nyoba.</string>
+    <string name="u_eksperimental_format_pertanyaan_wa_belum">Pesan rilis dikirim dengan tanda Pertanyaan resmi WA — follower bisa bales langsung ke admin. Kalau WA di HP belum kenal formatnya, pesan tetap tampil sebagai teks biasa yang pasti nyampe. Default mati.</string>
     <string name="u_bikin_channel">Bikin channel</string>
     <string name="u_tes_kirim_ke_channel">Tes kirim ke channel</string>
     <string name="u_buat_grup_yang_pakai_setujui">Buat grup yang pakai &quot;Setujui anggota baru&quot;: yang minta join otomatis di-approve, KECUALI yang dulu udah keluar / dikeluarin — mereka ditolak. Akun WA lo harus admin di grup itu.</string>
@@ -317,7 +317,7 @@
     <string name="u_bot_wa_umum">Bot WA umum · eksperimental</string>
     <string name="u_ket_bot_wa_umum">Default mati. Moderasi grup dan perintah pribadi membuat WhatsApp tersambung terus, lebih boros batre, dan masih butuh validasi perangkat nyata.</string>
     <string name="u_moderasi_grup">Moderasi grup</string>
-    <string name="u_ket_moderasi_grup">Hapus link/phishing/promo, peringatan, lalu dikeluarkan di strike terakhir. Admin dan bot sendiri nggak pernah disentuh.</string>
+    <string name="u_ket_moderasi_grup">Pesan berisi link luar, promosi/jualan, judi, atau kata terlarang langsung dihapus; pelakunya dapat 1 peringatan (ke-tag), lalu dikeluarkan di strike terakhir. Admin dan bot sendiri nggak pernah disentuh.</string>
     <string name="u_perintah_pribadi">Perintah pribadi di chat sendiri</string>
     <string name="u_ket_perintah_pribadi">.menu .ping .status .stiker .story .grup — cuma jalan di chat sendiri, bukan di grup.</string>
     <string name="u_izinkan_link_biasa">Izinkan link biasa</string>

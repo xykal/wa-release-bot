@@ -1,7 +1,21 @@
 // Format pesan WhatsApp (markdown WA: *bold*, _italic_, ~coret~, `mono`, ```blok```).
-import { BRAND, NAMA_PAKET, TANDA_TANGAN } from './config/brand.mjs';
+import { BRAND, NAMA_BOT, NAMA_PAKET, TANDA_TANGAN } from './config/brand.mjs';
 
 const MAX_BODY = 1800;
+
+// Kepala pesan: SukiBot SEKARANG selalu di atas (permintaan kall 2026-10-04:
+// "SukiBot harus di atas"). Satu baris judul bold + garis tipis di bawahnya,
+// konsisten di semua pesan bot biar follower langsung kenal.
+const GARIS = '─────────────────';
+export const KEPALA = `*🦴 ${NAMA_BOT.toUpperCase()}*\n${GARIS}`;
+/**
+ * Susun pesan baku: kepala SukiBot di atas → judul → pemisah → isi… → footer.
+ * @param {string} judul baris judul (tanpa bold, diboldkan di sini kalau diisi)
+ * @param {string[]} isi baris-baris isi
+ */
+export function pesanRapi(judul, ...isi) {
+  return [KEPALA, judul ? `\n*${judul}*\n` : '', ...isi].flat().join('\n').replace(/\n{3,}/g, '\n\n').trimEnd();
+}
 
 // Penutup buat format "pertanyaan" di channel: follower bisa bales pesan ini
 // (balasannya cuma keliatan sama admin channel).
@@ -87,14 +101,26 @@ export function formatUkuran(bytes) {
   return `${n} B`;
 }
 
-const MAKS_LAMPIRAN = 3;
+// Link unduh yang ditulis per file dibatasi biar pesan nggak kepanjangan;
+// sisanya nunjuk ke halaman rilis (permintaan kall: "link download masing-masing").
+const MAKS_LAMPIRAN = 5;
 
+/**
+ * Seksi "Download": satu file = nama + ukuran di satu baris, lalu URL unduh
+ * langsung di baris berikutnya (WA otomatis bikin link-nya bisa diketuk).
+ * File tanpa URL unduh tetap disebut namanya, diarahkan ke halaman rilis.
+ */
 function barisLampiran(assets) {
   const daftar = Array.isArray(assets) ? assets.filter((a) => a && a.name) : [];
   if (!daftar.length) return [];
-  const tampil = daftar.slice(0, MAKS_LAMPIRAN).map((a) => `• ${a.name} (${formatUkuran(a.size)})`);
+  const tampil = daftar.slice(0, MAKS_LAMPIRAN).map((a) =>
+    a.url ? `• *${a.name}* (${formatUkuran(a.size)})\n  ${a.url}` : `• *${a.name}* (${formatUkuran(a.size)}) _— di halaman rilis_`
+  );
+  const baris = ['📥 *Download:*', ...tampil];
   const sisa = daftar.length - tampil.length;
-  return ['📎 *File:*', ...tampil, ...(sisa > 0 ? [`_(+${sisa} file lain di link)_`] : []), ''];
+  if (sisa > 0) baris.push(`_(+${sisa} file lain di link rilis)_`);
+  baris.push('');
+  return baris;
 }
 
 export function formatReleasePost(rel, repoStr, { ajakBalas = false } = {}) {
@@ -103,50 +129,56 @@ export function formatReleasePost(rel, repoStr, { ajakBalas = false } = {}) {
 
   const body = mdKeWa(rel.body);
   const bodyFinal =
-    body.length > MAX_BODY ? potongAman(body, MAX_BODY) + '\n\n_(notes-nya panjang, lanjut di link)_' : body;
+    body.length > MAX_BODY ? potongAman(body, MAX_BODY) + '\n\n_(notes-nya panjang, lanjut di link changelog)_' : body;
 
-  const lines = [`🚀 *${namaRepo} ${rel.tag} udah rilis!*`, pilihPembuka(rel.tag), ''];
-  if (rel.name && rel.name.trim() !== rel.tag) lines.push(`📌 *${rel.name.trim()}*`);
-  if (rel.isPrerelease) lines.push('🧪 _Versi prerelease (uji coba), wajar kalau masih ada bug._');
-  if (rel.name || rel.isPrerelease) lines.push('');
-  lines.push(
-    '*Apa yang baru:*',
-    bodyFinal || '_(nggak ada catatan di rilis ini, langsung cek link-nya aja)_',
+  const isi = [];
+  const sub = [];
+  if (rel.name && rel.name.trim() !== rel.tag) sub.push(`📌 *${rel.name.trim()}*`);
+  if (rel.isPrerelease) sub.push('🧪 _Versi prerelease (uji coba), wajar kalau masih ada bug._');
+  if (sub.length) isi.push(...sub, '');
+  isi.push(
+    `✨ ${pilihPembuka(rel.tag)}`,
+    '',
+    '*📜 Changelog (apa yang baru):*',
+    bodyFinal || '_(nggak ada catatan di rilis ini, langsung cek link changelog)_',
     '',
     ...barisLampiran(rel.assets),
-    `🔗 ${rel.url}`,
-    `📦 ${repoStr} · 👤 @${rel.author} · 🕐 ${tanggal}`,
+    '🔗 *Link changelog & rilis lengkap:*',
+    `${rel.url}`,
     '',
-    ...(ajakBalas ? [AJAKAN_BALAS, ''] : []),
-    `_🦴 Dikirim otomatis oleh ${NAMA_PAKET} (${BRAND}). Botnya tidur, bangun cuma pas ada rilis baru._`
+    `📦 ${repoStr} · 👤 @${rel.author}`,
+    `🕐 ${tanggal}`,
+    ...(ajakBalas ? ['', AJAKAN_BALAS] : []),
+    '',
+    `_🦴 Dikirim otomatis oleh ${NAMA_BOT} — ${NAMA_PAKET} (${BRAND}). Botnya tidur, bangun cuma pas ada rilis baru._`
   );
 
-  return lines.join('\n');
+  return pesanRapi(`${namaRepo} ${rel.tag} udah rilis! 🚀`, ...isi);
 }
 
 export function formatTestMessage(repoStr, { ajakBalas = false } = {}) {
-  return [
-    '✅ *WA RELEASE BOT — SETUP SUKSES!*',
+  return pesanRapi(
+    'Setup sukses! ✅',
     '',
     `Bot ini sekarang siap ngabarin update release dari repo: \`${repoStr}\``,
     '',
-    'Setiap ada *release baru* di GitHub, bot bakal bangun & posting info-nya ke channel ini.',
-    'Kalau nggak ada update? Bot tidur. Nggak nyala 24 jam.',
+    '• Setiap ada *release baru* di GitHub → bot bangun & posting info-nya ke channel ini.',
+    '• Kalau nggak ada update → bot tidur. Nggak nyala 24 jam.',
+    ...(ajakBalas ? ['', AJAKAN_BALAS] : []),
     '',
-    ...(ajakBalas ? [AJAKAN_BALAS, ''] : []),
     `🦴 _${TANDA_TANGAN}_ ` + formatTanggal()
-  ].join('\n');
+  );
 }
 
 export function formatTesGrup(namaGrup) {
-  return [
-    '✅ *Bot nyambung ke grup ini!*',
+  return pesanRapi(
+    'Bot nyambung ke grup ini! ✅',
     '',
     `Penjaga grup${namaGrup ? ` "${namaGrup}"` : ''} aktif: permintaan join di-approve otomatis,`,
     'kecuali yang dulu udah keluar / dikeluarin.',
     '',
-    `🦴 _${TANDA_TANGAN}_ ` + formatTanggal(),
-  ].join('\n');
+    `🦴 _${TANDA_TANGAN}_ ` + formatTanggal()
+  );
 }
 
 /**
@@ -155,14 +187,14 @@ export function formatTesGrup(namaGrup) {
  */
 export function formatLaporGagal({ tag, repo, percobaan, maks, error, cli = false }) {
   const caraUlang = cli ? 'jalankan `npm run once -- --ulang`' : 'tekan *Cek sekarang* di app';
-  return [
-    '⚠️ *wa-release-bot: gagal kirim rilis*',
+  return pesanRapi(
+    'Gagal kirim rilis ⚠️',
     '',
     `Rilis *${tag}* (${repo}) gagal dikirim ke channel ${percobaan}x berturut-turut (batas ${maks}x).`,
     `Error terakhir: ${potongAman(String(error || 'tidak diketahui'), 300)}`,
     '',
     `Bot berhenti mencoba sampai lo ${caraUlang}.`,
     '',
-    `🦴 _${TANDA_TANGAN}_ ` + formatTanggal(),
-  ].join('\n');
+    `🦴 _${TANDA_TANGAN}_ ` + formatTanggal()
+  );
 }

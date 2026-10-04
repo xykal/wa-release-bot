@@ -11,6 +11,7 @@
 //     Aturannya bisa diubah lewat config (kata kunci tambahan).
 
 import { NAMA_BOT } from './config/brand.mjs';
+import { pesanRapi } from './format.mjs';
 
 /** Domain yang dianggap wajar dikirim di grup (undangan grup, link WA sendiri). */
 export const DOMAIN_DIIZINKAN = [
@@ -26,6 +27,12 @@ export const KATA_TERLARANG = [
   'promo', 'diskon', 'obat kuat', 'viagra', 'bokep', 'open bo',
   'crypto gratis', 'airdrop', 'investasi profit', 'profit pasti',
   'join sekarang', 'daftar sekarang', 'minat dm', 'cek dm', 'hub wa',
+  // Jualan / promosi dagang (kall 2026-10-04: "kalau ada unsur jualan juga
+  // bisa dihapus"). Admin tetap kebal — mereka boleh promoin apa aja.
+  'open po', 'pre order', 'pre-order', 'preorder', 'ready stock', 'jual rugi',
+  'harga spesial', 'murah banget', 'bisa cod', 'bayar ditempat', 'bayar di tempat',
+  'dm for price', 'dm harga', 'minat? dm', 'order sekarang', 'order via wa',
+  'chat aja kak', 'wa aja kak', 'tokped', 'link shopee', 'link tokopedia',
 ];
 
 /** Pola link phishing: domain mirip + parameter aneh yang umum di scam. */
@@ -160,38 +167,69 @@ export function menuTeks(namaBot = 'WA Release Bot') {
     `\n*${judul}*`,
     ...nama.map((k) => `• .${k} — ${PERINTAH[k]}`),
   ]);
-  return [
-    `*${namaBot}*`,
+  return pesanRapi(
+    `${namaBot} — Menu 📖`,
     'Perintah pribadi · chat ini saja',
     ...baris,
     '',
     'Kirim media dengan caption `.stiker` atau `.story`; `.storygrup` menunggu dukungan native mention.',
     'Buat stiker teks: `.brat <teks>` · Sambutan grup: `.welcome on/off`.',
     '',
-    `— ${NAMA_BOT}`,
-  ].join('\n');
+    `— ${NAMA_BOT}`
+  );
+}
+
+/** Label kategori yang manusiawi buat ditampilkan di peringatan. */
+export function labelKategori(kategori) {
+  return kategori === 'judi' ? 'judi'
+    : kategori === 'phishing' ? 'link mencurigakan'
+    : 'promosi / jualan';
 }
 
 /**
  * Rencana moderasi: dari satu kiriman yang kena, putuskan hukuman berdasarkan
  * hitungan strike yang sudah ada.
  *
- * @param {{ strikeSebelumnya?: number, batasStrike?: number }} opsi
+ * Pesan dirapikan 2026-10-04 (kall: "gaya pesan rapi, SukiBot di atas"):
+ * kepala SukiBot → judul peringatan → siapa (mention) → alasan → konsekuensi.
+ * `siapa` = teks mention('@628xx'); aksi-pesan mengirimnya bersama field
+ * `mentions` supaya orangnya ke-tag beneran.
+ *
+ * @param {{ strikeSebelumnya?: number, batasStrike?: number, kategori?: string, siapa?: string, alasan?: string }} opsi
  * @returns {{ hukuman: 'peringatan'|'kick', strike: number, teks: string }}
  */
-export function hukumanModerasi({ strikeSebelumnya = 0, batasStrike = 2, kategori = 'promosi' } = {}) {
+export function hukumanModerasi({ strikeSebelumnya = 0, batasStrike = 2, kategori = 'promosi', siapa = '', alasan = '' } = {}) {
   const strike = strikeSebelumnya + 1;
-  const label = kategori === 'judi' ? 'judi' : kategori === 'phishing' ? 'link mencurigakan' : 'promosi';
+  const label = labelKategori(kategori);
+  const target = siapa ? siapa : 'Anggota ini';
+  const barisAlasan = alasan ? [`• Alasan: kiriman berisi ${label} (${alasan}).`] : [`• Alasan: kiriman berisi ${label}.`];
   if (strike >= batasStrike) {
     return {
       hukuman: 'kick',
       strike,
-      teks: `Dikeluarkan dari grup: kiriman berisi ${label} (strike ${strike}/${batasStrike}).`,
+      teks: pesanRapi(
+        'Dikeluarkan dari grup ⛔',
+        '',
+        `${target} dikeluarkan dari grup ini.`,
+        ...barisAlasan,
+        `• Riwayat: ${strike}/${batasStrike} peringatan — batas terlampaui.`,
+        '',
+        `_Dijaga otomatis oleh ${NAMA_BOT}. Admin tetap kebal dari aturan ini._`
+      ),
     };
   }
   return {
     hukuman: 'peringatan',
     strike,
-    teks: `Peringatan ${strike}/${batasStrike}: kiriman berisi ${label} dihapus. Kirim lagi = keluar dari grup.`,
+    teks: pesanRapi(
+      `Peringatan ${strike}/${batasStrike} ⚠️`,
+      '',
+      `Halo ${target}, pesan kamu sudah *dihapus*.`,
+      ...barisAlasan,
+      '',
+      `Kirim hal yang sama lagi (${strike + 1}/${batasStrike}) = *dikeluarkan dari grup*.`,
+      '',
+      `_Dijaga otomatis oleh ${NAMA_BOT}. Admin tetap kebal dari aturan ini._`
+    ),
   };
 }

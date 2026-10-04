@@ -5,7 +5,7 @@
 
 import { bacaPerintah, nilaiPesan, hukumanModerasi, menuTeks } from '../pesan.mjs';
 import { sendText } from '../wa.mjs';
-import { identitas, kelompokHitam } from '../grup.mjs';
+import { identitas, kelompokHitam, kunciNama } from '../grup.mjs';
 import { pilihIsi, teksBerkala } from '../berkala.mjs';
 import { formatWaktu } from '../waktu.mjs';
 
@@ -56,6 +56,18 @@ export function buatAksiPesan(ctx, alat) {
     const pengirim = m.key?.participant || m.key?.remoteJid || '';
     const saya = identitas({ id: sock.user?.id, lid: sock.user?.lid });
 
+    // Pesan apa pun lewat = kesempatan melengkapi peta nama (kall: daftar
+    // hitam harus ada "nama sesuai no"). Murah: cuma isi Map + saveState
+    // sesekali — pushName dibawa WA di tiap pesan grup.
+    if (m.pushName && !m.key?.fromMe) {
+      g.namaPeta = { ...(g.namaPeta || {}) };
+      const k = kunciNama(pengirim);
+      if (k && g.namaPeta[k] !== m.pushName) {
+        g.namaPeta[k] = String(m.pushName).slice(0, 60);
+        saveState();
+      }
+    }
+
     const hasil = nilaiPesan({
       teks: teksPesan(m),
       dariSaya: identitas(m.key).some((i) => saya.includes(i)),
@@ -67,15 +79,20 @@ export function buatAksiPesan(ctx, alat) {
     });
     if (hasil.aksi === 'abaikan') return;
 
+    // Mention orangnya: nomor HP kalau ada, sisanya digit LID-nya.
+    const siapa = '@' + String(pengirim.split('@')[0] || 'anggota').split(':')[0];
     const putusan = hukumanModerasi({
       strikeSebelumnya: g.strike?.[pengirim] || 0,
       batasStrike: ctx.cfg?.jaga?.batasStrike || 2,
       kategori: hasil.kategori,
+      siapa,
+      alasan: hasil.alasan,
     });
     g.strike = { ...(g.strike || {}), [pengirim]: putusan.strike };
 
-    // Hapus kirimannya. Kalau bot bukan admin, WA bakal nolak — dilaporkan
-    // sekali saja biar log nggak dibanjiri orang yang sama.
+    // 1. HAPUS DULU pesannya (kall: "langsung hapus pesannya, serta kasih 1
+    //    peringatan"). Kalau bot bukan admin, WA bakal nolak — dilaporkan
+    //    biar log nggak diam.
     try {
       await sock.sendMessage(jidGrup, { delete: m.key });
       papan.dihapus += 1;
@@ -83,19 +100,20 @@ export function buatAksiPesan(ctx, alat) {
       log(`⚠️ Nggak bisa hapus pesan di grup (bot harus admin): ${e.message}`);
     }
 
+    // 2. Baru kirim peringatannya (dengan mention asli ke pelakunya).
     if (putusan.hukuman === 'kick') {
       try {
         await sock.groupParticipantsUpdate(jidGrup, [pengirim], 'remove');
         papan.kick += 1;
         log(`⛔ ${pengirim.split('@')[0]} dikeluarkan: ${hasil.alasan} (strike ${putusan.strike}).`);
-        await sendText(sock, jidGrup, `⛔ Dikeluarkan: ${putusan.teks}`);
+        await sendText(sock, jidGrup, putusan.teks, { mentions: [pengirim] });
       } catch (e) {
         log(`⚠️ Nggak bisa keluarin ${pengirim.split('@')[0]}: ${e.message}`);
       }
     } else {
       papan.peringatan += 1;
       log(`🧹 Pesan dihapus: ${hasil.alasan} (strike ${putusan.strike}).`);
-      await sendText(sock, jidGrup, `🧹 ${putusan.teks}`);
+      await sendText(sock, jidGrup, putusan.teks, { mentions: [pengirim] });
     }
     saveState();
     emitStatus();
@@ -266,7 +284,7 @@ export function buatAksiPesan(ctx, alat) {
       hitamSaja: Boolean(ctx.cfg?.berkala?.hitamSaja),
       teks: ctx.cfg?.berkala?.teks,
     });
-    const hitam = kustom ? [] : kelompokHitam(g.hitam || [], g.hitamInfo || []);
+    const hitam = kustom ? [] : kelompokHitam(g.hitam || [], g.hitamInfo || [], g.namaPeta || {});
     const manual = kustom ? [] : String(ctx.cfg?.grup?.daftarHitam || '')
       .split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
     return { teks: teksBerkala({ namaGrup: g.nama, hitam, manual, teksKustom: kustom }), mode };

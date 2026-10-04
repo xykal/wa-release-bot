@@ -293,19 +293,26 @@ export async function sendText(sock, jid, text, opsi = {}) {
  * Kirim pesan ke CHANNEL sebagai "Pertanyaan" (fitur saluran WA: follower bisa
  * bales, balasannya cuma sampai ke admin).
  *
- * STATUS: EKSPERIMENTAL / BELUM TERBUKTI. WA tidak mendokumentasikan formatnya
- * dan Baileys 6.7.24 belum punya dukungan Pertanyaan; yang ada cuma field
- * `questionMessage` (FutureProofMessage) di proto. Tebakan di sini: teks biasa
- * dibungkus questionMessage + messageSecret (pola yang dipakai poll/komentar,
- * karena balasan private butuh kunci). Kalau di HP tampil aneh, pakai format
- * 'teks' dan rekam post Pertanyaan asli dari HP lewat `npm run rekam` supaya
- * strukturnya bisa ditiru persis.
+ * Revisi 2026-10-04 (kall: "pesan pertanyaan belum bisa-bisa"): cara lama —
+ * teks dibungkus `questionMessage` (FutureProofMessage) — tidak pernah tampil
+ * bener di HP. Format pertanyaan saluran yang dipakai WA sekarang justru
+ * pesan teks biasa (extendedTextMessage) yang ContextInfo-nya ditandai
+ * `isQuestion: true`; kotak "balas ke admin" muncul karena tanda itu, bukan
+ * karena bungkus khusus. messageSecret tetap disertakan supaya balasan privat
+ * follower bisa dirutekan ke admin (pola yang sama dengan komentar/poll).
+ *
+ * Sifat aman yang penting: payload ini tetap extendedTextMessage standar, jadi
+ * kalau server menolak/tidak mengenali, pesan TETAP tampil sebagai teks biasa
+ * — bukan gelembung kosong seperti percobaan questionMessage dulu.
  */
 export async function sendPertanyaan(sock, jid, text) {
   if (!String(jid).endsWith('@newsletter')) return sendText(sock, jid, text);
   const pesan = proto.Message.fromObject({
+    extendedTextMessage: {
+      text: teksDenganTagline(text),
+      contextInfo: { isQuestion: true },
+    },
     messageContextInfo: { messageSecret: randomBytes(32) },
-    questionMessage: { message: { extendedTextMessage: { text: teksDenganTagline(text) } } },
   });
   await sock.relayMessage(jid, pesan, {});
 }

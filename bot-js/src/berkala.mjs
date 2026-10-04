@@ -15,6 +15,7 @@
 
 import { normalisasiNomor } from './nomor.mjs';
 import { formatWaktu, tanggalPendek } from './waktu.mjs';
+import { pesanRapi } from './format.mjs';
 
 /**
  * Putuskan isi yang dikirim: daftar hitam grup atau teks sendiri.
@@ -65,7 +66,8 @@ function orangDariMasukan(masukan) {
       const n = normalisasiNomor(angka) || angka;
       return { kunci: n, label: `+${n}` };
     }
-    return { kunci: `lid:${angka}`, label: `ID samaran …${angka.slice(-4)}` };
+    // LID ditampilkan UTUH (kall 2026-10-04: "gaperlu ada yang disamarkan").
+    return { kunci: `lid:${angka}`, label: `ID samaran ${angka}` };
   }
   const n = normalisasiNomor(t);
   if (n) return { kunci: n, label: `+${n}` };
@@ -76,13 +78,14 @@ function orangDariMasukan(masukan) {
 /**
  * Susun daftar hitam yang siap ditampilkan: normalisasi, buang duplikat
  * (otomatis vs manual), urutkan nomor kecil dulu, ID samaran di belakang.
+ * Kalau nama WA-nya kebaca, ditulis di depan nomornya: "Nama (+62812…)".
  *
  * @param {{ hitam?: object[], manual?: (string|number)[] }} opsi
- *   `hitam` = hasil `kelompokHitam()` (punya { label, ids, sejak }).
+ *   `hitam` = hasil `kelompokHitam()` (punya { label, ids, nama, sejak }).
  * @returns {{ baris: string[], jumlah: number, sejak: Map<string, number|null> }}
  */
 export function susunDaftarHitam({ hitam = [], manual = [] } = {}) {
-  const orang = new Map(); // kunci → { label, sejak, manual }
+  const orang = new Map(); // kunci → { label, nama, sejak, manual }
 
   // 1. dari daftar otomatis (yang keluar dari grup)
   for (const o of hitam || []) {
@@ -90,7 +93,9 @@ export function susunDaftarHitam({ hitam = [], manual = [] } = {}) {
     const utama = kandidat.find((k) => k.kunci.startsWith('62')) || kandidat[0];
     if (!utama) continue;
     if (!orang.has(utama.kunci)) {
-      orang.set(utama.kunci, { label: utama.label, sejak: o?.sejak || null, manual: false });
+      orang.set(utama.kunci, { label: utama.label, nama: o?.nama || null, sejak: o?.sejak || null, manual: false });
+    } else if (o?.nama && !orang.get(utama.kunci).nama) {
+      orang.get(utama.kunci).nama = o.nama;
     }
   }
 
@@ -119,7 +124,8 @@ export function susunDaftarHitam({ hitam = [], manual = [] } = {}) {
   for (const [kunci, info] of urut) {
     const tanda = [info.sejak ? `sejak ${tanggalPendek(info.sejak)}` : null, info.manual ? 'didaftarkan admin' : null]
       .filter(Boolean).join(', ');
-    baris.push(`${info.label}${tanda ? ` (${tanda})` : ''}`);
+    const tampil = info.nama ? `${info.nama} (${info.label})` : info.label;
+    baris.push(`${tampil}${tanda ? ` — ${tanda}` : ''}`);
     sejak.set(kunci, info.sejak);
   }
   return { baris, jumlah: baris.length, sejak };
@@ -141,24 +147,27 @@ export function teksBerkala({ namaGrup = '', hitam = [], manual = [], teksKustom
   const { baris, jumlah } = susunDaftarHitam({ hitam, manual });
 
   if (!jumlah) {
-    return [
-      `Daftar hitam ${grup}: masih kosong.`,
+    return pesanRapi(
+      `Daftar hitam ${grup} 🚫`,
+      '',
+      'Masih kosong.',
       '',
       'Artinya semua yang minta join boleh masuk, dan yang keluar sendiri bakal',
-      'otomatis masuk daftar ini.',
-    ].join('\n');
+      'otomatis masuk daftar ini.'
+    );
   }
 
   const tampil = baris.slice(0, MAKS_BARIS);
   const isi = [
-    `Daftar hitam ${grup} (${jumlah} orang):`,
+    `*${jumlah} orang* yang nggak boleh masuk lagi:`,
+    '',
     ...tampil.map((b, i) => `${i + 1}. ${b}`),
   ];
   if (baris.length > tampil.length) isi.push(`…dan ${baris.length - tampil.length} orang lainnya.`);
   isi.push(
     '',
-    `Diperbarui ${formatWaktu(sekarang)}. Orang di daftar ini nggak bisa masuk lagi`,
-    'lewat link grup. Admin grup bisa minta buka blokir.'
+    `_Diperbarui ${formatWaktu(sekarang)}._`,
+    '_Admin grup bisa minta buka blokir lewat app._'
   );
-  return isi.join('\n');
+  return pesanRapi(`Daftar hitam ${grup} 🚫`, ...isi);
 }

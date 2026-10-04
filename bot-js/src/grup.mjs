@@ -125,25 +125,52 @@ export function namaOrang(entri) {
 //  sebelum ada `info`) tetap muncul, satu identitas = satu orang.
 // ---------------------------------------------------------------------------
 
-/** Label ramah: +62812… kalau ada nomor, kalau nggak "ID samaran …1234". */
+/**
+ * Label satu orang: nomor penuh (+62812…) kalau ada; kalau cuma kebagian LID,
+ * tampilkan digitnya UTUH (kall 2026-10-04: "daftar hitam nggak perlu ada
+ * yang disamarkan") — bukan lagi "…1234".
+ */
 export function labelOrang(ids) {
   const pn = ids.find((i) => i.endsWith('@s.whatsapp.net'));
   if (pn) return '+' + pn.split('@')[0];
   const id = (ids[0] || '?').split('@')[0];
-  return `ID samaran …${id.slice(-4)}`;
+  return `ID samaran ${id}`;
 }
 
-/** @returns {Array<{kunci: string, ids: string[], label: string, sejak: number|null}>} */
-export function kelompokHitam(hitam = [], info = []) {
+// ---------------------------------------------------------------------------
+//  Peta nama: nomor/LID (digit saja) → nama pushname WA. Dibangun penjaga grup
+//  dari data anggota dan pesan masuk, disimpan di state (g.namaPeta) supaya
+//  daftar hitam bisa nampilin "nama sesuai no" (kall), bukan cuma angka.
+// ---------------------------------------------------------------------------
+
+/** Digit kunci dari satu JID — dipakai buat nyari nama di peta. */
+export function kunciNama(jid) {
+  return String(jid || '').split('@')[0].split(':')[0].replace(/\D/g, '');
+}
+
+/** Nama untuk sekumpulan identitas seorang (dari peta; null kalau belum tahu). */
+export function namaDariPeta(ids, peta = {}) {
+  for (const i of ids || []) {
+    const n = peta[kunciNama(i)];
+    if (n) return n;
+  }
+  return null;
+}
+
+/**
+ * @param {object} peta { digit: nama } — boleh kosong.
+ * @returns {Array<{kunci: string, ids: string[], label: string, nama: string|null, sejak: number|null}>}
+ */
+export function kelompokHitam(hitam = [], info = [], peta = {}) {
   const sisa = new Set(hitam);
   const hasil = [];
   for (const o of info || []) {
     const ids = (o?.ids || []).filter((i) => sisa.has(i));
     if (!ids.length) continue;
     ids.forEach((i) => sisa.delete(i));
-    hasil.push({ kunci: ids[0], ids, label: labelOrang(ids), sejak: o.sejak || null });
+    hasil.push({ kunci: ids[0], ids, label: labelOrang(ids), nama: namaDariPeta(ids, peta), sejak: o.sejak || null });
   }
-  for (const i of sisa) hasil.push({ kunci: i, ids: [i], label: labelOrang([i]), sejak: null });
+  for (const i of sisa) hasil.push({ kunci: i, ids: [i], label: labelOrang([i]), nama: namaDariPeta([i], peta), sejak: null });
   return hasil;
 }
 

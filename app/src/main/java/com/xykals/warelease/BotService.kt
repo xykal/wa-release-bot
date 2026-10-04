@@ -398,7 +398,8 @@ class BotService : Service() {
                     OrangHitam(
                         o.optString("kunci"),
                         o.optString("label", o.optString("kunci")),
-                        o.optLong("sejak", 0L).takeIf { it > 0 }
+                        o.optLong("sejak", 0L).takeIf { it > 0 },
+                        o.optString("nama", "").ifBlank { null }
                     )
                 }
                 val manual = (0 until (man?.length() ?: 0)).map { man!!.optString(it) }

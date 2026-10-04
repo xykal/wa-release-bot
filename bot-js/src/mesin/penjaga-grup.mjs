@@ -14,6 +14,7 @@ import {
   namaOrang,
   kelompokHitam,
   bukaBlokir,
+  kunciNama,
 } from '../grup.mjs';
 
 /** @param {object} ctx konteks engine (lihat bot.mjs) */
@@ -153,6 +154,19 @@ export function buatPenjagaGrup(ctx) {
     g.hitam = [...hitam];
     g.hitamInfo = hitamInfo;
     g.lastCekAt = Date.now();
+
+    // 4. Peta nama (digit → nama WA) buat daftar hitam "nama sesuai no"
+    //    (kall 2026-10-04). Sumber apa pun yang kebaca: field nama di
+    //    participants. Dibatasi 500 entri supaya state.json nggak membengkak.
+    const peta = { ...(g.namaPeta || {}) };
+    for (const p of sekarang) {
+      const nama = p.name || p.notify || p.verifiedName;
+      if (!nama) continue;
+      for (const i of identitas(p)) peta[kunciNama(i)] = String(nama).slice(0, 60);
+    }
+    const kunciPeta = Object.keys(peta);
+    if (kunciPeta.length > 500) delete peta[kunciPeta.sort()[0]];
+    g.namaPeta = peta;
     saveState();
 
     if (source !== 'jadwal' || setuju.length || tolak.length) {
@@ -165,10 +179,11 @@ export function buatPenjagaGrup(ctx) {
   function lihatHitam(diamDiLog = false) {
     const g = ctx.state.grup;
     const manual = daftarHitamManual(ctx.cfg?.grup?.daftarHitam, normalisasiNomor);
-    const otomatis = kelompokHitam(g?.hitam || [], g?.hitamInfo || []);
+    // Peta nama ikut dipakai: app nampilin "Nama · +62812…" bukan angka doang.
+    const otomatis = kelompokHitam(g?.hitam || [], g?.hitamInfo || [], g?.namaPeta || {});
     bridge.send({
       type: 'daftar_hitam',
-      otomatis: otomatis.map((o) => ({ kunci: o.kunci, label: o.label, sejak: o.sejak })),
+      otomatis: otomatis.map((o) => ({ kunci: o.kunci, label: o.label, nama: o.nama || '', sejak: o.sejak })),
       manual: manual.map((i) => '+' + i.split('@')[0]),
     });
     if (diamDiLog) return;
@@ -176,7 +191,8 @@ export function buatPenjagaGrup(ctx) {
       log('📋 Daftar hitam kosong.');
       return;
     }
-    log(`📋 Daftar hitam otomatis (${otomatis.length}): ${otomatis.map((o) => o.label).join(', ') || '-'}`);
+    const tampil = (o) => (o.nama ? `${o.nama} (${o.label})` : o.label);
+    log(`📋 Daftar hitam otomatis (${otomatis.length}): ${otomatis.map(tampil).join(', ') || '-'}`);
     log(`📋 Daftar hitam manual (${manual.length}): ${manual.map((i) => i.split('@')[0]).join(', ') || '-'}`);
   }
 

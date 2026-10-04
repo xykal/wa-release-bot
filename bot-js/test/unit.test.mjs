@@ -113,16 +113,19 @@ const sampleRel = {
   isPrerelease: false,
 };
 
-test('formatReleasePost: memuat tag, repo, author, link', () => {
+test('formatReleasePost: memuat tag, repo, author, link; SukiBot di atas', () => {
   const msg = formatReleasePost(sampleRel, 'xykal/wa-release-bot');
   assert.match(msg, /v1\.4\.0/);
   assert.match(msg, /xykal\/wa-release-bot/);
   assert.match(msg, /@xykal/);
   assert.match(msg, /releases\/tag\/v1\.4\.0/);
   assert.match(msg, /Fitur A/);
+  // SukiBot HARUS baris paling atas (kall 2026-10-04)
+  assert.ok(msg.startsWith('*🦴 SUKIBOT*'), 'kepala SukiBot di baris pertama');
   // markdown WhatsApp: bold pakai *...*
-  assert.match(msg, /\*wa-release-bot v1\.4\.0 udah rilis!\*/);
-  assert.match(msg, /\*Apa yang baru:\*/);
+  assert.match(msg, /\*wa-release-bot v1\.4\.0 udah rilis! 🚀\*/);
+  assert.match(msg, /\*📜 Changelog \(apa yang baru\):\*/);
+  assert.match(msg, /Link changelog & rilis lengkap/);
   // bukan prerelease → nggak ada penanda
   assert.doesNotMatch(msg, /prerelease/);
 });
@@ -144,20 +147,25 @@ test('formatReleasePost: release tanpa deskripsi tetap valid', () => {
   assert.match(msg, /nggak ada catatan/);
 });
 
-test('formatReleasePost: lampiran maks 3 baris + sisa dihitung, ukuran pakai koma', () => {
+test('formatReleasePost: tiap file ada link unduhnya; maks 5 + sisa dihitung', () => {
+  const mk = (nama, size, url = '') => ({ name: nama, size, url });
   const assets = [
-    { name: 'app-arm64.apk', size: 26004000 },
-    { name: 'engine.zip', size: 1150000 },
-    { name: 'a.sha256', size: 90 },
-    { name: 'b.sig', size: 2048 },
+    mk('app-arm64.apk', 26004000, 'https://github.com/a/b/releases/download/v1/app-arm64.apk'),
+    mk('app-v7a.apk', 25000000, 'https://github.com/a/b/releases/download/v1/app-v7a.apk'),
+    mk('engine.zip', 1150000), // tanpa URL → diarahkan ke halaman rilis
+    mk('a.sha256', 90),
+    mk('b.sig', 2048),
+    mk('c.sig', 1024),
   ];
   const msg = formatReleasePost({ ...sampleRel, assets }, 'a/b');
-  assert.match(msg, /📎 \*File:\*/);
-  assert.match(msg, /• app-arm64\.apk \(24,8 MB\)/);
-  assert.match(msg, /• a\.sha256 \(90 B\)/);
-  assert.doesNotMatch(msg, /b\.sig/);
-  assert.match(msg, /\+1 file lain di link/);
-  assert.doesNotMatch(formatReleasePost({ ...sampleRel, assets: [] }, 'a/b'), /📎/);
+  assert.match(msg, /📥 \*Download:\*/);
+  assert.match(msg, /• \*app-arm64\.apk\* \(24,8 MB\)/);
+  assert.match(msg, /github\.com\/a\/b\/releases\/download\/v1\/app-arm64\.apk/);
+  assert.match(msg, /• \*engine\.zip\* \(1,1 MB\)/);
+  assert.match(msg, /di halaman rilis/);
+  assert.doesNotMatch(msg, /c\.sig/);
+  assert.match(msg, /\+1 file lain di link rilis/);
+  assert.doesNotMatch(formatReleasePost({ ...sampleRel, assets: [] }, 'a/b'), /📥/);
 });
 
 test('formatReleasePost: pembuka ditentukan tag → retry ngirim teks identik', () => {
@@ -171,7 +179,8 @@ test('formatReleasePost: pembuka ditentukan tag → retry ngirim teks identik', 
 test('formatTestMessage: menyebut repo yang dipantau', () => {
   const msg = formatTestMessage('xykal/wa-release-bot');
   assert.match(msg, /xykal\/wa-release-bot/);
-  assert.match(msg, /SETUP SUKSES/);
+  assert.match(msg, /Setup sukses/);
+  assert.ok(msg.startsWith('*🦴 SUKIBOT*'), 'pesan tes juga berkepala SukiBot');
 });
 
 // --------------------------------------------------------------- bacaTarget
@@ -392,7 +401,11 @@ test('daftar hitam: dikelompokin per orang & bisa dibuka blokirnya pakai nomor',
   const k = kelompokHitam(hitam, info);
   assert.equal(k.length, 2, '1 orang (2 identitas) + 1 entri lama');
   assert.equal(k[0].label, '+6281234');
-  assert.equal(k[1].label, 'ID samaran …7000');
+  // peta nama: nomor/LID → nama WA (kall: "namanya sesuai no")
+  const denganNama = kelompokHitam(hitam, info, { '6281234': 'Budi', '777000': 'Susi Tanpa Nomor' });
+  assert.equal(denganNama[0].nama, 'Budi');
+  assert.equal(denganNama[1].nama, 'Susi Tanpa Nomor');
+  assert.equal(k[1].label, 'ID samaran 777000');
 
   const r = bukaBlokir(hitam, info, '081234', (x) => (x.replace(/\D/g, '').replace(/^0/, '62')) || null);
   assert.equal(r.dihapus.label, '+6281234');
@@ -402,7 +415,7 @@ test('daftar hitam: dikelompokin per orang & bisa dibuka blokirnya pakai nomor',
   const r2 = bukaBlokir(r.hitam, r.info, '777000@lid');
   assert.deepEqual(r2.hitam, []);
   assert.equal(bukaBlokir([], [], 'ngasal').dihapus, null);
-  assert.equal(labelOrang(['1@lid']), 'ID samaran …1');
+  assert.equal(labelOrang(['1@lid']), 'ID samaran 1');
 });
 
 // ------------------------------------------------------ format pertanyaan
@@ -469,7 +482,7 @@ test('perintah Brat dan welcome tetap dikendalikan dari chat pribadi', async () 
   assert.ok(balasan.some((teks) => teks.includes('hanya di grup yang dipantau')));
 });
 
-test('sendPertanyaan: channel → questionMessage, grup → teks biasa', async () => {
+test('sendPertanyaan: channel → isQuestion relay, grup → teks biasa', async () => {
   // Baileys butuh WebCrypto global; Node 18 belum punya (di app ada polyfill-nya).
   if (!globalThis.crypto) globalThis.crypto = (await import('node:crypto')).webcrypto;
   const { sendPertanyaan } = await import('../src/wa.mjs');
@@ -481,7 +494,8 @@ test('sendPertanyaan: channel → questionMessage, grup → teks biasa', async (
   await sendPertanyaan(sock, '123@newsletter', 'halo');
   await sendPertanyaan(sock, '456@g.us', 'halo');
   assert.equal(kirim[0][0], 'relay');
-  assert.equal(kirim[0][2].questionMessage.message.extendedTextMessage.text, 'halo\n\n— SukiBot');
+  assert.equal(kirim[0][2].extendedTextMessage.text, 'halo\n\n— SukiBot');
+  assert.equal(kirim[0][2].extendedTextMessage.contextInfo.isQuestion, true, 'tanda pertanyaan saluran');
   assert.deepEqual(kirim[1], ['send', '456@g.us', { text: 'halo\n\n— SukiBot' }]);
 });
 
@@ -785,13 +799,15 @@ test('kirimKeChannel: default teks; pertanyaan cuma kalau diminta DAN target cha
   assert.equal(pakaiPertanyaan('1@g.us', 'pertanyaan'), false);
 });
 
-test('sendPertanyaan: payload questionMessage + messageSecret 32 byte (tebakan, ditandai eksperimental)', async () => {
+test('sendPertanyaan: payload extendedTextMessage isQuestion + messageSecret 32 byte', async () => {
   let terkirim = null;
   const sock = { relayMessage: async (jid, pesan) => { terkirim = { jid, pesan }; } };
   await sendPertanyaan(sock, '1@newsletter', 'halo');
   assert.equal(terkirim.jid, '1@newsletter');
-  assert.equal(terkirim.pesan.questionMessage.message.extendedTextMessage.text, 'halo\n\n— SukiBot');
+  assert.equal(terkirim.pesan.extendedTextMessage.text, 'halo\n\n— SukiBot');
+  assert.equal(terkirim.pesan.extendedTextMessage.contextInfo.isQuestion, true);
   assert.equal(terkirim.pesan.messageContextInfo.messageSecret.length, 32);
+  assert.equal(terkirim.pesan.questionMessage ?? null, null, 'bungkus lama (questionMessage) nggak dipakai lagi');
 });
 
 test('kirimKeChannel: error jelas -> jatuh ke teks; error ambigu -> TIDAK kirim ulang', async () => {

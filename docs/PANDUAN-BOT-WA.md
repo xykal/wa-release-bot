@@ -54,8 +54,12 @@ menolak perintah itu alih-alih mengirim audience list sambil mengaku men-tag gru
 Aktifkan lagi hanya setelah implementasi native mention lolos audit kompatibilitas,
 CI, dan uji nyata di WhatsApp.
 
-**Rekam postingan channel.** Ada fitur WhatsApp (mis. **Pertanyaan** di channel)
-yang bentuk kabelnya belum ada di Baileys 6.7.24, jadi belum bisa dikirim bot.
+**Postingan Pertanyaan channel.** Bot mengirim postingan Pertanyaan pakai tandaresmi `isQuestion` di contextInfo pesan teks biasa; di HP yang belum kenal
+formatnya, postingan TETAP tampil sebagai teks biasa (nggak pernah kosong).
+Saklarnya ada di pengaturan ("Kirim sebagai Pertanyaan", default mati).
+
+**Rekam postingan channel.** Fitur WhatsApp lain yang belum punya bentuk kabel
+di Baileys 6.7.24 tetap belum bisa dikirim bot.
 Nyalakan **Perintah pribadi**, lalu `.rekam on` dan publikasikan postingan baru.
 Byte mentah postingan (base64) otomatis disimpan ke
 `Android/media/com.xykals.warelease/rekaman/rekaman-channel.json`; salinan internal
@@ -103,18 +107,25 @@ Kartu **Pesan berkala ke grup** ngirim pesan berulang ke grup yang sama dengan
 Nomor yang lo daftarin sendiri boleh ditulis bebas (`0812-3456-7890`, `+62 813 …`,
 `813999888777`) — semuanya dinormalkan ke `+62…`, duplikat sama daftar otomatis digabung jadi
 satu baris, dan baris yang bukan nomor dibuang. Urutannya dari nomor kecil ke besar, ID
-samaran di belakang; kalau lebih dari 30 orang, sisanya diringkas jadi "…dan N orang lainnya"
-(hitungannya tetap jumlah orang sebenarnya).
+samaran (LID) di belakang dan ditulis UTUH, nggak disamarkan; kalau nama WA-nya kebaca bot,
+namanya ditulis di depan nomornya. Kalau lebih dari 30 orang, sisanya diringkas jadi
+"…dan N orang lainnya" (hitungannya tetap jumlah orang sebenarnya).
 
 Contoh isi daftar hitam:
 
 ```
-Daftar hitam Alumni SMK (2 orang):
-1. +6281234567890 (sejak 30/9)
-2. +62811222333 (didaftarkan admin)
+*🦴 SUKIBOT*
+─────────────────
 
-Diperbarui 1 Okt 2026, 19.05 WIB. Orang di daftar ini nggak bisa masuk
-lagi lewat link grup. Admin grup bisa minta buka blokir.
+*Daftar hitam Alumni SMK 🚫*
+
+*2 orang* yang nggak boleh masuk lagi:
+
+1. Budi Santoso (+6281234567890) — sejak 30/9
+2. +62811222333 — didaftarkan admin
+
+_Diperbarui 1 Okt 2026, 19.05 WIB._
+_Admin grup bisa minta buka blokir lewat app._
 ```
 
 Kalau daftar hitamnya kosong, pesannya bukan daftar hampa tapi keterangan

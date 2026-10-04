@@ -34,7 +34,7 @@
     <string name="u_kirim_pesan_tes_pas_setup">Send a test message during setup</string>
     <string name="u_biar_ketahuan_channel_nya_bener">So you know the channel is right</string>
     <string name="u_kirim_sebagai_pertanyaan">Send as a Question</string>
-    <string name="u_eksperimental_format_pertanyaan_wa_belum">Experimental: WhatsApp\'s Question format isn\'t publicly documented, so it may not render correctly. Off by default = release posts go out as plain text, which always arrives. Turn on only to try it.</string>
+    <string name="u_eksperimental_format_pertanyaan_wa_belum">Release posts are sent with WhatsApp\'s official Question flag — followers can reply straight to the admins. If a phone doesn\'t recognize the format yet, the post still shows up as plain text that always arrives. Off by default.</string>
     <string name="u_bikin_channel">Create channel</string>
     <string name="u_tes_kirim_ke_channel">Test send to channel</string>
     <string name="u_buat_grup_yang_pakai_setujui">For groups that use &quot;Approve new members&quot;: join requests get approved automatically, EXCEPT people who left or were removed before — they get rejected. Your WhatsApp account must be an admin of that group.</string>
@@ -317,7 +317,7 @@
     <string name="u_bot_wa_umum">WhatsApp features · experimental</string>
     <string name="u_ket_bot_wa_umum">Off by default. Group moderation and personal commands keep WhatsApp connected, use more battery, and still require real-device validation.</string>
     <string name="u_moderasi_grup">Group moderation</string>
-    <string name="u_ket_moderasi_grup">Delete links/phishing/ads, warn, then remove on the last strike. Admins and the bot itself are never touched.</string>
+    <string name="u_ket_moderasi_grup">Messages with outside links, promos/sales pitches, gambling, or banned words are deleted right away; the sender gets 1 warning (tagged), then is removed on the last strike. Admins and the bot itself are never touched.</string>
     <string name="u_perintah_pribadi">Personal commands in your own chat</string>
     <string name="u_ket_perintah_pribadi">.menu .ping .status .sticker .story .group — only in your own chat, never in groups.</string>
     <string name="u_izinkan_link_biasa">Allow normal links</string>

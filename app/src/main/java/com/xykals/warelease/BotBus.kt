@@ -12,7 +12,8 @@ package com.xykals.warelease
  * Jadi nggak ada dua thread yang nulis ke objek yang sama.
  */
 /** Satu orang di daftar hitam otomatis penjaga grup. */
-data class OrangHitam(val kunci: String, val label: String, val sejak: Long?)
+/** Satu orang di daftar hitam. nama = pushname WA kalau engine kebaca (boleh null). */
+data class OrangHitam(val kunci: String, val label: String, val sejak: Long?, val nama: String? = null)
 
 /** Satu baris konsol bot custom. jenis: out | err | sys | in */
 data class BarisKonsol(val jenis: String, val teks: String)

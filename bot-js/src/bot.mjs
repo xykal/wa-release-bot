@@ -233,6 +233,11 @@ async function main() {
   const grupAktif = () => Boolean(ctx.cfg?.grup?.aktif && ctx.cfg?.grup?.target);
   const laguAktif = () => Boolean(ctx.cfg?.lagu?.aktif);
   const lawakAktif = () => Boolean(ctx.cfg?.lawak?.aktif);
+  // Perpisahan respons instan: saklar opt-in yang bikin WA nyambung terus
+  // (nebeng koneksi mode jaga) biar salam perpisahan keluar dalam detik,
+  // bukan nunggu cek rutin. Butuh fitur perpisahan + penjaga grup nyala.
+  const perpisahanInstan = () =>
+    Boolean(grupAktif() && ctx.cfg?.grup?.perpisahan?.aktif && ctx.cfg?.grup?.perpisahan?.instan);
 
   function emitStatus() {
     const { state, cfg } = ctx;
@@ -355,8 +360,11 @@ async function main() {
   }
 
   function intervalGrupMs() {
+    // Minimal 1 menit: label app & CHANGELOG bilang 1, tapi dulu dijepit 2
+    // (Math.max(2, ...)) — setelan 1 menit diam-diam jadi 2 (kall: respons
+    // perpisahan mesti cepet). Sekarang 1 menit beneran dihormati.
     const min = Number(ctx.cfg?.grup?.intervalMinutes ?? 5);
-    return Math.max(2, min) * 60_000;
+    return Math.max(1, min) * 60_000;
   }
 
   function jadwalGrup(delayMs) {
@@ -376,6 +384,7 @@ async function main() {
     const bagian = [];
     if (repoAda()) bagian.push(`cek release tiap ${Math.round(intervalMs() / 60000)} mnt`);
     if (grupAktif()) bagian.push(`jaga grup tiap ${Math.round(intervalGrupMs() / 60000)} mnt`);
+    if (perpisahanInstan()) bagian.push('perpisahan respons instan');
     if (laguAktif()) bagian.push(`lagu mood ±${ctx.cfg.lagu.perHari}x/hari`);
     if (lawakAktif()) bagian.push(`pertanyaan mood ±${ctx.cfg.lawak.perHari}x/hari`);
     if (ctx.cfg.jaga?.moderasi) bagian.push('moderasi grup');
@@ -388,7 +397,7 @@ async function main() {
     ctx.fitur.lagu.jadwalLagu();
     ctx.fitur.lawak.jadwalTanya();
     ctx.fitur.berkala.jadwal(60_000);
-    if (ctx.cfg.jaga?.moderasi || ctx.cfg.jaga?.perintah) void ctx.fitur.jaga.mulai();
+    if (ctx.cfg.jaga?.moderasi || ctx.cfg.jaga?.perintah || perpisahanInstan()) void ctx.fitur.jaga.mulai();
   }
 
   function stopEngine() {
@@ -410,7 +419,7 @@ async function main() {
   // ----------------------------- modul fitur --------------------------------
   Object.assign(ctx, {
     log, saveState, emitStatus, pakaiWA, sambung,
-    repos, repoAda, grupAktif, laguAktif, lawakAktif,
+    repos, repoAda, grupAktif, laguAktif, lawakAktif, perpisahanInstan,
     scheduleNext, intervalMs, intervalGrupMs, jadwalGrup, startEngine, stopEngine,
   });
   const rilis = buatRilis(ctx);

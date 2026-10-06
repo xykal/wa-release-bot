@@ -11,6 +11,7 @@
 #   4. kolom-kolom baru ada (domain phishing, nomor story, interval, teks berkala),
 #   5. tombol kirim menu ngasih umpan balik walau WA belum tersambung;
 #   6. status rekam channel dan kondisi awalnya tampil di kartu Bot WA umum.
+#   7. saklar perpisahan instan (kartu Penjaga grup) bisa nyala-mati dua arah.
 set -euo pipefail
 
 : "${PKG:?PKG belum diisi}" "${ACT:?ACT belum diisi}" "${OUT:?OUT belum diisi}"
@@ -106,6 +107,32 @@ if [ -n "$kotak" ]; then
   fi
 fi
 tangkap berkala
+
+# Perpisahan respons instan: saklar di kartu Penjaga grup, harus bisa
+# nyala lalu mati lagi (ditingkatkan MATI — bawaannya memang mati, dan
+# jangan bikin emulator nyimpen fitur hemat-batre yang kebalik).
+gulir_ke rowPerpisahanInstan perpisahan-instan 480
+dump="$(dump_ui)"
+if [[ "$dump" == *"id/rowPerpisahanInstan"* ]]; then
+  echo "uji perpisahan-instan: saklar instan kelihatan OK"
+else
+  echo "uji perpisahan-instan: saklar instan tidak ketemu di dump UI"; tangkap_gagal perpisahan-instan-gagal; exit 1
+fi
+
+ketuk_id rowPerpisahanInstan "saklar perpisahan instan"
+baris="$(dump_ui | grep -F "id/rowPerpisahanInstan" | head -n 1 || true)"
+if [[ "$baris" == *'selected="true"'* ]]; then
+  echo "uji perpisahan-instan: saklar bisa nyala OK"
+else
+  echo "uji perpisahan-instan: saklar tidak berubah jadi nyala"; tangkap_gagal perpisahan-instan-gagal; exit 1
+fi
+ketuk_id rowPerpisahanInstan "saklar perpisahan instan (matikan lagi)"
+baris="$(dump_ui | grep -F "id/rowPerpisahanInstan" | head -n 1 || true)"
+if [[ "$baris" == *'selected="false"'* ]]; then
+  echo "uji perpisahan-instan: saklar bisa mati lagi OK"
+else
+  echo "uji perpisahan-instan: saklar tidak kembali mati"; tangkap_gagal perpisahan-instan-gagal; exit 1
+fi
 
 # Simpan, lalu bar Simpan harus hilang lagi.
 kotak="$(kotak_id btnSave)"

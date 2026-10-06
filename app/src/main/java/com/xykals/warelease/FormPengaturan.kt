@@ -43,6 +43,7 @@ internal class FormPengaturan(
     private lateinit var rowFormatTanya: View
     private lateinit var rowGrupAktif: View
     private lateinit var rowPerpisahanAktif: View
+    private lateinit var rowPerpisahanInstan: View
     private lateinit var rowBoot: View
     private lateinit var rowLogcat: View
     private lateinit var rowLaguAktif: View
@@ -126,6 +127,7 @@ internal class FormPengaturan(
         rowFormatTanya = saklar(R.id.rowFormatTanya)
         rowGrupAktif = saklar(R.id.rowGrupAktif)
         rowPerpisahanAktif = saklar(R.id.rowPerpisahanAktif)
+        rowPerpisahanInstan = saklar(R.id.rowPerpisahanInstan)
         rowBoot = saklar(R.id.rowBoot)
         rowLogcat = saklar(R.id.rowLogcat)
         rowLaguAktif = saklar(R.id.rowLaguAktif)
@@ -183,6 +185,7 @@ internal class FormPengaturan(
         etGrupInterval.setText(settings.grupInterval.toString())
         etGrupHitam.setText(settings.grupHitam)
         rowPerpisahanAktif.isSelected = settings.grupPerpisahanAktif
+        rowPerpisahanInstan.isSelected = settings.grupPerpisahanInstan
         etPerpisahanTeks.setText(settings.grupPerpisahanTeks)
         etPerpisahanJudul.setText(settings.grupPerpisahanJudul)
         rowPrerelease.isSelected = settings.includePrereleases
@@ -228,6 +231,7 @@ internal class FormPengaturan(
         settings.grupInterval = etGrupInterval.text.toString().toIntOrNull() ?: 5
         settings.grupHitam = etGrupHitam.text.toString()
         settings.grupPerpisahanAktif = rowPerpisahanAktif.isSelected
+        settings.grupPerpisahanInstan = rowPerpisahanInstan.isSelected
         settings.grupPerpisahanTeks = etPerpisahanTeks.text.toString()
         settings.grupPerpisahanJudul = etPerpisahanJudul.text.toString()
         settings.autoStartOnBoot = rowBoot.isSelected

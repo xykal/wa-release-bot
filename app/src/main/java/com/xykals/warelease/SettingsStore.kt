@@ -110,6 +110,15 @@ class SettingsStore(ctx: Context) {
         get() = p.getString("grupPerpisahanJudul", "") ?: ""
         set(v) = p.edit().putString("grupPerpisahanJudul", v).apply()
 
+    /**
+     * Respons instan: nyambungin WA terus (nebeng mode jaga) walau moderasi
+     * dan perintah pribadi mati, supaya pesan perpisahan keluar dalam
+     * hitungan detik — bukan nunggu cek rutin. Makan batre lebih; bawaan mati.
+     */
+    var grupPerpisahanInstan: Boolean
+        get() = p.getBoolean("grupPerpisahanInstan", false)
+        set(v) = p.edit().putBoolean("grupPerpisahanInstan", v).apply()
+
     // ---- lagu mood ----
     var laguAktif: Boolean
         get() = p.getBoolean("laguAktif", PengaturanBawaan.LAGU)
@@ -265,6 +274,7 @@ class SettingsStore(ctx: Context) {
         "grupPerpisahanAktif" to grupPerpisahanAktif,
         "grupPerpisahanTeks" to grupPerpisahanTeks,
         "grupPerpisahanJudul" to grupPerpisahanJudul,
+        "grupPerpisahanInstan" to grupPerpisahanInstan,
         "moderasiAktif" to moderasiAktif,
         "perintahPribadi" to perintahPribadi,
         "moderasiStrike" to moderasiStrike,
@@ -313,6 +323,7 @@ class SettingsStore(ctx: Context) {
                         .put("aktif", grupPerpisahanAktif)
                         .put("judul", grupPerpisahanJudul)
                         .put("teks", grupPerpisahanTeks)
+                        .put("instan", grupPerpisahanInstan)
                 )
         )
         .put(

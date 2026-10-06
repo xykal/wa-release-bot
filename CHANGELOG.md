@@ -6,6 +6,24 @@ Semua perubahan penting proyek ini. Format mengikuti
 
 ## [Unreleased]
 
+### Ditambahkan (ronda 4)
+- **Perpisahan respons instan** (opt-in, saklar baru di kartu Penjaga grup):
+  buat yang mau salam perpisahan keluar dalam hitungan detik TANPA menyalakan
+  moderasi/perintah pribadi. Saat nyala, WhatsApp dihubungkan terus (menumpang
+  koneksi mode jaga) khusus menangkap event keluar grup; yang keluar langsung
+  disalam dan langsung dicatat ke daftar hitam. Bawaannya mati karena makan
+  batre lebih; ket penjelaskannya tampil di app (ID dan EN).
+- **Cek susulan otomatis setelah koneksi jaga putus**: event keluar grup yang
+  hilang di celah putus-nyambung tidak lagi menunggu interval penuh — begitu
+  sesi jaga nyambung ulang, Penjaga grup dicek sekali (dibatasi sekali per
+  menit agar jaringan yang tidak stabil tidak memicu spam koneksi). Juga
+  mempercepat approve/tolak permintaan join setelah gangguan.
+
+### Diperbaiki (ronda 4)
+- Setelan interval Penjaga grup 1 menit kini benar-benar dihormati. Label app
+  dan catatan ronda 3 menyebut minimal 1 menit, tetapi engine masih menjepit
+  di 2 menit (`Math.max(2, ...)`), jadi setelan 1 diam-diam jadi 2.
+
 ### Ditambahkan (ronda 3)
 - **Respons perpisahan real-time**: dengan mode jaga (moderasi/perintah) nyala,
   salam + pencatatan daftar hitam terjadi begitu event keluar datang dari

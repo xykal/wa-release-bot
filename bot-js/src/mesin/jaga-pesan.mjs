@@ -26,9 +26,21 @@ import { pesanRapi } from '../format.mjs';
 export function buatJagaPesan(ctx, { rekam = null } = {}) {
   const { log, emitStatus, sambung, saveState } = ctx;
 
+  /**
+   * Perpisahan respons instan (kall: "pastikan cepet responsnya"): salam
+   * perpisahan keluar dalam detik lewat event WA. Butuh koneksi yang nyala
+   * terus — kalau moderasi/perintah mati, socket ini satu-satunya jalurnya.
+   * Opt-in karena makan batre (lihat saklar di kartu Penjaga grup).
+   */
+  function instanPerpisahan() {
+    const p = ctx.cfg?.grup?.perpisahan;
+    return Boolean(ctx.cfg?.grup?.aktif && p?.aktif && p?.instan && String(ctx.cfg?.grup?.target || '').trim());
+  }
+
   let jalan = false;      // loop lagi hidup
   let berhenti = false;   // diminta berhenti (engine stop / saklar dimatiin)
   let sockAktif = null;
+  let susulanTerakhir = 0; // jembatan keledai cek susulan (maks 1x/menit)
   const papan = { dihapus: 0, peringatan: 0, kick: 0, perintah: 0, stiker: 0, story: 0 };
 
   /** Jabarkan media dari satu pesan. `downloadMediaMessage` itu fungsi Baileys
@@ -216,7 +228,7 @@ export function buatJagaPesan(ctx, { rekam = null } = {}) {
     try { ctx.fitur?.rekam?.pasang(sock); } catch (e) { log(`⚠️ Rekam channel nggak kepasang: ${e.message}`); }
     log(
       `👀 Mode jaga pesan nyala (perintah: ${aksi.aktifPerintah() ? 'ya' : 'tidak'}, ` +
-      `moderasi: ${aksi.aktifModerasi() ? 'ya' : 'tidak'}) — makan batre lebih, matikan kalau nggak dipakai.`
+      `moderasi: ${aksi.aktifModerasi() ? 'ya' : 'tidak'}${instanPerpisahan() ? ', perpisahan instan: ya' : ''}) — makan batre lebih, matikan kalau nggak dipakai.`
     );
 
     // Dua jalur dipisah (kall, 2026-10-01: "menu/rekam mesti cepat"):
@@ -276,10 +288,14 @@ export function buatJagaPesan(ctx, { rekam = null } = {}) {
    * Nyalain mode jaga pesan. Kalau koneksi putus, disambung ulang dengan jeda
    * naik (2 dtk x2 sampai maksimal 1 menit) — kecuali WA belum ditautkan, itu
    * berhenti tenang: user nyalain lagi setelah nautin.
+   *
+   * Mode jaga hidup kalau ada yang butuh koneksi nyala terus: perintah
+   * pribadi, moderasi, ATAU perpisahan respons instan (opt-in, kall
+   * 2026-10-06: pesan perpisahan mesti lebih cepet responsnya).
    */
   async function mulai() {
     if (jalan) return;
-    if (!aksi.aktifModerasi() && !aksi.aktifPerintah()) return;
+    if (!aksi.aktifModerasi() && !aksi.aktifPerintah() && !instanPerpisahan()) return;
     jalan = true;
     berhenti = false;
     let jeda = 2000;
@@ -295,6 +311,14 @@ export function buatJagaPesan(ctx, { rekam = null } = {}) {
         log(`⚠️ Mode jaga pesan galat: ${e.message}`);
       }
       if (berhenti) break;
+      // Susulan: sesi barusan tamat berarti koneksi sempat putus — event
+      // keluar-grup di celah itu bisa hilang. Cek grup SEKARANG (bukan nunggu
+      // interval penuh) supaya yang kelewat tetap disalam kilat. Dibatasi
+      // sekali per menit biar jaringan nggak stabil nggak bikin spam koneksi.
+      if (ctx.running && Date.now() - susulanTerakhir >= 60_000) {
+        susulanTerakhir = Date.now();
+        try { void ctx.fitur?.grup?.runGrup?.('susulan'); } catch { /* fitur belum siap */ }
+      }
       await new Promise((r) => setTimeout(r, jeda));
       jeda = Math.min(jeda * 2, 60000);
     }

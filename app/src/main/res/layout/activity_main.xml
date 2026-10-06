@@ -476,6 +476,28 @@
                 </LinearLayout>
                 <ImageView style="@style/Saklar" />
             </LinearLayout>
+            <LinearLayout android:id="@+id/rowPerpisahanInstan" style="@style/BarisSaklar">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/u_nyalain_perpisahan_instan"
+                        android:textColor="@color/wr_teks"
+                        android:textSize="15sp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/u_ket_perpisahan_instan"
+                        android:textColor="@color/wr_teks2"
+                        android:textSize="12sp" />
+                </LinearLayout>
+                <ImageView style="@style/Saklar" />
+            </LinearLayout>
             <TextView style="@style/Label" android:text="@string/u_judul_pesan_perpisahan" />
             <EditText
                 android:id="@+id/etPerpisahanJudul"

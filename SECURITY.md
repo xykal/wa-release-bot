@@ -107,7 +107,10 @@ dia masuk **draft release** yang cuma bisa diunduh pemilik repo.
   Node 18 belum punya permission model). Allowlist environment mencegah secret
   diwariskan lewat `process.env`, tetapi tidak membatasi akses filesystem. Kode
   project masih bisa membaca session WA dan setting app. Setiap ZIP menampilkan
-  SHA-256 dan meminta persetujuan; tetap jalankan hanya kode yang sudah diaudit.
+  SHA-256 dan meminta persetujuan; mesin menolak menjalankan project (termasuk
+  jalan otomatis setelah boot) sampai persetujuan untuk sidik ZIP yang terpasang
+  tercatat, dan ZIP baru menggugurkan persetujuan lama. Ini persetujuan berbasis
+  informasi, bukan isolasi — tetap jalankan hanya kode yang sudah diaudit.
 - Runtime APK adalah Node 18.20.4 yang sudah EOL. CI menguji versi persis ini,
   tetapi tidak dapat memberikan patch runtime yang tidak dirilis upstream.
 

@@ -30,6 +30,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import org.json.JSONObject
 import java.util.zip.ZipInputStream
 
 /**
@@ -451,7 +452,7 @@ class HostingActivity : AppCompatActivity() {
                     disetujui = true
                     LogRecorder.tulis("Hosting", "Project disetujui user; SHA-256 ZIP=$hash")
                     d.dismiss()
-                    pasangZip(arsip)
+                    pasangZip(arsip, hash)
                 }
             }
             val batal = TextView(this@HostingActivity, null, 0, R.style.TombolLembut).apply {
@@ -472,8 +473,13 @@ class HostingActivity : AppCompatActivity() {
      * Bongkar ZIP ke folder project. Folder lama nggak langsung dibuang:
      * isi yang NGGAK ada di ZIP baru (sesi WA bot, .env, node_modules) dibawa
      * pindah — jadi update project nggak bikin bot-nya harus ditautin ulang.
+     *
+     * `hash` = SHA-256 arsip yang DISETUJUI user di dialog (hasil salin+hash
+     * satu lintasan, jadi yang dipasang = yang disetujui). Dipakai untuk
+     * sumber.json: sidik ZIP terpasang yang dicek ulang oleh mesin (mesin
+     * menolak jalan tanpa persetujuan yang cocok — lihat hosting-setuju.mjs).
      */
-    private fun pasangZip(arsip: File) {
+    private fun pasangZip(arsip: File, hash: String) {
         lagiUpload = true
         render(BotBus.ui)
         banner(getString(R.string.k_membongkar_zip))
@@ -483,7 +489,30 @@ class HostingActivity : AppCompatActivity() {
                     kirim(mapOf("type" to "hosting-stop"))
                     delay(2500)
                 }
-                withContext(Dispatchers.IO) { bongkar(arsip) }
+                withContext(Dispatchers.IO) {
+                    // ZIP baru = sidik baru: persetujuan ZIP lama gugur sebelum
+                    // satu byte pun diganti (hapus dua-duanya, bukan yang satu).
+                    // Filenya di induk proyek (hosting/), sama seperti yang
+                    // dibaca mesin (hosting-setuju.mjs: buatPersetujuan(akar)).
+                    val indukHost = dirProyek.parentFile
+                        ?: throw IllegalStateException(getString(R.string.k_folder_data_nggak_ada))
+                    File(indukHost, "persetujuan.json").delete()
+                    File(indukHost, "sumber.json").delete()
+                    val teks = bongkar(arsip)
+                    try {
+                        // Ditulis atomik (tmp lalu rename) supaya mesin tidak
+                        // pernah membaca sumber.json setengah jadi.
+                        val tmp = File(indukHost, "sumber.json.tmp")
+                        tmp.writeText(JSONObject().put("sha256", hash).put("waktu", System.currentTimeMillis()).toString())
+                        if (!tmp.renameTo(File(indukHost, "sumber.json"))) {
+                            throw IllegalStateException(getString(R.string.k_hosting_sumber_gagal))
+                        }
+                    } catch (e: Throwable) {
+                        LogRecorder.galat("Hosting", "sumber.json gagal disimpan", e)
+                        return@withContext getString(R.string.k_hosting_sumber_gagal)
+                    }
+                    teks
+                }
             } catch (e: Throwable) {
                 LogRecorder.galat("Hosting", "bongkar ZIP gagal", e)
                 getString(R.string.k_gagal_2, e.message)
@@ -492,7 +521,13 @@ class HostingActivity : AppCompatActivity() {
             lagiUpload = false
             SettingsStore(this@HostingActivity).hostingDipakai = true
             banner(hasil)
-            pastikanService { kirim(mapOf("type" to "hosting-cek")) }
+            // Persetujuan yang baru saja diberikan user di dialog dicatat ke
+            // mesin (hosting-setuju.mjs) supaya project bisa jalan; kalau
+            // ditolak/dicabut, mesin menahan jalan & jalan otomatis boot.
+            pastikanService {
+                kirim(mapOf("type" to "hosting-setuju", "sha256" to hash))
+                kirim(mapOf("type" to "hosting-cek"))
+            }
             render(BotBus.ui)
         }
     }

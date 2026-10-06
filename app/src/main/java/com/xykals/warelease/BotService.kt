@@ -373,7 +373,9 @@ class BotService : Service() {
                     ada = e.optBoolean("ada"),
                     punyaModul = e.optBoolean("punyaModul"),
                     autoRestart = e.optBoolean("autoRestart", true),
-                    mulaiPada = e.optLong("mulaiPada", 0L).takeIf { it > 0 }
+                    mulaiPada = e.optLong("mulaiPada", 0L).takeIf { it > 0 },
+                    sha256 = e.optString("sha256", "").takeIf { it.matches(Regex("^[0-9a-f]{64}$")) },
+                    setuju = e.optBoolean("setuju", false)
                 )
             }
 

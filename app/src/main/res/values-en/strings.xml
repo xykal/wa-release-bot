@@ -278,6 +278,7 @@
     <string name="k_hapus_project_2">Delete the project?</string>
     <string name="k_bot_di_stop_semua_file">The bot is stopped and all project files (including that bot\'s WhatsApp session &amp; node_modules) are deleted from the phone.</string>
     <string name="k_hapus_2">Delete</string>
+    <string name="k_hosting_sumber_gagal">Could not save the project fingerprint.</string>
     <string name="k_folder_data_nggak_ada">data folder is missing</string>
     <string name="k_file_zip_nggak_kebaca">can\'t read the ZIP file</string>
     <string name="k_file_zip_lebih_dari_100_mb">The ZIP is larger than 100 MB. Remove node_modules/cache from the archive and try again.</string>

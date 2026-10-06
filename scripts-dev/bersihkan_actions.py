@@ -103,6 +103,19 @@ def daftar_run_simpan(simpan: int) -> tuple[list[dict], set[int]]:
     return runs, {int(r["id"]) for r in runs[:simpan]}
 
 
+def daftar_run_buka(runs: list[dict]) -> set[int]:
+    """Id run yang MASIH jalan (queued/in_progress).
+
+    Artifact milik run yang belum selesai tidak boleh dihapus walau profilnya
+    agresif: build lain (mis. PR) bisa sedang memakai artifact itu (engine-bundle)
+    di job berikutnya. Kejadian 2026-10-06: full-wipe usai build main menghapus
+    engine-bundle run PR yang tengah berjalan -> job APK gagal
+    "Artifact not found for name: engine-bundle". Pelajaran 2026-10-01 (draft)
+    keulang polanya di jalur PR.
+    """
+    return {int(r["id"]) for r in runs if r.get("status") != "completed"}
+
+
 def bersihkan_run(hari: float, simpan: int, runs: list[dict] | None = None) -> int:
     batas = hari * 24
     if runs is None:
@@ -121,17 +134,20 @@ def bersihkan_run(hari: float, simpan: int, runs: list[dict] | None = None) -> i
     return dihapus
 
 
-def bersihkan_artifact(hari: float, run_simpan: set[int] | None = None) -> int:
-    """Hapus artifact menua — KECUALI milik run termuda.
+def bersihkan_artifact(hari: float, run_simpan: set[int] | None = None, run_buka: set[int] | None = None) -> int:
+    """Hapus artifact menua — KECUALI milik run termuda & run yang masih jalan.
 
     Kenapa dikecualikan: draft release internal (job `release-internal`) mengambil
     APK dari artifact run yang sedang jalan. Sapuan yang jalan di tengah build
     pernah menghapus artifact itu lebih dulu, jadi draft-nya gagal dengan
     "ls: cannot access 'dist/'" (kejadian 2026-10-01). Artifact milik run
     termuda disimpan; yang menua tetap dibuang.
+    Sejak 2026-10-06, artifact milik run BELUM SELESAI mana pun juga dilindungi:
+    full-wipe usai build main sempat menghapus engine-bundle build PR yang
+    tengah berjalan, bikin job APK-nya gagal "Artifact not found".
     """
     batas = hari * 24
-    dilindungi = run_simpan or set()
+    dilindungi = (run_simpan or set()) | (run_buka or set())
     arts = semua_halaman(f"{API}/repos/{REPO}/actions/artifacts", "artifacts")
     dihapus = 0
     disimpan = 0
@@ -214,8 +230,9 @@ def main() -> int:
           f"batas cache {batas_cache:.0f} MB{' [KERING]' if KERING else ''}")
 
     runs, run_simpan = daftar_run_simpan(simpan_run)
+    run_buka = daftar_run_buka(runs)
     total = bersihkan_run(hari_run, simpan_run, runs)
-    total += bersihkan_artifact(hari_artifact, run_simpan)
+    total += bersihkan_artifact(hari_artifact, run_simpan, run_buka)
     total += bersihkan_cache(hari_cache)
     total += batasi_cache(batas_cache)
 

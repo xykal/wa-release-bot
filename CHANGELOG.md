@@ -60,6 +60,10 @@ Semua perubahan penting proyek ini. Format mengikuti
   `clipChildren=false` dan mantulnya diredam).
 
 ### Keamanan (CI)
+- Sapuan artifact tidak lagi menyentuh artifact milik run yang BELUM selesai.
+  Full-wipe usai build main pernah menghapus `engine-bundle` build PR yang tengah
+  berjalan (2026-10-06) sehingga job APK-nya gagal "Artifact not found" - pola
+  yang sama dengan kejadian draft 2026-10-01, kali ini di jalur PR.
 - `bersihkan.yml` kini punya profil **full wipe**: tiap kali build `main` selesai
   (`workflow_run`), semua run Actions yang selesai — beserta log dan artifact-nya —
   dan semua cache di atas ±1 jam dihapus; yang tersisa hanya run sapuan itu sendiri.

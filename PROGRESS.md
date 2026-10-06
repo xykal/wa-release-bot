@@ -1,3 +1,18 @@
+## 2026-10-06 — lanjutan pasca-rilis (sesi agent)
+
+- PR #62 (perpisahan respons instan + cek susulan reconnect + interval 1 menit) di-merge.
+- PR #60 di-merge (globals 17.13.0); PR #61 ditutup tanpa merge: core-ktx 1.19.1
+  menuntut compileSdk 37 + AGP 9.1 (proyek: 35 + 8.13.2) - tunggu migrasi atau pin core.
+- PR #58 di-rebase ke main: bagian yang sudah digantikan hardening (SidikZip, dialog) dibuang;
+  lapisan uniknya dipertahankan - MESIN menolak jalan (termasuk autostart) tanpa persetujuan
+  per sidik ZIP (hosting-setuju.mjs + perintah hosting-setuju + sumber.json atomik dari app).
+- PR #18 (chore/rilis-1.0.0) ditutup, branch dihapus (basi; v1.0.0 sudah rilis).
+- Worker lagu di-deploy ulang (148 lagu, benih TikTok + bobot baru); burst limiter terbukti
+  (kena di request ke-19 pada cek-batas-worker.sh MAKS=40; 10 sampel kurang buat counter CF).
+- Insiden: full-wipe bersihkan.yml menghapus engine-bundle build PR yang masih jalan
+  (job APK gagal "Artifact not found"). Fix: bersihkan_artifact melindungi semua artifact
+  milik run berstatus != completed (bersihkan_actions.py), pola insiden 2026-10-01.
+
 # PROGRESS
 
 Start: 2026-09-26 (commit pertama repo)

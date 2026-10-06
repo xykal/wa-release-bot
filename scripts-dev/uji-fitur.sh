@@ -18,6 +18,37 @@ set -euo pipefail
 : "${X:?X belum diisi}" "${H:?H belum diisi}"
 source "$(dirname "$0")/ui-uji.sh"
 
+# Perpisahan respons instan (kartu Penjaga grup): diuji PALING AWAL, dari
+# posisi tab yang baru dibuka — kartunya di bawah kartu rilis tapi di ATAS
+# kartu Bot WA umum, jadi arah gulirnya tetap turun seperti semua uji lain.
+# (Dulu ditaruh setelah uji berkala: harus menggulir balik ke atas, dan
+# gulir_ke arah "elemen belum kelihatan" memang cuma turun — saklarnya jadi
+# tidak pernah ketemu. Keyboard sisa ketik interval ikut menutupi layar.)
+# Harus bisa nyala lalu mati lagi (ditingkatkan MATI — bawaannya memang mati,
+# dan jangan bikin emulator nyimpen fitur hemat-batre yang kebalik).
+gulir_ke rowPerpisahanInstan perpisahan-instan 480
+dump="$(dump_ui)"
+if [[ "$dump" == *"id/rowPerpisahanInstan"* ]]; then
+  echo "uji perpisahan-instan: saklar instan kelihatan OK"
+else
+  echo "uji perpisahan-instan: saklar instan tidak ketemu di dump UI"; tangkap_gagal perpisahan-instan-gagal; exit 1
+fi
+
+ketuk_id rowPerpisahanInstan "saklar perpisahan instan"
+baris="$(dump_ui | grep -F "id/rowPerpisahanInstan" | head -n 1 || true)"
+if [[ "$baris" == *'selected="true"'* ]]; then
+  echo "uji perpisahan-instan: saklar bisa nyala OK"
+else
+  echo "uji perpisahan-instan: saklar tidak berubah jadi nyala"; tangkap_gagal perpisahan-instan-gagal; exit 1
+fi
+ketuk_id rowPerpisahanInstan "saklar perpisahan instan (matikan lagi)"
+baris="$(dump_ui | grep -F "id/rowPerpisahanInstan" | head -n 1 || true)"
+if [[ "$baris" == *'selected="false"'* ]]; then
+  echo "uji perpisahan-instan: saklar bisa mati lagi OK"
+else
+  echo "uji perpisahan-instan: saklar tidak kembali mati"; tangkap_gagal perpisahan-instan-gagal; exit 1
+fi
+
 gulir_ke rowModerasi bot-umum 320
 dump_moderasi="$(dump_ui)"
 if [[ "$dump_moderasi" == *"id/rowModerasi"* && ( "$dump_moderasi" == *"Bot WA umum"* || "$dump_moderasi" == *"WhatsApp features"* ) ]]; then
@@ -107,32 +138,6 @@ if [ -n "$kotak" ]; then
   fi
 fi
 tangkap berkala
-
-# Perpisahan respons instan: saklar di kartu Penjaga grup, harus bisa
-# nyala lalu mati lagi (ditingkatkan MATI — bawaannya memang mati, dan
-# jangan bikin emulator nyimpen fitur hemat-batre yang kebalik).
-gulir_ke rowPerpisahanInstan perpisahan-instan 480
-dump="$(dump_ui)"
-if [[ "$dump" == *"id/rowPerpisahanInstan"* ]]; then
-  echo "uji perpisahan-instan: saklar instan kelihatan OK"
-else
-  echo "uji perpisahan-instan: saklar instan tidak ketemu di dump UI"; tangkap_gagal perpisahan-instan-gagal; exit 1
-fi
-
-ketuk_id rowPerpisahanInstan "saklar perpisahan instan"
-baris="$(dump_ui | grep -F "id/rowPerpisahanInstan" | head -n 1 || true)"
-if [[ "$baris" == *'selected="true"'* ]]; then
-  echo "uji perpisahan-instan: saklar bisa nyala OK"
-else
-  echo "uji perpisahan-instan: saklar tidak berubah jadi nyala"; tangkap_gagal perpisahan-instan-gagal; exit 1
-fi
-ketuk_id rowPerpisahanInstan "saklar perpisahan instan (matikan lagi)"
-baris="$(dump_ui | grep -F "id/rowPerpisahanInstan" | head -n 1 || true)"
-if [[ "$baris" == *'selected="false"'* ]]; then
-  echo "uji perpisahan-instan: saklar bisa mati lagi OK"
-else
-  echo "uji perpisahan-instan: saklar tidak kembali mati"; tangkap_gagal perpisahan-instan-gagal; exit 1
-fi
 
 # Simpan, lalu bar Simpan harus hilang lagi.
 kotak="$(kotak_id btnSave)"

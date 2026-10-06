@@ -49,6 +49,16 @@ else
   echo "uji perpisahan-instan: saklar tidak kembali mati"; tangkap_gagal perpisahan-instan-gagal; exit 1
 fi
 
+# Toggle ON->OF menandai form "kotor" (bar Simpan kelihatan) walau nilai
+# kembali sama — app tidak menghitung mundur. Simpan sekarang supaya uji
+# "bar Simpan sembunyi waktu belum ada perubahan" di bawah tetap jujur.
+kotak="$(kotak_id btnSave)"
+if [ -n "$kotak" ]; then
+  set -- $kotak
+  adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
+  sleep 1.4
+fi
+
 gulir_ke rowModerasi bot-umum 320
 dump_moderasi="$(dump_ui)"
 if [[ "$dump_moderasi" == *"id/rowModerasi"* && ( "$dump_moderasi" == *"Bot WA umum"* || "$dump_moderasi" == *"WhatsApp features"* ) ]]; then

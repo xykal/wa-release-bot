@@ -64,6 +64,9 @@ export function buatPerintah(ctx, { rilis, lagu, lawak, grup, tautan, jaga, berk
               aktif: Boolean(cmd.grupPerpisahanAktif),
               judul: String(cmd.grupPerpisahanJudul || '').trim(),
               teks: String(cmd.grupPerpisahanTeks || '').trim(),
+              // Respons instan: koneksi jaga nyala walau moderasi/perintah
+              // mati, biar salam keluar dalam detik (opt-in, makan batre).
+              instan: Boolean(cmd.grupPerpisahanInstan),
             },
           },
           jaga: {
@@ -137,8 +140,10 @@ export function buatPerintah(ctx, { rilis, lagu, lawak, grup, tautan, jaga, berk
         berkala.hentikan();
         if (ctx.running && next.berkala.aktif) berkala.jadwal(60_000);
         // Mode jaga pesan nyala/mati mengikuti setting yang baru disimpan.
+        // Perpisahan instan ikut: dia butuh koneksi nyala terus juga.
         if (ctx.running) {
-          if (next.jaga.moderasi || next.jaga.perintah) {
+          if (next.jaga.moderasi || next.jaga.perintah ||
+            (next.grup.aktif && next.grup.perpisahan?.aktif && next.grup.perpisahan?.instan)) {
             if (!jaga.sedangJalan()) void jaga.mulai();
           } else {
             jaga.hentikan();

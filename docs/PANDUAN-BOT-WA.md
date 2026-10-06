@@ -162,6 +162,12 @@ waktu cek rutin tiap N menit, jadi maksimal selambat itu).
   mode itu mati, salam dikirim pas cek rutin Penjaga grup (boleh turunin
   intervalnya sampai 1 menit). Dua jalur itu dijamin nggak dobel — tanda
   "sudah disalam" dibagi antar keduanya.
+- **Perpisahan respons instan** — saklar tambahan di kartu Penjaga grup, buat
+  yang mau salamnya detik-an TANPA nyalain moderasi/perintah pribadi: WA
+  disambungin terus (nebeng koneksi mode jaga) cuma buat nangkep event keluar
+  grup. Sama seperti Bot WA umum, ini makan batre lebih — bawaannya mati, dan
+  kalau koneksi sempat putus, cek susulan otomatis jalan begitu nyambung lagi
+  biar yang kelewat tetap disalam kilat (dibatasi sekali per menit).
 - **Kirim pesan perpisahan** — saklarnya di kartu Penjaga grup, jadi butuh
   Penjaga grup nyala dulu.
 - **Judul pesan** — kolom tersendiri di atas kolom teks; pengepala pesannya

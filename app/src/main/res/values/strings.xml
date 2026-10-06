@@ -59,6 +59,8 @@
     <string name="u_nyalain_pertanyaan_mood">Nyalain pertanyaan mood</string>
     <string name="u_nyalain_pesan_perpisahan">Kirim pesan perpisahan</string>
     <string name="u_ket_pesan_perpisahan">Pas ada yang keluar grup, bot ngirim pesan ini — orangnya pasti ke-mention</string>
+    <string name="u_nyalain_perpisahan_instan">Perpisahan respons instan</string>
+    <string name="u_ket_perpisahan_instan">Nyambungin WA terus biar pesan perpisahan keluar dalam hitungan detik, bukan nunggu cek rutin. Makan batre lebih — matiin kalau nggak dipakai.</string>
     <string name="u_judul_pesan_perpisahan">Judul pesan (kepala)</string>
     <string name="u_hint_judul_perpisahan">PERPISAHAN</string>
     <string name="u_ket_placeholder_perpisahan">Tulis {tag} buat manggil orangnya (kalau lupa nulis tetap disisipin otomatis), {nama} buat nama WA-nya, {grup} buat nama grup. Kosongin aja buat teks bawaan.</string>

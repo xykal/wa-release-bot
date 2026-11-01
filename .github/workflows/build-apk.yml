@@ -126,7 +126,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node ${{ env.NODE_VERSION }} (sama dengan nodejs-mobile)
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -165,7 +165,7 @@ jobs:
           "
 
       - name: Upload bundle
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: engine-bundle
           path: bot-js/dist/bundle.cjs
@@ -242,7 +242,7 @@ jobs:
           echo "ABI   : $ABIS → $ABI_TAG"
 
       - name: Setup JDK ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
@@ -259,7 +259,7 @@ jobs:
           log-accepted-android-sdk-licenses: false
 
       - name: Ambil bundle engine dari artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: engine-bundle
           path: app/src/main/assets/node
@@ -309,7 +309,7 @@ jobs:
           fi
 
       - name: Setup Gradle (dengan cache)
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
@@ -322,7 +322,7 @@ jobs:
 
       - name: Upload hasil lint
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: android-lint-results
           path: app/build/reports/lint-results-*.{html,xml,sarif}
@@ -469,7 +469,7 @@ jobs:
           exit $FAIL
 
       - name: Upload APK
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ steps.vars.outputs.apk-name }}
           path: dist/*
@@ -485,7 +485,7 @@ jobs:
       # balik jadi nama class asli. Cuma berguna kalau versinya sama.
       - name: Upload mapping R8 (buat baca crash log)
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: r8-mapping-${{ steps.vars.outputs.abi-slug }}
           path: app/build/outputs/mapping/*/mapping.txt
@@ -534,7 +534,7 @@ jobs:
           persist-credentials: false
 
       - name: Ambil APK hasil matrix
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: wa-release-bot-*.apk
           merge-multiple: true
@@ -546,7 +546,7 @@ jobs:
       # pesan jelas, bukan "ls: cannot access 'dist/'".
       - name: Ambil APK hasil matrix (coba kedua)
         if: hashFiles('dist/*.apk') == ''
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: wa-release-bot-*.apk
           merge-multiple: true
@@ -585,7 +585,7 @@ jobs:
       # 'wa-release-bot-' dan isinya unik per ABI, jadi aman digabung.
       # merge-multiple: true menaruh semua file di satu folder 'dist/'.
       - name: Ambil semua APK hasil matrix
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: wa-release-bot-*.apk
           merge-multiple: true

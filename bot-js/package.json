@@ -18,14 +18,14 @@
     "mpg123-decoder": "1.0.3",
     "opusscript": "0.1.1",
     "pino": "^9.6.0",
-    "semver": "^7.8.5",
-    "ws": "^8.18.0"
+    "semver": "^7.8.6",
+    "ws": "^8.22.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "esbuild": "^0.28.2",
-    "eslint": "^10.11.0",
-    "globals": "^17.13.0"
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0"
   },
   "license": "SEE LICENSE IN ../LICENSE",
   "author": "xykal (XyVerse Technology Global)"
